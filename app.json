@@ -1,15 +1,15 @@
 {
   "expo": {
-    "name": "Closet",
-    "slug": "closet",
+    "name": "Almari",
+    "slug": "almari",
     "version": "0.1.0",
-    "scheme": "closet",
+    "scheme": "almari",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "platforms": ["ios", "web"],
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.zaimimran.closet",
+      "bundleIdentifier": "com.zaimimran.almari",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -39,7 +39,16 @@
       "expo-status-bar",
       "expo-image",
       "expo-sqlite",
-      "expo-font"
-    ]
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/brand/icon.png",
+          "imageWidth": 220,
+          "backgroundColor": "#FDFBF7"
+        }
+      ]
+    ],
+    "icon": "./assets/brand/icon.png"
   }
 }
