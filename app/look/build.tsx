@@ -1,5 +1,11 @@
-import { useState } from "react";
-import { FlatList, StyleSheet, View } from "react-native";
+import { useEffect, useState } from "react";
+import {
+  FlatList,
+  Keyboard,
+  StyleSheet,
+  View,
+  useWindowDimensions,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, router, useLocalSearchParams } from "expo-router";
 import { randomUUID } from "expo-crypto";
@@ -13,13 +19,16 @@ import {
   Field,
   Filters,
   HeaderAction,
-  Message,
   OutfitCollage,
   PieceTile,
 } from "../../src/ui";
 import { theme } from "../../src/ui/theme";
 
 export default function BuildLook() {
+  const { width, fontScale } = useWindowDimensions();
+  const wide = width >= 900;
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const keyboardVisible = keyboardHeight > 0;
   const { id: sourceId } = useLocalSearchParams<{ id?: string }>();
   const { closet, update } = useCloset();
   const [source] = useState(() =>
@@ -48,6 +57,19 @@ export default function BuildLook() {
     (piece) => category === "all" || piece.category === category,
   );
 
+  useEffect(() => {
+    const show = Keyboard.addListener("keyboardWillShow", (event) =>
+      setKeyboardHeight(event.endCoordinates.height),
+    );
+    const hide = Keyboard.addListener("keyboardWillHide", () =>
+      setKeyboardHeight(0),
+    );
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
+
   async function save() {
     if (busy || !selected.length || !name.trim()) return;
     setBusy(true);
@@ -75,7 +97,7 @@ export default function BuildLook() {
   }
 
   return (
-    <View style={styles.screen}>
+    <View style={[styles.screen, { paddingBottom: keyboardHeight }]}>
       <Stack.Screen
         options={{
           title: source ? "Edit your look" : "Build a look",
@@ -84,96 +106,117 @@ export default function BuildLook() {
           ),
         }}
       />
-      <FlatList
-        data={options}
-        numColumns={2}
-        keyExtractor={(piece) => piece.id}
-        contentInsetAdjustmentBehavior="automatic"
-        automaticallyAdjustKeyboardInsets
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag"
-        contentContainerStyle={styles.content}
-        columnWrapperStyle={styles.row}
-        ListHeaderComponent={
-          <View style={styles.header}>
-            <AppText muted>
-              Choose the pieces you want to wear together.
+      <View style={[styles.workspace, wide && styles.workspaceWide]}>
+        <View style={styles.preview}>
+          <OutfitCollage pieces={pieces} fill testID="live-outfit-preview" />
+          {pieces.length ? (
+            <AppText
+              variant="caption"
+              muted
+              style={styles.summary}
+              accessibilityLiveRegion="polite"
+            >
+              {pieces.length} {pieces.length === 1 ? "piece" : "pieces"} in your
+              look
             </AppText>
-            <OutfitCollage pieces={pieces} compact />
-            <Field
-              label="Look name"
-              testID="look-name"
-              placeholder="e.g. Soft layers for work"
-              value={name}
-              onChangeText={setName}
-              maxLength={80}
-              editable={!busy}
-            />
-            <AppText variant="caption" muted>
-              {selected.length
-                ? `${selected.length} selected. Tap a selected piece to remove it.`
-                : "Tap a piece below to add it to your look."}
-            </AppText>
+          ) : null}
+        </View>
+        <View
+          style={[
+            styles.wardrobe,
+            wide
+              ? styles.wardrobeWide
+              : { height: 256 + Math.max(0, fontScale - 1) * 68 },
+            keyboardVisible && styles.hidden,
+          ]}
+        >
+          <View style={styles.filters}>
             <Filters value={category} onChange={setCategory} />
           </View>
-        }
-        ListEmptyComponent={
-          <Message
-            title={
-              closet.pieces.length
-                ? "No pieces in this category"
-                : "Your closet comes first"
+          <FlatList
+            key={wide ? "grid" : "strip"}
+            testID="outfit-piece-picker"
+            data={options}
+            horizontal={!wide}
+            numColumns={wide ? 2 : 1}
+            keyExtractor={(piece) => piece.id}
+            contentInsetAdjustmentBehavior="never"
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+            style={styles.picker}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={wide ? styles.grid : styles.strip}
+            columnWrapperStyle={wide ? styles.row : undefined}
+            ListEmptyComponent={
+              <View style={[styles.empty, !wide && { width: width - 48 }]}>
+                <AppText muted>
+                  {closet.pieces.length
+                    ? "No pieces in this category yet."
+                    : "Add a few pieces to start building your look."}
+                </AppText>
+                <Button
+                  label={
+                    closet.pieces.length ? "Show all pieces" : "Go to closet"
+                  }
+                  secondary
+                  onPress={() =>
+                    closet.pieces.length
+                      ? setCategory("all")
+                      : router.replace("/closet")
+                  }
+                />
+              </View>
             }
-            description={
-              closet.pieces.length
-                ? "Choose another category to keep building."
-                : "Add your first pieces, then return here to make a look."
-            }
-            action={
-              <Button
-                label={
-                  closet.pieces.length ? "Show all pieces" : "Go to closet"
-                }
-                secondary
-                onPress={() =>
-                  closet.pieces.length
-                    ? setCategory("all")
-                    : router.replace("/closet")
-                }
-              />
-            }
+            renderItem={({ item }) => (
+              <View style={wide ? styles.cell : styles.stripCell}>
+                <PieceTile
+                  piece={item}
+                  compact={!wide}
+                  selected={selected.includes(item.id)}
+                  onPress={() => {
+                    if (!busy)
+                      setSelected((current) =>
+                        current.includes(item.id)
+                          ? current.filter((pieceId) => pieceId !== item.id)
+                          : [...current, item.id],
+                      );
+                  }}
+                />
+              </View>
+            )}
           />
-        }
-        renderItem={({ item }) => (
-          <View style={styles.cell}>
-            <PieceTile
-              piece={item}
-              selected={selected.includes(item.id)}
-              onPress={() => {
-                if (!busy)
-                  setSelected((current) =>
-                    current.includes(item.id)
-                      ? current.filter((pieceId) => pieceId !== item.id)
-                      : [...current, item.id],
-                  );
-              }}
-            />
-          </View>
-        )}
-      />
-      <SafeAreaView edges={["bottom"]} style={styles.footer}>
+        </View>
+      </View>
+      <SafeAreaView
+        edges={keyboardVisible ? [] : ["bottom"]}
+        style={styles.footer}
+      >
         <View style={styles.footerContent}>
           <ErrorMessage message={error} />
-          <Button
-            label={source ? "Save changes" : "Save look"}
-            onPress={() => {
-              void save();
-            }}
-            disabled={
-              !selected.length || !name.trim() || Boolean(source && !dirty)
-            }
-            busy={busy}
-          />
+          <View style={styles.saveRow}>
+            <View style={styles.nameField}>
+              <Field
+                label="Look name"
+                testID="look-name"
+                placeholder="e.g. Soft layers"
+                value={name}
+                onChangeText={setName}
+                maxLength={80}
+                editable={!busy}
+                returnKeyType="done"
+              />
+            </View>
+            <Button
+              label={source ? "Save changes" : "Save look"}
+              onPress={() => {
+                void save();
+              }}
+              disabled={
+                !selected.length || !name.trim() || Boolean(source && !dirty)
+              }
+              busy={busy}
+            />
+          </View>
         </View>
       </SafeAreaView>
     </View>
@@ -182,16 +225,33 @@ export default function BuildLook() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.colors.background },
-  content: {
-    padding: 24,
-    paddingBottom: 56,
+  workspace: {
+    flex: 1,
+    minHeight: 0,
     width: "100%",
-    maxWidth: 720,
+    maxWidth: 1120,
     alignSelf: "center",
   },
-  header: { gap: 20, paddingBottom: 24 },
-  row: { gap: 16 },
+  workspaceWide: { flexDirection: "row" },
+  preview: { flex: 1, minHeight: 0, paddingHorizontal: 24, paddingTop: 8 },
+  summary: { textAlign: "center", paddingTop: 4, paddingBottom: 12 },
+  wardrobe: {
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderColor: theme.colors.line,
+  },
+  wardrobeWide: { width: 400, borderTopWidth: 0, paddingTop: 16 },
+  filters: { paddingHorizontal: 24, paddingBottom: 12 },
+  picker: { flex: 1 },
+  hidden: { display: "none" },
+  strip: { paddingHorizontal: 24, gap: 12 },
+  stripCell: { width: 116 },
+  grid: { paddingHorizontal: 24, paddingBottom: 24 },
+  row: { gap: 12 },
   cell: { width: "48%" },
+  empty: { gap: 12 },
+  saveRow: { flexDirection: "row", gap: 12, alignItems: "flex-end" },
+  nameField: { flex: 1 },
   footer: {
     backgroundColor: theme.colors.background,
     borderTopWidth: 1,
@@ -199,7 +259,7 @@ const styles = StyleSheet.create({
   },
   footerContent: {
     width: "100%",
-    maxWidth: 720,
+    maxWidth: 1120,
     alignSelf: "center",
     paddingHorizontal: 24,
     paddingVertical: 12,

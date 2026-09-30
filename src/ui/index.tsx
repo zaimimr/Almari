@@ -25,6 +25,8 @@ import { isSamplePhoto } from "../domain/samples";
 import { photoSource } from "./photos";
 import { theme } from "./theme";
 
+export { OutfitCollage } from "./OutfitCollage";
+
 export function AppText({
   variant = "body",
   muted,
@@ -242,10 +244,12 @@ export function PieceTile({
   piece,
   onPress,
   selected,
+  compact = false,
 }: {
   piece: Piece;
   onPress: () => void;
   selected?: boolean;
+  compact?: boolean;
 }) {
   return (
     <Pressable
@@ -255,7 +259,13 @@ export function PieceTile({
       accessibilityState={{ selected }}
       style={({ pressed }) => [styles.tile, pressed && styles.pressed]}
     >
-      <View style={[styles.tilePhoto, selected && styles.selectedPhoto]}>
+      <View
+        style={[
+          styles.tilePhoto,
+          compact && styles.compactPhoto,
+          selected && styles.selectedPhoto,
+        ]}
+      >
         <PiecePhoto piece={piece} />
         {selected ? (
           <View style={styles.selectedBadge}>
@@ -265,45 +275,19 @@ export function PieceTile({
           </View>
         ) : null}
       </View>
-      <AppText style={styles.pieceName} numberOfLines={2}>
+      <AppText
+        style={[styles.pieceName, compact && styles.compactName]}
+        numberOfLines={2}
+      >
         {piece.name}
       </AppText>
-      <AppText variant="caption" muted>
-        {categoryLabel(piece.category)}
-        {isSamplePhoto(piece.photo) ? " · Sample" : ""}
-      </AppText>
-    </Pressable>
-  );
-}
-
-export function OutfitCollage({
-  pieces,
-  compact = false,
-}: {
-  pieces: Piece[];
-  compact?: boolean;
-}) {
-  return (
-    <View style={[styles.collage, compact && styles.collageCompact]}>
-      {pieces.map((piece) => (
-        <PiecePhoto
-          key={piece.id}
-          piece={piece}
-          style={[
-            styles.collagePiece,
-            {
-              width: pieces.length === 1 ? "100%" : "50%",
-              height: compact ? 120 : pieces.length < 3 ? 270 : 180,
-            },
-          ]}
-        />
-      ))}
-      {pieces.length === 0 ? (
-        <AppText muted style={styles.collagePlaceholder}>
-          Your pieces will appear here.
+      {!compact ? (
+        <AppText variant="caption" muted>
+          {categoryLabel(piece.category)}
+          {isSamplePhoto(piece.photo) ? " · Sample" : ""}
         </AppText>
       ) : null}
-    </View>
+    </Pressable>
   );
 }
 
@@ -414,16 +398,6 @@ export const styles = StyleSheet.create({
   },
   selectedLabel: { color: theme.colors.accentText, fontWeight: "600" },
   pieceName: { marginTop: 6, fontWeight: "500", fontSize: 15, lineHeight: 21 },
-  collage: {
-    width: "100%",
-    backgroundColor: theme.colors.background,
-    flexDirection: "row",
-    flexWrap: "wrap",
-    minHeight: 180,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  collageCompact: { minHeight: 120 },
-  collagePiece: { flex: undefined, padding: 8 },
-  collagePlaceholder: { padding: 24, textAlign: "center" },
+  compactPhoto: { aspectRatio: 1 },
+  compactName: { fontSize: 13, lineHeight: 18 },
 });

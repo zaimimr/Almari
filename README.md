@@ -31,6 +31,7 @@ Working iPhone screenshots: [Closet](planning/build/iphone-closet.png), [Add a p
 - Add a photo from the library, or use the iPhone camera.
 - Name and categorize clothing, including hijabs, kurtas, tunics, and abayas.
 - Search and filter the closet; edit or remove pieces.
+- Build outfits in a live, overlapping flat lay that stays visible while browsing clothes.
 - Select pieces, name the combination, and save it to Looks.
 - Reopen a look and change its pieces.
 - Keep data locally across app restarts.
@@ -40,6 +41,8 @@ Uploaded photos retain their backgrounds. Automatic cleanup, coverage checking, 
 The sample wardrobe uses prepared clothing cutouts and is added once without replacing existing pieces or looks. Deleted sample items stay deleted. Uploaded photos still use the manual form; [automatic naming, categories, and background cleanup](planning/PHOTO-IMPORT.md) are the next capture task.
 
 See the [sample wardrobe and screenshots](planning/SAMPLE-WARDROBE.md).
+
+The [outfit builder](planning/OUTFIT-BUILDER.md) shows the whole combination as you select pieces, with the same arrangement in saved looks.
 
 The iPhone app saves records in SQLite and photos in its document directory. Uninstalling it deletes the local closet. The browser preview uses browser storage, which can fill up with large images.
 

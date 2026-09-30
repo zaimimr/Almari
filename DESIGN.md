@@ -14,6 +14,8 @@ Use the approved white/light neutral surface as the primary canvas. Clothing sup
 
 The light canvas helps people judge color; it cannot guarantee physical color accuracy across cameras and displays. Avoid applying a decorative color grade to uploaded clothes.
 
+Outfits use an overlapping flat lay rather than separate item tiles. Keep garment proportions intact, put trousers behind tops and tunics, and arrange outer layers, hijabs, shoes, and bags around the combination. Use the same composition in the builder and saved looks.
+
 Keep earthy and floral colors in small interface details and the garments themselves. The reference's approximate palette is flower white `#FAF8F3`, dark bark `#322E28`, and muted plum `#675469`. These become semantic theme tokens during implementation after contrast checks.
 
 ## Typography and layout
@@ -37,3 +39,5 @@ The original A identity is approved. Revised styling flows remain proposals. The
 ## First implementation
 
 Shared tokens and components live in `src/ui`. The app uses a white clothing canvas, restrained plum actions, Georgia display headings, system body typography, and native iPhone navigation. The first version follows the selected light appearance. Adaptive dark appearance remains a later refinement.
+
+The outfit builder keeps a live preview above a horizontal clothing picker on iPhone. On wide browser screens, the picker sits beside the preview. Selecting or removing a piece updates the composition immediately. The name and save controls stay at the bottom; while naming on iPhone, the clothing picker gives its space to the outfit and keyboard. See [the builder brief](planning/OUTFIT-BUILDER.md).
