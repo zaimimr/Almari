@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <link rel="icon" href="data:,">
+  <title>Closet | Competitor references</title>
+  <style>
+    :root { --paper: #fff; --ink: #302f29; --muted: #655f56; --line: #ddd8d1; --accent: #66546c; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    a { color: var(--accent); text-underline-offset: 4px; }
+    a:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 5px; }
+    .wrap { max-width: 1440px; margin: auto; padding: 28px 48px 48px; }
+    header { display: flex; justify-content: space-between; align-items: center; gap: 20px; border-bottom: 1px solid var(--line); padding-bottom: 20px; }
+    .wordmark { font-size: 19px; font-weight: 650; letter-spacing: -.02em; }
+    .date { color: var(--muted); font-size: 14px; }
+    nav { display: flex; flex-wrap: wrap; gap: 12px 24px; }
+    nav a { display: inline-flex; align-items: center; min-height: 44px; font-size: 14px; }
+    .intro { display: grid; grid-template-columns: 1.25fr 1fr; gap: 48px; align-items: end; margin: 36px 0; }
+    h1 { font: 400 clamp(32px, 3.5vw, 48px)/1.1 Georgia, serif; letter-spacing: -.035em; margin: 0; max-width: 590px; }
+    .intro p { color: var(--muted); margin: 0; max-width: 60ch; font-size: 15px; }
+    .references { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 28px; }
+    article { min-width: 0; }
+    h2 { font-size: 20px; line-height: 1.3; margin: 0 0 5px; font-weight: 600; }
+    .type { color: var(--muted); font-size: 13px; margin: 0 0 16px; }
+    figure { margin: 0; }
+    .image { display: flex; height: 400px; align-items: center; justify-content: center; background: #fff; }
+    .image img { display: block; max-width: 100%; max-height: 100%; width: auto; height: auto; }
+    figcaption { font-size: 14px; margin-top: 20px; }
+    figcaption p { margin: 0 0 12px; }
+    .source { display: inline-flex; align-items: center; min-height: 44px; font-size: 13px; }
+    .patterns { border-top: 1px solid var(--line); margin-top: 36px; padding-top: 28px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 36px; }
+    .patterns h2 { font-size: 18px; }
+    .patterns p { font-size: 14px; margin: 12px 0 0; }
+    .proposal { margin: 32px 0 0; padding: 24px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    .proposal h2 { font: 400 28px/1.2 Georgia, serif; }
+    .proposal p { max-width: 90ch; margin: 14px 0 0; }
+    details { margin-top: 20px; }
+    summary { color: var(--accent); cursor: pointer; min-height: 44px; padding: 9px 0; }
+    details figure { max-width: 300px; margin: 14px 0 28px; }
+    details img { max-width: 100%; height: auto; }
+    footer { display: flex; justify-content: space-between; gap: 32px; margin-top: 24px; color: var(--muted); font-size: 13px; }
+    footer p { max-width: 70ch; margin: 0; }
+    @media (max-width: 1000px) { .references { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 36px; } .intro { grid-template-columns: 1fr; gap: 20px; } }
+    @media (max-width: 620px) { .wrap { padding: 20px; } header { align-items: start; } .date { max-width: 110px; text-align: right; } .intro { margin: 28px 0; } .references, .patterns { grid-template-columns: 1fr; } .references { gap: 32px; } .image { height: 440px; } .patterns { gap: 24px; } footer { display: block; } footer nav { margin-top: 12px; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header><div class="wordmark">Closet / field notes</div><div class="date">30 September 2026</div></header>
+    <nav aria-label="Research navigation"><a href="../index.html">Our design studies</a><a href="../COMPETITOR-RESEARCH.md">Read the research</a></nav>
+    <main>
+      <div class="intro">
+        <h1>What makes getting<br>dressed easier?</h1>
+        <p>Four visual references from a seven-product review. Publisher images and documented interactions inform the next study. Styling quality has not been tested in the installed apps.</p>
+      </div>
+      <section class="references" aria-label="Publisher product images">
+        <article aria-labelledby="stylebook">
+          <h2 id="stylebook">Stylebook</h2><p class="type">The outfit takes the space</p>
+          <figure>
+            <a class="image" href="assets/stylebook-looks.png" aria-label="Open Stylebook publisher image at full size"><img src="assets/stylebook-looks.png" alt="Stylebook outfit view with a large white collage canvas and a bottom action toolbar."></a>
+            <figcaption><p>Large garment images make the whole combination easy to inspect. Our interpretation: keep this visual emphasis, with clearer labels for frequent actions.</p><a class="source" href="https://www.stylebookapp.com/features.html">Publisher features and image ↗</a></figcaption>
+          </figure>
+        </article>
+        <article aria-labelledby="indyx">
+          <h2 id="indyx">Indyx</h2><p class="type">A piece leads to its looks</p>
+          <figure>
+            <a class="image" href="assets/indyx-item-outfits.png" aria-label="Open Indyx publisher tutorial image at full size"><img src="assets/indyx-item-outfits.png" alt="Indyx item detail tutorial image with Item and Outfits tabs above a shoe photograph."></a>
+            <figcaption><p>The Outfits tab connects a garment to saved combinations. Our interpretation: make this an obvious route from a favorite piece.</p><a class="source" href="https://www.myindyx.com/blog/personal-style-workshop/shop-your-closet">Publisher tutorial and image ↗</a></figcaption>
+          </figure>
+        </article>
+        <article aria-labelledby="aliff">
+          <h2 id="aliff">ALIFF</h2><p class="type">Explain the suggestion</p>
+          <figure>
+            <a class="image" href="assets/aliff-coverage.jpeg" aria-label="Open ALIFF publisher image at full size"><img src="assets/aliff-coverage.jpeg" alt="ALIFF published outfit result with a collage, styling explanation, coverage summary, and feedback actions."></a>
+            <figcaption><p>The result pairs clothes with a styling reason and coverage summary. Our interpretation: keep useful explanations short and grounded in known attributes.</p><a class="source" href="https://aliff.app/">Publisher website and image ↗</a></figcaption>
+          </figure>
+        </article>
+        <article aria-labelledby="mirah">
+          <h2 id="mirah">Mirah</h2><p class="type">Name the cultural occasion</p>
+          <figure>
+            <a class="image" href="assets/mirah-styling.webp" aria-label="Open Mirah App Store image at full size"><img src="assets/mirah-styling.webp" alt="Mirah App Store promotional image showing a mehndi outfit as a vertical list of garments followed by explanations."></a>
+            <figcaption><p>The occasion result uses a garment list and reasoning. Our interpretation: a full collage would help her compare hijabs against the complete look.</p><a class="source" href="https://apps.apple.com/us/app/ai-closet-ootd-mirah/id6778236177">Publisher App Store listing ↗</a></figcaption>
+          </figure>
+        </article>
+      </section>
+      <section class="patterns" aria-label="Other documented patterns">
+        <article><h2>Keep the pieces she likes</h2><p>Whering documents pinning during shuffle. Apply the same visible control to our outfit flow. <a href="https://whering.co.uk/faq/pin-dress-me-items">Pinning instructions ↗</a></p></article>
+        <article><h2>Complete one missing part</h2><p>Acloset documents recommendations for selected empty categories. This is a useful model for finding a hijab. <a href="https://www.acloset.app/support/">Category recommendations ↗</a></p></article>
+        <article><h2>Start with the day ahead</h2><p>Alta presents daily and occasion styling. Keep our occasion and optional mood close to the outfit. <a href="https://www.altadaily.com/">Occasion styling ↗</a></p></article>
+      </section>
+      <section class="proposal" aria-labelledby="next">
+        <h2 id="next">The next study: familiar looks, easier choices.</h2>
+        <p>Carry forward Direction A. Show relevant saved looks for her day, keep the full outfit visible during hijab comparison, and allow one-piece changes. Treat event dressiness as a contextual conversation. These are proposals to explore in the next mockups.</p>
+      </section>
+      <details>
+        <summary>Additional reference: Mirah's closet</summary>
+        <figure><a href="assets/mirah-home.webp"><img src="assets/mirah-home.webp" alt="Mirah published closet image with category rows, hijab photographs, and category, color, coverage, and season filters." loading="lazy"></a><figcaption>Published closet view. <a href="https://apps.apple.com/us/app/ai-closet-ootd-mirah/id6778236177">App Store source ↗</a></figcaption></figure>
+      </details>
+    </main>
+    <footer><p>Images are publisher reference materials, retained unmodified for comparison. They are not our product designs or assets for a shipped app. Tutorial and marketing screens may differ from current app behavior.</p><nav aria-label="Research files"><a href="assets.json">Image sources</a><a href="../TODAY.md">Proposed daily flow</a></nav></footer>
+  </div>
+</body>
+</html>

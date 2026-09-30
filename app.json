@@ -1,0 +1,45 @@
+{
+  "expo": {
+    "name": "Closet",
+    "slug": "closet",
+    "version": "0.1.0",
+    "scheme": "closet",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "platforms": ["ios", "web"],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.zaimimran.closet",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Choose clothing photos to add to your closet.",
+          "cameraPermission": "Photograph a piece for your closet.",
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "26.0",
+            "enableSceneSupport": true
+          }
+        }
+      ],
+      "expo-status-bar",
+      "expo-image",
+      "expo-sqlite",
+      "expo-font"
+    ]
+  }
+}

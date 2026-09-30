@@ -1,0 +1,47 @@
+[
+  {
+    "file": "assets/stylebook-looks.png",
+    "asset_url": "https://www.stylebookapp.com/images/features/grid/looks10.png",
+    "source_page": "https://www.stylebookapp.com/features.html",
+    "accessed": "2026-09-30",
+    "type": "publisher product image",
+    "bytes": 571452,
+    "content_type": "image/png"
+  },
+  {
+    "file": "assets/aliff-coverage.jpeg",
+    "asset_url": "https://aliff.app/images/v2-section3-03-coverage-first-styling.jpeg",
+    "source_page": "https://aliff.app/",
+    "accessed": "2026-09-30",
+    "type": "publisher product image",
+    "bytes": 79803,
+    "content_type": "image/jpeg"
+  },
+  {
+    "file": "assets/mirah-home.webp",
+    "asset_url": "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/be/68/f4/be68f4cb-8829-fb09-9af1-2ecab51273fc/iphone_1.png/600x1300bb.webp",
+    "source_page": "https://apps.apple.com/us/app/ai-closet-ootd-mirah/id6778236177",
+    "accessed": "2026-09-30",
+    "type": "publisher product image",
+    "bytes": 30618,
+    "content_type": "image/webp"
+  },
+  {
+    "file": "assets/mirah-styling.webp",
+    "asset_url": "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource211/v4/3f/6c/bb/3f6cbbb9-382f-7a39-732c-05ed94a13cea/iphone_3.png/600x1300bb.webp",
+    "source_page": "https://apps.apple.com/us/app/ai-closet-ootd-mirah/id6778236177",
+    "accessed": "2026-09-30",
+    "type": "publisher product image",
+    "bytes": 31490,
+    "content_type": "image/webp"
+  },
+  {
+    "file": "assets/indyx-item-outfits.png",
+    "asset_url": "https://images.squarespace-cdn.com/content/v1/6321094c82fde37e691eb3f2/1735847636708-QXYF3KKSGEB56A0POB0F/1.png",
+    "source_page": "https://www.myindyx.com/blog/personal-style-workshop/shop-your-closet",
+    "accessed": "2026-09-30",
+    "type": "publisher tutorial image",
+    "bytes": 907969,
+    "content_type": "image/png"
+  }
+]

@@ -1,0 +1,292 @@
+import { useState } from "react";
+import { Platform, Pressable, StyleSheet, View } from "react-native";
+import { Image } from "expo-image";
+import * as ImagePicker from "expo-image-picker";
+import { randomUUID } from "expo-crypto";
+import { Stack, router } from "expo-router";
+import {
+  type Piece,
+  type Category,
+  categories,
+  savePiece,
+  removePiece,
+} from "../domain/closet";
+import { useCloset } from "../state/closet";
+import { keepPhoto, discardPhoto, photoUri } from "../storage/local";
+import {
+  AppText,
+  Button,
+  ErrorMessage,
+  Field,
+  FormScreen,
+  HeaderAction,
+} from "../ui";
+import { theme } from "../ui/theme";
+import { confirmAction } from "../ui/confirm";
+import { useDiscardChanges } from "../navigation/useDiscardChanges";
+
+export function PieceEditor({ piece }: { piece?: Piece }) {
+  const { closet, update } = useCloset();
+  const [id] = useState(() => piece?.id ?? randomUUID());
+  const [name, setName] = useState(piece?.name ?? "");
+  const [category, setCategory] = useState<Category | null>(
+    piece?.category ?? null,
+  );
+  const [image, setImage] = useState<string | null>(
+    piece ? photoUri(piece.photo) : null,
+  );
+  const [newImage, setNewImage] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const dirty =
+    name !== (piece?.name ?? "") ||
+    category !== (piece?.category ?? null) ||
+    newImage;
+  const allowClose = useDiscardChanges(dirty, busy);
+
+  async function pick(source: "camera" | "library") {
+    setError(null);
+    try {
+      if (source === "camera") {
+        const permission = await ImagePicker.requestCameraPermissionsAsync();
+        if (!permission.granted) {
+          setError(
+            "Camera access is off. You can choose a photo, or enable camera access in Settings.",
+          );
+          return;
+        }
+      }
+      const options: ImagePicker.ImagePickerOptions = {
+        mediaTypes: ["images"],
+        quality: 0.9,
+        allowsEditing: false,
+        exif: false,
+      };
+      const result =
+        source === "camera"
+          ? await ImagePicker.launchCameraAsync(options)
+          : await ImagePicker.launchImageLibraryAsync(options);
+      const asset = result.assets?.[0];
+      if (!result.canceled && asset) {
+        setImage(asset.uri);
+        setNewImage(true);
+      }
+    } catch {
+      setError("The photo could not be opened. Please choose it again.");
+    }
+  }
+
+  async function save() {
+    if (!image || !category || !name.trim() || busy) return;
+    setBusy(true);
+    setError(null);
+    let copiedPhoto: string | null = null;
+    try {
+      const photo = newImage
+        ? (copiedPhoto = await keepPhoto(image))
+        : piece!.photo;
+      await update((current) =>
+        savePiece(current, {
+          id,
+          name,
+          category,
+          photo,
+          createdAt: piece?.createdAt ?? new Date().toISOString(),
+        }),
+      );
+      if (piece && newImage)
+        void discardPhoto(piece.photo).catch(() => undefined);
+      allowClose();
+      router.back();
+    } catch {
+      if (copiedPhoto) void discardPhoto(copiedPhoto).catch(() => undefined);
+      setError(
+        "This piece could not be saved. Check that your device has free space, then try again.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function remove() {
+    if (!piece || busy) return;
+    const uses = closet.looks.filter((look) =>
+      look.pieceIds.includes(piece.id),
+    ).length;
+    const confirmed = await confirmAction(
+      "Remove this piece?",
+      uses
+        ? `It appears in ${uses} saved ${uses === 1 ? "look" : "looks"}. Those looks will show that this piece is missing.`
+        : "This removes the piece and its closet photo from this device.",
+      "Remove",
+    );
+    if (!confirmed) return;
+    setBusy(true);
+    try {
+      await update((current) => removePiece(current, piece.id));
+      void discardPhoto(piece.photo).catch(() => undefined);
+      allowClose();
+      router.back();
+    } catch {
+      setError("This piece could not be removed. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <FormScreen>
+      <Stack.Screen
+        options={{
+          title: piece ? "Your piece" : "Add a piece",
+          headerLeft: () => (
+            <HeaderAction
+              label={piece ? "Back" : "Cancel"}
+              onPress={() => router.back()}
+            />
+          ),
+        }}
+      />
+      <View style={[styles.photo, image && styles.photoWithImage]}>
+        {image ? (
+          <Image
+            source={{ uri: image }}
+            style={styles.image}
+            contentFit="contain"
+            accessibilityLabel="Clothing photo preview"
+          />
+        ) : (
+          <View style={styles.photoHint}>
+            <AppText variant="heading">Start with a photo.</AppText>
+            <AppText muted style={styles.hint}>
+              A clear photo in natural light helps you see the colors you love.
+            </AppText>
+          </View>
+        )}
+      </View>
+      <View style={styles.actions}>
+        <View style={styles.action}>
+          <Button
+            label={image ? "Change photo" : "Choose a photo"}
+            secondary
+            disabled={busy}
+            onPress={() => {
+              void pick("library");
+            }}
+          />
+        </View>
+        {Platform.OS !== "web" ? (
+          <View style={styles.action}>
+            <Button
+              label="Take a photo"
+              secondary
+              disabled={busy}
+              onPress={() => {
+                void pick("camera");
+              }}
+            />
+          </View>
+        ) : null}
+      </View>
+      <Field
+        label="Name"
+        testID="piece-name"
+        placeholder="e.g. Mauve chiffon hijab"
+        value={name}
+        onChangeText={setName}
+        maxLength={80}
+        editable={!busy}
+        returnKeyType="done"
+      />
+      <View style={styles.categorySection}>
+        <AppText style={styles.label}>Category</AppText>
+        <View style={styles.categories}>
+          {categories.map((option) => (
+            <Pressable
+              key={option.id}
+              accessibilityRole="button"
+              accessibilityState={{
+                selected: category === option.id,
+                disabled: busy,
+              }}
+              disabled={busy}
+              onPress={() => setCategory(option.id)}
+              style={[
+                styles.category,
+                category === option.id && styles.selectedCategory,
+              ]}
+            >
+              <AppText
+                variant="caption"
+                style={category === option.id ? styles.selectedText : undefined}
+              >
+                {option.label}
+              </AppText>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+      <ErrorMessage message={error} />
+      <Button
+        label={piece ? "Save changes" : "Add to closet"}
+        onPress={() => {
+          void save();
+        }}
+        busy={busy}
+        disabled={
+          !image || !category || !name.trim() || Boolean(piece && !dirty)
+        }
+      />
+      <AppText variant="caption" muted>
+        Saved on this device. Photos keep their original backgrounds.
+      </AppText>
+      {piece ? (
+        <Button
+          label="Remove piece"
+          danger
+          disabled={busy}
+          onPress={() => {
+            void remove();
+          }}
+        />
+      ) : null}
+    </FormScreen>
+  );
+}
+
+const styles = StyleSheet.create({
+  photo: {
+    minHeight: 280,
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: theme.colors.line,
+    borderRadius: theme.radius,
+    borderCurve: "continuous",
+    overflow: "hidden",
+    backgroundColor: theme.colors.background,
+  },
+  photoWithImage: { height: 280 },
+  image: { width: "100%", height: "100%" },
+  photoHint: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
+    gap: 16,
+  },
+  hint: { textAlign: "center", maxWidth: 260 },
+  actions: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
+  action: { flexGrow: 1, minWidth: 130 },
+  categorySection: { gap: 12 },
+  categories: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  category: {
+    minHeight: 44,
+    borderRadius: 22,
+    backgroundColor: theme.colors.surface,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  selectedCategory: { backgroundColor: theme.colors.accent },
+  selectedText: { color: theme.colors.accentText },
+  label: { fontWeight: "600" },
+});
