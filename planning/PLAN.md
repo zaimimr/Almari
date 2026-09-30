@@ -22,6 +22,8 @@ The wife's confirmed needs sharpen the first styling milestone: match a hijab to
 
 Additional confirmed needs are contextual occasion and dressiness guidance for Desi outfits, work suggestions influenced by an explicitly selected mood, and options drawn from already created outfits. The initial proposal uses intentionally saved looks as that library.
 
+The two styling paths are everyday/default and a temporary request for another occasion. Both must support requests for a garment type, such as a blazer or a dress for work, and completion around any number of exact owned pieces. Desi/Western selection and weather-appropriate clothing are confirmed requirements. [Detailed styling flow](TODAY.md).
+
 ## First use
 
 1. Explain the value with one owned outfit and a short privacy statement.
@@ -54,7 +56,7 @@ Use clear distinctions between a known mismatch and an unknown attribute. A phot
 
 An example: an open abaya does not automatically cover the neckline or front of an outfit. An ivory tunic underneath still needs a suitable neckline and opacity. A high-scoring color combination must never override a required coverage condition.
 
-Do not force a user to choose between Western, Pakistani, and Arab identities. Use garment categories and optional style tags. A Pakistani kurta can be styled with Western trousers and a hijab. A dupatta can have a different role from a hijab; one does not automatically substitute for the other.
+Provide the requested Desi/Western outfit-style selector without making it a permanent identity choice. Use garment categories and optional multiple style tags, so a shared bag, pair of trousers, or hijab can work in either style. A Pakistani kurta can be styled with Western trousers and a hijab. Keep Arab and mixed wardrobes representable. A dupatta can have a different role from a hijab; one does not automatically substitute for the other.
 
 Matching sets need relationships between pieces. A three-piece suit can remain a set while its kurta, trousers, and dupatta remain independently selectable when the owner wants that.
 
@@ -66,7 +68,9 @@ Open with an outfit based on the user's saved default everyday style. Daily styl
 
 Proposed behavior: refresh on first opening of a new local day, retain the result that day, and keep occasion changes temporary. Preserve saved looks and manual edits. Build my own and Use a reference photo remain available through More options. See [the Today brief](TODAY.md) for flow details and acceptance checks.
 
-An outfit request can include an occasion, preferred style, temperature entered by the user, a pinned item, and exclusions such as something in the laundry. Weather integration can follow later; location permission is unnecessary for the first version.
+Both styling paths accept occasion, preferred Desi/Western style, requested garment types, multiple required item IDs, weather and warmth preferences, and exclusions such as something in the laundry. Distinguish Use a blazer from Use this exact blazer. The request can combine type requirements with exact pieces, such as a blazer around selected shoes and a bag. Everyday can default to Work.
+
+Begin with manual warmth and rain/snow controls. Optional forecasts can follow with a chosen city or permission-based location. Weather includes temperature or feels-like temperature, precipitation, wind, date/place, and optional indoor/outdoor context. Do not infer warmth from sunshine or garment weather suitability from a photo alone. Preserve the everyday preset when trying today's preferences or another occasion. [Request, style, and weather behavior](TODAY.md).
 
 Give Match a hijab a visible entry near the outfit, also accessible through the hijab itself. Tapping any item offers Change this piece and Keep this piece. Candidate replacements must fit the complete outfit while the other pieces stay fixed. Proposed daily discovery balances familiar favorites with suitable overlooked pieces. [Detailed matching, replacement, and rediscovery flow](TODAY.md).
 
@@ -77,6 +81,8 @@ Allow an optional mood such as Comfortable or Polished within the selected occas
 A searchable image grid with category filters. Detail views show the original and cleaned photo, category, colors, attributes, notes, and availability. Let users correct recognition and remove a garment without losing access to the rest of the app.
 
 Suggested initial categories: tops, bottoms, dresses, layers, hijabs/scarves, shoes, accessories, and matching sets. Garment types such as abaya, jilbab, kimono, kurta, kameez, shalwar, and dupatta sit under suitable categories or roles. The vocabulary must be reviewed with users who wear these garments.
+
+Add Desi/Western as a style filter alongside garment categories. Use specific garment types to distinguish a blazer from another outer layer. Shared items can have multiple style tags; they should appear once in the closet.
 
 ### Add a piece
 
@@ -103,6 +109,8 @@ Explain the judgment with contextual language and offer suitable owned-piece cha
 ### Build a look
 
 Start with simple garment selection by role, with a live collage preview. Tap to replace a piece, pin a favorite, and save a name. Support multiple layers and matching sets; do not require a top and trousers for every outfit.
+
+The live manual collage is implemented. The proposed Style around these action uses any selected pieces as exact requirements, then completes the outfit with the active occasion, garment-type requirements, Desi/Western style, weather, and coverage preferences. User-kept pieces remain through Try another; generated pieces remain changeable. A complete selection does not need arbitrary extra items, and conflicting selections need a clear resolution.
 
 A freeform drag-and-drop canvas is an optional later enhancement. It creates additional gesture, accessibility, and layout complexity without being necessary to make and save outfits.
 
@@ -151,12 +159,12 @@ Do not require virtual try-on in the first release. A collage of actual cutouts 
 
 Use software rules for known requirements, then rank eligible combinations for taste.
 
-1. Parse the request into a typed occasion, event expectations, optional explicit mood, preferences, fixed items, and exclusions.
+1. Resolve the everyday default and temporary overrides into a typed request: occasion, event expectations, optional explicit mood, Desi/Western choice, garment-type requirements, exact fixed IDs, weather/comfort context, coverage, and exclusions. Structured controls and later natural-language parsing produce the same request.
 2. Retrieve relevant saved outfits and owned pieces by context, roles, attributes, and optional similarity. Recheck saved outfits against current coverage and availability.
 3. When requested or needed, build a bounded set of new combinations using role templates, including full-length garments and matching sets. Keep saved-look identities distinct from new variants.
 4. Evaluate coverage across all layers. Reject known violations; route missing essential information to review.
 5. Score eligible candidates for palette, silhouette, occasion, weather if supplied, and personal feedback. Evaluate hijab compatibility with the full combination, including known fabric, finish, and pattern preferences. Balance favorite anchors with suitable pieces that have received less exposure.
-6. Revalidate final item IDs, ownership, availability, and coverage before display.
+6. Revalidate final item IDs, ownership, availability, coverage, every exact fixed ID, garment-type requirement, and requested style before display. Weather suitability must be grounded in known attributes. An unsatisfied request produces an explanation and a choice to adjust it.
 7. Present a few diverse results as real-item collages, with short explanations derived from verified attributes.
 8. Apply feedback to future ranking, without relaxing coverage silently. Keep pairing-specific feedback separate from global garment preferences, and suggestion exposure separate from confirmed wear.
 
@@ -263,6 +271,8 @@ flowchart TD
 
 The coverage evaluator stays ordinary domain code. Providers cannot bypass it. Domain types must not import provider SDK types. Adapters translate and validate their outputs at the boundary.
 
+Manual weather inputs already fit the outfit request. When forecasts are added, translate provider output into that same weather context at a small boundary, keeping provider types and location permissions out of outfit ranking. A separate service is unnecessary.
+
 A capability reports whether it is available, requires a download, needs network access, or needs explicit cloud permission. Use errors with clear meanings, such as unavailable, denied, uncertain, timeout, and cancelled. Keep a small adapter registry and dependency injection at app startup.
 
 A replacement is complete when the same evaluation fixtures and contract tests pass without changing the screens or coverage rules. This is a measurable definition of modularity.
@@ -271,9 +281,10 @@ A replacement is complete when the same evaluation fixtures and contract tests p
 
 | Entity | Important fields |
 | --- | --- |
-| Preferences | Coverage profiles, selected context, taste choices, optional fit notes, user-described workplace expectations, locale |
+| Preferences | Coverage profiles, default occasion/style, taste choices, warmth preference, optional fit notes, user-described workplace expectations, locale |
 | Everyday style and daily suggestion | Default preference reference, local date, preference version, owned item IDs, optional occasion variant |
-| Garment | Stable ID, owner, category/roles, colors, coverage attributes, availability, optional set ID |
+| Outfit request | Path, default reference, temporary occasion/mood/style, required item IDs, required garment types, exclusions, weather with source/date/place, optional indoor/outdoor context |
+| Garment | Stable ID, owner, category/roles, garment type, multiple style tags, colors, coverage and known warmth/weather attributes, availability, optional set ID |
 | Attribute evidence | Value, source, confidence, reviewed state, updated time |
 | Media asset | Local path, optional remote key, original/cutout/thumbnail kind, processing version |
 | Outfit | Stable ID, owner, name, selected item IDs and roles, collage layout, optional occasion tags and explicit contextual feedback; source reference for variants |
@@ -307,7 +318,8 @@ Needle's repository documents enabled-by-default telemetry. Disable it in any in
 | Current: first working increment | Prepared sample wardrobe, local photo import/camera, manual builder, and saved looks | Build outfits immediately, then edit, save, and reopen without losing data |
 | Capture automation | Automatic name/category suggestions, faithful cutouts, batch review, and original-photo retention | Clear photos become useful closet items without typing; uncertain results are easy to correct |
 | Preferences | Personal coverage preferences and corrected garment attributes | Her actual clothes remain recognizable and attributes are trustworthy |
-| Styling alpha | Constraint evaluator, hijab matching, individual swaps, wardrobe rediscovery, saved-look retrieval, mood and occasion inputs | Useful matching, suitable existing looks and variety, unchanged other pieces during swaps, and no known hard-rule violations |
+| First styling slice | Today with everyday/occasion paths, editable default, garment-type controls, multiple chosen pieces, Desi/Western selector, manual weather, and a small local baseline using reviewed sample attributes | A blazer, dress-for-work, shoes-and-bag, and trousers request yield owned combinations or clear conflicts; required pieces survive alternatives |
+| Styling refinement | Real-wardrobe attributes, coverage evaluator, hijab matching, individual swaps, wardrobe rediscovery, saved-look retrieval, mood and occasion inputs; optional forecasts and language input | Useful matching, suitable existing looks and variety, unchanged other pieces during swaps, preserved defaults, and no known hard-rule violations |
 | Reference and conversation beta | Image inspiration and grounded stylist | Matches style intent using owned pieces and explains gaps honestly |
 | Store release | Accounts/backup if chosen, billing, deletion/export, accessibility and operational support | Verified release checks and successful private beta |
 
@@ -332,6 +344,10 @@ Proposed targets to discuss:
 - Reference interpretation makes its preserved and changed aspects visible.
 - Hijab matching offers at least one option she likes for the evaluation outfits when the wardrobe contains a suitable option.
 - A single-piece replacement changes only the requested piece and preserves known coverage requirements.
+- Exact selected shoes, bag, trousers, or any combination of pieces remain in every generated alternative until released.
+- Garment-type requests include a matching owned type, with no invented blazer or silent replacement by a different layer.
+- Desi/Western preferences apply in everyday and occasion flows without overwriting the saved default or excluding shared accessories unnecessarily.
+- Warm, cold, and snow cases use reviewed weather attributes, preserve required coverage indoors, and explain missing suitable clothing.
 - Daily suggestions use suitable pieces beyond favorites when available, with no fabricated claims about wear frequency.
 - Occasion/mood requests surface suitable saved looks and clearly distinguish variants from saved originals.
 - Dressiness advice is grounded in stated event expectations and known attributes, with missing context made clear.

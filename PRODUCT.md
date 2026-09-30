@@ -18,6 +18,8 @@ Her confirmed struggles are finding a hijab that matches the outfit and style, a
 
 She also needs help choosing outfits for occasions, judging whether Desi clothing is dressy enough for a particular event, and deciding what to wear to work based on her mood. She should be able to choose from outfits already created.
 
+She wants to start with a garment type, such as a blazer or a dress for work, or choose any number of specific owned pieces and have the rest of the outfit built around them. Shoes and a bag, or one pair of trousers, are valid starting points. She needs an explicit Desi/Western choice and clothing appropriate for warm days, cold weather, and snow.
+
 ## Product Purpose
 
 Build modest outfits from clothes the user already owns. Help people see new combinations, plan what to wear, and save looks for future reference.
@@ -47,6 +49,10 @@ Start with frequently worn pieces, review the digital closet, then create outfit
 - Build outfits with coverage preferences applied from the beginning.
 - Let users save a default everyday style and receive an outfit based on it each day.
 - Offer occasion-based restyling from the daily outfit. Refresh timing and temporary override behavior remain design proposals.
+- Support garment-type requests such as Use a blazer today and A dress for work.
+- Build around multiple exact selected pieces, preserving those pieces during generation and subsequent alternatives.
+- Provide an explicit Desi/Western outfit-style selector, separate from clothing categories. Shared pieces may work in either style.
+- Account for weather and personal warmth preferences, including lighter clothing, removable layers, and cold or snowy conditions. Manual weather input and optional automatic forecasts are proposed delivery stages.
 - Help match owned hijabs to the complete outfit and its intended style.
 - Help users rediscover clothes beyond their favorite pieces.
 - Allow individual pieces in a suggested outfit to be changed.
@@ -83,4 +89,4 @@ The user requested sample clothes to try outfit building without entering clothi
 
 ## Open Decisions
 
-Product name; final minimum iPhone and iOS versions; initial languages and markets; account requirements; cloud permissions; membership model; body information optionality; detailed launch scope; model providers; exact daily refresh and occasion-restyling behavior.
+Product name; final minimum iPhone and iOS versions; initial languages and markets; account requirements; cloud permissions; membership model; body information optionality; detailed launch scope; model providers; exact daily refresh and occasion-restyling behavior; the wife's initial everyday defaults; optional mixed-style behavior and automatic weather source.

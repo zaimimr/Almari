@@ -12,6 +12,67 @@
 - Help assess whether an outfit, including Desi clothing, is suitable and dressy enough for the intended occasion.
 - Let the user choose a mood for work and daily styling.
 - Offer relevant outfits that have already been created.
+- Accept garment-type requests, including a blazer today or a dress for work.
+- Build around any number of exact owned pieces chosen by the user, including shoes and a bag or a single pair of trousers.
+- Provide an explicit choice between Desi and Western styling.
+- Adapt clothing and layers to weather, including warm days and cold or snowy conditions.
+
+## Two styling paths
+
+Surface mode: Operate. Help her reach a complete outfit with little effort, while keeping the live flat lay as the visual focus. Direction A and the existing manual builder remain the visual foundation.
+
+| Path | Starting context | What she can change |
+| --- | --- | --- |
+| Everyday | Saved default style, usual occasion, coverage, and current weather when supplied | Today's mood, garment type, exact pieces, style, and weather |
+| For an occasion | A temporary request for work, dinner, a celebration, or another event | The same controls, plus any event expectations that matter |
+
+Everyday describes the repeatable flow. Her default occasion may be Work. Today's overrides apply to the current request. Only Edit everyday style changes future defaults. Both paths can reuse eligible saved looks or assemble a new combination.
+
+### Choose the starting pieces
+
+| Her request | Interpretation | Behavior |
+| --- | --- | --- |
+| I want to wear a blazer today | Require a blazer garment type | Choose an available owned blazer and complete the outfit |
+| A dress for work | Require a dress and set occasion to Work | Find an appropriate complete combination, including required coverage layers |
+| Use these shoes and this bag | Keep two exact owned item IDs | Complete the outfit around both |
+| Use these trousers | Keep one exact owned item ID | Find the remaining clothing and a suitable hijab |
+| Keep these three pieces and try again | Keep three exact IDs | Change only the remaining pieces |
+
+Specific pieces and garment-type requirements can coexist. A selected blazer can satisfy the blazer request without adding another. Do not assume every item in the broad Layers category is a blazer or every item in Dresses & abayas satisfies a request for a particular dress type.
+
+Proposed controls: a short optional What would you like to wear? input, garment-type shortcuts, and Choose pieces. In the closet and manual builder, Style around these takes the chosen pieces into this flow. It does not turn an ordinary manual edit into generation automatically.
+
+Mark user-chosen pieces Keep in every option, with an accessible tap action to release one. Generated pieces remain changeable unless she explicitly keeps them. Try another retains the same chosen IDs, type requirements, style, occasion, weather, and coverage. Change this piece still replaces only that item.
+
+Allow one or many selected pieces, without imposing a one-item-per-category rule that would prevent valid layering. If the selection is already complete, show it and offer an optional change. If it cannot form a suitable outfit, explain the specific conflict and let her change the request or release a piece. Never silently omit a chosen item or add clothes she does not own.
+
+### Desi and Western
+
+Place Desi and Western in a visible outfit-style selector shared by both paths. Save a preferred choice in the everyday default. An optional Either / Mix choice is a proposal for later discussion, and must not weaken an explicit Desi or Western request.
+
+Keep style separate from occasion and garment category. Desi can be appropriate for work or celebrations; Western can be casual or dressed up. Clothing may have multiple style tags. A shared bag, pair of trousers, or hijab can participate in either style without duplicating the closet item. A Desi request can still use the selected everyday shoes and bag when the complete combination fits the requested style.
+
+The closet should offer the same style filter alongside its existing garment categories. Support multi-part sets while allowing their individual pieces to be used separately. Keep Arab garments and mixed wardrobes representable in the data; detailed extra selector options can follow.
+
+### Weather and comfort
+
+Treat weather as part of the request in both paths. For the first styling increment, propose a simple editable warmth choice, Warm / Mild / Cold, with Rain or Snow when relevant. Optional Mostly indoors / Time outside context helps distinguish a heated workplace from the journey there. Avoid requiring this detail every morning.
+
+Later, an optional weather provider can prefill conditions for a chosen city or a location shared with permission. Keep manual input available. Show the place, date, and forecast freshness. Sun alone must not mean warm: temperature or feels-like temperature, precipitation, wind, and her comfort preference matter. A future occasion needs weather for its own date and place when available.
+
+Use known garment attributes to suggest lighter fabrics, warmer layers, or suitable footwear. Keep uncertainty explicit: fabric warmth, breathability, water resistance, and snow suitability cannot be assumed from appearance. Snowy outdoor use must not be labeled suitable just because the outfit contains a coat. If the closet lacks suitable pieces, explain the gap and preserve her selected items until she chooses a change.
+
+Show removable outdoor layers as part of the same outfit when needed, with a proposed Indoors / Outside preview toggle. Both views retain the same underlying outfit. Required modesty must still hold when an outdoor layer comes off. Do not substitute a heavy coat for an explicitly requested blazer; keep the blazer and add a compatible outer layer if one is available and needed.
+
+Weather changes do not silently replace a chosen outfit. Offer an update when conditions change materially. If a forecast is unavailable or stale, show that state and use manual conditions or clearly identified recent data, without inventing a current forecast.
+
+### First styling increment
+
+Add a Today surface using the existing live flat lay. Keep a compact occasion/style/weather summary near the outfit and put detailed adjustments in a sheet. Everyday starts with a suggestion; For an occasion opens the temporary request. Choose pieces and garment-type shortcuts work in both. Keep mood optional and expose matching saved looks beside new combinations.
+
+Start with structured controls and a small local suggestion engine using reviewed sample attributes. Evaluate blazer, dress, Desi/Western, and multiple-piece requests before adding conversational parsing. A later language provider translates a sentence into the same editable request; it must not own the outfit rules. The sample wardrobe lacks verified weather attributes and dedicated snow gear, so extend its reviewed metadata and test fixtures before demonstrating those results.
+
+This is the next proposed styling slice, alongside the already planned photo-import automation. Detailed weather integration, free text, and ranking refinement follow separately. No new model dependency is required just to validate the flow.
 
 ## Proposed screen
 
@@ -63,7 +124,7 @@ The exact discovery control and optional Wore this action remain proposals. A fu
 
 ## Default style proposal
 
-One editable everyday preset combines the established coverage preferences with taste and fit preferences. Examples include relaxed layers, tailored, colorful, and minimal. Cultural garment preferences can coexist. The editor will be mocked up separately.
+One editable everyday preset combines the established coverage preferences with taste, fit, usual occasion, preferred Desi/Western styling, and warmth preference. Examples include relaxed layers, tailored, colorful, and minimal. These are examples, not the wife's supplied default. Cultural garment preferences can coexist. The editor will be mocked up separately.
 
 Explicitly editing the default changes future daily suggestions. Trying an occasion does not implicitly edit it. Multiple named defaults and weekday schedules are not required for this first flow.
 
@@ -113,7 +174,7 @@ If the closet cannot form a suitable complete outfit, identify the missing infor
 
 Open a native sheet titled What are you dressing for? It offers Work, Everyday, Celebration, and Something else. These labels are examples for discussion.
 
-Keep a piece optionally pins an owned item, such as the current hijab. Create occasion look makes a temporary variant. Coverage preferences stay the same, and this changes this look only.
+Choose pieces optionally keeps any number of owned items, such as the current hijab or a bag and shoes. A garment-type request, style selection, and weather can also be set here. Create occasion look makes a temporary variant. Coverage preferences stay the same, and this changes this look only.
 
 Refine the earlier Create occasion look proposal to Find outfits so existing saved looks can be returned before asking for a new combination. For ambiguous celebrations, ask for the particular event and expected dressiness only as needed. Work can expose the optional mood choices.
 
@@ -131,12 +192,24 @@ A replacement request includes the selected role and fixed IDs for all other pie
 
 The styling request can additionally carry explicit mood, event expectations, an optional user-approved reference look, and a preference for saved or new results. Saved-look retrieval and newly assembled candidates use the same eligibility checks. Keep contextual dressiness feedback separate from global garment preferences and avoid persisting transient mood without a reason.
 
+Represent exact required item IDs and requested garment types separately. Include the active Desi/Western choice, weather with source/time/place when known, warmth preference, and optional indoor/outdoor context. Changing providers must preserve these meanings. Validation checks every required ID and type before a result is shown. Retrieved saved looks must contain all exact required pieces; label adapted looks as new variants.
+
+Add garment subtype and optional multiple style tags, alongside reviewed warmth, material, and weather-suitability attributes as needed. Keep unknown values explicit. These attributes belong to the existing garment-analysis/review flow, with corrections available; users should not have to complete another long form to get dressed.
+
 ## Acceptance checks for later implementation
 
 - First opening shows a default-based daily suggestion without a generation-button press.
 - Reopening preserves it unless the user changed it or it became invalid.
 - Occasion changes preserve coverage and the everyday default.
 - Pinned pieces remain or a conflict is explained.
+- A blazer request includes an actual owned blazer; a dress-for-work request includes a dress and retains Work context.
+- Requests around shoes and a bag preserve both exact IDs; a trousers request preserves those exact trousers.
+- Repeated alternatives retain every required ID and garment type until the user changes them.
+- Desi/Western affects the complete outfit and closet filter, while shared accessories remain usable in either style.
+- A temporary style change leaves the saved everyday choice unchanged.
+- Warm and cold requests use reviewed clothing attributes; sunny cold weather does not trigger a warm-weather outfit.
+- Outdoor layers can be removed without losing required indoor coverage. Unknown snow footwear suitability is not presented as verified.
+- Forecast failure leaves manual weather input usable; a different occasion date does not reuse today's forecast as if current for that event.
 - Cancel and Back to today's look preserve the baseline.
 - A new day does not erase saved looks or unsaved edits.
 - Garment images keep their colors on the light canvas.
@@ -151,6 +224,6 @@ The styling request can additionally carry explicit mood, event expectations, an
 - Saved outfits with missing or unavailable pieces are not presented as ready to wear.
 - Saving a look is not treated as proof of wear, approval of every pairing, or a successful occasion.
 
-These describe future implementation. Current deliverables are static mockups.
+These describe future styling implementation. The current app has a local closet, live manual flat-lay builder, and saved looks. Today and automated styling remain planned.
 
-The existing two mockups predate prominent hijab matching, rediscovery, mood, and saved-result options. The next visual study should connect the occasion/mood request to saved-look choices and then to hijab comparison and individual-piece replacement, within Direction A.
+The existing two mockups predate the garment requests, multiple chosen pieces, Desi/Western selector, and weather controls, as well as prominent hijab matching, rediscovery, mood, and saved-result options. The next visual study should show the everyday view, occasion adjustments, and a result built around selected pieces within Direction A.
