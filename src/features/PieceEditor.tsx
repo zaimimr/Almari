@@ -142,6 +142,8 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
     try {
       await update((current) => removePiece(current, piece.id));
       void discardPhoto(piece.photo).catch(() => undefined);
+      if (piece.original && piece.original !== piece.photo)
+        void discardPhoto(piece.original).catch(() => undefined);
       allowClose();
       router.back();
     } catch {

@@ -22,6 +22,15 @@ export async function keepPhoto(uri: string): Promise<string> {
   return filename;
 }
 
+export async function keepPhotoAs(uri: string, id: string): Promise<string> {
+  photos.create({ intermediates: true, idempotent: true });
+  const source = new File(uri);
+  const filename = `${id}-original${source.extension || ".jpg"}`;
+  const target = new File(photos, filename);
+  if (!target.exists) source.copy(target);
+  return filename;
+}
+
 export function photoUri(photo: string) {
   return new File(photos, photo).uri;
 }

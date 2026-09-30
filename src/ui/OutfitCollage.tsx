@@ -123,6 +123,7 @@ export function OutfitCollage({
           {arrangePieces(pieces).map(
             ({ piece, x, y, width, height, depth }) => {
               const frame =
+                piece.frame ??
                 sampleFrames[piece.photo as keyof typeof sampleFrames];
               const slotWidth = width * size;
               const slotHeight = height * size;

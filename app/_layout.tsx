@@ -23,6 +23,14 @@ export default function RootLayout() {
           />
           <Stack.Screen name="look/[id]" options={{ title: "Your look" }} />
           <Stack.Screen
+            name="capture/index"
+            options={{ title: "Add pieces", presentation: "modal" }}
+          />
+          <Stack.Screen
+            name="capture/[id]"
+            options={{ title: "Check this piece" }}
+          />
+          <Stack.Screen
             name="today/adjust"
             options={{ title: "Adjust today", presentation: "modal" }}
           />

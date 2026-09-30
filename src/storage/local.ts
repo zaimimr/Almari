@@ -27,6 +27,10 @@ export async function keepPhoto(uri: string): Promise<string> {
   });
 }
 
+export async function keepPhotoAs(uri: string, _id: string) {
+  return keepPhoto(uri);
+}
+
 export function photoUri(photo: string) {
   return photo;
 }

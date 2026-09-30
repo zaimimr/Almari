@@ -9,6 +9,7 @@ import {
 import { ClosetRepository } from "../domain/repository";
 import { addSampleWardrobe, sampleCatalogVersion } from "../domain/samples";
 import { closetStorage } from "../storage/local";
+import { useImportRunner } from "./imports";
 import { Button, Message, Screen } from "../ui";
 
 const Context = createContext<ClosetRepository | null>(null);
@@ -19,6 +20,7 @@ export function ClosetProvider({ children }: PropsWithChildren) {
     "loading",
   );
   const [attempt, setAttempt] = useState(0);
+  useImportRunner(repository, status === "ready");
 
   useEffect(() => {
     let active = true;

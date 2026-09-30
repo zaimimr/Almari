@@ -61,6 +61,8 @@ export type Traits = {
   open?: boolean;
 };
 
+export type Frame = { x: number; y: number; width: number; height: number };
+
 export type Piece = {
   id: string;
   name: string;
@@ -71,6 +73,33 @@ export type Piece = {
   kind?: GarmentKind;
   styles?: Style[];
   traits?: Traits;
+  original?: string;
+  frame?: Frame;
+};
+
+export type Prepared = {
+  original: string;
+  cutout: string | null;
+  thumbnail: string | null;
+  frame: Frame | null;
+  instances: number;
+  kinds: { kind: string; score: number }[];
+  color: [number, number, number] | null;
+};
+
+export type ImportJob = {
+  id: string;
+  source: string;
+  createdAt: string;
+  state: "queued" | "preparing" | "ready" | "review" | "failed";
+  attempts: number;
+  prepared?: Prepared;
+  kind?: GarmentKind;
+  name?: string;
+  alternatives?: GarmentKind[];
+  checks?: ("uncertain" | "no-cutout" | "several")[];
+  keepOriginal?: boolean;
+  error?: string;
 };
 
 export type Look = {
@@ -140,6 +169,8 @@ export type Closet = {
   looks: Look[];
   sampleCatalog: number;
   styling: Styling;
+  imports: ImportJob[];
+  photoTipsSeen?: boolean;
 };
 
 export const emptyStyling: Styling = {
@@ -154,6 +185,7 @@ export const emptyCloset: Closet = {
   looks: [],
   sampleCatalog: 0,
   styling: emptyStyling,
+  imports: [],
 };
 
 export const categoryLabel = (id: Category) =>
@@ -250,7 +282,74 @@ function isPiece(value: unknown): value is Piece {
         list.every(isStyle) &&
         new Set(list).size === list.length,
     ) &&
-    optional(value.traits, isTraits)
+    optional(value.traits, isTraits) &&
+    optional(value.original, isString) &&
+    optional(value.frame, isFrame)
+  );
+}
+
+function isFrame(value: unknown): value is Frame {
+  return (
+    isRecord(value) &&
+    ["x", "y", "width", "height"].every(
+      (key) => typeof value[key] === "number" && Number.isFinite(value[key]),
+    )
+  );
+}
+
+function isPrepared(value: unknown): value is Prepared {
+  return (
+    isRecord(value) &&
+    isString(value.original) &&
+    (value.cutout === null || isString(value.cutout)) &&
+    (value.thumbnail === null || isString(value.thumbnail)) &&
+    (value.frame === null || isFrame(value.frame)) &&
+    Number.isInteger(value.instances) &&
+    Array.isArray(value.kinds) &&
+    value.kinds.every(
+      (entry) =>
+        isRecord(entry) &&
+        isString(entry.kind) &&
+        typeof entry.score === "number",
+    ) &&
+    (value.color === null ||
+      (Array.isArray(value.color) &&
+        value.color.length === 3 &&
+        value.color.every((part) => typeof part === "number")))
+  );
+}
+
+const jobStates = ["queued", "preparing", "ready", "review", "failed"];
+const checkReasons = ["uncertain", "no-cutout", "several"];
+
+function isImportJob(value: unknown): value is ImportJob {
+  return (
+    isRecord(value) &&
+    isString(value.id) &&
+    isString(value.source) &&
+    isString(value.createdAt) &&
+    jobStates.includes(value.state as string) &&
+    Number.isInteger(value.attempts) &&
+    optional(value.prepared, isPrepared) &&
+    optional(value.kind, isKind) &&
+    optional(value.name, isString) &&
+    optional(
+      value.alternatives,
+      (list): list is GarmentKind[] =>
+        Array.isArray(list) && list.every(isKind),
+    ) &&
+    optional(
+      value.checks,
+      (list): list is string[] =>
+        Array.isArray(list) &&
+        list.every((item) => checkReasons.includes(item as string)),
+    ) &&
+    optional(value.keepOriginal, isBoolean) &&
+    optional(value.error, isString) &&
+    (!["ready", "review"].includes(value.state as string) ||
+      (value.prepared !== undefined &&
+        value.kind !== undefined &&
+        value.name !== undefined))
   );
 }
 
@@ -400,6 +499,7 @@ export function migrateV1(
     looks: value.looks,
     sampleCatalog: value.sampleWardrobeAdded ? 1 : 0,
     styling: emptyStyling,
+    imports: [],
   };
 }
 
@@ -421,11 +521,20 @@ export function decodeCloset(
     !value.looks.every(isLook) ||
     !hasUniqueIds(value.pieces) ||
     !hasUniqueIds(value.looks) ||
-    !isStyling(value.styling)
+    !isStyling(value.styling) ||
+    !optional(
+      value.imports,
+      (list): list is ImportJob[] =>
+        Array.isArray(list) && list.every(isImportJob),
+    ) ||
+    !optional(value.photoTipsSeen, isBoolean)
   ) {
     throw unreadable();
   }
-  return value as Closet;
+  return {
+    ...(value as Closet),
+    imports: (value.imports as ImportJob[]) ?? [],
+  };
 }
 
 export function savePiece(closet: Closet, piece: Piece): Closet {

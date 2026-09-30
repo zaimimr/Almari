@@ -40,6 +40,7 @@ import {
   OutfitCollage,
   PiecePhoto,
 } from "../../../src/ui";
+import { addPiecesRoute } from "../../../src/state/imports";
 import { theme } from "../../../src/ui/theme";
 
 const shortcuts: GarmentKind[] = ["blazer", "dress", "kurta", "trousers"];
@@ -157,7 +158,7 @@ function TodayContent() {
       case "choose-pieces":
         return router.push("/today/pieces");
       case "add-pieces":
-        return router.push("/piece/new");
+        return router.push(addPiecesRoute);
       case "use-samples":
         return run((current) =>
           setWardrobe(current, "sample", clockFor(new Date())),

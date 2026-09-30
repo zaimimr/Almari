@@ -12,6 +12,7 @@ import {
   Message,
   PieceTile,
 } from "../../../src/ui";
+import { addPiecesRoute } from "../../../src/state/imports";
 import { theme } from "../../../src/ui/theme";
 
 export default function ClosetScreen() {
@@ -33,8 +34,8 @@ export default function ClosetScreen() {
         options={{
           headerRight: () => (
             <HeaderAction
-              label="Add piece"
-              onPress={() => router.push("/piece/new")}
+              label="Add pieces"
+              onPress={() => router.push(addPiecesRoute)}
             />
           ),
         }}
@@ -96,7 +97,7 @@ export default function ClosetScreen() {
               </View>
               <Button
                 label="Add your first piece"
-                onPress={() => router.push("/piece/new")}
+                onPress={() => router.push(addPiecesRoute)}
               />
               <AppText variant="caption" muted style={styles.note}>
                 Your closet is saved on this device.

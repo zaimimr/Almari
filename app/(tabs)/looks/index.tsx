@@ -9,6 +9,7 @@ import {
   Message,
   OutfitCollage,
 } from "../../../src/ui";
+import { addPiecesRoute } from "../../../src/state/imports";
 import { theme } from "../../../src/ui/theme";
 
 export default function LooksScreen() {
@@ -53,7 +54,7 @@ export default function LooksScreen() {
                   }
                   onPress={() =>
                     router.push(
-                      closet.pieces.length ? "/look/build" : "/piece/new",
+                      closet.pieces.length ? "/look/build" : addPiecesRoute,
                     )
                   }
                 />

@@ -42,4 +42,32 @@ Known limitations:
 - VoiceOver reading order and Reduce Motion have not been audited.
 - The wife-led usability check in the D1 stop gate has not happened yet.
 
-Next: D2, easy clothing capture. It needs her phone model and a decision about local or optional cloud processing before any personal photo is processed.
+## D2: Easy clothing capture (first increment, 1 October 2026)
+
+Decisions from the owner: her phone is believed to be an iPhone 16 Pro. An optional online service is acceptable if it is quick, and a cheap classifier is preferred over a large language model. The spike showed that everything can run on the phone, so no online service or account is used yet.
+
+What works:
+
+- Add pieces (Closet, Today, and Looks) opens capture on iPhone. The browser preview keeps the manual editor.
+- Three first-use photo tips with Skip, replayable from Photo tips.
+- Take a photo, or choose up to 20 photos at once. Each photo is copied into the app, recorded as an import job, and prepared one at a time off the main thread.
+- A local Swift module (`modules/closet-vision`) handles orientation, Apple Vision background removal, a transparent square cutout with visible bounds, a thumbnail, a Core ML garment classifier (SigLIP 2 base, Apache 2.0, 8-bit, 88 MB), and the dominant colour.
+- The name comes from colour plus garment type, for example "Sage kurta". The category comes from the type. Kurta, kameez, shalwar, and dupatta are marked Desi. Hijabs, shoes, boots, and bags are marked for both styles.
+- Each job shows Waiting, Preparing, Ready, Quick check, or Could not finish. Quick check covers a close call between two types ("Is this a hijab or a dupatta?"), no cutout, or several subjects.
+- Check this piece shows the prepared image beside the original, with Use prepared or Keep original, type choices, name, and Remove.
+- Add ready pieces saves only the ready jobs and leaves the rest. Saving twice, retrying, and results that arrive after a photo was removed cannot create duplicates or bring the photo back. Unfinished jobs resume after a restart.
+- Originals are kept, and removing a piece also removes its original.
+
+Evidence: the classifier comparison and license review are in [the model README](../../modules/closet-vision/model/README.md). On the Mac, Vision cutouts took about 30 ms per photo after a 3.5 second first load and kept fringe and hems. `npm run check` passes with 32 domain tests, including P01 and P07. Screens were checked on the simulator: photo tips, the photo picker with 8 photos, batch preparation, quick checks, the full type list, partial save, the closet with imported pieces, and Today styling from my clothes. Screenshots are in [planning/build/capture](../build/capture).
+
+Known limitations:
+
+- Vision background removal does not run in the iOS simulator, so every simulator import shows "no cutout". The same code produced clean cutouts on the Mac. It still has to be confirmed on her iPhone, along with timing, memory, and heat.
+- The Core ML classifier runs on CPU in the simulator (Neural Engine is not available there).
+- Recognition was tested on 48 photos, mostly not her own clothes. Accuracy on her wardrobe is unknown until she tries it.
+- The tips are text only. The paired example photos from the photography specification do not exist yet.
+- Blur, cropped hems, lighting, duplicate detection, and linking a Desi set (P04, P05) are not implemented.
+- Retake is available as Remove followed by another photo, not as a single action.
+- The app grows by about 90 MB because of the model.
+
+Next: install the development build on her iPhone and try 10 to 20 of her real pieces, including hijabs, a white garment, embroidery, and a long dress. Then finish D2 quality hints and sets, or move on to D3.
