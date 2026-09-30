@@ -29,25 +29,29 @@ export default function BuildLook() {
   const wide = width >= 900;
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const keyboardVisible = keyboardHeight > 0;
-  const { id: sourceId } = useLocalSearchParams<{ id?: string }>();
+  const { id: sourceId, pieces: startingPieces } = useLocalSearchParams<{
+    id?: string;
+    pieces?: string;
+  }>();
   const { closet, update } = useCloset();
   const [source] = useState(() =>
     closet.looks.find((look) => look.id === sourceId),
   );
   const [id] = useState(() => source?.id ?? randomUUID());
   const [name, setName] = useState(source?.name ?? "");
-  const [selected, setSelected] = useState(
-    () =>
-      source?.pieceIds.filter((pieceId) =>
-        closet.pieces.some((piece) => piece.id === pieceId),
-      ) ?? [],
+  const [initialSelection] = useState(() =>
+    (source?.pieceIds ?? startingPieces?.split(",") ?? []).filter((pieceId) =>
+      closet.pieces.some((piece) => piece.id === pieceId),
+    ),
   );
+  const [selected, setSelected] = useState(initialSelection);
   const [category, setCategory] = useState<Category | "all">("all");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const dirty =
     name !== (source?.name ?? "") ||
-    JSON.stringify(selected) !== JSON.stringify(source?.pieceIds ?? []);
+    JSON.stringify(selected) !==
+      JSON.stringify(source?.pieceIds ?? initialSelection);
   const allowClose = useDiscardChanges(dirty, busy);
   const pieces = selected.flatMap((pieceId) => {
     const piece = closet.pieces.find((item) => item.id === pieceId);
@@ -100,7 +104,11 @@ export default function BuildLook() {
     <View style={[styles.screen, { paddingBottom: keyboardHeight }]}>
       <Stack.Screen
         options={{
-          title: source ? "Edit your look" : "Build a look",
+          title: source
+            ? "Edit your look"
+            : initialSelection.length
+              ? "Save this look"
+              : "Build a look",
           headerLeft: () => (
             <HeaderAction label="Cancel" onPress={() => router.back()} />
           ),

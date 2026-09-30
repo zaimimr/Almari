@@ -4,11 +4,13 @@ import { randomUUID } from "expo-crypto";
 import type { ClosetStorage } from "../domain/repository";
 import { isSamplePhoto } from "../domain/samples";
 
-const key = "closet.v1";
+const key = "closet.v2";
+const previousKey = "closet.v1";
 const photos = new Directory(Paths.document, "closet-photos");
 
 export const closetStorage: ClosetStorage = {
-  read: () => Storage.getItem(key),
+  read: async () =>
+    (await Storage.getItem(key)) ?? (await Storage.getItem(previousKey)),
   write: (value) => Storage.setItem(key, value),
 };
 

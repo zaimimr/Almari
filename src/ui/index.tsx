@@ -21,7 +21,6 @@ import {
   categories,
   categoryLabel,
 } from "../domain/closet";
-import { isSamplePhoto } from "../domain/samples";
 import { photoSource } from "./photos";
 import { theme } from "./theme";
 
@@ -220,6 +219,74 @@ export function Filters({
   );
 }
 
+export function Chip({
+  label,
+  selected,
+  disabled,
+  onPress,
+  accessibilityLabel,
+}: {
+  label: string;
+  selected?: boolean;
+  disabled?: boolean;
+  onPress: () => void;
+  accessibilityLabel?: string;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? label}
+      accessibilityState={{ selected: Boolean(selected), disabled }}
+      disabled={disabled}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.chip,
+        selected && styles.chipSelected,
+        disabled && styles.disabled,
+        pressed && styles.pressed,
+      ]}
+    >
+      <AppText
+        variant="caption"
+        style={[styles.chipLabel, selected && styles.chipLabelSelected]}
+      >
+        {label}
+      </AppText>
+    </Pressable>
+  );
+}
+
+export function ChoiceGroup<T extends string>({
+  label,
+  options,
+  value,
+  onChange,
+  disabled,
+}: {
+  label: string;
+  options: readonly { id: T; label: string }[];
+  value: T | null;
+  onChange: (value: T) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <View style={styles.choiceGroup} accessibilityRole="radiogroup">
+      <AppText style={styles.label}>{label}</AppText>
+      <View style={styles.choices}>
+        {options.map((option) => (
+          <Chip
+            key={option.id}
+            label={option.label}
+            selected={option.id === value}
+            disabled={disabled}
+            onPress={() => onChange(option.id)}
+          />
+        ))}
+      </View>
+    </View>
+  );
+}
+
 export function PiecePhoto({
   piece,
   style,
@@ -245,17 +312,19 @@ export function PieceTile({
   onPress,
   selected,
   compact = false,
+  selectedLabel = "Selected",
 }: {
   piece: Piece;
   onPress: () => void;
   selected?: boolean;
   compact?: boolean;
+  selectedLabel?: string;
 }) {
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`${piece.name}, ${categoryLabel(piece.category)}${selected ? ", selected" : ""}`}
+      accessibilityLabel={`${piece.name}, ${categoryLabel(piece.category)}${selected ? `, ${selectedLabel.toLowerCase()}` : ""}`}
       accessibilityState={{ selected }}
       style={({ pressed }) => [styles.tile, pressed && styles.pressed]}
     >
@@ -270,7 +339,7 @@ export function PieceTile({
         {selected ? (
           <View style={styles.selectedBadge}>
             <AppText variant="caption" style={styles.selectedLabel}>
-              Selected
+              {selectedLabel}
             </AppText>
           </View>
         ) : null}
@@ -284,7 +353,7 @@ export function PieceTile({
       {!compact ? (
         <AppText variant="caption" muted>
           {categoryLabel(piece.category)}
-          {isSamplePhoto(piece.photo) ? " · Sample" : ""}
+          {piece.source === "sample" ? " · Sample" : ""}
         </AppText>
       ) : null}
     </Pressable>
@@ -364,6 +433,8 @@ export const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
   },
   chipSelected: { backgroundColor: theme.colors.accent },
+  choiceGroup: { gap: 12 },
+  choices: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   chipLabel: { color: theme.colors.ink, fontWeight: "500" },
   chipLabelSelected: { color: theme.colors.accentText },
   photo: {

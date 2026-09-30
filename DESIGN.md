@@ -34,7 +34,7 @@ Raster mockups illustrate the design rather than defining exact system chrome, t
 
 The user requested a default style that is styled every day and an option to redesign for an occasion. Proposed behavior and revised mockups live in [the Today brief](planning/TODAY.md).
 
-The original A identity is approved. Revised styling flows remain proposals. The user has requested a simple working foundation, with the richer features kept in the plans. The first implementation exposes Closet and Looks; Today and Stylist can follow as their functionality is built.
+The original A identity is approved. Revised styling flows remain proposals. The user has requested a simple working foundation, with the richer features kept in the plans. The app now opens on Today, followed by Closet and Looks. Stylist follows when conversation is useful.
 
 ## First implementation
 

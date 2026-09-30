@@ -22,6 +22,22 @@ export default function RootLayout() {
             options={{ title: "Build a look", presentation: "modal" }}
           />
           <Stack.Screen name="look/[id]" options={{ title: "Your look" }} />
+          <Stack.Screen
+            name="today/adjust"
+            options={{ title: "Adjust today", presentation: "modal" }}
+          />
+          <Stack.Screen
+            name="today/everyday"
+            options={{ title: "Everyday style", presentation: "modal" }}
+          />
+          <Stack.Screen
+            name="today/pieces"
+            options={{ title: "Choose pieces", presentation: "modal" }}
+          />
+          <Stack.Screen
+            name="today/replace"
+            options={{ title: "Change a piece", presentation: "modal" }}
+          />
         </Stack>
       </ClosetProvider>
     </SafeAreaProvider>

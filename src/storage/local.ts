@@ -1,10 +1,14 @@
 import type { ClosetStorage } from "../domain/repository";
 
-const key = "closet.v1";
+const key = "closet.v2";
+const previousKey = "closet.v1";
 
 export const closetStorage: ClosetStorage = {
   async read() {
-    return window.localStorage.getItem(key);
+    return (
+      window.localStorage.getItem(key) ??
+      window.localStorage.getItem(previousKey)
+    );
   },
   async write(value) {
     window.localStorage.setItem(key, value);

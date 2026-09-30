@@ -10,7 +10,12 @@ import {
   type Piece,
 } from "./closet";
 import { ClosetRepository, type ClosetStorage } from "./repository";
-import { addSampleWardrobe, samplePieces } from "./samples";
+import {
+  addSampleWardrobe,
+  sampleCatalogVersion,
+  samplePieces,
+  sampleTraits,
+} from "./samples";
 
 const hijab: Piece = {
   id: "hijab",
@@ -18,6 +23,7 @@ const hijab: Piece = {
   category: "hijab",
   photo: "hijab.jpg",
   createdAt: "2026-09-30T12:00:00Z",
+  source: "owned",
 };
 const tunic: Piece = {
   id: "tunic",
@@ -25,6 +31,7 @@ const tunic: Piece = {
   category: "tunic",
   photo: "tunic.jpg",
   createdAt: hijab.createdAt,
+  source: "owned",
 };
 const trousers: Piece = {
   id: "trousers",
@@ -32,6 +39,7 @@ const trousers: Piece = {
   category: "bottom",
   photo: "trousers.jpg",
   createdAt: hijab.createdAt,
+  source: "owned",
 };
 
 function memoryStorage() {
@@ -213,7 +221,7 @@ test("sample setup preserves owned clothing, edits, saved looks, and removals af
   await reopened.load();
   const saved = reopened.getSnapshot();
   assert.equal(addSampleWardrobe(saved), saved);
-  assert.equal(saved.sampleWardrobeAdded, true);
+  assert.equal(saved.sampleCatalog, sampleCatalogVersion);
   assert.deepEqual(
     saved.pieces.find((piece) => piece.id === hijab.id),
     hijab,
@@ -229,4 +237,102 @@ test("sample setup preserves owned clothing, edits, saved looks, and removals af
   assert.equal(saved.looks.length, 2);
   assert.deepEqual(saved.looks[0]?.pieceIds, [hijab.id, editedSample.id]);
   assert.equal(saved.looks[1]?.name, "Already saved");
+});
+
+function v1Snapshot() {
+  const oldSample = (id: string) => {
+    const {
+      source: _source,
+      kind: _kind,
+      styles: _styles,
+      traits: _traits,
+      ...rest
+    } = samplePieces.find((piece) => piece.id === id)!;
+    return rest;
+  };
+  const { source: _source, ...ownedHijab } = hijab;
+  return {
+    version: 1,
+    sampleWardrobeAdded: true,
+    pieces: [
+      ownedHijab,
+      { ...oldSample("sample-navy-blazer"), name: "My navy blazer" },
+      { ...oldSample("sample-ivory-tunic"), category: "top" },
+      oldSample("sample-chocolate-loafers"),
+    ],
+    looks: [
+      {
+        id: "old-look",
+        name: "Before styling",
+        pieceIds: [hijab.id, "sample-mauve-hijab"],
+        createdAt: hijab.createdAt,
+      },
+    ],
+  };
+}
+
+test("an old closet migrates without losing edits, removals, or saved looks", async () => {
+  const storage = memoryStorage();
+  const raw = JSON.stringify(v1Snapshot());
+  await storage.write(raw);
+  const repository = new ClosetRepository(storage);
+  await repository.load();
+  const migrated = repository.getSnapshot();
+  assert.equal(migrated.version, 2);
+  assert.deepEqual(
+    migrated.pieces.map((piece) => [piece.id, piece.source]),
+    [
+      [hijab.id, "owned"],
+      ["sample-navy-blazer", "sample"],
+      ["sample-ivory-tunic", "sample"],
+      ["sample-chocolate-loafers", "sample"],
+    ],
+  );
+  const blazer = migrated.pieces[1]!;
+  assert.equal(blazer.name, "My navy blazer");
+  assert.equal(blazer.kind, "blazer");
+  assert.equal(migrated.pieces[0]!.kind, undefined);
+  assert.equal(migrated.pieces[0]!.traits, undefined);
+  assert.equal(migrated.pieces[2]!.kind, undefined);
+  assert.deepEqual(migrated.looks, v1Snapshot().looks);
+  assert.equal(migrated.sampleCatalog, 1);
+
+  await repository.update(addSampleWardrobe);
+  const ids = repository.getSnapshot().pieces.map((piece) => piece.id);
+  assert.equal(ids.includes("sample-olive-maxi-dress"), true);
+  assert.equal(ids.includes("sample-mauve-hijab"), false);
+  assert.equal(ids.length, 5);
+
+  await repository.update((closet) =>
+    removePiece(closet, "sample-olive-maxi-dress"),
+  );
+  const reopened = new ClosetRepository(storage);
+  await reopened.load();
+  await reopened.update(addSampleWardrobe);
+  assert.equal(
+    reopened
+      .getSnapshot()
+      .pieces.some((piece) => piece.id === "sample-olive-maxi-dress"),
+    false,
+  );
+});
+
+test("a closet that never had samples receives the whole catalog once", () => {
+  const seeded = addSampleWardrobe(emptyCloset);
+  assert.equal(seeded.pieces.length, samplePieces.length);
+  assert.equal(addSampleWardrobe(seeded), seeded);
+  assert.equal(
+    seeded.pieces.every((piece) => piece.source === "sample"),
+    true,
+  );
+  assert.equal(Object.keys(sampleTraits).length, samplePieces.length);
+});
+
+test("a malformed old closet stays unreadable instead of becoming empty", () => {
+  assert.throws(() =>
+    decodeCloset(
+      JSON.stringify({ ...v1Snapshot(), pieces: [{ id: "broken" }] }),
+      sampleTraits,
+    ),
+  );
 });

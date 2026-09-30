@@ -18,6 +18,15 @@ export default function ClosetTabs() {
       }}
     >
       <Tabs.Screen
+        name="today"
+        options={{
+          title: "Today",
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="sun" color={color} size={size} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="closet"
         options={{
           title: "Closet",

@@ -3,7 +3,6 @@ import { FlatList, StyleSheet, View } from "react-native";
 import { Stack, router } from "expo-router";
 import { useCloset } from "../../../src/state/closet";
 import { type Category } from "../../../src/domain/closet";
-import { isSamplePhoto } from "../../../src/domain/samples";
 import {
   AppText,
   Button,
@@ -19,8 +18,8 @@ export default function ClosetScreen() {
   const { closet } = useCloset();
   const [category, setCategory] = useState<Category | "all">("all");
   const [search, setSearch] = useState("");
-  const sampleCount = closet.pieces.filter((piece) =>
-    isSamplePhoto(piece.photo),
+  const sampleCount = closet.pieces.filter(
+    (piece) => piece.source === "sample",
   ).length;
   const filtered = closet.pieces.filter(
     (piece) =>

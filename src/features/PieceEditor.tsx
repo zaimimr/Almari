@@ -7,17 +7,21 @@ import { Stack, router } from "expo-router";
 import {
   type Piece,
   type Category,
+  type GarmentKind,
+  type Style,
   categories,
+  garmentKinds,
+  styleOptions,
   savePiece,
   removePiece,
 } from "../domain/closet";
 import { useCloset } from "../state/closet";
 import { keepPhoto, discardPhoto } from "../storage/local";
-import { isSamplePhoto } from "../domain/samples";
 import { photoSource } from "../ui/photos";
 import {
   AppText,
   Button,
+  Chip,
   ErrorMessage,
   Field,
   FormScreen,
@@ -34,6 +38,8 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
   const [category, setCategory] = useState<Category | null>(
     piece?.category ?? null,
   );
+  const [kind, setKind] = useState<GarmentKind | undefined>(piece?.kind);
+  const [worn, setWorn] = useState<Style[] | undefined>(piece?.styles);
   const [image, setImage] = useState<string | null>(piece?.photo ?? null);
   const [newImage, setNewImage] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -41,7 +47,12 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
   const dirty =
     name !== (piece?.name ?? "") ||
     category !== (piece?.category ?? null) ||
+    kind !== piece?.kind ||
+    JSON.stringify(worn) !== JSON.stringify(piece?.styles) ||
     newImage;
+  const kindOptions = garmentKinds.filter(
+    (option) => option.category === category,
+  );
   const allowClose = useDiscardChanges(dirty, busy);
 
   async function pick(source: "camera" | "library") {
@@ -92,6 +103,12 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
           category,
           photo,
           createdAt: piece?.createdAt ?? new Date().toISOString(),
+          source: piece?.source ?? "owned",
+          ...(kind ? { kind } : {}),
+          ...(worn?.length ? { styles: worn } : {}),
+          ...(piece?.traits && category === piece.category
+            ? { traits: piece.traits }
+            : {}),
         }),
       );
       if (piece && newImage)
@@ -210,7 +227,10 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
                 disabled: busy,
               }}
               disabled={busy}
-              onPress={() => setCategory(option.id)}
+              onPress={() => {
+                if (option.id !== category) setKind(undefined);
+                setCategory(option.id);
+              }}
               style={[
                 styles.category,
                 category === option.id && styles.selectedCategory,
@@ -226,6 +246,50 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
           ))}
         </View>
       </View>
+      {kindOptions.length > 1 ? (
+        <View style={styles.categorySection}>
+          <AppText style={styles.label}>Type (optional)</AppText>
+          <View style={styles.categories}>
+            {kindOptions.map((option) => (
+              <Chip
+                key={option.id}
+                label={option.label}
+                selected={kind === option.id}
+                disabled={busy}
+                onPress={() =>
+                  setKind(kind === option.id ? undefined : option.id)
+                }
+              />
+            ))}
+          </View>
+        </View>
+      ) : null}
+      <View style={styles.categorySection}>
+        <AppText style={styles.label}>Worn in (optional)</AppText>
+        <View style={styles.categories}>
+          {styleOptions.map((option) => {
+            const selected = Boolean(worn?.includes(option.id));
+            return (
+              <Chip
+                key={option.id}
+                label={`${option.label} outfits`}
+                selected={selected}
+                disabled={busy}
+                onPress={() =>
+                  setWorn((current = []) =>
+                    selected
+                      ? current.filter((item) => item !== option.id)
+                      : [...current, option.id],
+                  )
+                }
+              />
+            );
+          })}
+        </View>
+        <AppText variant="caption" muted>
+          Choose both for pieces you wear either way, like shoes or a hijab.
+        </AppText>
+      </View>
       <ErrorMessage message={error} />
       <Button
         label={piece ? "Save changes" : "Add to closet"}
@@ -238,7 +302,7 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
         }
       />
       <AppText variant="caption" muted>
-        {piece && !newImage && isSamplePhoto(piece.photo)
+        {piece?.source === "sample"
           ? "A sample piece for trying outfit combinations."
           : "Saved on this device. Photos keep their original backgrounds."}
       </AppText>

@@ -95,10 +95,12 @@ export function OutfitCollage({
   pieces,
   fill = false,
   testID,
+  keptIds = [],
 }: {
   pieces: Piece[];
   fill?: boolean;
   testID?: string;
+  keptIds?: string[];
 }) {
   const [size, setSize] = useState(0);
   return (
@@ -147,7 +149,11 @@ export function OutfitCollage({
                   <Image
                     source={photoSource(piece.photo)}
                     accessible
-                    accessibilityLabel={piece.name}
+                    accessibilityLabel={
+                      keptIds.includes(piece.id)
+                        ? `${piece.name}, kept`
+                        : piece.name
+                    }
                     contentFit={frame ? "fill" : "contain"}
                     style={
                       frame
@@ -161,6 +167,17 @@ export function OutfitCollage({
                         : StyleSheet.absoluteFill
                     }
                   />
+                  {keptIds.includes(piece.id) ? (
+                    <View style={styles.kept}>
+                      <Text
+                        style={styles.keptLabel}
+                        numberOfLines={1}
+                        maxFontSizeMultiplier={1.3}
+                      >
+                        Kept
+                      </Text>
+                    </View>
+                  ) : null}
                 </View>
               );
             },
@@ -182,6 +199,22 @@ const styles = StyleSheet.create({
   square: { aspectRatio: 1 },
   fill: { flex: 1, minHeight: 0 },
   piece: { position: "absolute", overflow: "hidden" },
+  kept: {
+    position: "absolute",
+    top: 2,
+    left: 2,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 8,
+    backgroundColor: theme.colors.accent,
+  },
+  keptLabel: {
+    ...theme.typography.caption,
+    fontSize: 11,
+    lineHeight: 15,
+    color: theme.colors.accentText,
+    fontWeight: "600",
+  },
   empty: { padding: 24, maxWidth: 340, gap: 16 },
   emptyTitle: {
     ...theme.typography.heading,

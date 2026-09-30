@@ -1,105 +1,179 @@
-import type { Closet, Piece } from "./closet";
+import type { Closet, Piece, SampleTraits } from "./closet";
 
-export const samplePieces: Piece[] = [
+const createdAt = "2026-09-30T18:00:00.000Z";
+const both = ["western", "desi"] as Piece["styles"];
+
+type CatalogPiece = Piece & { catalog: number };
+
+const catalog: CatalogPiece[] = [
   {
     id: "sample-mauve-hijab",
     name: "Mauve chiffon hijab",
     category: "hijab",
-    photo: "sample:mauve-hijab",
-    createdAt: "2026-09-30T18:00:00.000Z",
+    kind: "hijab",
+    styles: both,
+    traits: {
+      tone: "mid",
+      occasions: ["work", "everyday", "dinner", "celebration"],
+    },
   },
   {
     id: "sample-ivory-hijab",
     name: "Ivory modal hijab",
     category: "hijab",
-    photo: "sample:ivory-hijab",
-    createdAt: "2026-09-30T18:00:00.000Z",
+    kind: "hijab",
+    styles: both,
+    traits: {
+      tone: "light",
+      occasions: ["work", "everyday", "dinner", "celebration"],
+    },
   },
   {
     id: "sample-chocolate-hijab",
     name: "Chocolate jersey hijab",
     category: "hijab",
-    photo: "sample:chocolate-hijab",
-    createdAt: "2026-09-30T18:00:00.000Z",
+    kind: "hijab",
+    styles: both,
+    traits: { tone: "dark", occasions: ["work", "everyday"] },
   },
   {
     id: "sample-ivory-tunic",
     name: "Ivory longline tunic",
     category: "tunic",
-    photo: "sample:ivory-tunic",
-    createdAt: "2026-09-30T18:00:00.000Z",
+    kind: "tunic",
+    styles: ["western"],
+    traits: { tone: "light", occasions: ["work", "everyday"] },
   },
   {
     id: "sample-sage-kurta",
     name: "Sage embroidered kurta",
     category: "tunic",
-    photo: "sample:sage-kurta",
-    createdAt: "2026-09-30T18:00:00.000Z",
+    kind: "kurta",
+    styles: ["desi"],
+    traits: {
+      tone: "mid",
+      occasions: ["work", "everyday", "dinner", "celebration"],
+    },
   },
   {
     id: "sample-navy-blazer",
     name: "Navy longline blazer",
     category: "layer",
-    photo: "sample:navy-blazer",
-    createdAt: "2026-09-30T18:00:00.000Z",
+    kind: "blazer",
+    styles: ["western"],
+    traits: { tone: "dark", occasions: ["work", "dinner"], warmth: "medium" },
   },
   {
     id: "sample-taupe-abaya",
     name: "Taupe flowing abaya",
     category: "dress",
-    photo: "sample:taupe-abaya",
-    createdAt: "2026-09-30T18:00:00.000Z",
+    kind: "abaya",
+    styles: ["western"],
+    traits: {
+      tone: "mid",
+      occasions: ["work", "everyday", "dinner"],
+      warmth: "light",
+      open: true,
+    },
   },
   {
     id: "sample-ivory-trousers",
     name: "Ivory wide-leg trousers",
     category: "bottom",
-    photo: "sample:ivory-trousers",
-    createdAt: "2026-09-30T18:00:00.000Z",
+    kind: "trousers",
+    styles: both,
+    traits: { tone: "light", occasions: ["work", "everyday", "dinner"] },
   },
   {
     id: "sample-charcoal-trousers",
     name: "Charcoal wide-leg trousers",
     category: "bottom",
-    photo: "sample:charcoal-trousers",
-    createdAt: "2026-09-30T18:00:00.000Z",
+    kind: "trousers",
+    styles: both,
+    traits: { tone: "dark", occasions: ["work", "everyday"] },
   },
   {
     id: "sample-ivory-salwar",
     name: "Ivory cotton shalwar",
     category: "bottom",
-    photo: "sample:ivory-salwar",
-    createdAt: "2026-09-30T18:00:00.000Z",
+    kind: "shalwar",
+    styles: ["desi"],
+    traits: {
+      tone: "light",
+      occasions: ["everyday", "dinner", "celebration"],
+    },
   },
   {
     id: "sample-chocolate-loafers",
     name: "Chocolate leather loafers",
     category: "shoes",
-    photo: "sample:chocolate-loafers",
-    createdAt: "2026-09-30T18:00:00.000Z",
+    kind: "shoes",
+    styles: both,
+    traits: { tone: "dark", occasions: ["work", "everyday", "dinner"] },
   },
   {
     id: "sample-taupe-bag",
     name: "Taupe everyday bag",
     category: "bag",
-    photo: "sample:taupe-bag",
-    createdAt: "2026-09-30T18:00:00.000Z",
+    kind: "bag",
+    styles: both,
+    traits: { tone: "mid", occasions: ["work", "everyday", "dinner"] },
   },
-];
+].map((piece) => ({
+  ...piece,
+  source: "sample" as const,
+  photo: `sample:${piece.id.replace("sample-", "")}`,
+  createdAt,
+  catalog: 1,
+})) as CatalogPiece[];
+
+catalog.push({
+  id: "sample-olive-maxi-dress",
+  name: "Olive maxi dress",
+  category: "dress",
+  kind: "dress",
+  styles: ["western"],
+  traits: { tone: "mid", occasions: ["work", "everyday", "dinner"] },
+  source: "sample",
+  photo: "sample:olive-maxi-dress",
+  createdAt: "2026-10-01T09:00:00.000Z",
+  catalog: 2,
+});
+
+export const sampleCatalogVersion = 2;
+
+export const samplePieces: Piece[] = catalog.map(
+  ({ catalog: _catalog, ...piece }) => piece,
+);
+
+export const sampleTraits: Record<string, SampleTraits> = Object.fromEntries(
+  samplePieces.map((piece) => [
+    piece.id,
+    {
+      category: piece.category,
+      kind: piece.kind,
+      styles: piece.styles,
+      traits: piece.traits,
+    },
+  ]),
+);
 
 export function isSamplePhoto(photo: string) {
   return photo.startsWith("sample:");
 }
 
 export function addSampleWardrobe(closet: Closet): Closet {
-  if (closet.sampleWardrobeAdded) return closet;
+  if (closet.sampleCatalog >= sampleCatalogVersion) return closet;
   const existingIds = new Set(closet.pieces.map((piece) => piece.id));
+  const additions = catalog
+    .filter(
+      (piece) =>
+        piece.catalog > closet.sampleCatalog && !existingIds.has(piece.id),
+    )
+    .map(({ catalog: _catalog, ...piece }) => piece);
   return {
     ...closet,
-    sampleWardrobeAdded: true,
-    pieces: [
-      ...closet.pieces,
-      ...samplePieces.filter((piece) => !existingIds.has(piece.id)),
-    ],
+    sampleCatalog: sampleCatalogVersion,
+    pieces: [...closet.pieces, ...additions],
   };
 }

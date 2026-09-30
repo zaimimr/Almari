@@ -7,6 +7,12 @@ export default function ClosetTabs() {
       tintColor={theme.colors.accent}
       backgroundColor={theme.colors.background}
     >
+      <NativeTabs.Trigger name="today">
+        <NativeTabs.Trigger.Label>Today</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon
+          sf={{ default: "sparkles", selected: "sparkles" }}
+        />
+      </NativeTabs.Trigger>
       <NativeTabs.Trigger name="closet">
         <NativeTabs.Trigger.Label>Closet</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf="hanger" />

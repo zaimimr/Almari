@@ -1,4 +1,5 @@
 import { type Closet, decodeCloset, emptyCloset } from "./closet";
+import { sampleTraits } from "./samples";
 
 export interface ClosetStorage {
   read(): Promise<string | null>;
@@ -23,7 +24,7 @@ export class ClosetRepository {
   };
 
   async load() {
-    this.snapshot = decodeCloset(await this.storage.read());
+    this.snapshot = decodeCloset(await this.storage.read(), sampleTraits);
     this.initialized = true;
     this.listeners.forEach((listener) => listener());
   }

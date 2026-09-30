@@ -96,6 +96,8 @@ Do not reopen settled visual decisions or ask her to design technical infrastruc
 
 The application baseline is commit `b5486e3`, followed by planning updates in `c1708e5`. Inspect the actual working tree before beginning; newer commits may exist when this is handed over.
 
+Progress since this handoff is tracked in [Implementation status](planning/implementation/STATUS.md). D0 and D1 are built; the lists below describe the starting point before them.
+
 ### Working now
 
 - Closet and Looks tabs.

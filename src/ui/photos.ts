@@ -14,6 +14,7 @@ const samplePhotos: Record<string, number> = {
   "sample:ivory-salwar": require("../../assets/wardrobe/ivory-salwar.png"),
   "sample:chocolate-loafers": require("../../assets/wardrobe/chocolate-loafers.png"),
   "sample:taupe-bag": require("../../assets/wardrobe/taupe-bag.png"),
+  "sample:olive-maxi-dress": require("../../assets/wardrobe/olive-maxi-dress.png"),
 };
 
 export function photoSource(photo: string): ImageSource | number {
