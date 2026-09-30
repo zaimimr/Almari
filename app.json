@@ -49,6 +49,13 @@
         }
       ]
     ],
-    "icon": "./assets/brand/icon.png"
+    "icon": "./assets/brand/icon.png",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "9de17712-f6aa-44ba-9cb1-212d845635d2"
+      }
+    },
+    "owner": "zaim"
   }
 }
