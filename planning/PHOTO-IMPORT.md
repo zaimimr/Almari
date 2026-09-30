@@ -1,5 +1,7 @@
 # Photo in, closet item out
 
+See the [photography and import specification](implementation/PHOTOGRAPHY.md) for app-ready tutorials, garment-specific guidance, processing behavior, and acceptance checks. Follow the [implementation handoff](../BUILD-PLAN.md) for delivery order.
+
 ## Confirmed need
 
 The user finds entering a name and category for every piece annoying. Import should handle those tasks automatically and produce a clean closet image. This is the next capture task. The current app has a prepared sample wardrobe so outfit building can be tried immediately; automatic processing of newly uploaded photos is not implemented yet.

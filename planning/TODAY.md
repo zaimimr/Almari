@@ -1,5 +1,7 @@
 # Today: everyday style and occasion restyling
 
+See the [implementation handoff](../BUILD-PLAN.md), [detailed UX](implementation/PRODUCT-UX.md), and [delivery packets](implementation/DELIVERY.md) for the current build specification and acceptance checks. This document retains the earlier flow discussion.
+
 ## Confirmed requirements
 
 - Carry forward Direction A's look and feel.

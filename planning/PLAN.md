@@ -1,5 +1,7 @@
 # Digital closet and personal stylist
 
+Implementation entry point: [BUILD-PLAN.md](../BUILD-PLAN.md). Its detailed specifications and delivery order supersede conflicting proposals below. This earlier roadmap remains background context.
+
 Product roadmap, 30 September 2026. Recommendations are proposals unless marked confirmed. A small local closet and manual outfit implementation has begun. Model integrations and the wider styling experience remain planned. [Current build scope](FIRST-BUILD.md).
 
 ## Confirmed direction

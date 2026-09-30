@@ -4,6 +4,10 @@ An iPhone-first modest wardrobe and personal styling app, starting with a person
 
 The first working version is intentionally small: add clothing photos, browse your closet, and manually build and save outfits. It follows Direction A's white background and muted plum styling. The broader stylist features remain in the plans.
 
+## Implementation handoff
+
+Start with [BUILD-PLAN.md](BUILD-PLAN.md). It links the detailed product flows, design system, photography tutorials, architecture, delivery packets, and privacy/release requirements. It records what works today and what is still planned. The next implementation increment is the Today experience in delivery packets D0 and D1.
+
 ## Run the app
 
 Requirements: Node 22.13 or newer, npm, and Xcode 27 for the current iPhone simulator setup. Dependencies are pinned in `package-lock.json`; use `npm ci` to install them.
@@ -59,6 +63,7 @@ See [first-build scope and checks](planning/FIRST-BUILD.md) for implementation l
 
 ## Product and design plans
 
+- [Complete implementation handoff](BUILD-PLAN.md)
 - [Visual comparison gallery](planning/index.html)
 - [Competitor research and visual references](planning/COMPETITOR-RESEARCH.md)
 - [Selected design direction](DESIGN.md)
