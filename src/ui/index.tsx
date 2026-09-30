@@ -21,7 +21,8 @@ import {
   categories,
   categoryLabel,
 } from "../domain/closet";
-import { photoUri } from "../storage/local";
+import { isSamplePhoto } from "../domain/samples";
+import { photoSource } from "./photos";
 import { theme } from "./theme";
 
 export function AppText({
@@ -227,7 +228,7 @@ export function PiecePhoto({
   return (
     <View style={[styles.photo, style]}>
       <Image
-        source={{ uri: photoUri(piece.photo) }}
+        source={photoSource(piece.photo)}
         accessibilityLabel={piece.name}
         style={styles.image}
         contentFit="contain"
@@ -269,6 +270,7 @@ export function PieceTile({
       </AppText>
       <AppText variant="caption" muted>
         {categoryLabel(piece.category)}
+        {isSamplePhoto(piece.photo) ? " · Sample" : ""}
       </AppText>
     </Pressable>
   );

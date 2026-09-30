@@ -27,6 +27,7 @@ Working iPhone screenshots: [Closet](planning/build/iphone-closet.png), [Add a p
 
 ## Current scope
 
+- Start with 12 labeled sample pieces, ready to combine into outfits.
 - Add a photo from the library, or use the iPhone camera.
 - Name and categorize clothing, including hijabs, kurtas, tunics, and abayas.
 - Search and filter the closet; edit or remove pieces.
@@ -34,7 +35,11 @@ Working iPhone screenshots: [Closet](planning/build/iphone-closet.png), [Add a p
 - Reopen a look and change its pieces.
 - Keep data locally across app restarts.
 
-Photos retain their backgrounds. Automatic cleanup, coverage checking, daily styling, hijab matching, occasion advice, and inspiration photos are future increments. No account, backend, model integration, billing, or backup/export interface is included. This is a personal prototype, not a store release.
+Uploaded photos retain their backgrounds. Automatic cleanup, coverage checking, daily styling, hijab matching, occasion advice, and inspiration photos are future increments. No account, backend, model integration, billing, or backup/export interface is included. This is a personal prototype, not a store release.
+
+The sample wardrobe uses prepared clothing cutouts and is added once without replacing existing pieces or looks. Deleted sample items stay deleted. Uploaded photos still use the manual form; [automatic naming, categories, and background cleanup](planning/PHOTO-IMPORT.md) are the next capture task.
+
+See the [sample wardrobe and screenshots](planning/SAMPLE-WARDROBE.md).
 
 The iPhone app saves records in SQLite and photos in its document directory. Uninstalling it deletes the local closet. The browser preview uses browser storage, which can fill up with large images.
 

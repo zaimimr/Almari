@@ -5,6 +5,7 @@ The user asked to keep the larger ideas in the plans and start simply, then work
 ## This increment
 
 - Two sections: Closet and Looks.
+- A prepared sample wardrobe for trying outfit combinations immediately.
 - Add a clothing photo from the library or iPhone camera.
 - Give it a name and category, including hijabs, kurtas, tunics, and abayas.
 - Browse and filter the closet.
@@ -18,7 +19,7 @@ This is a personal prototype. Photos keep their supplied backgrounds. A manually
 
 ## Subsequent increments
 
-1. Improve capture and faithful background removal with real wardrobe examples.
+1. Automate photo naming, categorization, faithful background removal, and consistent presentation. Make review optional for clear results and support batch import. See [photo import task](PHOTO-IMPORT.md).
 2. Add coverage preferences and a simple daily look from saved outfits.
 3. Add hijab alternatives and suggestions that keep other pieces fixed.
 4. Add wardrobe rediscovery, occasion context, mood, and dressiness guidance.

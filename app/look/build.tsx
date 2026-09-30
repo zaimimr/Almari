@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { FlatList, StyleSheet, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, router, useLocalSearchParams } from "expo-router";
 import { randomUUID } from "expo-crypto";
 import { useCloset } from "../../src/state/closet";
@@ -108,17 +109,6 @@ export default function BuildLook() {
               maxLength={80}
               editable={!busy}
             />
-            <ErrorMessage message={error} />
-            <Button
-              label={source ? "Save changes" : "Save look"}
-              onPress={() => {
-                void save();
-              }}
-              disabled={
-                !selected.length || !name.trim() || Boolean(source && !dirty)
-              }
-              busy={busy}
-            />
             <AppText variant="caption" muted>
               {selected.length
                 ? `${selected.length} selected. Tap a selected piece to remove it.`
@@ -171,6 +161,21 @@ export default function BuildLook() {
           </View>
         )}
       />
+      <SafeAreaView edges={["bottom"]} style={styles.footer}>
+        <View style={styles.footerContent}>
+          <ErrorMessage message={error} />
+          <Button
+            label={source ? "Save changes" : "Save look"}
+            onPress={() => {
+              void save();
+            }}
+            disabled={
+              !selected.length || !name.trim() || Boolean(source && !dirty)
+            }
+            busy={busy}
+          />
+        </View>
+      </SafeAreaView>
     </View>
   );
 }
@@ -187,4 +192,17 @@ const styles = StyleSheet.create({
   header: { gap: 20, paddingBottom: 24 },
   row: { gap: 16 },
   cell: { width: "48%" },
+  footer: {
+    backgroundColor: theme.colors.background,
+    borderTopWidth: 1,
+    borderColor: theme.colors.line,
+  },
+  footerContent: {
+    width: "100%",
+    maxWidth: 720,
+    alignSelf: "center",
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    gap: 12,
+  },
 });

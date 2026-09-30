@@ -1,0 +1,74 @@
+[
+  {
+    "id": "mauve-hijab",
+    "name": "Mauve chiffon hijab",
+    "category": "hijab",
+    "prompt": "Use case: product-mockup. Asset type: individual sample garment for a modest digital closet. Create a photorealistic catalog cutout of ONE dusty mauve chiffon hijab scarf, loosely folded with graceful hanging folds showing its fabric and both ends. Flat lay viewed directly overhead, complete item entirely in frame with generous empty margin, isolated on a truly transparent background. Soft neutral studio lighting, accurate dusty mauve color, fine chiffon texture, realistic fabric edges, no human, no mannequin, no hanger, no accessories, no writing, no labels, no logos, no watermark, no fake checkerboard. Square canvas. This single item will appear beside other separate garment photos."
+  },
+  {
+    "id": "ivory-hijab",
+    "name": "Ivory modal hijab",
+    "category": "hijab",
+    "prompt": "Use case: product-mockup. Asset type: individual sample garment for a modest digital closet. Create a photorealistic catalog cutout of ONE warm ivory modal hijab scarf, arranged in an elongated loose fold with flowing ends, subtly matte fabric. Entire item fully in frame, centered with generous transparent margin. Isolated on a truly transparent background. Soft neutral studio lighting, honest realistic fabric or leather texture, crisp natural edges. Square canvas. No human, no mannequin, no hanger, no accessories except those explicitly requested, no text, no labels, no logos, no watermark, no fake checkerboard. One individually selectable wardrobe item, not an outfit or collage."
+  },
+  {
+    "id": "chocolate-hijab",
+    "name": "Chocolate jersey hijab",
+    "category": "hijab",
+    "prompt": "Use case: product-mockup. Asset type: individual sample garment for a modest digital closet. Create a photorealistic catalog cutout of ONE rich chocolate brown jersey hijab scarf, loosely folded in elongated natural waves, soft opaque knit fabric. Entire item fully in frame, centered with generous transparent margin. Isolated on a truly transparent background. Soft neutral studio lighting, honest realistic fabric or leather texture, crisp natural edges. Square canvas. No human, no mannequin, no hanger, no accessories except those explicitly requested, no text, no labels, no logos, no watermark, no fake checkerboard. One individually selectable wardrobe item, not an outfit or collage."
+  },
+  {
+    "id": "ivory-tunic",
+    "name": "Ivory longline tunic",
+    "category": "tunic",
+    "prompt": "Use case: product-mockup. Asset type: individual sample garment for a modest digital closet. Create a photorealistic catalog cutout of ONE warm ivory opaque cotton longline tunic blouse, relaxed straight fit, long sleeves, high round neckline, hem to mid thigh, neatly laid flat front facing, no other garments. Entire item fully in frame, centered with generous transparent margin. Isolated on a truly transparent background. Soft neutral studio lighting, honest realistic fabric or leather texture, crisp natural edges. Square canvas. No human, no mannequin, no hanger, no accessories except those explicitly requested, no text, no labels, no logos, no watermark, no fake checkerboard. One individually selectable wardrobe item, not an outfit or collage."
+  },
+  {
+    "id": "sage-kurta",
+    "name": "Sage embroidered kurta",
+    "category": "tunic",
+    "prompt": "Use case: product-mockup. Asset type: individual sample garment for a modest digital closet. Create a photorealistic catalog cutout of ONE sage green Pakistani cotton silk long kurta, full length sleeves, modest round neckline with short button placket, delicate tonal ivory embroidery around neckline and cuffs, knee length hem with small side slits, laid flat front facing, kurta only without trousers or dupatta. Entire item fully in frame, centered with generous transparent margin. Isolated on a truly transparent background. Soft neutral studio lighting, honest realistic fabric or leather texture, crisp natural edges. Square canvas. No human, no mannequin, no hanger, no accessories except those explicitly requested, no text, no labels, no logos, no watermark, no fake checkerboard. One individually selectable wardrobe item, not an outfit or collage."
+  },
+  {
+    "id": "navy-blazer",
+    "name": "Navy longline blazer",
+    "category": "layer",
+    "prompt": "Use case: product-mockup. Asset type: individual sample garment for a modest digital closet. Create a photorealistic catalog cutout of ONE deep navy blue relaxed longline women's tailored blazer, full sleeves, notched lapels, double front pockets, long hip covering silhouette, open front, laid flat front facing, no shirt or other garments inside. Entire item fully in frame, centered with generous transparent margin. Isolated on a truly transparent background. Soft neutral studio lighting, honest realistic fabric or leather texture, crisp natural edges. Square canvas. No human, no mannequin, no hanger, no accessories except those explicitly requested, no text, no labels, no logos, no watermark, no fake checkerboard. One individually selectable wardrobe item, not an outfit or collage."
+  },
+  {
+    "id": "taupe-abaya",
+    "name": "Taupe flowing abaya",
+    "category": "dress",
+    "prompt": "Use case: product-mockup. Asset type: individual sample garment for a modest digital closet. Create a photorealistic catalog cutout of ONE mushroom taupe full length open front abaya, flowing ample cut and long sleeves, straight front view laid flat with graceful fabric folds, robe only with empty open front, no underdress or other garment. Entire item fully in frame, centered with generous transparent margin. Isolated on a truly transparent background. Soft neutral studio lighting, honest realistic fabric or leather texture, crisp natural edges. Square canvas. No human, no mannequin, no hanger, no accessories except those explicitly requested, no text, no labels, no logos, no watermark, no fake checkerboard. One individually selectable wardrobe item, not an outfit or collage."
+  },
+  {
+    "id": "ivory-trousers",
+    "name": "Ivory wide-leg trousers",
+    "category": "bottom",
+    "prompt": "Use case: product-mockup. Asset type: individual sample garment for a modest digital closet. Create a photorealistic catalog cutout of ONE pair of opaque ivory cream full length wide leg tailored women's trousers, subtle front pleats, high waistband, two straight separated legs neatly laid flat front facing, no belt or other items. Entire item fully in frame, centered with generous transparent margin. Isolated on a truly transparent background. Soft neutral studio lighting, honest realistic fabric or leather texture, crisp natural edges. Square canvas. No human, no mannequin, no hanger, no accessories except those explicitly requested, no text, no labels, no logos, no watermark, no fake checkerboard. One individually selectable wardrobe item, not an outfit or collage."
+  },
+  {
+    "id": "charcoal-trousers",
+    "name": "Charcoal wide-leg trousers",
+    "category": "bottom",
+    "prompt": "Use case: product-mockup. Asset type: individual sample garment for a modest digital closet. Create a photorealistic catalog cutout of ONE pair of charcoal gray full length wide leg tailored women's trousers, subtle front pleats and a high waistband, neatly laid flat with two straight separated legs, no belt or other items. Entire item fully in frame, centered with generous transparent margin. Isolated on a truly transparent background. Soft neutral studio lighting, honest realistic fabric or leather texture, crisp natural edges. Square canvas. No human, no mannequin, no hanger, no accessories except those explicitly requested, no text, no labels, no logos, no watermark, no fake checkerboard. One individually selectable wardrobe item, not an outfit or collage."
+  },
+  {
+    "id": "ivory-salwar",
+    "name": "Ivory cotton shalwar",
+    "category": "bottom",
+    "prompt": "Use case: product-mockup. Asset type: individual sample garment for a modest digital closet. Create a photorealistic catalog cutout of ONE pair of ivory white Pakistani cotton shalwar trousers, loose pleated legs tapering gently to narrow plain ankle cuffs, comfortable gathered waist, neatly laid flat front facing, trousers only. Entire item fully in frame, centered with generous transparent margin. Isolated on a truly transparent background. Soft neutral studio lighting, honest realistic fabric or leather texture, crisp natural edges. Square canvas. No human, no mannequin, no hanger, no accessories except those explicitly requested, no text, no labels, no logos, no watermark, no fake checkerboard. One individually selectable wardrobe item, not an outfit or collage."
+  },
+  {
+    "id": "chocolate-loafers",
+    "name": "Chocolate leather loafers",
+    "category": "shoes",
+    "prompt": "Use case: product-mockup. Asset type: individual sample garment for a modest digital closet. Create a photorealistic catalog cutout of ONE matching pair of chocolate brown women's leather penny loafers, minimal almond shaped toe, very low heel, viewed directly from above, two shoes side by side with tips pointing up, no other objects. Entire item fully in frame, centered with generous transparent margin. Isolated on a truly transparent background. Soft neutral studio lighting, honest realistic fabric or leather texture, crisp natural edges. Square canvas. No human, no mannequin, no hanger, no accessories except those explicitly requested, no text, no labels, no logos, no watermark, no fake checkerboard. One individually selectable wardrobe item, not an outfit or collage."
+  },
+  {
+    "id": "taupe-bag",
+    "name": "Taupe everyday bag",
+    "category": "bag",
+    "prompt": "Use case: product-mockup. Asset type: individual sample garment for a modest digital closet. Create a photorealistic catalog cutout of ONE small structured taupe leather handbag with a simple top handle and minimal brushed gold clasp, a neat optional shoulder strap folded beside the bag but within its silhouette, front three-quarter catalog view, no logos or other objects. Entire item fully in frame, centered with generous transparent margin. Isolated on a truly transparent background. Soft neutral studio lighting, honest realistic fabric or leather texture, crisp natural edges. Square canvas. No human, no mannequin, no hanger, no accessories except those explicitly requested, no text, no labels, no logos, no watermark, no fake checkerboard. One individually selectable wardrobe item, not an outfit or collage."
+  }
+]

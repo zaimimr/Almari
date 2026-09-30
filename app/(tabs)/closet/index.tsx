@@ -3,6 +3,7 @@ import { FlatList, StyleSheet, View } from "react-native";
 import { Stack, router } from "expo-router";
 import { useCloset } from "../../../src/state/closet";
 import { type Category } from "../../../src/domain/closet";
+import { isSamplePhoto } from "../../../src/domain/samples";
 import {
   AppText,
   Button,
@@ -18,6 +19,9 @@ export default function ClosetScreen() {
   const { closet } = useCloset();
   const [category, setCategory] = useState<Category | "all">("all");
   const [search, setSearch] = useState("");
+  const sampleCount = closet.pieces.filter((piece) =>
+    isSamplePhoto(piece.photo),
+  ).length;
   const filtered = closet.pieces.filter(
     (piece) =>
       (category === "all" || piece.category === category) &&
@@ -52,6 +56,18 @@ export default function ClosetScreen() {
                 ? "A little space for the pieces you love."
                 : `${closet.pieces.length} ${closet.pieces.length === 1 ? "piece" : "pieces"}, ready for a new combination.`}
             </AppText>
+            {sampleCount > 0 ? (
+              <View style={styles.starter}>
+                <AppText variant="caption" muted>
+                  {sampleCount} sample pieces included. Try a combination you
+                  love.
+                </AppText>
+                <Button
+                  label="Build a look"
+                  onPress={() => router.push("/look/build")}
+                />
+              </View>
+            ) : null}
             {closet.pieces.length > 0 ? (
               <>
                 <Field
@@ -132,6 +148,7 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
   intro: { gap: 20, paddingBottom: 24 },
+  starter: { gap: 12 },
   row: { gap: 16 },
   cell: { width: "48%", flexGrow: 0 },
   empty: { gap: 20, paddingTop: 24 },

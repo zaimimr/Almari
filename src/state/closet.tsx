@@ -7,6 +7,7 @@ import {
   type PropsWithChildren,
 } from "react";
 import { ClosetRepository } from "../domain/repository";
+import { addSampleWardrobe } from "../domain/samples";
 import { closetStorage } from "../storage/local";
 import { Button, Message, Screen } from "../ui";
 
@@ -23,6 +24,11 @@ export function ClosetProvider({ children }: PropsWithChildren) {
     let active = true;
     repository
       .load()
+      .then(async () => {
+        if (!repository.getSnapshot().sampleWardrobeAdded) {
+          await repository.update(addSampleWardrobe);
+        }
+      })
       .then(() => {
         if (active) setStatus("ready");
       })

@@ -12,7 +12,9 @@ import {
   removePiece,
 } from "../domain/closet";
 import { useCloset } from "../state/closet";
-import { keepPhoto, discardPhoto, photoUri } from "../storage/local";
+import { keepPhoto, discardPhoto } from "../storage/local";
+import { isSamplePhoto } from "../domain/samples";
+import { photoSource } from "../ui/photos";
 import {
   AppText,
   Button,
@@ -32,9 +34,7 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
   const [category, setCategory] = useState<Category | null>(
     piece?.category ?? null,
   );
-  const [image, setImage] = useState<string | null>(
-    piece ? photoUri(piece.photo) : null,
-  );
+  const [image, setImage] = useState<string | null>(piece?.photo ?? null);
   const [newImage, setNewImage] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -150,7 +150,7 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
       <View style={[styles.photo, image && styles.photoWithImage]}>
         {image ? (
           <Image
-            source={{ uri: image }}
+            source={newImage ? { uri: image } : photoSource(image)}
             style={styles.image}
             contentFit="contain"
             accessibilityLabel="Clothing photo preview"
@@ -238,7 +238,9 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
         }
       />
       <AppText variant="caption" muted>
-        Saved on this device. Photos keep their original backgrounds.
+        {piece && !newImage && isSamplePhoto(piece.photo)
+          ? "A sample piece for trying outfit combinations."
+          : "Saved on this device. Photos keep their original backgrounds."}
       </AppText>
       {piece ? (
         <Button

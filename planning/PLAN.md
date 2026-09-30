@@ -84,6 +84,8 @@ Use the camera or system photo picker. Show the clean result next to a way to in
 
 Avoid forcing a long form after every photo. Category, primary colors, garment role, and the few attributes needed for coverage are the initial essentials. Fabric, seasons, brand, and notes can be added later.
 
+The user confirmed that manual name and category entry is too much effort. The next capture increment must suggest these automatically and produce a faithful clean cutout, with optional corrections and batch review. See the [photo import task](PHOTO-IMPORT.md). A labeled sample wardrobe is provided now so outfit building can be evaluated immediately.
+
 ### Looks
 
 Saved collages with user-created names and optional collections such as Work or Eid. Open a look to edit it, duplicate it, or choose Make another like this. A saved outfit records its item IDs and user decisions, so it remains a meaningful recipe.
@@ -302,8 +304,9 @@ Needle's repository documents enabled-by-default telemetry. Disable it in any in
 | Phase | Deliverable | Exit evidence |
 | --- | --- | --- |
 | Foundation selected | Direction A, product plans, and competitor research | Start simply and iterate, as requested |
-| Current: first working increment | Local photo import/camera, closet, names/categories, manual builder, and saved looks | Create, edit, save, and reopen without losing data |
-| Capture and preferences | Faithful cutouts, corrected attributes, and personal coverage preferences | Her actual clothes remain recognizable and attributes are trustworthy |
+| Current: first working increment | Prepared sample wardrobe, local photo import/camera, manual builder, and saved looks | Build outfits immediately, then edit, save, and reopen without losing data |
+| Capture automation | Automatic name/category suggestions, faithful cutouts, batch review, and original-photo retention | Clear photos become useful closet items without typing; uncertain results are easy to correct |
+| Preferences | Personal coverage preferences and corrected garment attributes | Her actual clothes remain recognizable and attributes are trustworthy |
 | Styling alpha | Constraint evaluator, hijab matching, individual swaps, wardrobe rediscovery, saved-look retrieval, mood and occasion inputs | Useful matching, suitable existing looks and variety, unchanged other pieces during swaps, and no known hard-rule violations |
 | Reference and conversation beta | Image inspiration and grounded stylist | Matches style intent using owned pieces and explains gaps honestly |
 | Store release | Accounts/backup if chosen, billing, deletion/export, accessibility and operational support | Verified release checks and successful private beta |

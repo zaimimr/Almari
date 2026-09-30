@@ -42,6 +42,7 @@ Start with frequently worn pieces, review the digital closet, then create outfit
 ## Capabilities and Constraints
 
 - Capture or import clothes, clean their photographs, and organize by category, color, and coverage.
+- Automatically suggest each item's name and category, remove its background, and prepare a faithful closet image. Routine importing should not require typing. See [photo import task](planning/PHOTO-IMPORT.md).
 - Learn coverage preferences, hijab choices, taste, and user-selected body or fit preferences. The collection method and optionality of body information need discussion.
 - Build outfits with coverage preferences applied from the beginning.
 - Let users save a default everyday style and receive an outfit based on it each day.
@@ -69,6 +70,8 @@ The user selected Direction A, The dressing room, as the visual foundation. Pres
 ## Evidence on Hand
 
 No real wardrobe photos, tested recommendations, commercial pricing, or performance results have been supplied. Concept wardrobes and screenshots must be labeled illustrative. The first working increment supports a local closet and manual saved looks; styling intelligence remains planned.
+
+The user requested sample clothes to try outfit building without entering clothing. The prototype includes a labeled starter wardrobe. These items are illustrative and do not represent the wife's real closet.
 
 ## Product Principles
 

@@ -24,7 +24,12 @@ export type Look = {
   pieceIds: string[];
   createdAt: string;
 };
-export type Closet = { version: 1; pieces: Piece[]; looks: Look[] };
+export type Closet = {
+  version: 1;
+  pieces: Piece[];
+  looks: Look[];
+  sampleWardrobeAdded?: boolean;
+};
 export const emptyCloset: Closet = { version: 1, pieces: [], looks: [] };
 export const categoryLabel = (id: Category) =>
   categories.find((c) => c.id === id)?.label ?? id;
@@ -67,6 +72,8 @@ export function decodeCloset(raw: string | null): Closet {
   if (
     !isRecord(value) ||
     value.version !== 1 ||
+    (value.sampleWardrobeAdded !== undefined &&
+      typeof value.sampleWardrobeAdded !== "boolean") ||
     !Array.isArray(value.pieces) ||
     !Array.isArray(value.looks) ||
     !value.pieces.every(isPiece) ||

@@ -10,6 +10,7 @@ import {
   type Piece,
 } from "./closet";
 import { ClosetRepository, type ClosetStorage } from "./repository";
+import { addSampleWardrobe, samplePieces } from "./samples";
 
 const hijab: Piece = {
   id: "hijab",
@@ -179,4 +180,53 @@ test("blank names and missing pieces cannot create saved looks", () => {
       createdAt: hijab.createdAt,
     }),
   );
+});
+
+test("sample setup preserves owned clothing, edits, saved looks, and removals after restarting", async () => {
+  const storage = memoryStorage();
+  const repository = new ClosetRepository(storage);
+  await repository.load();
+  await repository.update((closet) =>
+    saveLook(savePiece(closet, hijab), {
+      id: "existing-look",
+      name: "Already saved",
+      pieceIds: [hijab.id],
+      createdAt: hijab.createdAt,
+    }),
+  );
+  await repository.update(addSampleWardrobe);
+  assert.equal(repository.getSnapshot().pieces.length, samplePieces.length + 1);
+  const editedSample = { ...samplePieces[0]!, name: "My renamed sample" };
+  const removedSample = samplePieces[1]!;
+  await repository.update((closet) =>
+    removePiece(savePiece(closet, editedSample), removedSample.id),
+  );
+  await repository.update((closet) =>
+    saveLook(closet, {
+      id: "sample-look",
+      name: "Trying a combination",
+      pieceIds: [hijab.id, editedSample.id],
+      createdAt: hijab.createdAt,
+    }),
+  );
+  const reopened = new ClosetRepository(storage);
+  await reopened.load();
+  const saved = reopened.getSnapshot();
+  assert.equal(addSampleWardrobe(saved), saved);
+  assert.equal(saved.sampleWardrobeAdded, true);
+  assert.deepEqual(
+    saved.pieces.find((piece) => piece.id === hijab.id),
+    hijab,
+  );
+  assert.deepEqual(
+    saved.pieces.find((piece) => piece.id === editedSample.id),
+    editedSample,
+  );
+  assert.equal(
+    saved.pieces.some((piece) => piece.id === removedSample.id),
+    false,
+  );
+  assert.equal(saved.looks.length, 2);
+  assert.deepEqual(saved.looks[0]?.pieceIds, [hijab.id, editedSample.id]);
+  assert.equal(saved.looks[1]?.name, "Already saved");
 });
