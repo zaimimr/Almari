@@ -27,10 +27,10 @@ Evaluation pending photos.
 
 Only the 13 sample garments are available now. The 35 web photos from the first evaluation are gone and the 20 extra photos have not been collected, so the numbers below cover 13 of 68 photos and are not comparable with the earlier 48-photo baseline.
 
-| Model | Photos | Category | Subcategory | Style | Quick checks |
-| --- | --- | --- | --- | --- | --- |
-| SigLIP 2 base (PyTorch) | samples 13 | 13/13 | 13/13 | 13/13 | 7/13 |
-| SigLIP 2 base, Core ML 8-bit | samples 13 | 13/13 | 13/13 | 13/13 | 6/13 |
+| Model                        | Photos     | Category | Subcategory | Style | Quick checks |
+| ---------------------------- | ---------- | -------- | ----------- | ----- | ------------ |
+| SigLIP 2 base (PyTorch)      | samples 13 | 13/13    | 13/13       | 13/13 | 7/13         |
+| SigLIP 2 base, Core ML 8-bit | samples 13 | 13/13    | 13/13       | 13/13 | 6/13         |
 
 Margin: kept at 0.01. With it, the Core ML run asks a quick check for 6 of 13 photos and leaves 0 wrong without one. Median Core ML time per photo on the Mac: 29.2 ms.
 
@@ -45,11 +45,11 @@ Subcategories without a dedicated photo: shirt, kameez, jacket, clutch, backpack
 
 Before the subcategory and style labels, `zeroshot.py` and `evalml.py` scored the 13 sample garments plus 35 public web photos (`truth.py`). The web photos are not committed.
 
-| Model | Garment type correct | Category correct | Time per photo |
-| --- | --- | --- | --- |
-| OpenAI CLIP ViT-B/32 (PyTorch) | 35/48 | 41/48 | 53 ms, Mac CPU |
-| SigLIP 2 base (PyTorch) | 47/48 | 47/48 | 85 ms, Mac CPU |
-| SigLIP 2 base, Core ML 8-bit | 46/48 | 47/48 | 13.5 ms, Mac |
+| Model                          | Garment type correct | Category correct | Time per photo |
+| ------------------------------ | -------------------- | ---------------- | -------------- |
+| OpenAI CLIP ViT-B/32 (PyTorch) | 35/48                | 41/48            | 53 ms, Mac CPU |
+| SigLIP 2 base (PyTorch)        | 47/48                | 47/48            | 85 ms, Mac CPU |
+| SigLIP 2 base, Core ML 8-bit   | 46/48                | 47/48            | 13.5 ms, Mac   |
 
 Both Core ML misses (a scarf read as a dupatta, trousers read as shalwar) had a margin under 0.01 between the first two guesses. The app asks for a quick check below that margin. On the iOS 27 simulator, 8 of 8 imported web photos were classified correctly on CPU. Timing on an iPhone 16 Pro has not been measured.
 
@@ -59,3 +59,21 @@ Once the photos exist, run:
 .venv/bin/python zeroshot.py google/siglip2-base-patch16-224 ../../.. | tee .venv/zeroshot.txt
 .venv/bin/python evalml.py GarmentEncoder.mlpackage | tee .venv/evalml.txt
 ```
+
+## Care label reading, evaluation
+
+Label text comes from Apple Vision. A rules parser in `src/domain/careLabel.ts` reads fibres with percentages, size and origin in English and Norwegian. Apple Foundation Models, the on-device language model, then fills fields the parser left empty, using guided generation into `CareLabelFields` in `ios/CareLabelModel.swift`. A model value is kept only when it is printed on the label. Needle was dropped because the phone does not have the memory for it.
+
+16 fixture labels in `src/domain/fixtures/care-labels.json` (English, Norwegian, Urdu-English, one unreadable, one with only an origin), 50 expected facts. The model's answers are recorded on a Mac with `model/care_labels.swift` into `src/domain/fixtures/care-labels.model.json`.
+
+| Reader                                        | Correct                   | Wrong                     | Missed                    |
+| --------------------------------------------- | ------------------------- | ------------------------- | ------------------------- |
+| Parser alone                                  | 45                        | 0                         | 5                         |
+| Model alone, after the printed-on-label check | not available on this Mac | not available on this Mac | not available on this Mac |
+| Parser first, model fills gaps (shipped)      | not available on this Mac | not available on this Mac | not available on this Mac |
+
+The model could not be recorded on 2 October 2026: `SystemLanguageModel.default.availability` was `unavailable(modelNotReady)`, so `care-labels.model.json` is an empty object and the model rows are not measured. With an empty recording the merged reader equals the parser (45 correct, 0 wrong, 5 missed). The 5 missed facts are the brands, which the parser does not read.
+
+The parser's rules were written together with these fixtures, so its score is optimistic. Her own labels are the real test. Time per label on the Mac: not measured.
+
+To record again once Apple Intelligence has downloaded the model, build and run `care_labels.swift` together with `ios/CareLabelModel.swift` as in Task 5 Step 2 of the care label plan, check that it prints `available true`, then run `npm test`.
