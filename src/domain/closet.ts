@@ -9,6 +9,7 @@ import {
   type Occasion,
   type Style,
 } from "./taxonomy";
+import type { Attributes } from "./attributes";
 
 export * from "./taxonomy";
 
@@ -28,9 +29,7 @@ export type Frame = { x: number; y: number; width: number; height: number };
 
 export type Source = "proposed" | "label" | "confirmed";
 
-export const sourceKeys = ["kind", "styles"] as const;
-
-export type SourceKey = (typeof sourceKeys)[number];
+export type SourceKey = keyof Attributes | "kind" | "styles";
 
 export type Sources = Partial<Record<SourceKey, Source>>;
 
@@ -224,6 +223,8 @@ function isTraits(value: unknown): value is Traits {
     )
   );
 }
+
+const sourceKeys: readonly SourceKey[] = ["kind", "styles"];
 
 const sourceValues = ["proposed", "label", "confirmed"];
 
