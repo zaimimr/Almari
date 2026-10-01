@@ -3,21 +3,25 @@ appId: com.zaimimran.almari
 - launchApp
 - tapOn: "Closet"
 - tapOn: "Add pieces"
+- scrollUntilVisible:
+    element: "Choose photos"
 - tapOn: "Choose photos"
 - tapOn:
-    text: "Photo.*"
+    text: "Photo, [^,]+, [0-9:]+"
     index: 0
-- tapOn: "Add"
-- extendedWaitUntil:
-    visible: ".*Quick check"
+- tapOn: "Add|Done"
+- scrollUntilVisible:
+    element: ".*, Quick check"
     timeout: 60000
-- tapOn: ".*Quick check"
+- tapOn: ".*, Quick check"
 - takeScreenshot: planning/build/labels/large-text-check-piece
 - scrollUntilVisible:
     element: "Remove this photo"
 - takeScreenshot: planning/build/labels/large-text-check-piece-end
 - tapOn: "Remove this photo"
 - tapOn: "Close"
+- scrollUntilVisible:
+    element: "Sage embroidered kurta.*"
 - tapOn: "Sage embroidered kurta.*"
 - scrollUntilVisible:
     element: "Style"

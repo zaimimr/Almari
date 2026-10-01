@@ -8,12 +8,14 @@ appId: com.zaimimran.almari
     optional: true
 - tapOn: "Choose photos"
 - tapOn:
-    text: "Photo.*"
+    text: "Photo, [^,]+, [0-9:]+"
     index: 0
-- tapOn: "Add"
+- tapOn: "Add|Done"
 - extendedWaitUntil:
-    visible: ".*Quick check"
+    visible: ".*, Quick check"
     timeout: 60000
-- tapOn: ".*Quick check"
+- tapOn: ".*, Quick check"
+- scrollUntilVisible:
+    element: "Kurta"
 - assertVisible: "Kurta"
 - takeScreenshot: planning/build/labels/native-kurta

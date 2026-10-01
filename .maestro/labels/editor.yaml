@@ -2,18 +2,29 @@ appId: com.zaimimran.almari
 ---
 - launchApp
 - tapOn: "Closet"
+- scrollUntilVisible:
+    element: "Sage embroidered kurta, Kurtas & tunics · Kurta"
 - assertVisible: "Sage embroidered kurta, Kurtas & tunics · Kurta"
 - tapOn: "Sage embroidered kurta.*"
 - scrollUntilVisible:
     element: "Subcategory \\(optional\\)"
+- scrollUntilVisible:
+    element: "Desi, set by the subcategory"
 - assertVisible: "Desi, set by the subcategory"
 - takeScreenshot: planning/build/labels/editor-sample
 - tapOn: "Back"
+- scrollUntilVisible:
+    element: "Kurti.*"
+    direction: UP
 - tapOn: "Kurti.*"
 - scrollUntilVisible:
     element: "Subcategory"
 - tapOn: "Tops"
+- scrollUntilVisible:
+    element: "Choose a subcategory to save this piece."
 - assertVisible: "Choose a subcategory to save this piece."
+- scrollUntilVisible:
+    element: "Save changes"
 - assertVisible:
     text: "Save changes"
     enabled: false

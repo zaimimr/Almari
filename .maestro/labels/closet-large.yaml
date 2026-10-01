@@ -2,5 +2,7 @@ appId: com.zaimimran.almari
 ---
 - launchApp
 - tapOn: "Closet"
+- scrollUntilVisible:
+    element: "All"
 - assertVisible: "All"
 - takeScreenshot: planning/build/labels/large-text-closet

@@ -15,14 +15,33 @@ appId: com.zaimimran.almari
 - takeScreenshot: planning/build/labels/closet-no-match
 - tapOn: "Desi"
 - assertVisible: "Ivory longline tunic.*"
+- repeat:
+    while:
+      notVisible: "Layers"
+    times: 4
+    commands:
+      - swipe:
+          from: "Categories"
+          direction: LEFT
 - tapOn: "Layers"
 - assertVisible: "Navy longline blazer.*"
 - assertNotVisible: "Ivory longline tunic.*"
-- swipe:
-    from: "Western"
-    direction: LEFT
+- repeat:
+    times: 3
+    commands:
+      - swipe:
+          from: "Filters"
+          direction: LEFT
 - tapOn: "Unavailable"
 - assertVisible: "No pieces found"
 - tapOn: "Clear filters"
 - assertNotVisible: "No pieces found"
-- assertVisible: "All"
+- repeat:
+    times: 3
+    commands:
+      - swipe:
+          from: "Categories"
+          direction: RIGHT
+- assertVisible:
+    text: "All"
+    selected: true
