@@ -54,3 +54,28 @@ STYLES = {
  "desi": ["a South Asian embroidered garment", "a Pakistani or Indian outfit piece"],
  "western": ["a Western garment", "a plain Western fashion piece"],
 }
+
+import math
+
+MARGIN = 0.01
+SCALE = 100.0
+
+def pooled(scores):
+    top = max(scores)
+    return top + math.log(sum(math.exp(SCALE * (s - top)) for s in scores)) / SCALE
+
+def recognize(kinds, styles, margin=MARGIN):
+    groups = {}
+    for kind, score in kinds.items(): groups.setdefault(KINDS[kind][0], []).append(score)
+    category_scores = {category: pooled(scores) for category, scores in groups.items()}
+    category_rank = sorted(category_scores, key=category_scores.get, reverse=True)
+    category = category_rank[0]
+    inside = sorted((k for k in kinds if KINDS[k][0] == category), key=kinds.get, reverse=True)
+    kind = inside[0]
+    fixed = KINDS[kind][1]
+    style_rank = sorted(styles, key=styles.get, reverse=True)
+    def close(scores, rank): return not rank or (len(rank) > 1 and scores[rank[0]] - scores[rank[1]] < margin)
+    question = ("category" if close(category_scores, category_rank) else
+                "subcategory" if close(kinds, inside) else
+                "style" if not fixed and close(styles, style_rank) else None)
+    return category, kind, fixed or style_rank[:1], question
