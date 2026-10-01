@@ -69,7 +69,7 @@ Style is `desi`, `western` or both. Subcategories that decide style on their own
 
 `labels.py` gets descriptions for every subcategory and for style. `convert.py` regenerates `garment-labels.json` grouped by subcategory, plus a style group. No new model.
 
-1. Category: add up subcategory scores per category and take the best.
+1. Category: pool subcategory scores per category (log-sum-exp) and take the best.
 2. Subcategory: the best subcategory inside that category.
 3. Style: fixed style when the subcategory has one. Otherwise compare the "South Asian embroidered garment" descriptions with the "Western garment" descriptions.
 
