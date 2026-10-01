@@ -35,6 +35,10 @@ What we do differently, because ALIFF got it wrong:
 - One category list mixed garment type, occasion and style. Ours keeps type as chips and the rest as filters.
 - Login, usage limits and photos sent to outside AI services. We have none of these.
 
+## Language
+
+The app follows the phone's language: Norwegian bokmål when the phone is set to Norwegian, otherwise English. Never nynorsk. From Part 1 every new or changed screen text goes through one string catalog with both languages. Screens that already exist are moved into the catalog in Part 8. Taxonomy names such as kurta, dupatta and abaya stay the same in both languages.
+
 ## Part 1: Labels
 
 ### Taxonomy
