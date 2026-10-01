@@ -47,7 +47,8 @@
           "imageWidth": 220,
           "backgroundColor": "#FDFBF7"
         }
-      ]
+      ],
+      "expo-localization"
     ],
     "icon": "./assets/brand/icon.png",
     "extra": {
