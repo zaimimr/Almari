@@ -184,7 +184,7 @@ Answers fill `StyleProfile` with source `confirmed`. Skipped answers stay null a
 
 ### Weather
 
-- Apple WeatherKit gives the forecast for her city. The city becomes coordinates with the Apple geocoder; no location permission is asked.
+- Apple WeatherKit gives the forecast for her city. The city becomes coordinates with the Apple MapKit geocoder; no location permission is asked.
 - Today uses the forecast for the day's daytime hours: temperature, rain or snow, and wind. It maps to the existing warm, mild, cold and dry, rain, snow values.
 - She can still change the weather by hand on Today, and a manual choice wins for that day.
 - When there is no network or WeatherKit fails, Today falls back to manual weather and says so. The forecast is labelled with the WeatherKit attribution Apple requires.
@@ -286,6 +286,18 @@ The model has never seen hijabs, kurtas or dupattas, so Desi outfits are out of 
 - **Saved looks on Today:** exact saved looks that fit the request appear separately from variants. Missing pieces are shown with a repair (R04).
 - **Archive:** separate from delete and from Unavailable (Part 2), and reversible.
 - **Weather for her own clothes:** warmth, rain and snow on each piece, proposed from fabric and subcategory and confirmed by her.
+
+## Part 9: Live closet scan (after Part 8)
+
+Inspired by Alta's Closet Scan. Planned only after Part 8 is done; it gets its own plan then.
+
+- She props the phone up or someone holds it. Front and back camera are switchable.
+- A baseline frame records what she is wearing. A new garment region that covers her body, with hands at its edges, counts as the held item.
+- When the item has held still for about 0.7 seconds, the app takes a full-resolution photo and confirms with a tone and a haptic. No tapping.
+- An item very close to the previous capture is not taken again.
+- Each capture goes through the Part 4 pipeline in a queue while she keeps scanning; a strip shows the captured items. She reviews them on the Keep and Drop screen at the end.
+- Held garments and bags only. Shoes and jewellery use the photo flow.
+- The frame analysis rate and SegFormer speed are measured on her iPhone first.
 
 ## Data changes
 
