@@ -11,6 +11,11 @@ struct LabelScore: Record {
   @Field var score: Double = 0
 }
 
+struct Swatch: Record {
+  @Field var rgb: [Double] = []
+  @Field var share: Double = 0
+}
+
 struct PreparedGarment: Record {
   @Field var original: String = ""
   @Field var cutout: String? = nil
@@ -18,7 +23,8 @@ struct PreparedGarment: Record {
   @Field var frame: [String: Double]? = nil
   @Field var instances: Int = 0
   @Field var labels: [LabelScore] = []
-  @Field var color: [Double]? = nil
+  @Field var palette: [Swatch] = []
+  @Field var embedding: String? = nil
   @Field var width: Int = 0
   @Field var height: Int = 0
   @Field var milliseconds: [String: Int] = [:]
@@ -36,6 +42,61 @@ enum PrepareError: Error, CustomStringConvertible {
     case .storage: return "storage"
     }
   }
+}
+
+func paletteClusters(_ points: [SIMD3<Double>]) -> [(rgb: SIMD3<Double>, share: Double)] {
+  guard points.count >= 16 else { return [] }
+  let weights = SIMD3<Double>(0.2126, 0.7152, 0.0722)
+  let sorted = points.sorted { ($0 * weights).sum() < ($1 * weights).sum() }
+  var centers = (0..<4).map { sorted[(2 * $0 + 1) * sorted.count / 8] }
+  var counts = [Int](repeating: 0, count: 4)
+  for _ in 0..<12 {
+    var sums = [SIMD3<Double>](repeating: .zero, count: 4)
+    counts = [Int](repeating: 0, count: 4)
+    for point in points {
+      var best = 0
+      var distance = Double.infinity
+      for (cluster, center) in centers.enumerated() {
+        let gap = point - center
+        let squared = (gap * gap).sum()
+        if squared < distance {
+          distance = squared
+          best = cluster
+        }
+      }
+      sums[best] += point
+      counts[best] += 1
+    }
+    for cluster in 0..<4 where counts[cluster] > 0 {
+      centers[cluster] = sums[cluster] / Double(counts[cluster])
+    }
+  }
+  var merged: [(rgb: SIMD3<Double>, count: Int)] = []
+  for cluster in (0..<4).sorted(by: { counts[$0] > counts[$1] }) where counts[cluster] > 0 {
+    if let near = merged.firstIndex(where: {
+      let gap = $0.rgb - centers[cluster]
+      return (gap * gap).sum() < 900
+    }) {
+      let count = merged[near].count + counts[cluster]
+      merged[near].rgb = (merged[near].rgb * Double(merged[near].count) + centers[cluster] * Double(counts[cluster])) / Double(count)
+      merged[near].count = count
+    } else {
+      merged.append((rgb: centers[cluster], count: counts[cluster]))
+    }
+  }
+  let total = Double(points.count)
+  return merged
+    .filter { Double($0.count) / total >= 0.15 }
+    .sorted { $0.count > $1.count }
+    .prefix(3)
+    .map { (rgb: $0.rgb, share: Double($0.count) / total) }
+}
+
+func encodeEmbedding(_ embedding: [Float]) -> String? {
+  let peak = embedding.reduce(Float(0)) { max($0, abs($1)) }
+  guard peak > 0 else { return nil }
+  let bytes = embedding.map { UInt8(bitPattern: Int8(max(-127, min(127, ($0 / peak * 127).rounded())))) }
+  return Data(bytes).base64EncodedString()
 }
 
 final class GarmentPipeline {
@@ -154,9 +215,13 @@ final class GarmentPipeline {
 
     let classifyStart = Date()
     try loadResources()
-    result.labels = try classify(garment)
+    let vector = try embed(garment)
+    result.labels = score(vector)
+    result.embedding = encodeEmbedding(vector)
     timings["classify"] = elapsed(classifyStart)
-    result.color = dominantColor(garment, masked: result.cutout != nil)
+    let paletteStart = Date()
+    result.palette = palette(garment, masked: result.cutout != nil)
+    timings["palette"] = elapsed(paletteStart)
     timings["total"] = elapsed(started)
     result.milliseconds = timings
     return result
@@ -183,7 +248,7 @@ final class GarmentPipeline {
     } catch { throw PrepareError.storage }
   }
 
-  private func classify(_ garment: CIImage) throws -> [LabelScore] {
+  private func embed(_ garment: CIImage) throws -> [Float] {
     guard let model else { throw PrepareError.resources }
     let side = max(garment.extent.width, garment.extent.height)
     let square = CGRect(x: 0, y: 0, width: side, height: side)
@@ -198,8 +263,11 @@ final class GarmentPipeline {
     let input = try MLFeatureValue(cgImage: cgImage, constraint: constraint)
     let output = try model.prediction(from: MLDictionaryFeatureProvider(dictionary: ["image": input]))
     guard let array = output.featureValue(for: "embedding")?.multiArrayValue else { throw PrepareError.resources }
-    let embedding = (0..<array.count).map { Float(truncating: array[$0]) }
-    return labels.map { label in
+    return (0..<array.count).map { Float(truncating: array[$0]) }
+  }
+
+  private func score(_ embedding: [Float]) -> [LabelScore] {
+    labels.map { label in
       let best = label.embeddings.map { zip($0, embedding).reduce(0) { $0 + $1.0 * $1.1 } }.max() ?? -1
       var score = LabelScore()
       score.group = label.group
@@ -210,33 +278,32 @@ final class GarmentPipeline {
     .sorted { $0.score > $1.score }
   }
 
-  private func dominantColor(_ garment: CIImage, masked: Bool) -> [Double]? {
-    guard masked else { return nil }
+  private func palette(_ garment: CIImage, masked: Bool) -> [Swatch] {
+    guard masked else { return [] }
     let side: CGFloat = 96
     let scale = side / max(garment.extent.width, garment.extent.height)
     let small = garment.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
     let width = Int(small.extent.width.rounded(.down))
     let height = Int(small.extent.height.rounded(.down))
-    guard width > 0, height > 0 else { return nil }
+    guard width > 0, height > 0 else { return [] }
     var pixels = [UInt8](repeating: 0, count: width * height * 4)
     context.render(
       small, toBitmap: &pixels, rowBytes: width * 4, bounds: CGRect(x: 0, y: 0, width: width, height: height),
       format: .RGBA8, colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
-    var buckets: [Int: (count: Int, r: Double, g: Double, b: Double)] = [:]
+    var points: [SIMD3<Double>] = []
     for index in stride(from: 0, to: pixels.count, by: 4) {
       let alpha = Double(pixels[index + 3])
       if alpha < 200 { continue }
-      let a = max(alpha, 1) / 255
-      let r = Double(pixels[index]) / a
-      let g = Double(pixels[index + 1]) / a
-      let b = Double(pixels[index + 2]) / a
-      let key = (Int(r) >> 5) << 6 | (Int(g) >> 5) << 3 | (Int(b) >> 5)
-      let current = buckets[key] ?? (0, 0, 0, 0)
-      buckets[key] = (current.count + 1, current.r + r, current.g + g, current.b + b)
+      let a = alpha / 255
+      let point = SIMD3(Double(pixels[index]), Double(pixels[index + 1]), Double(pixels[index + 2])) / a
+      points.append(point.clamped(lowerBound: SIMD3(repeating: 0), upperBound: SIMD3(repeating: 255)))
     }
-    guard let top = buckets.values.max(by: { $0.count < $1.count }), top.count > 0 else { return nil }
-    let count = Double(top.count)
-    return [top.r / count, top.g / count, top.b / count].map { min(255, max(0, $0)) }
+    return paletteClusters(points).map { cluster in
+      var swatch = Swatch()
+      swatch.rgb = [cluster.rgb.x, cluster.rgb.y, cluster.rgb.z].map { $0.rounded() }
+      swatch.share = cluster.share
+      return swatch
+    }
   }
 }
 

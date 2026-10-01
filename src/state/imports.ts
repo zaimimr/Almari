@@ -1,5 +1,7 @@
 import { useEffect } from "react";
-import ClosetVision from "../../modules/closet-vision/src";
+import ClosetVision, {
+  type PreparedGarment,
+} from "../../modules/closet-vision/src";
 import type { ClosetRepository } from "../domain/repository";
 import type { ImportJob, Prepared } from "../domain/closet";
 import {
@@ -23,6 +25,19 @@ export function discardImportFiles(job: ImportJob, keepOriginal = false) {
     if (file) void discardPhoto(file).catch(() => undefined);
 }
 
+export function preparedFrom(result: PreparedGarment): Prepared {
+  return {
+    original: result.original,
+    cutout: result.cutout,
+    thumbnail: result.thumbnail,
+    frame: result.frame,
+    instances: result.instances,
+    labels: result.labels,
+    palette: result.palette,
+    embedding: result.embedding,
+  };
+}
+
 export function useImportRunner(repository: ClosetRepository, ready: boolean) {
   useEffect(() => {
     if (!ready || !canPrepareOnDevice) return;
@@ -42,16 +57,7 @@ export function useImportRunner(repository: ClosetRepository, ready: boolean) {
             photoUri(job.source),
             job.id,
           );
-          const prepared: Prepared = {
-            original: result.original,
-            cutout: result.cutout,
-            thumbnail: result.thumbnail,
-            frame: result.frame,
-            instances: result.instances,
-            labels: result.labels,
-            palette: result.color ? [{ rgb: result.color, share: 1 }] : [],
-            embedding: null,
-          };
+          const prepared = preparedFrom(result);
           const current = repository
             .getSnapshot()
             .imports.find((item) => item.id === job.id);
