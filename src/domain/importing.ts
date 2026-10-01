@@ -19,6 +19,7 @@ import {
   type Sources,
   type Style,
 } from "./closet";
+import { withCareLabel, type CareLabel } from "./careLabel";
 import { colorName, type Swatch } from "./color";
 import { attributeCheck, proposeAttributes, recognize } from "./recognition";
 
@@ -197,6 +198,20 @@ export function correctImport(
   });
 }
 
+export function setImportLabel(
+  closet: Closet,
+  id: string,
+  label: CareLabel | undefined,
+): Closet {
+  return updateJob(closet, id, (job) => {
+    if (job.state !== "ready" && job.state !== "review") return job;
+    const next = { ...job };
+    if (label) next.label = label;
+    else delete next.label;
+    return next;
+  });
+}
+
 export function removeImport(closet: Closet, id: string): Closet {
   return updateJob(closet, id, () => null);
 }
@@ -222,7 +237,7 @@ export function pieceFromImport(job: ImportJob): Piece | null {
     createdAt: job.createdAt,
     source: "owned",
   };
-  return {
+  const accepted: Piece = {
     ...withDetails(piece, {
       attributes: job.attributes,
       sources: job.attributeSources,
@@ -230,6 +245,7 @@ export function pieceFromImport(job: ImportJob): Piece | null {
     ...(job.prepared.palette.length ? { colors: job.prepared.palette } : {}),
     ...(job.prepared.embedding ? { embedding: job.prepared.embedding } : {}),
   };
+  return job.label ? withCareLabel(accepted, job.label) : accepted;
 }
 
 export function acceptImports(closet: Closet): Closet {

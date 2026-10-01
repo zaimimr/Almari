@@ -1,3 +1,6 @@
+import { fitAttributes, type Fabric } from "./attributes";
+import type { Piece } from "./closet";
+
 export type LabelMaterial = { fibre: string; percent: number | null };
 
 export type LabelFields = {
@@ -195,4 +198,123 @@ export async function readCareLabelText(
     .then((ready) => (ready ? model.extract(text) : null))
     .catch(() => null);
   return mergeCareLabel(parsed, json, text);
+}
+
+export type LabelDraft = {
+  materials: { fibre: string; percent: string }[];
+  size: string;
+  brand: string;
+  origin: string;
+};
+
+const fibreFabric: Partial<Record<string, Fabric>> = {
+  cotton: "cotton",
+  linen: "linen",
+  wool: "wool",
+  cashmere: "wool",
+  silk: "silk",
+  modal: "modal",
+};
+
+export function hasLabelFields(fields: LabelFields) {
+  return Boolean(
+    fields.materials.length || fields.size || fields.brand || fields.origin,
+  );
+}
+
+export function isCareLabel(value: unknown): value is CareLabel {
+  return (
+    isRecord(value) &&
+    isText(value.photo, 200) &&
+    Array.isArray(value.materials) &&
+    value.materials.every(
+      (item) =>
+        isRecord(item) &&
+        isText(item.fibre, limits.fibre) &&
+        (item.percent === null || isPercent(item.percent)),
+    ) &&
+    (value.size === undefined || isText(value.size, limits.size)) &&
+    (value.brand === undefined || isText(value.brand, limits.brand)) &&
+    (value.origin === undefined || isText(value.origin, limits.origin))
+  );
+}
+
+export function draftFromLabel(
+  fields?: LabelFields,
+  name: (fibre: string) => string = (fibre) => fibre,
+): LabelDraft {
+  return {
+    materials: (fields?.materials ?? []).map((material) => ({
+      fibre: name(material.fibre),
+      percent: material.percent === null ? "" : String(material.percent),
+    })),
+    size: fields?.size ?? "",
+    brand: fields?.brand ?? "",
+    origin: fields?.origin ?? "",
+  };
+}
+
+export function labelFromDraft(photo: string, draft: LabelDraft): CareLabel {
+  const materials = unique(
+    draft.materials.flatMap((item): LabelMaterial[] => {
+      const typed = item.fibre.trim().slice(0, limits.fibre);
+      if (!typed) return [];
+      const digits = item.percent.trim().replace(/\s*%$/, "");
+      const percent = /^\d{1,3}$/.test(digits) ? Number(digits) : null;
+      return [
+        {
+          fibre: fibreName(typed) ?? typed.toLowerCase(),
+          percent: percent !== null && percent <= 100 ? percent : null,
+        },
+      ];
+    }),
+  );
+  const label: CareLabel = { photo, materials };
+  for (const key of ["size", "brand", "origin"] as const) {
+    const value = draft[key].trim().slice(0, limits[key]);
+    if (value) label[key] = value;
+  }
+  return label;
+}
+
+export function fabricFromMaterials(materials: LabelMaterial[]): Fabric | null {
+  const main = [...materials].sort(
+    (a, b) => (b.percent ?? -1) - (a.percent ?? -1),
+  )[0];
+  return main ? (fibreFabric[main.fibre] ?? null) : null;
+}
+
+function dropFabric<T extends { fabric?: unknown }>(value: T | undefined) {
+  if (!value) return undefined;
+  const copy = { ...value };
+  delete copy.fabric;
+  return Object.keys(copy).length ? copy : undefined;
+}
+
+export function withCareLabel(
+  piece: Piece,
+  label: CareLabel | undefined,
+): Piece {
+  const next: Piece = { ...piece };
+  if (label) next.label = label;
+  else delete next.label;
+  const source = piece.sources?.fabric;
+  const confirmed =
+    piece.attributes?.fabric !== undefined &&
+    (source === undefined || source === "confirmed");
+  if (confirmed) return next;
+  const fabric = label ? fabricFromMaterials(label.materials) : null;
+  if (fabric) {
+    next.attributes = { ...piece.attributes, fabric };
+    next.sources = { ...piece.sources, fabric: "label" };
+    return next.sources.formality === "proposed" ? fitAttributes(next) : next;
+  }
+  if (source !== "label") return next;
+  const attributes = dropFabric(piece.attributes);
+  const sources = dropFabric(piece.sources);
+  if (attributes) next.attributes = attributes;
+  else delete next.attributes;
+  if (sources) next.sources = sources;
+  else delete next.sources;
+  return next.sources?.formality === "proposed" ? fitAttributes(next) : next;
 }

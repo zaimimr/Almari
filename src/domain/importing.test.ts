@@ -9,6 +9,7 @@ import {
   type Piece,
   type Prepared,
 } from "./closet";
+import type { CareLabel } from "./careLabel";
 import {
   acceptImports,
   correctImport,
@@ -21,6 +22,7 @@ import {
   refreshPiece,
   removeImport,
   retryImport,
+  setImportLabel,
   startImport,
 } from "./importing";
 
@@ -391,5 +393,42 @@ test("re-preparing an owned piece fills attributes and keeps what she confirmed"
   assert.deepEqual(
     decodeCloset(JSON.stringify(savePiece(closet, piece))).pieces[0],
     piece,
+  );
+});
+
+test("C20 a care label added in Check this piece goes with the piece", () => {
+  const label: CareLabel = {
+    photo: "job-label.jpg",
+    materials: [
+      { fibre: "cotton", percent: 95 },
+      { fibre: "elastane", percent: 5 },
+    ],
+    size: "S",
+  };
+  let closet = startImport(queued(), "job");
+  closet = finishImport(closet, "job", prepared());
+  closet = correctImport(closet, "job", {});
+  assert.equal(
+    setImportLabel(
+      failImport(startImport(queued("other"), "other"), "other", "processing"),
+      "other",
+      label,
+    ).imports[0]!.label,
+    undefined,
+  );
+  closet = setImportLabel(closet, "job", label);
+  assert.deepEqual(closet.imports[0]!.label, label);
+  assert.equal(
+    setImportLabel(closet, "job", undefined).imports[0]!.label,
+    undefined,
+  );
+  closet = acceptImports(closet);
+  const piece = closet.pieces.find((item) => item.id === "job")!;
+  assert.deepEqual(piece.label, label);
+  assert.equal(piece.attributes?.fabric, "cotton");
+  assert.equal(piece.sources?.fabric, "label");
+  assert.deepEqual(
+    decodeCloset(JSON.stringify(closet)).pieces[0]!.label,
+    label,
   );
 });

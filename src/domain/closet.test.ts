@@ -7,9 +7,11 @@ import {
   removePiece,
   saveLook,
   savePiece,
+  setPieceLabel,
   type Piece,
   type Prepared,
 } from "./closet";
+import type { CareLabel } from "./careLabel";
 import { closetV2, ids } from "./closet-v2.fixture";
 import {
   acceptImports,
@@ -571,4 +573,37 @@ test("the refresh marker survives reopening and must be a whole number", () => {
   assert.throws(() =>
     decodeCloset(JSON.stringify({ ...emptyCloset, attributeRefresh: "yes" })),
   );
+});
+
+test("C18 a care label is kept when the closet is saved and reopened", () => {
+  const label: CareLabel = {
+    photo: "tunic-label.jpg",
+    materials: [{ fibre: "cotton", percent: 100 }],
+    size: "M",
+    origin: "Turkey",
+  };
+  const closet = setPieceLabel(savePiece(emptyCloset, tunic), "tunic", label);
+  const reopened = decodeCloset(JSON.stringify(closet));
+  const piece = reopened.pieces.find((item) => item.id === "tunic")!;
+  assert.deepEqual(piece.label, label);
+  assert.equal(piece.attributes?.fabric, "cotton");
+  assert.equal(piece.sources?.fabric, "label");
+  const renamed = savePiece(reopened, { ...piece, name: "Ivory tunic two" });
+  assert.deepEqual(renamed.pieces[0]!.label, label);
+  const removed = setPieceLabel(reopened, "tunic", undefined).pieces[0]!;
+  assert.equal(removed.label, undefined);
+  assert.equal(removed.attributes?.fabric, undefined);
+  assert.equal(setPieceLabel(reopened, "missing", label), reopened);
+});
+
+test("C19 a malformed care label is refused instead of stored", () => {
+  assert.throws(() =>
+    savePiece(emptyCloset, { ...tunic, label: { photo: "", materials: [] } }),
+  );
+  const stored = JSON.parse(JSON.stringify(savePiece(emptyCloset, tunic)));
+  stored.pieces[0].label = {
+    photo: "tunic-label.jpg",
+    materials: [{ fibre: "cotton", percent: 140 }],
+  };
+  assert.throws(() => decodeCloset(JSON.stringify(stored)));
 });

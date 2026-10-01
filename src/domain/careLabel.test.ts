@@ -1,14 +1,22 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  draftFromLabel,
+  fabricFromMaterials,
   fibreName,
+  isCareLabel,
+  labelFromDraft,
   mergeCareLabel,
   parseCareText,
   readCareLabelText,
+  withCareLabel,
+  type CareLabel,
   type LabelFields,
   type LabelModel,
 } from "./careLabel";
 import { careLabelFixtures } from "./careLabelEval";
+import { formalityFor } from "./attributes";
+import type { Piece } from "./closet";
 
 const withoutBrand = (fields: LabelFields): LabelFields => {
   const copy = { ...fields };
@@ -264,4 +272,168 @@ test("C11 only the parser runs when the model is off, failing or not needed", as
     materials: [],
   });
   assert.deepEqual(empty.asked, []);
+});
+
+const piece = (changes: Partial<Piece> = {}): Piece => ({
+  id: "piece",
+  name: "Sage kurta",
+  category: "tunic",
+  photo: "piece.png",
+  createdAt: "2026-10-01T08:00:00Z",
+  source: "owned",
+  ...changes,
+});
+
+const label = (changes: Partial<CareLabel> = {}): CareLabel => ({
+  photo: "piece-label.jpg",
+  materials: [
+    { fibre: "cotton", percent: 95 },
+    { fibre: "elastane", percent: 5 },
+  ],
+  ...changes,
+});
+
+test("C12 a label she types is cleaned and normalised", () => {
+  const typed = labelFromDraft("piece-label.jpg", {
+    materials: [
+      { fibre: " Bomull ", percent: "80 %" },
+      { fibre: "Tencel", percent: "20" },
+      { fibre: "cotton", percent: "5" },
+      { fibre: "  ", percent: "10" },
+      { fibre: "silke", percent: "250" },
+    ],
+    size: " M ",
+    brand: "",
+    origin: "Norge",
+  });
+  assert.deepEqual(typed, {
+    photo: "piece-label.jpg",
+    materials: [
+      { fibre: "cotton", percent: 80 },
+      { fibre: "tencel", percent: 20 },
+      { fibre: "silk", percent: null },
+    ],
+    size: "M",
+    origin: "Norge",
+  });
+  assert.ok(isCareLabel(typed));
+  const draft = draftFromLabel(
+    { materials: [{ fibre: "cotton", percent: 95 }], size: "S" },
+    (fibre) => (fibre === "cotton" ? "bomull" : fibre),
+  );
+  assert.deepEqual(draft, {
+    materials: [{ fibre: "bomull", percent: "95" }],
+    size: "S",
+    brand: "",
+    origin: "",
+  });
+  assert.deepEqual(labelFromDraft("a.jpg", draft).materials, [
+    { fibre: "cotton", percent: 95 },
+  ]);
+  assert.deepEqual(draftFromLabel(), {
+    materials: [],
+    size: "",
+    brand: "",
+    origin: "",
+  });
+});
+
+test("C13 a stored label is checked before it is trusted", () => {
+  assert.ok(isCareLabel(label({ size: "M", brand: "H&M", origin: "Turkey" })));
+  assert.ok(isCareLabel(label({ materials: [] })));
+  assert.equal(isCareLabel(label({ photo: "" })), false);
+  assert.equal(isCareLabel({ photo: "a.jpg" }), false);
+  assert.equal(
+    isCareLabel(label({ materials: [{ fibre: "cotton", percent: 120 }] })),
+    false,
+  );
+  assert.equal(
+    isCareLabel(label({ materials: [{ fibre: "cotton", percent: 2.5 }] })),
+    false,
+  );
+  assert.equal(isCareLabel(label({ size: "" })), false);
+});
+
+test("C14 the main fibre sets the fabric with source label", () => {
+  const next = withCareLabel(piece(), label());
+  assert.deepEqual(next.label, label());
+  assert.equal(next.attributes?.fabric, "cotton");
+  assert.equal(next.sources?.fabric, "label");
+  const proposed = withCareLabel(
+    piece({ attributes: { fabric: "lawn" }, sources: { fabric: "proposed" } }),
+    label(),
+  );
+  assert.equal(proposed.attributes?.fabric, "cotton");
+  assert.equal(proposed.sources?.fabric, "label");
+  assert.equal(
+    fabricFromMaterials([{ fibre: "cashmere", percent: 100 }]),
+    "wool",
+  );
+  assert.equal(
+    fabricFromMaterials([
+      { fibre: "silk", percent: null },
+      { fibre: "polyester", percent: null },
+    ]),
+    "silk",
+  );
+  const silk = label({ materials: [{ fibre: "silk", percent: 100 }] });
+  const rated = withCareLabel(
+    piece({
+      attributes: { fabric: "lawn", formality: 2 },
+      sources: { fabric: "proposed", formality: "proposed" },
+    }),
+    silk,
+  );
+  assert.equal(
+    rated.attributes?.formality,
+    formalityFor({ category: "tunic", fabric: "silk" }),
+  );
+  assert.equal(rated.sources?.formality, "proposed");
+});
+
+test("C15 a confirmed fabric is never replaced by the label", () => {
+  for (const confirmed of [
+    piece({ attributes: { fabric: "silk" } }),
+    piece({ attributes: { fabric: "silk" }, sources: { fabric: "confirmed" } }),
+  ]) {
+    const next = withCareLabel(confirmed, label());
+    assert.equal(next.attributes?.fabric, "silk");
+    assert.equal(next.sources?.fabric, confirmed.sources?.fabric);
+    assert.deepEqual(next.label, label());
+  }
+});
+
+test("C16 synthetic or unknown fibres record materials without inventing a fabric", () => {
+  const synthetic = label({
+    materials: [
+      { fibre: "polyester", percent: 60 },
+      { fibre: "cotton", percent: 40 },
+    ],
+  });
+  assert.equal(fabricFromMaterials(synthetic.materials), null);
+  assert.equal(fabricFromMaterials([]), null);
+  const fresh = withCareLabel(piece(), synthetic);
+  assert.equal(fresh.attributes, undefined);
+  assert.equal(fresh.sources, undefined);
+  const relabelled = withCareLabel(withCareLabel(piece(), label()), synthetic);
+  assert.equal(relabelled.attributes?.fabric, undefined);
+  assert.equal(relabelled.sources?.fabric, undefined);
+  assert.deepEqual(relabelled.label, synthetic);
+});
+
+test("C17 removing the label removes only a fabric that came from it", () => {
+  const labelled = withCareLabel(
+    piece({ attributes: { length: "knee" }, sources: { length: "confirmed" } }),
+    label(),
+  );
+  const removed = withCareLabel(labelled, undefined);
+  assert.equal(removed.label, undefined);
+  assert.deepEqual(removed.attributes, { length: "knee" });
+  assert.deepEqual(removed.sources, { length: "confirmed" });
+  const confirmed = withCareLabel(
+    piece({ attributes: { fabric: "silk" }, label: label() }),
+    undefined,
+  );
+  assert.equal(confirmed.attributes?.fabric, "silk");
+  assert.equal(confirmed.label, undefined);
 });

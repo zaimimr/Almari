@@ -15,6 +15,7 @@ import {
   type AttributeKey,
   type Attributes,
 } from "./attributes";
+import { isCareLabel, withCareLabel, type CareLabel } from "./careLabel";
 import { isSwatches, type Swatch } from "./color";
 
 export * from "./taxonomy";
@@ -63,6 +64,7 @@ export type Piece = {
   embedding?: string;
   status?: "away" | "archived";
   away?: AwayReason;
+  label?: CareLabel;
 };
 
 export type Prepared = {
@@ -95,6 +97,7 @@ export type ImportJob = {
   checks?: ("uncertain" | "no-cutout" | "several" | "attribute")[];
   keepOriginal?: boolean;
   error?: string;
+  label?: CareLabel;
 };
 
 export type Look = {
@@ -310,7 +313,8 @@ function isPiece(value: unknown): value is Piece {
     optional(value.away, (reason): reason is AwayReason =>
       awayReasons.includes(reason as AwayReason),
     ) &&
-    (value.status === "away") === (value.away !== undefined)
+    (value.status === "away") === (value.away !== undefined) &&
+    optional(value.label, isCareLabel)
   );
 }
 
@@ -387,6 +391,7 @@ function isImportJob(value: unknown): value is ImportJob {
     ) &&
     optional(value.keepOriginal, isBoolean) &&
     optional(value.error, isString) &&
+    optional(value.label, isCareLabel) &&
     (!["ready", "review"].includes(value.state as string) ||
       (value.prepared !== undefined &&
         value.kind !== undefined &&
@@ -707,4 +712,14 @@ export function setAway(
 
 export function usedIn(closet: Closet, id: string) {
   return closet.looks.filter((look) => look.pieceIds.includes(id)).length;
+}
+
+export function setPieceLabel(
+  closet: Closet,
+  id: string,
+  label: CareLabel | undefined,
+): Closet {
+  const piece = closet.pieces.find((item) => item.id === id);
+  if (!piece) return closet;
+  return savePiece(closet, withCareLabel(piece, label));
 }
