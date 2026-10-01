@@ -3,7 +3,10 @@ import assert from "node:assert/strict";
 import {
   decodeCloset,
   emptyCloset,
+  savePiece,
+  type Closet,
   type LabelScore,
+  type Piece,
   type Prepared,
 } from "./closet";
 import {
@@ -11,8 +14,11 @@ import {
   correctImport,
   failImport,
   finishImport,
+  finishRefresh,
+  piecesToRefresh,
   queueImport,
   recoverImports,
+  refreshPiece,
   removeImport,
   retryImport,
   startImport,
@@ -319,4 +325,71 @@ test("a piece without a cutout is named by its subcategory alone", () => {
   });
   assert.equal(closet.imports[0]!.name, "Kurta");
   assert.equal(acceptImports(closet).pieces.length, 0);
+});
+
+test("re-preparing an owned piece fills attributes and keeps what she confirmed", () => {
+  const old: Piece = {
+    id: "old",
+    name: "My kurta",
+    category: "tunic",
+    kind: "kurta",
+    photo: "old.png",
+    original: "old-original.jpg",
+    createdAt: "2026-09-01T08:00:00Z",
+    source: "owned",
+    attributes: { length: "ankle", fabric: "cotton" },
+    sources: { length: "confirmed", kind: "confirmed" },
+  };
+  const sample: Piece = {
+    id: "sample",
+    name: "Sample hijab",
+    category: "hijab",
+    photo: "sample.png",
+    createdAt: old.createdAt,
+    source: "sample",
+  };
+  const refreshed: Prepared = {
+    ...withAttributes([
+      { group: "length", value: "knee", score: 0.12 },
+      { group: "length", value: "ankle", score: 0.09 },
+      { group: "sleeve", value: "long", score: 0.1 },
+      { group: "fabric", value: "silk", score: 0.1 },
+    ]),
+    original: "old-refresh-original.jpg",
+    cutout: "old-refresh.png",
+    palette: [{ rgb: [151, 107, 112], share: 0.8 }],
+  };
+  let closet: Closet = { ...emptyCloset, pieces: [old, sample] };
+  assert.deepEqual(
+    piecesToRefresh(closet).map((piece) => piece.id),
+    ["old"],
+  );
+  closet = refreshPiece(closet, "old", refreshed);
+  const piece = closet.pieces[0]!;
+  assert.equal(piece.attributes?.length, "ankle");
+  assert.equal(piece.sources?.length, "confirmed");
+  assert.equal(piece.attributes?.fabric, "cotton");
+  assert.equal(piece.sources?.fabric, undefined);
+  assert.equal(piece.attributes?.sleeve, "long");
+  assert.equal(piece.sources?.sleeve, "proposed");
+  assert.equal(piece.attributes?.formality, 2);
+  assert.equal(piece.sources?.kind, "confirmed");
+  assert.equal(piece.name, "My kurta");
+  assert.equal(piece.photo, "old.png");
+  assert.equal(piece.original, "old-original.jpg");
+  assert.equal(piece.embedding, embedding);
+  assert.deepEqual(piece.colors, [{ rgb: [151, 107, 112], share: 0.8 }]);
+  assert.deepEqual(closet.pieces[1], sample);
+  assert.deepEqual(piecesToRefresh(closet), []);
+  assert.equal(refreshPiece(closet, "gone", refreshed), closet);
+  const done = finishRefresh({
+    ...closet,
+    pieces: [{ ...old, id: "failed" }, ...closet.pieces],
+  });
+  assert.equal(done.attributeRefresh, 1);
+  assert.deepEqual(piecesToRefresh(done), []);
+  assert.deepEqual(
+    decodeCloset(JSON.stringify(savePiece(closet, piece))).pieces[0],
+    piece,
+  );
 });

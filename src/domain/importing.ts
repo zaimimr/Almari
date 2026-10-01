@@ -247,3 +247,35 @@ export function acceptImports(closet: Closet): Closet {
     imports: next.imports.filter((job) => !accepted.includes(job.id)),
   };
 }
+
+export const attributeRefreshVersion = 1;
+
+export function piecesToRefresh(closet: Closet): Piece[] {
+  if ((closet.attributeRefresh ?? 0) >= attributeRefreshVersion) return [];
+  return closet.pieces.filter(
+    (piece) => piece.source === "owned" && piece.embedding === undefined,
+  );
+}
+
+export function refreshPiece(
+  closet: Closet,
+  id: string,
+  prepared: Prepared,
+): Closet {
+  const piece = closet.pieces.find((item) => item.id === id);
+  if (!piece) return closet;
+  const proposal = proposeAttributes(prepared.labels, piece);
+  const next: Piece = {
+    ...mergeProposal(piece, proposal.attributes),
+    ...(prepared.palette.length ? { colors: prepared.palette } : {}),
+    ...(prepared.embedding ? { embedding: prepared.embedding } : {}),
+  };
+  return {
+    ...closet,
+    pieces: closet.pieces.map((item) => (item.id === id ? next : item)),
+  };
+}
+
+export function finishRefresh(closet: Closet): Closet {
+  return { ...closet, attributeRefresh: attributeRefreshVersion };
+}
