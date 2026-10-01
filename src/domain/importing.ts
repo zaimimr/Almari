@@ -1,4 +1,12 @@
 import {
+  confirmAttribute,
+  mergeProposal,
+  withDetails,
+  type AttributeKey,
+  type AttributeValue,
+  type Described,
+} from "./attributes";
+import {
   categoryOf,
   fixedStyles,
   kindLabel,
@@ -12,7 +20,7 @@ import {
   type Style,
 } from "./closet";
 import { colorName, type Swatch } from "./color";
-import { recognize } from "./recognition";
+import { attributeCheck, proposeAttributes, recognize } from "./recognition";
 
 export type CheckReason = "uncertain" | "no-cutout" | "several" | "attribute";
 
@@ -70,6 +78,14 @@ export function finishImport(
     if (recognition.question) checks.push("uncertain");
     if (!prepared.cutout) checks.push("no-cutout");
     if (prepared.instances > 1) checks.push("several");
+    const base: Described = {
+      category: recognition.category,
+      kind: recognition.kind,
+    };
+    const details = proposeAttributes(prepared.labels, base);
+    const asked = attributeCheck(details, checks.includes("uncertain"));
+    if (asked) checks.push("attribute");
+    const described = mergeProposal(base, details.attributes);
     const styles = recognition.styles.length ? recognition.styles : undefined;
     const sources: Sources = styles
       ? { kind: "proposed", styles: "proposed" }
@@ -83,6 +99,9 @@ export function finishImport(
       styles,
       question: recognition.question ?? undefined,
       sources,
+      attributes: described.attributes,
+      attributeSources: described.sources,
+      attributeCheck: asked ?? undefined,
       checks,
       error: undefined,
     };
@@ -121,6 +140,7 @@ export function correctImport(
     styles?: Style[];
     name?: string;
     keepOriginal?: boolean;
+    attribute?: { key: AttributeKey; value: AttributeValue };
   },
 ): Closet {
   return updateJob(closet, id, (job) => {
@@ -142,11 +162,32 @@ export function correctImport(
         change.styles?.length || (fixed && change.kind)
           ? "confirmed"
           : (job.sources?.styles ?? "proposed");
+    const category = categoryOf(kind);
+    let described: Described = {
+      category,
+      kind,
+      attributes: job.attributes,
+      sources: job.attributeSources,
+    };
+    if (kind !== job.kind)
+      described = mergeProposal(
+        described,
+        proposeAttributes(job.prepared!.labels, { category, kind }).attributes,
+      );
+    if (change.attribute)
+      described = confirmAttribute(
+        described,
+        change.attribute.key,
+        change.attribute.value,
+      );
     return {
       ...job,
       kind,
       styles,
       name: renamed,
+      attributes: described.attributes,
+      attributeSources: described.sources,
+      attributeCheck: undefined,
       keepOriginal: change.keepOriginal ?? job.keepOriginal,
       sources,
       question: undefined,
@@ -168,7 +209,7 @@ export function pieceFromImport(job: ImportJob): Piece | null {
   const sources: Sources =
     job.sources ??
     (styles ? { kind: "proposed", styles: "proposed" } : { kind: "proposed" });
-  return {
+  const piece: Piece = {
     id: job.id,
     name: job.name,
     category: categoryOf(job.kind),
@@ -180,6 +221,14 @@ export function pieceFromImport(job: ImportJob): Piece | null {
     ...(useCutout && job.prepared.frame ? { frame: job.prepared.frame } : {}),
     createdAt: job.createdAt,
     source: "owned",
+  };
+  return {
+    ...withDetails(piece, {
+      attributes: job.attributes,
+      sources: job.attributeSources,
+    }),
+    ...(job.prepared.palette.length ? { colors: job.prepared.palette } : {}),
+    ...(job.prepared.embedding ? { embedding: job.prepared.embedding } : {}),
   };
 }
 

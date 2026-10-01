@@ -441,7 +441,11 @@ test("a version 2 closet opens as version 3 with every piece, look, Today sessio
   const piece = saved.pieces.find((item) => item.id === ids.ready)!;
   assert.equal(piece.category, "tunic");
   assert.deepEqual(piece.styles, ["desi"]);
-  assert.deepEqual(piece.sources, { kind: "proposed", styles: "proposed" });
+  assert.deepEqual(piece.sources, {
+    kind: "proposed",
+    styles: "proposed",
+    formality: "proposed",
+  });
   const review = saved.imports.find((job) => job.id === ids.review)!;
   assert.equal(review.state, "ready");
   assert.equal(review.name, "Hijab");

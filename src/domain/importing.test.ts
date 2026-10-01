@@ -67,7 +67,11 @@ test("P01 a clear photo becomes a named piece with category, subcategory and sty
   assert.equal(piece.category, "tunic");
   assert.equal(piece.kind, "kurta");
   assert.deepEqual(piece.styles, ["desi"]);
-  assert.deepEqual(piece.sources, { kind: "proposed", styles: "proposed" });
+  assert.deepEqual(piece.sources, {
+    kind: "proposed",
+    styles: "proposed",
+    formality: "proposed",
+  });
   assert.equal(piece.photo, "job.png");
   assert.equal(piece.original, "job-original.jpg");
   assert.deepEqual(piece.frame, prepared().frame);
@@ -101,6 +105,7 @@ test("close calls, missing cutouts, and several garments ask for a quick check",
   assert.deepEqual(closet.pieces[0]!.sources, {
     kind: "confirmed",
     styles: "confirmed",
+    formality: "proposed",
   });
 });
 
@@ -119,6 +124,7 @@ test("a style she picks in review is stored as confirmed", () => {
   assert.deepEqual(closet.pieces[0]!.sources, {
     kind: "proposed",
     styles: "confirmed",
+    formality: "proposed",
   });
 });
 
@@ -183,4 +189,134 @@ test("a restart puts unfinished work back in the queue and keeps partial batches
 test("a closet saved before imports existed still opens", () => {
   const { imports: _imports, ...older } = emptyCloset;
   assert.deepEqual(decodeCloset(JSON.stringify(older)).imports, []);
+});
+
+const embedding = "A".repeat(1024);
+
+const withAttributes = (
+  labels: LabelScore[],
+  kinds: LabelScore[] = [
+    { group: "kind", value: "kurta", score: 0.2 },
+    { group: "kind", value: "tunic", score: 0.1 },
+  ],
+): Prepared => ({
+  original: "job-original.jpg",
+  cutout: "job.png",
+  thumbnail: "job-thumb.png",
+  frame: { x: 0.2, y: 0, width: 0.6, height: 1 },
+  instances: 1,
+  labels: [...kinds, ...labels],
+  palette: [
+    { rgb: [167, 174, 152], share: 0.7 },
+    { rgb: [238, 235, 230], share: 0.2 },
+  ],
+  embedding,
+});
+
+const sureLength: LabelScore[] = [
+  { group: "length", value: "knee", score: 0.12 },
+  { group: "length", value: "calf", score: 0.09 },
+  { group: "sleeve", value: "long", score: 0.11 },
+  { group: "sleeve", value: "elbow", score: 0.08 },
+  { group: "fabric", value: "lawn", score: 0.1 },
+  { group: "fabric", value: "cotton", score: 0.099 },
+];
+
+const unsureLength: LabelScore[] = [
+  { group: "length", value: "knee", score: 0.12 },
+  { group: "length", value: "calf", score: 0.115 },
+  { group: "sleeve", value: "long", score: 0.11 },
+  { group: "sleeve", value: "elbow", score: 0.105 },
+];
+
+test("an imported piece keeps proposed attributes, its palette and its embedding", () => {
+  let closet = finishImport(
+    startImport(queued(), "job"),
+    "job",
+    withAttributes(sureLength),
+  );
+  const job = closet.imports[0]!;
+  assert.equal(job.state, "ready");
+  assert.equal(job.attributeCheck, undefined);
+  assert.equal(job.name, "Sage kurta");
+  closet = acceptImports(closet);
+  const piece = closet.pieces[0]!;
+  assert.equal(piece.attributes?.length, "knee");
+  assert.equal(piece.attributes?.fabric, "lawn");
+  assert.equal(piece.attributes?.formality, 2);
+  assert.equal(piece.sources?.length, "proposed");
+  assert.equal(piece.sources?.fabric, "proposed");
+  assert.equal(piece.attributes?.sheer, undefined);
+  assert.deepEqual(piece.colors, withAttributes([]).palette);
+  assert.equal(piece.embedding, embedding);
+});
+
+test("an unsure length is the only quick check and her answer is stored as confirmed", () => {
+  let closet = finishImport(
+    startImport(queued(), "job"),
+    "job",
+    withAttributes(unsureLength),
+  );
+  assert.equal(closet.imports[0]!.state, "review");
+  assert.deepEqual(closet.imports[0]!.checks, ["attribute"]);
+  assert.equal(closet.imports[0]!.attributeCheck, "length");
+  closet = correctImport(closet, "job", {
+    attribute: { key: "length", value: "calf" },
+  });
+  assert.equal(closet.imports[0]!.state, "ready");
+  assert.equal(closet.imports[0]!.attributeCheck, undefined);
+  closet = acceptImports(closet);
+  assert.equal(closet.pieces[0]!.attributes?.length, "calf");
+  assert.equal(closet.pieces[0]!.sources?.length, "confirmed");
+  assert.equal(closet.pieces[0]!.sources?.sleeve, "proposed");
+});
+
+test("a subcategory close call keeps the attribute question away", () => {
+  const closet = finishImport(
+    startImport(queued(), "job"),
+    "job",
+    withAttributes(unsureLength, [
+      { group: "kind", value: "kurta", score: 0.14 },
+      { group: "kind", value: "kameez", score: 0.135 },
+    ]),
+  );
+  const job = closet.imports[0]!;
+  assert.ok(job.checks?.includes("uncertain"));
+  assert.equal(job.checks?.includes("attribute"), false);
+  assert.equal(job.attributeCheck, undefined);
+  assert.equal(job.attributes?.length, "knee");
+});
+
+test("correcting the subcategory re-proposes attributes and keeps confirmed answers that still apply", () => {
+  let closet = finishImport(
+    startImport(queued(), "job"),
+    "job",
+    withAttributes([
+      ...sureLength,
+      { group: "volume", value: "straight", score: 0.1 },
+      { group: "volume", value: "fitted", score: 0.05 },
+    ]),
+  );
+  closet = correctImport(closet, "job", {
+    attribute: { key: "fabric", value: "silk" },
+  });
+  closet = correctImport(closet, "job", { kind: "trousers" });
+  const job = closet.imports[0]!;
+  assert.equal(job.attributes?.length, undefined);
+  assert.equal(job.attributes?.sleeve, undefined);
+  assert.equal(job.attributes?.fabric, "silk");
+  assert.equal(job.attributeSources?.fabric, "confirmed");
+  assert.equal(job.attributes?.volume, "straight");
+  assert.equal(job.attributes?.formality, 3);
+  assert.equal(job.name, "Sage trousers");
+});
+
+test("a piece without a cutout is named by its subcategory alone", () => {
+  const closet = finishImport(startImport(queued(), "job"), "job", {
+    ...withAttributes(sureLength),
+    cutout: null,
+    palette: [],
+  });
+  assert.equal(closet.imports[0]!.name, "Kurta");
+  assert.equal(acceptImports(closet).pieces.length, 0);
 });
