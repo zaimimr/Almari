@@ -3,19 +3,28 @@ import assert from "node:assert/strict";
 import {
   decodeCloset,
   emptyCloset,
+  garmentKinds,
   savePiece,
   type Closet,
+  type GarmentRegion,
   type LabelScore,
   type Piece,
   type Prepared,
 } from "./closet";
 import type { CareLabel } from "./careLabel";
+import { proposalsFromRegions } from "./capture";
 import {
   acceptImports,
+  addToCapture,
+  captureJobs,
   correctImport,
+  cropCapture,
   failImport,
   finishImport,
+  fileStem,
   finishRefresh,
+  jobStem,
+  orphanedFiles,
   piecesToRefresh,
   queueImport,
   recoverImports,
@@ -23,6 +32,7 @@ import {
   removeImport,
   retryImport,
   setImportLabel,
+  splitCapture,
   startImport,
 } from "./importing";
 
@@ -456,4 +466,215 @@ test("refreshing a piece whose photo was replaced measures colours and embedding
   );
   assert.equal(closet.pieces[0]!.embedding, embedding);
   assert.deepEqual(closet.pieces[0]!.colors, [{ rgb: [10, 20, 30], share: 1 }]);
+});
+
+const region = (
+  kind: GarmentRegion["kind"],
+  index: number,
+  partial = false,
+): GarmentRegion => ({
+  kind,
+  cutout: `job-region-${index}.png`,
+  frame: { x: 0.25, y: 0.125 * index, width: 0.5, height: 0.125 },
+  share: 0.1,
+  partial,
+});
+
+const splitOutfit = (people = 1) =>
+  splitCapture(
+    startImport(queued(), "job"),
+    "job",
+    proposalsFromRegions([region("upper", 1), region("pants", 2)], people),
+  );
+
+test("one photo of an outfit becomes one job per piece sharing the capture", () => {
+  const start = startImport(
+    queueImport(queued(), {
+      id: "later",
+      source: "later-original.jpg",
+      createdAt: "2026-10-01T08:01:00Z",
+    }),
+    "job",
+  );
+  const closet = splitCapture(
+    start,
+    "job",
+    proposalsFromRegions(
+      [region("upper", 1), region("pants", 2), region("head", 3)],
+      2,
+    ),
+  );
+  assert.deepEqual(
+    closet.imports.map((job) => job.id),
+    ["job", "job-2", "job-3", "later"],
+  );
+  const parts = closet.imports.slice(0, 3);
+  assert.deepEqual(
+    parts.map((job) => job.region?.kind),
+    ["head", "upper", "pants"],
+  );
+  for (const job of parts) {
+    assert.equal(job.captureId, "job");
+    assert.equal(job.source, "job-original.jpg");
+    assert.equal(job.state, "queued");
+    assert.equal(job.attempts, 0);
+    assert.equal(job.people, 2);
+    assert.equal(jobStem(job), job.id);
+  }
+  assert.equal(closet.imports[3]!.captureId, undefined);
+  assert.deepEqual(
+    captureJobs(closet, "job").map((job) => job.id),
+    ["job", "job-2", "job-3"],
+  );
+  assert.equal(
+    splitCapture(closet, "job", proposalsFromRegions([], 0)),
+    closet,
+  );
+  assert.deepEqual(
+    decodeCloset(JSON.stringify(closet)).imports,
+    closet.imports,
+  );
+});
+
+test("a single-garment photo keeps the existing cutout path", () => {
+  const closet = splitCapture(
+    startImport(queued(), "job"),
+    "job",
+    proposalsFromRegions([region("dress", 1)], 0),
+  );
+  assert.equal(closet.imports.length, 1);
+  const job = closet.imports[0]!;
+  assert.equal(job.captureId, "job");
+  assert.equal(job.region, undefined);
+  assert.equal(job.state, "queued");
+  assert.equal(jobStem(job), "job");
+  assert.deepEqual(captureJobs(closet, "job"), []);
+});
+
+test("a parse result for a removed photo changes nothing", () => {
+  const removed = removeImport(startImport(queued(), "job"), "job");
+  assert.equal(
+    splitCapture(removed, "job", proposalsFromRegions([region("upper", 1)], 1)),
+    removed,
+  );
+  const waiting = queued();
+  assert.equal(
+    splitCapture(waiting, "job", proposalsFromRegions([region("upper", 1)], 1)),
+    waiting,
+  );
+});
+
+test("a head region becomes a hijab and a partly hidden top gets a quick check", () => {
+  let closet = splitCapture(
+    startImport(queued(), "job"),
+    "job",
+    proposalsFromRegions([region("upper", 2, true), region("head", 1)], 1),
+  );
+  closet = finishImport(
+    startImport(closet, "job"),
+    "job",
+    prepared({
+      labels: [
+        { group: "kind", value: "top", score: 0.3 },
+        { group: "kind", value: "hijab", score: 0.2 },
+      ],
+    }),
+  );
+  const head = closet.imports.find((job) => job.id === "job")!;
+  assert.equal(
+    garmentKinds.find((kind) => kind.id === head.kind)?.category,
+    "hijab",
+  );
+  closet = finishImport(startImport(closet, "job-2"), "job-2", prepared());
+  const top = closet.imports.find((job) => job.id === "job-2")!;
+  assert.equal(top.state, "review");
+  assert.ok(top.checks?.includes("partial"));
+  closet = correctImport(closet, "job-2", { name: "Ivory top" });
+  assert.equal(
+    closet.imports.find((job) => job.id === "job-2")!.state,
+    "ready",
+  );
+  const saved = acceptImports(closet);
+  assert.equal(
+    saved.pieces.find((piece) => piece.id === "job-2")?.captureId,
+    "job",
+  );
+});
+
+test("a box drawn by hand prepares a piece again or adds one that was missed", () => {
+  let closet = splitOutfit();
+  closet = finishImport(startImport(closet, "job"), "job", prepared());
+  const box = { x: 0.25, y: 0.25, width: 0.5, height: 0.5 };
+  const cropped = cropCapture(closet, "job", box);
+  const job = cropped.imports[0]!;
+  assert.equal(job.state, "queued");
+  assert.equal(job.attempts, 0);
+  assert.deepEqual(job.crop, box);
+  assert.equal(job.prepared, undefined);
+  assert.equal(job.kind, undefined);
+  assert.equal(job.region?.kind, "upper");
+  assert.equal(job.captureId, "job");
+  assert.equal(cropCapture(cropped, "job", box), cropped);
+  const added = addToCapture(
+    cropped,
+    "job",
+    "extra",
+    box,
+    "2026-10-01T09:00:00Z",
+  );
+  const extra = added.imports.find((item) => item.id === "extra")!;
+  assert.equal(extra.source, "job-original.jpg");
+  assert.equal(extra.captureId, "job");
+  assert.equal(extra.state, "queued");
+  assert.equal(extra.people, 1);
+  assert.equal(extra.region, undefined);
+  assert.equal(jobStem(extra), "extra");
+  assert.deepEqual(
+    captureJobs(added, "job").map((item) => item.id),
+    ["job", "job-2", "extra"],
+  );
+  assert.equal(addToCapture(added, "missing", "other", box, "x"), added);
+  assert.equal(addToCapture(added, "job", "extra", box, "x"), added);
+});
+
+test("dropping one piece from a photo keeps the files the others still use", () => {
+  let closet = splitOutfit();
+  closet = finishImport(startImport(closet, "job"), "job", prepared());
+  closet = finishImport(
+    startImport(closet, "job-2"),
+    "job-2",
+    prepared({
+      original: "job-2-original.jpg",
+      cutout: "job-2.png",
+      thumbnail: "job-2-thumb.png",
+    }),
+  );
+  const dropped = removeImport(closet, "job-2");
+  assert.deepEqual(orphanedFiles(closet, dropped).sort(), [
+    "job-2-original.jpg",
+    "job-2-thumb.png",
+    "job-2.png",
+    "job-region-2.png",
+  ]);
+  assert.deepEqual(orphanedFiles(dropped, acceptImports(dropped)).sort(), [
+    "job-region-1.png",
+    "job-thumb.png",
+  ]);
+  assert.deepEqual(
+    orphanedFiles(dropped, removeImport(dropped, "job")).sort(),
+    ["job-original.jpg", "job-region-1.png", "job-thumb.png", "job.png"],
+  );
+});
+
+test("file stems keep retaken and split files apart", () => {
+  assert.equal(fileStem("job-original.jpg"), "job");
+  assert.equal(fileStem("b2c1-original.heic"), "b2c1");
+  assert.equal(fileStem("plain.png"), "plain");
+  assert.equal(fileStem("plain"), "plain");
+});
+
+test("a stored job with an unknown region kind is rejected", () => {
+  const stored = JSON.parse(JSON.stringify(splitOutfit()));
+  stored.imports[0].region.kind = "gloves";
+  assert.throws(() => decodeCloset(JSON.stringify(stored)));
 });

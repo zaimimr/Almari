@@ -12,6 +12,7 @@ import {
   kindLabel,
   savePiece,
   type Closet,
+  type Frame,
   type GarmentKind,
   type ImportJob,
   type Piece,
@@ -19,11 +20,13 @@ import {
   type Sources,
   type Style,
 } from "./closet";
+import { categoryForRegion, type CapturePlan } from "./capture";
 import { withCareLabel, type CareLabel } from "./careLabel";
 import { colorName, type Swatch } from "./color";
 import { attributeCheck, proposeAttributes, recognize } from "./recognition";
 
-export type CheckReason = "uncertain" | "no-cutout" | "several" | "attribute";
+export type CheckReason =
+  "uncertain" | "no-cutout" | "several" | "attribute" | "partial";
 
 export function nameFor(kind: GarmentKind, palette: Swatch[]) {
   const top = palette[0];
@@ -74,7 +77,10 @@ export function finishImport(
 ): Closet {
   return updateJob(closet, id, (job) => {
     if (job.state !== "preparing") return job;
-    const recognition = recognize(prepared.labels);
+    const recognition = recognize(
+      prepared.labels,
+      (job.region && categoryForRegion(job.region.kind)) ?? undefined,
+    );
     const checks: CheckReason[] = [];
     if (recognition.question) checks.push("uncertain");
     if (!prepared.cutout) checks.push("no-cutout");
@@ -91,6 +97,8 @@ export function finishImport(
     const sources: Sources = styles
       ? { kind: "proposed", styles: "proposed" }
       : { kind: "proposed" };
+    if (job.region?.partial && !checks.includes("partial"))
+      checks.push("partial");
     return {
       ...job,
       state: checks.length ? "review" : "ready",
@@ -216,6 +224,116 @@ export function removeImport(closet: Closet, id: string): Closet {
   return updateJob(closet, id, () => null);
 }
 
+export function fileStem(source: string): string {
+  return source.replace(/-original(\.[^.]*)?$/, "").replace(/\.[^.]*$/, "");
+}
+
+export function jobStem(job: ImportJob): string {
+  return job.region || job.crop ? job.id : fileStem(job.source);
+}
+
+export function splitCapture(
+  closet: Closet,
+  id: string,
+  plan: CapturePlan,
+): Closet {
+  const job = closet.imports.find((item) => item.id === id);
+  if (!job || job.state !== "preparing" || job.captureId) return closet;
+  const people = plan.people ? { people: plan.people } : {};
+  const jobs: ImportJob[] = plan.proposals.length
+    ? plan.proposals.map((proposal, index) => ({
+        id: index ? `${id}-${index + 1}` : id,
+        source: job.source,
+        createdAt: job.createdAt,
+        state: "queued",
+        attempts: 0,
+        captureId: id,
+        region: proposal.region,
+        ...people,
+      }))
+    : [{ ...job, state: "queued", captureId: id, ...people }];
+  return {
+    ...closet,
+    imports: closet.imports.flatMap((item) => (item.id === id ? jobs : [item])),
+  };
+}
+
+export function captureJobs(closet: Closet, captureId: string): ImportJob[] {
+  return closet.imports.filter(
+    (job) => job.captureId === captureId && Boolean(job.region || job.crop),
+  );
+}
+
+export function cropCapture(closet: Closet, id: string, crop: Frame): Closet {
+  return updateJob(closet, id, (job) =>
+    job.captureId && ["ready", "review", "failed"].includes(job.state)
+      ? {
+          id: job.id,
+          source: job.source,
+          createdAt: job.createdAt,
+          state: "queued",
+          attempts: 0,
+          captureId: job.captureId,
+          ...(job.region ? { region: job.region } : {}),
+          ...(job.people ? { people: job.people } : {}),
+          crop,
+        }
+      : job,
+  );
+}
+
+export function addToCapture(
+  closet: Closet,
+  captureId: string,
+  id: string,
+  crop: Frame,
+  createdAt: string,
+): Closet {
+  const sibling = captureJobs(closet, captureId)[0];
+  if (!sibling || closet.imports.some((job) => job.id === id)) return closet;
+  return {
+    ...closet,
+    imports: [
+      ...closet.imports,
+      {
+        id,
+        source: sibling.source,
+        createdAt,
+        state: "queued",
+        attempts: 0,
+        captureId,
+        ...(sibling.people ? { people: sibling.people } : {}),
+        crop,
+      },
+    ],
+  };
+}
+
+function jobFiles(job: ImportJob): (string | null | undefined)[] {
+  return [
+    job.source,
+    job.label?.photo,
+    job.region?.cutout,
+    job.prepared?.original,
+    job.prepared?.cutout,
+    job.prepared?.thumbnail,
+  ];
+}
+
+function pieceFiles(piece: Piece): (string | null | undefined)[] {
+  return [piece.photo, piece.original, piece.label?.photo];
+}
+
+export function orphanedFiles(before: Closet, after: Closet): string[] {
+  const kept = new Set([
+    ...after.imports.flatMap(jobFiles),
+    ...after.pieces.flatMap(pieceFiles),
+  ]);
+  return [...new Set(before.imports.flatMap(jobFiles))].filter(
+    (file): file is string => Boolean(file) && !kept.has(file),
+  );
+}
+
 export function pieceFromImport(job: ImportJob): Piece | null {
   if (job.state !== "ready" || !job.prepared || !job.kind || !job.name)
     return null;
@@ -236,6 +354,7 @@ export function pieceFromImport(job: ImportJob): Piece | null {
     ...(useCutout && job.prepared.frame ? { frame: job.prepared.frame } : {}),
     createdAt: job.createdAt,
     source: "owned",
+    ...(job.captureId ? { captureId: job.captureId } : {}),
   };
   const accepted: Piece = {
     ...withDetails(piece, {

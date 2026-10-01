@@ -87,6 +87,7 @@ export type Piece = {
   status?: "away" | "archived";
   away?: AwayReason;
   label?: CareLabel;
+  captureId?: string;
 };
 
 export type Prepared = {
@@ -116,8 +117,12 @@ export type ImportJob = {
   attributes?: Attributes;
   attributeSources?: Sources;
   attributeCheck?: AttributeKey;
-  checks?: ("uncertain" | "no-cutout" | "several" | "attribute")[];
+  checks?: ("uncertain" | "no-cutout" | "several" | "attribute" | "partial")[];
   keepOriginal?: boolean;
+  captureId?: string;
+  region?: GarmentRegion;
+  crop?: Frame;
+  people?: number;
   error?: string;
   label?: CareLabel;
 };
@@ -336,7 +341,8 @@ function isPiece(value: unknown): value is Piece {
       awayReasons.includes(reason as AwayReason),
     ) &&
     (value.status === "away") === (value.away !== undefined) &&
-    optional(value.label, isCareLabel)
+    optional(value.label, isCareLabel) &&
+    optional(value.captureId, isString)
   );
 }
 
@@ -376,8 +382,28 @@ function isPrepared(value: unknown): value is Prepared {
 }
 
 const jobStates = ["queued", "preparing", "ready", "review", "failed"];
-const checkReasons = ["uncertain", "no-cutout", "several", "attribute"];
+const checkReasons = [
+  "uncertain",
+  "no-cutout",
+  "several",
+  "attribute",
+  "partial",
+];
 const quickChecks = ["category", "subcategory", "style"];
+
+function isGarmentRegion(value: unknown): value is GarmentRegion {
+  return (
+    isRecord(value) &&
+    garmentRegionKinds.includes(value.kind as GarmentRegionKind) &&
+    isString(value.cutout) &&
+    isFrame(value.frame) &&
+    typeof value.share === "number" &&
+    isBoolean(value.partial)
+  );
+}
+
+const isCount = (value: unknown): value is number =>
+  Number.isInteger(value) && (value as number) >= 0;
 
 function isImportJob(value: unknown): value is ImportJob {
   return (
@@ -412,6 +438,10 @@ function isImportJob(value: unknown): value is ImportJob {
         list.every((item) => checkReasons.includes(item as string)),
     ) &&
     optional(value.keepOriginal, isBoolean) &&
+    optional(value.captureId, isString) &&
+    optional(value.region, isGarmentRegion) &&
+    optional(value.crop, isFrame) &&
+    optional(value.people, isCount) &&
     optional(value.error, isString) &&
     optional(value.label, isCareLabel) &&
     (!["ready", "review"].includes(value.state as string) ||
