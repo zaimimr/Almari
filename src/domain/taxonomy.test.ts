@@ -1,4 +1,5 @@
 import { test } from "node:test";
+import { readFileSync } from "node:fs";
 import assert from "node:assert/strict";
 import {
   categories,
@@ -150,4 +151,34 @@ test("fixed styles follow the agreed table", () => {
   assert.equal(decided, 18);
   assert.equal(stylesLabel(["desi"]), "Desi");
   assert.equal(stylesLabel(["western", "desi"]), "Western and Desi");
+});
+
+test("the bundled label file describes every offered subcategory and both styles", () => {
+  const file = JSON.parse(
+    readFileSync(
+      "modules/closet-vision/ios/Resources/garment-labels.json",
+      "utf8",
+    ),
+  ) as {
+    version: number;
+    labels: { group: string; value: string; embeddings: number[][] }[];
+  };
+  const values = (group: string) =>
+    file.labels
+      .filter((label) => label.group === group)
+      .map((label) => label.value);
+  assert.equal(file.version, 2);
+  assert.deepEqual(
+    values("kind"),
+    offeredKinds.map((kind) => kind.id),
+  );
+  assert.deepEqual(values("style"), ["desi", "western"]);
+  assert.equal(
+    file.labels.every(
+      (label) =>
+        label.embeddings.length > 0 &&
+        label.embeddings.every((row) => row.length === 768),
+    ),
+    true,
+  );
 });

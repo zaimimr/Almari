@@ -9,7 +9,7 @@ def _cast(context, node, dtype, dtype_name):
     return _orig(context, node, dtype, dtype_name)
 _ops._cast=_cast
 from transformers import AutoModel, AutoProcessor
-from labels import KINDS
+from labels import KINDS, STYLES
 name="google/siglip2-base-patch16-224"
 model=AutoModel.from_pretrained(name).eval(); proc=AutoProcessor.from_pretrained(name)
 class Vision(torch.nn.Module):
@@ -25,15 +25,15 @@ ml=ct.convert(traced, inputs=[ct.ImageType(name="image", shape=(1,3,224,224), sc
 from coremltools.optimize.coreml import OpLinearQuantizerConfig, OptimizationConfig, linear_quantize_weights
 ml8=linear_quantize_weights(ml, OptimizationConfig(global_config=OpLinearQuantizerConfig(mode="linear_symmetric", dtype="int8")))
 ml8.save("GarmentEncoder.mlpackage")
-prompts, kinds = [], []
-for kind,(cat,texts) in KINDS.items():
-    for t in texts: prompts.append(f"This is a photo of {t}."); kinds.append(kind)
+groups=[("kind", kind, texts) for kind,(_,_,texts) in KINDS.items()]+[("style", style, texts) for style,texts in STYLES.items()]
+prompts=[f"This is a photo of {t}." for _,_,texts in groups for t in texts]
 with torch.no_grad():
     ti=proc(text=prompts, return_tensors="pt", padding="max_length", max_length=64, truncation=True)
     tf=model.get_text_features(**ti); tf=getattr(tf,"pooler_output",tf); tf=tf/tf.norm(dim=-1,keepdim=True)
-json.dump({"model":name,"logitScale":float(model.logit_scale.exp()),"logitBias":float(model.logit_bias),
-  "labels":[{"kind":k,"category":KINDS[k][0],"prompt":p,"embedding":[round(x,5) for x in e.tolist()]} for k,p,e in zip(kinds,prompts,tf)]},
-  open("garment-labels.json","w"))
+rows=iter(tf.tolist())
+labels=[{"group":g,"value":v,"embeddings":[[round(x,5) for x in next(rows)] for _ in texts]} for g,v,texts in groups]
+json.dump({"model":name,"version":2,"labels":labels}, open("../ios/Resources/garment-labels.json","w"), separators=(",",":"))
+print("labels:", len([l for l in labels if l["group"]=="kind"]), "kinds,", len([l for l in labels if l["group"]=="style"]), "styles")
 img=proc(images=__import__("PIL.Image",fromlist=["x"]).open("../../../assets/wardrobe/navy-blazer.png").convert("RGB"),return_tensors="pt")
 with torch.no_grad(): ref=v(img["pixel_values"])[0].numpy()
 from PIL import Image

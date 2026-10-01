@@ -11,3 +11,9 @@ dist/
 .playwright-cli/
 coverage/
 .superpowers/
+modules/closet-vision/model/.venv/
+modules/closet-vision/model/__pycache__/
+modules/closet-vision/model/*.mlpackage
+modules/closet-vision/model/web/
+modules/closet-vision/model/ov/
+modules/closet-vision/model/extra/

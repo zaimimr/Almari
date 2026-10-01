@@ -1,2 +1,6 @@
 export { default } from "./ClosetVisionModule";
-export type { KindScore, PreparedGarment } from "./ClosetVision.types";
+export type {
+  LabelGroup,
+  LabelScore,
+  PreparedGarment,
+} from "./ClosetVision.types";

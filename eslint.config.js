@@ -9,6 +9,7 @@ module.exports = defineConfig([
       "ios/**",
       "android/**",
       "planning/**",
+      "modules/closet-vision/model/**",
       ".playwright-cli/**",
     ],
   },

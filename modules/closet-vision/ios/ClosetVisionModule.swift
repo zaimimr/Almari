@@ -5,8 +5,9 @@ import ImageIO
 import UniformTypeIdentifiers
 import Vision
 
-struct KindScore: Record {
-  @Field var kind: String = ""
+struct LabelScore: Record {
+  @Field var group: String = ""
+  @Field var value: String = ""
   @Field var score: Double = 0
 }
 
@@ -16,7 +17,7 @@ struct PreparedGarment: Record {
   @Field var thumbnail: String? = nil
   @Field var frame: [String: Double]? = nil
   @Field var instances: Int = 0
-  @Field var kinds: [KindScore] = []
+  @Field var labels: [LabelScore] = []
   @Field var color: [Double]? = nil
   @Field var width: Int = 0
   @Field var height: Int = 0
@@ -43,7 +44,7 @@ final class GarmentPipeline {
   private let queue = DispatchQueue(label: "closet.vision.prepare")
   private let context = CIContext(options: [.workingColorSpace: CGColorSpace(name: CGColorSpace.sRGB)!])
   private var model: MLModel?
-  private var labels: [(kind: String, embeddings: [[Float]])] = []
+  private var labels: [(group: String, value: String, embeddings: [[Float]])] = []
 
   private var bundle: Bundle? {
     let host = Bundle(for: GarmentPipeline.self)
@@ -65,6 +66,17 @@ final class GarmentPipeline {
     guard let bundle, let modelUrl = bundle.url(forResource: "GarmentEncoder", withExtension: "mlmodelc"),
       let labelsUrl = bundle.url(forResource: "garment-labels", withExtension: "json")
     else { throw PrepareError.resources }
+    let data = try Data(contentsOf: labelsUrl)
+    guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+      json["version"] as? Int == 2,
+      let entries = json["labels"] as? [[String: Any]]
+    else { throw PrepareError.resources }
+    labels = entries.compactMap { entry in
+      guard let group = entry["group"] as? String, let value = entry["value"] as? String,
+        let embeddings = entry["embeddings"] as? [[Double]]
+      else { return nil }
+      return (group, value, embeddings.map { $0.map(Float.init) })
+    }
     let configuration = MLModelConfiguration()
     #if targetEnvironment(simulator)
       configuration.computeUnits = .cpuOnly
@@ -72,15 +84,6 @@ final class GarmentPipeline {
       configuration.computeUnits = .all
     #endif
     model = try MLModel(contentsOf: modelUrl, configuration: configuration)
-    let data = try Data(contentsOf: labelsUrl)
-    let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
-    let entries = json?["labels"] as? [[String: Any]] ?? []
-    labels = entries.compactMap { entry in
-      guard let kind = entry["kind"] as? String, let embeddings = entry["embeddings"] as? [[Double]] else {
-        return nil
-      }
-      return (kind, embeddings.map { $0.map(Float.init) })
-    }
   }
 
   private func elapsed(_ start: Date) -> Int { Int(Date().timeIntervalSince(start) * 1000) }
@@ -151,7 +154,7 @@ final class GarmentPipeline {
 
     let classifyStart = Date()
     try loadResources()
-    result.kinds = try classify(garment)
+    result.labels = try classify(garment)
     timings["classify"] = elapsed(classifyStart)
     result.color = dominantColor(garment, masked: result.cutout != nil)
     timings["total"] = elapsed(started)
@@ -180,7 +183,7 @@ final class GarmentPipeline {
     } catch { throw PrepareError.storage }
   }
 
-  private func classify(_ garment: CIImage) throws -> [KindScore] {
+  private func classify(_ garment: CIImage) throws -> [LabelScore] {
     guard let model else { throw PrepareError.resources }
     let side = max(garment.extent.width, garment.extent.height)
     let square = CGRect(x: 0, y: 0, width: side, height: side)
@@ -198,8 +201,9 @@ final class GarmentPipeline {
     let embedding = (0..<array.count).map { Float(truncating: array[$0]) }
     return labels.map { label in
       let best = label.embeddings.map { zip($0, embedding).reduce(0) { $0 + $1.0 * $1.1 } }.max() ?? -1
-      var score = KindScore()
-      score.kind = label.kind
+      var score = LabelScore()
+      score.group = label.group
+      score.value = label.value
       score.score = Double(best)
       return score
     }

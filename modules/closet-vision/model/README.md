@@ -13,7 +13,7 @@ VIRTUAL_ENV=.venv uv pip install "torch==2.7.0" "torchvision==0.22.0" transforme
 xcrun coremlcompiler compile GarmentEncoder.mlpackage ../ios/Resources/
 ```
 
-`convert.py` writes the embeddings with one entry per description. The app expects them grouped by kind, as in the committed `garment-labels.json`.
+`convert.py` writes `../ios/Resources/garment-labels.json` (version 2): one entry per subcategory in the `kind` group and one per style (`desi`, `western`) in the `style` group, each with the embeddings of all its descriptions. The subcategory order must match `offeredKinds` in `src/domain/taxonomy.ts`; `npm test` checks this. Recompiling `GarmentEncoder.mlmodelc` is only needed when the image model changes.
 
 ## Evaluation, 1 October 2026
 

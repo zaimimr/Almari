@@ -1,4 +1,6 @@
-export type KindScore = { kind: string; score: number };
+export type LabelGroup = "kind" | "style";
+
+export type LabelScore = { group: LabelGroup; value: string; score: number };
 
 export type PreparedGarment = {
   original: string;
@@ -6,7 +8,7 @@ export type PreparedGarment = {
   thumbnail: string | null;
   frame: { x: number; y: number; width: number; height: number } | null;
   instances: number;
-  kinds: KindScore[];
+  labels: LabelScore[];
   color: [number, number, number] | null;
   width: number;
   height: number;

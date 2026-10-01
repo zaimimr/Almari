@@ -1,0 +1,19 @@
+appId: com.zaimimran.almari
+---
+- launchApp
+- tapOn: "Closet"
+- tapOn: "Add pieces"
+- tapOn:
+    text: "Skip"
+    optional: true
+- tapOn: "Choose photos"
+- tapOn:
+    text: "Photo.*"
+    index: 0
+- tapOn: "Add"
+- extendedWaitUntil:
+    visible: ".*Quick check"
+    timeout: 60000
+- tapOn: ".*Quick check"
+- assertVisible: "Kurta"
+- takeScreenshot: planning/build/labels/native-kurta
