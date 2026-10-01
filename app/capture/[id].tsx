@@ -3,15 +3,26 @@ import { StyleSheet, View } from "react-native";
 import { Image } from "expo-image";
 import { Stack, router, useLocalSearchParams } from "expo-router";
 import {
-  garmentKinds,
-  kindLabel,
+  categoryOf,
+  fixedStyles,
+  type Category,
   type GarmentKind,
+  type QuickCheck,
+  type Style,
 } from "../../src/domain/closet";
 import {
   correctImport,
   nameFor,
   removeImport,
 } from "../../src/domain/importing";
+import { rankCategories, rankKinds } from "../../src/domain/recognition";
+import {
+  categoryName,
+  kindName,
+  styleName,
+  stylesName,
+  t,
+} from "../../src/i18n";
 import { useCloset } from "../../src/state/closet";
 import { discardImportFiles } from "../../src/state/imports";
 import { photoUri } from "../../src/storage/local";
@@ -19,6 +30,7 @@ import {
   AppText,
   Button,
   Chip,
+  ChoiceGroup,
   ErrorMessage,
   Field,
   FormScreen,
@@ -28,12 +40,51 @@ import {
 } from "../../src/ui";
 import { theme } from "../../src/ui/theme";
 
+type StyleChoice = Style | "both";
+
+const styleChoices = (): { id: StyleChoice; label: string }[] => [
+  { id: "desi", label: styleName("desi") },
+  { id: "western", label: styleName("western") },
+  { id: "both", label: t("piece.styleBoth") },
+];
+
+function choiceOf(styles: Style[] | undefined): StyleChoice | null {
+  if (!styles?.length) return null;
+  return styles.length > 1 ? "both" : styles[0]!;
+}
+
+function stylesOf(choice: StyleChoice): Style[] {
+  return choice === "both" ? ["western", "desi"] : [choice];
+}
+
+function questionText(
+  question: QuickCheck,
+  categories: Category[],
+  kinds: GarmentKind[],
+) {
+  if (question === "category")
+    return t("capture.askCategory", {
+      first: categoryName(categories[0]!),
+      second: categoryName(categories[1]!),
+    });
+  if (question === "subcategory" && kinds.length > 1)
+    return t("capture.askKind", {
+      first: kindName(kinds[0]!).toLowerCase(),
+      second: kindName(kinds[1]!).toLowerCase(),
+    });
+  if (question === "style") return t("capture.askStyle");
+  return null;
+}
+
 export default function CheckPiece() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { closet, update } = useCloset();
   const job = closet.imports.find((item) => item.id === id);
   const [name, setName] = useState(job?.name ?? "");
   const [kind, setKind] = useState<GarmentKind | undefined>(job?.kind);
+  const [chosenStyles, setChosenStyles] = useState<Style[] | undefined>(
+    job?.styles ?? (job?.kind ? fixedStyles(job.kind) : undefined),
+  );
   const [keepOriginal, setKeepOriginal] = useState(
     Boolean(job?.keepOriginal || !job?.prepared?.cutout),
   );
@@ -41,39 +92,68 @@ export default function CheckPiece() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (!job?.prepared || !job.kind)
+  if (!job?.prepared || !job.kind || !kind)
     return (
       <Screen centered>
         <Message
-          title="This photo is no longer waiting"
-          description="Your other photos are still in Add pieces."
-          action={<Button label="Go back" onPress={() => router.back()} />}
+          title={t("capture.gone.title")}
+          description={t("capture.gone.description")}
+          action={
+            <Button label={t("common.goBack")} onPress={() => router.back()} />
+          }
         />
       </Screen>
     );
 
   const prepared = job.prepared;
   const checks = job.checks ?? [];
-  const alternatives = job.alternatives ?? [job.kind];
-  const shown = showAll
-    ? garmentKinds.map((item) => item.id)
-    : [...new Set([job.kind, ...alternatives])];
+  const question = checks.includes("uncertain")
+    ? (job.question ?? "subcategory")
+    : null;
+  const category = categoryOf(kind);
+  const rankedCategories = rankCategories(prepared.labels);
+  const shownCategories = showAll
+    ? rankedCategories
+    : [...new Set([category, ...rankedCategories.slice(0, 3)])];
+  const kindChoices = rankKinds(prepared.labels, category);
+  const fixed = fixedStyles(kind);
+  const asked = question
+    ? questionText(
+        question,
+        rankedCategories,
+        rankKinds(prepared.labels, categoryOf(job.kind)),
+      )
+    : null;
+
+  function chooseKind(next: GarmentKind) {
+    if (name === nameFor(kind!, prepared.color))
+      setName(nameFor(next, prepared.color));
+    setKind(next);
+    const nextFixed = fixedStyles(next);
+    if (nextFixed) setChosenStyles(nextFixed);
+    else if (fixed) setChosenStyles(undefined);
+  }
+
+  function chooseCategory(next: Category) {
+    if (next !== category) chooseKind(rankKinds(prepared.labels, next)[0]!);
+  }
 
   async function save() {
-    if (!name.trim() || !kind || busy) return;
+    if (!name.trim() || busy) return;
     setBusy(true);
     setError(null);
     try {
       await update((current) =>
         correctImport(current, job!.id, {
           kind,
+          styles: fixed ? undefined : chosenStyles,
           name: name.trim(),
           keepOriginal,
         }),
       );
       router.back();
     } catch {
-      setError("This piece could not be updated. Please try again.");
+      setError(t("capture.saveFailed"));
     } finally {
       setBusy(false);
     }
@@ -86,7 +166,7 @@ export default function CheckPiece() {
       discardImportFiles(job!);
       router.back();
     } catch {
-      setError("This photo could not be removed. Please try again.");
+      setError(t("capture.removeFailed"));
       setBusy(false);
     }
   }
@@ -96,7 +176,10 @@ export default function CheckPiece() {
       <Stack.Screen
         options={{
           headerLeft: () => (
-            <HeaderAction label="Back" onPress={() => router.back()} />
+            <HeaderAction
+              label={t("common.back")}
+              onPress={() => router.back()}
+            />
           ),
         }}
       />
@@ -108,11 +191,11 @@ export default function CheckPiece() {
                 source={{ uri: photoUri(prepared.cutout) }}
                 style={styles.image}
                 contentFit="contain"
-                accessibilityLabel="Prepared closet image"
+                accessibilityLabel={t("capture.preparedImage")}
               />
             </View>
             <Chip
-              label="Use prepared"
+              label={t("capture.usePrepared")}
               selected={!keepOriginal}
               onPress={() => setKeepOriginal(false)}
             />
@@ -124,55 +207,75 @@ export default function CheckPiece() {
               source={{ uri: photoUri(prepared.original) }}
               style={styles.image}
               contentFit="contain"
-              accessibilityLabel="Original photo"
+              accessibilityLabel={t("capture.originalPhoto")}
             />
           </View>
           <Chip
-            label="Keep original"
+            label={t("capture.keepOriginal")}
             selected={keepOriginal}
             onPress={() => setKeepOriginal(true)}
           />
         </View>
       </View>
       {checks.includes("no-cutout") ? (
-        <AppText>
-          We could not separate this piece from its background. You can keep the
-          original photo, or remove it and try a plainer background.
-        </AppText>
+        <AppText>{t("capture.noCutout")}</AppText>
       ) : null}
       {checks.includes("several") ? (
-        <AppText>
-          There may be more than one piece here. Check that the prepared image
-          shows only this piece, or remove it and photograph each piece on its
-          own.
-        </AppText>
+        <AppText>{t("capture.several")}</AppText>
       ) : null}
       <View style={styles.section}>
         <AppText style={styles.label}>
-          {checks.includes("uncertain") && alternatives.length > 1
-            ? `Is this a ${kindLabel(alternatives[0]!).toLowerCase()} or a ${kindLabel(alternatives[1]!).toLowerCase()}?`
-            : "Type"}
+          {question === "category" && asked ? asked : t("piece.category")}
         </AppText>
         <View style={styles.chips}>
-          {shown.map((option) => (
+          {shownCategories.map((option) => (
             <Chip
               key={option}
-              label={kindLabel(option)}
-              selected={kind === option}
-              onPress={() => {
-                if (kind && name === nameFor(kind, prepared.color))
-                  setName(nameFor(option, prepared.color));
-                setKind(option);
-              }}
+              label={categoryName(option)}
+              selected={category === option}
+              onPress={() => chooseCategory(option)}
             />
           ))}
           {!showAll ? (
-            <Chip label="Something else" onPress={() => setShowAll(true)} />
+            <Chip
+              label={t("capture.somethingElse")}
+              onPress={() => setShowAll(true)}
+            />
           ) : null}
         </View>
       </View>
+      <View style={styles.section}>
+        <AppText style={styles.label}>
+          {question === "subcategory" && asked ? asked : t("piece.kind")}
+        </AppText>
+        <View style={styles.chips}>
+          {kindChoices.map((option) => (
+            <Chip
+              key={option}
+              label={kindName(option)}
+              selected={kind === option}
+              onPress={() => chooseKind(option)}
+            />
+          ))}
+        </View>
+      </View>
+      {fixed ? (
+        <View style={styles.section}>
+          <AppText style={styles.label}>{t("piece.style")}</AppText>
+          <AppText muted>
+            {t("piece.styleFixed", { styles: stylesName(fixed) })}
+          </AppText>
+        </View>
+      ) : (
+        <ChoiceGroup
+          label={question === "style" && asked ? asked : t("piece.style")}
+          options={styleChoices()}
+          value={choiceOf(chosenStyles)}
+          onChange={(choice) => setChosenStyles(stylesOf(choice))}
+        />
+      )}
       <Field
-        label="Name"
+        label={t("piece.name")}
         value={name}
         onChangeText={setName}
         maxLength={80}
@@ -180,15 +283,15 @@ export default function CheckPiece() {
       />
       <ErrorMessage message={error} />
       <Button
-        label="Looks right"
+        label={t("capture.looksRight")}
         busy={busy}
-        disabled={!name.trim() || !kind}
+        disabled={!name.trim()}
         onPress={() => {
           void save();
         }}
       />
       <Button
-        label="Remove this photo"
+        label={t("capture.remove")}
         danger
         disabled={busy}
         onPress={() => {

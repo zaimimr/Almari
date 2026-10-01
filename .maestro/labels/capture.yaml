@@ -1,0 +1,37 @@
+appId: com.zaimimran.almari
+---
+- launchApp
+- tapOn: "Closet"
+- tapOn: "Add pieces"
+- tapOn:
+    text: "Skip"
+    optional: true
+- tapOn: "Choose photos"
+- tapOn:
+    text: "Photo.*"
+    index: 0
+- tapOn: "Add"
+- extendedWaitUntil:
+    visible: ".*Quick check"
+    timeout: 60000
+- tapOn: ".*Quick check"
+- assertVisible: "Category|Is this in .*"
+- assertVisible: "Subcategory|Is this a .*"
+- assertVisible: "Kurtas & tunics"
+- assertVisible: "Kurti"
+- takeScreenshot: planning/build/labels/check-piece
+- tapOn: "Something else"
+- assertVisible: "Accessories"
+- takeScreenshot: planning/build/labels/check-piece-all-categories
+- tapOn: "Tops"
+- assertVisible: "Blouse"
+- assertVisible: "Style|Is this Desi or Western\\?"
+- assertVisible: "Both"
+- tapOn: "Kurtas & tunics"
+- tapOn: "Kurti"
+- assertVisible: "Desi, set by the subcategory"
+- takeScreenshot: planning/build/labels/check-piece-kurti
+- tapOn: "Looks right"
+- tapOn: "Add 1 ready piece"
+- assertVisible: ".*Kurtas & tunics · Kurti.*"
+- takeScreenshot: planning/build/labels/closet-card
