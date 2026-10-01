@@ -65,7 +65,30 @@ const sizeAfterWord =
   /\b(?:size|str|størrelse|eur|eu)\b\.?\s*:?\s*(XXXL|XXL|XXS|XL|XS|S|M|L|\d{2})\b/iu;
 const sizeAlone = /^(XXXL|XXL|XXS|XL|XS|S|M|L)$/i;
 const madeIn =
-  /\b(?:made in|produced in|laget i|produsert i)[ \t]+(\p{L}+(?:[ -]\p{L}+)?)/iu;
+  /\b(?:made in|produced in|laget i|produsert i)[ \t]+(\p{L}+(?:[ \t]+\p{L}+)?)/iu;
+const multiWordCountries = new Set([
+  "sri lanka",
+  "united kingdom",
+  "united states",
+  "south korea",
+  "hong kong",
+  "new zealand",
+  "el salvador",
+  "costa rica",
+  "dominican republic",
+  "north macedonia",
+  "saudi arabia",
+  "south africa",
+]);
+
+function originFrom(text: string) {
+  const words = text.match(madeIn)?.[1];
+  if (!words) return undefined;
+  const joined = words.split(/\s+/).join(" ");
+  return multiWordCountries.has(joined.toLowerCase())
+    ? joined
+    : joined.split(" ")[0];
+}
 
 function materialsIn(line: string): LabelMaterial[] {
   const pairs = (pattern: RegExp, fibreAt: 1 | 2) =>
@@ -85,7 +108,7 @@ export function parseCareText(text: string): LabelFields {
   const size =
     text.match(sizeAfterWord)?.[1] ??
     lines.map((line) => line.trim()).find((line) => sizeAlone.test(line));
-  const origin = text.match(madeIn)?.[1];
+  const origin = originFrom(text);
   if (size) fields.size = size.toUpperCase();
   if (origin) fields.origin = origin;
   return fields;

@@ -101,12 +101,12 @@ test("C04 origin is read after Made in, Laget i or Produsert i", () => {
     assert.equal(parseCareText(text).origin, origin, text);
 });
 
-test("C04b a multilingual origin line keeps at most two words", () => {
+test("C04b a multilingual origin line keeps one origin", () => {
   const origin = parseCareText(
     "Made in Bangladesh Fabriqué au Bangladesh Hecho en Bangladesh",
   ).origin;
-  assert.ok(origin?.startsWith("Bangladesh"));
-  assert.ok(origin!.split(/[ -]/).length <= 2);
+  assert.equal(origin, "Bangladesh");
+  assert.equal(parseCareText("Made in Sri Lanka").origin, "Sri Lanka");
 });
 
 test("C12b a long typed fibre stays within the limit after lowercasing", () => {
