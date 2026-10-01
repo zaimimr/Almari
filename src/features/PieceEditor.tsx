@@ -26,6 +26,7 @@ import {
 import { confirmEdits } from "../domain/recognition";
 import { categoryName, kindName, styleName, stylesName, t } from "../i18n";
 import { useCloset } from "../state/closet";
+import { measurePiece } from "../state/imports";
 import { keepPhoto, discardPhoto } from "../storage/local";
 import { photoSource } from "../ui/photos";
 import {
@@ -151,6 +152,7 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
       );
       if (piece && newImage)
         void discardPhoto(piece.photo).catch(() => undefined);
+      if (newImage) void measurePiece({ update }, confirmed);
       allowClose();
       router.back();
     } catch {

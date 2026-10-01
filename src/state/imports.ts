@@ -3,7 +3,7 @@ import ClosetVision, {
   type PreparedGarment,
 } from "../../modules/closet-vision/src";
 import type { ClosetRepository } from "../domain/repository";
-import type { ImportJob, Prepared } from "../domain/closet";
+import type { ImportJob, Piece, Prepared } from "../domain/closet";
 import {
   attributeRefreshVersion,
   failImport,
@@ -98,6 +98,27 @@ export function useImportRunner(repository: ClosetRepository, ready: boolean) {
 
 const wait = (milliseconds: number) =>
   new Promise((resolve) => setTimeout(resolve, milliseconds));
+
+export async function measurePiece(
+  repository: Pick<ClosetRepository, "update">,
+  piece: Piece,
+) {
+  if (!canPrepareOnDevice) return;
+  try {
+    const result = await ClosetVision.prepare(
+      photoUri(piece.original ?? piece.photo),
+      `${piece.id}-refresh`,
+    );
+    for (const file of [result.original, result.cutout, result.thumbnail])
+      if (file && file !== piece.photo && file !== piece.original)
+        void discardPhoto(file).catch(() => undefined);
+    await repository.update((closet) =>
+      refreshPiece(closet, piece.id, preparedFrom(result)),
+    );
+  } catch {
+    return;
+  }
+}
 
 export function useAttributeRefresh(
   repository: ClosetRepository,

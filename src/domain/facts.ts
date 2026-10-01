@@ -209,17 +209,24 @@ function confirmedPiece(piece: Piece, key: FactKey, option: string): Piece {
         : kindsIn(piece.category).find((item) => item.id === option)?.id;
     if (!kind) throw new Error("Choose one of the listed options.");
     const styles = fixedStyles(kind);
+    const dropStyles =
+      !styles &&
+      kind !== piece.kind &&
+      !!piece.kind &&
+      !!fixedStyles(piece.kind);
     const sources: Partial<Record<SourceKey, Source>> = {
       ...piece.sources,
       kind: "confirmed",
     };
     if (styles) sources.styles = "confirmed";
+    if (dropStyles) delete sources.styles;
     const next: Piece = {
       ...piece,
       kind,
       ...(styles ? { styles } : {}),
       sources,
     };
+    if (dropStyles) delete next.styles;
     return fitAttributes(next);
   }
   const attribute = askedAttribute(key);

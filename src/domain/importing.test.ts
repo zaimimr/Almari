@@ -432,3 +432,28 @@ test("C20 a care label added in Check this piece goes with the piece", () => {
     label,
   );
 });
+
+test("refreshing a piece whose photo was replaced measures colours and embedding again", () => {
+  const replaced: Piece = {
+    id: "swap",
+    name: "Swap",
+    category: "tunic",
+    photo: "new.png",
+    createdAt: "2026-10-01T08:00:00.000Z",
+    source: "owned",
+  };
+  const prepared: Prepared = {
+    ...withAttributes([]),
+    original: "new-original.jpg",
+    cutout: "new.png",
+    palette: [{ rgb: [10, 20, 30], share: 1 }],
+    embedding,
+  };
+  const closet = refreshPiece(
+    { ...emptyCloset, pieces: [replaced] },
+    "swap",
+    prepared,
+  );
+  assert.equal(closet.pieces[0]!.embedding, embedding);
+  assert.deepEqual(closet.pieces[0]!.colors, [{ rgb: [10, 20, 30], share: 1 }]);
+});

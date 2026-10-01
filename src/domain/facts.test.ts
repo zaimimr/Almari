@@ -261,3 +261,15 @@ test("confirming a subcategory guess also fixes its style and refits the details
   assert.equal(same.attributes?.formality, 2);
   assert.throws(() => confirmFact(closet, "kurta", "kind", "jeans"));
 });
+
+test("confirming a free subcategory drops the old subcategory's fixed styles", () => {
+  const closet = savePiece(emptyCloset, {
+    ...kurta,
+    sources: { ...kurta.sources, kind: "proposed", styles: "confirmed" },
+  });
+  const tunic = confirmFact(closet, "kurta", "kind", "tunic").pieces[0]!;
+  assert.equal(tunic.kind, "tunic");
+  assert.equal(tunic.styles, undefined);
+  assert.equal(tunic.sources?.styles, undefined);
+  assert.equal(tunic.sources?.kind, "confirmed");
+});
