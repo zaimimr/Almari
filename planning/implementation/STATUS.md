@@ -98,3 +98,31 @@ Known limitations:
 - Pieces without occasion tags show under every occasion filter until she tags them. Unavailable shows nothing until Part 2 adds Mark as unavailable.
 - Owned pieces saved before this version have no record of whether their subcategory was proposed, so they count as confirmed and will not be re-labelled automatically.
 - The simulator cannot remove backgrounds, so every simulator import asks a quick check; real photos on her iPhone have not been tried with the new labels.
+
+## Part 2: Piece attributes and colour (done, 1 October 2026)
+
+What works:
+
+- New photos get suggested length, sleeves, fit, pattern, pattern size, fabric and embellishment, plus a formality from 1 to 6 worked out from the subcategory, fabric and embellishment. Each value is stored with its source: suggested, from the care label, or confirmed.
+- A quick check is asked only when length or sleeves are unclear and no category, subcategory or style question is already being asked, so a piece never gets more than one question. Unclear fabric or pattern stays a suggestion.
+- See-through and open front are never guessed.
+- The item page shows fact chips for colour, subcategory, fabric, pattern, see-through, fit, length, sleeves, formality and season. Guesses have a dashed outline and a question mark; tapping one asks her to confirm or change it. Unknown values have no chip.
+- Mark as unavailable (in the wash, lent out, needs repair) keeps the piece in the closet and in saved looks but leaves it out of outfit suggestions and Change a piece until she marks it available. A piece on today's outfit is swapped out at once; a kept piece is explained with a release. The closet filters Available and Unavailable.
+- The item page shows how many saved looks use the piece.
+- Editing moved behind Edit on the item page. The editor shows a Details section with each value, where it came from, and Looks right or another option to confirm it. Confirmed values are never replaced by a later suggestion.
+- On iPhone, k-means on the cutout gives up to three garment colours with their share, and the name uses the largest one. The image embedding is stored as 768 signed bytes (1,024 base64 characters).
+- Colour maths for the stylist: Lab and LCh, CIEDE2000, colour classes (black, white, grey, navy, denim, warm neutral, accent) and pair relations (same, tonal, near miss, analogous, complementary, echo) plus the outfit contrast range.
+- Existing owned pieces are re-prepared once in the background from their originals. Imports go first, failures are skipped, scratch files are removed, and values she set by hand stay.
+- Every new or changed text on these screens is in English and bokmål.
+
+Evidence: `npm run check` with 103 domain tests, including all 34 CIEDE2000 reference pairs from Sharma, Wu and Dalal (2005), colour classes and pair relations at each threshold, the one-question rule, re-preparation keeping confirmed values, fact chips and their sources, and availability on Today. `npx expo-doctor` and `npx expo export --platform ios --platform web` pass. Simulator checks with Maestro (item page, confirming a guess, Mark as unavailable, piece details, the length question, removing a piece, larger text) are in [planning/build/attributes](../build/attributes). The background pass was checked on the simulator with a seeded older piece.
+
+Known limitations:
+
+- The simulator cannot cut out garments, so palettes there are always empty. Colours and their shares have to be checked on her iPhone.
+- Attribute accuracy has not been measured. Suggestions may be wrong until she confirms them.
+- The colour report's thresholds put camel, olive and chocolate in accent rather than warm neutral. The colour layer in Part 6 should tune this with her clothes.
+- Sample pieces have no attributes or colours yet, so their item pages show only subcategory and, where set, season.
+- Used in counts saved looks only. The wear count arrives with Wore this in Part 6.
+- A piece whose photo is replaced in the editor loses its colours and embedding and is not re-prepared, because the one-time pass has already run.
+- Screens that existed before this part still have English-only text; Part 8 moves them into the catalog.
