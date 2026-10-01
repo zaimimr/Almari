@@ -25,6 +25,16 @@ export type Traits = {
 
 export type Frame = { x: number; y: number; width: number; height: number };
 
+export type Source = "proposed" | "label" | "confirmed";
+
+export const sourceKeys = ["kind", "styles"] as const;
+
+export type SourceKey = (typeof sourceKeys)[number];
+
+export type Sources = Partial<Record<SourceKey, Source>>;
+
+export type QuickCheck = "category" | "subcategory" | "style";
+
 export type Piece = {
   id: string;
   name: string;
@@ -37,6 +47,7 @@ export type Piece = {
   traits?: Traits;
   original?: string;
   frame?: Frame;
+  sources?: Sources;
 };
 
 export type Prepared = {
@@ -206,6 +217,19 @@ function isTraits(value: unknown): value is Traits {
   );
 }
 
+const sourceValues = ["proposed", "label", "confirmed"];
+
+function isSources(value: unknown): value is Sources {
+  return (
+    isRecord(value) &&
+    Object.entries(value).every(
+      ([key, source]) =>
+        (sourceKeys as readonly string[]).includes(key) &&
+        sourceValues.includes(source as string),
+    )
+  );
+}
+
 function isPieceBase(value: unknown): value is Record<string, unknown> {
   return (
     isRecord(value) &&
@@ -234,7 +258,8 @@ function isPiece(value: unknown): value is Piece {
     ) &&
     optional(value.traits, isTraits) &&
     optional(value.original, isString) &&
-    optional(value.frame, isFrame)
+    optional(value.frame, isFrame) &&
+    optional(value.sources, isSources)
   );
 }
 

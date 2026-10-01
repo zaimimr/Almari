@@ -336,3 +336,27 @@ test("a malformed old closet stays unreadable instead of becoming empty", () => 
     ),
   );
 });
+
+test("piece sources accept only known fields and origins", () => {
+  const proposed: Piece = {
+    ...hijab,
+    kind: "hijab",
+    sources: { kind: "proposed", styles: "label" },
+  };
+  assert.deepEqual(savePiece(emptyCloset, proposed).pieces[0]!.sources, {
+    kind: "proposed",
+    styles: "label",
+  });
+  assert.throws(() =>
+    savePiece(emptyCloset, {
+      ...hijab,
+      sources: { kind: "guessed" },
+    } as unknown as Piece),
+  );
+  assert.throws(() =>
+    savePiece(emptyCloset, {
+      ...hijab,
+      sources: { colour: "proposed" },
+    } as unknown as Piece),
+  );
+});
