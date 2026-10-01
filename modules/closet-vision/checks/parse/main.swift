@@ -64,6 +64,48 @@ check(apart.map(\.kind) == ["head"], "hat and scarf on one person gave \(describ
 
 check(GarmentRegions.find(grid([(.hair, 0, 0, 99, 99)]), person: true).isEmpty, "hair became a garment")
 
+let arguments = CommandLine.arguments
+if arguments.count > 2 {
+  let modelUrl = URL(fileURLWithPath: arguments[1])
+  let folder = URL(fileURLWithPath: arguments[2], isDirectory: true)
+  let output = arguments.count > 3 ? URL(fileURLWithPath: arguments[3], isDirectory: true) : nil
+  if let output { try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true) }
+  let sRGB = CGColorSpace(name: CGColorSpace.sRGB)!
+  let context = CIContext(options: [.workingColorSpace: sRGB])
+  let parser = ClothesParser(model: try MLModel(contentsOf: modelUrl), context: context)
+  let samples = folder.path.hasSuffix("assets/wardrobe")
+  let files = try FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil)
+    .filter { ["png", "jpg", "jpeg", "heic"].contains($0.pathExtension.lowercased()) }
+    .sorted { $0.lastPathComponent < $1.lastPathComponent }
+  check(!files.isEmpty, "no photos in \(folder.path)")
+  for file in files {
+    let name = file.deletingPathExtension().lastPathComponent
+    guard let loaded = CIImage(contentsOf: file, options: [.applyOrientationProperty: true]) else {
+      check(false, "\(name) could not be read")
+      continue
+    }
+    let origin = loaded.transformed(
+      by: CGAffineTransform(translationX: -loaded.extent.minX, y: -loaded.extent.minY))
+    let photo = origin.composited(over: CIImage(color: .white).cropped(to: origin.extent))
+    let started = Date()
+    let parse = try parser.parse(photo)
+    let regions = GarmentRegions.find(parse.grid, person: parse.people > 0)
+    let milliseconds = Int(Date().timeIntervalSince(started) * 1000)
+    check(parse.grid.width == 512 && parse.grid.height == 512, "\(name) grid \(parse.grid.width)")
+    check(parse.grid.labels.allSatisfy { Int($0) < ClothesClass.allCases.count }, "\(name) label out of range")
+    if samples { check(parse.people == 0, "\(name) is a garment alone but \(parse.people) people were found") }
+    print("\(name): people \(parse.people), \(regions.count) garments: \(describe(regions)), \(milliseconds) ms")
+    if let output {
+      for (index, region) in regions.enumerated() {
+        try context.writePNGRepresentation(
+          of: parse.cutout(photo, region: region),
+          to: output.appendingPathComponent("\(name)-\(index + 1)-\(region.kind).png"),
+          format: .RGBA8, colorSpace: sRGB)
+      }
+    }
+  }
+}
+
 if failures.isEmpty {
   print("PASS")
 } else {

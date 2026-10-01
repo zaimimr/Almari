@@ -102,3 +102,32 @@ VIRTUAL_ENV=.venv uv pip install "torch==2.7.0" "torchvision==0.22.0" transforme
 .venv/bin/python parsercheck.py
 xcrun coremlcompiler compile ClothesParser.mlpackage ../ios/Resources/
 ```
+
+### Clothes parser on photos in the repo, Mac, provisional
+
+`~/Almari-test-photos` does not exist on this Mac, so the check ran on the photos that are in the repo: the 13 sample garments in `assets/wardrobe` and 3 flat lay screenshots in `planning/research/assets`. There is no photo of a person wearing an outfit, no photo with a second person and no mirror photo in the repo, so the person path has not been measured. All numbers below are provisional.
+
+To rerun on her own photos, put them in `~/Almari-test-photos` and run `dist/closet-parse-check modules/closet-vision/ios/Resources/ClothesParser.mlmodelc ~/Almari-test-photos dist/parse-photos`. Photos and cutouts stay on the Mac and are not committed. Replace this table with one row per photo, using a description instead of the file name.
+
+Vision reports one person on every one of these flat lay photos, so the parser only counts a person when the parsed area has at least 1 percent hair, face, arm or leg pixels. Otherwise it parses the whole photo as a flat lay with people 0. The 1 percent threshold was set on flat lays only and has to be checked against worn outfits.
+
+| Photo | Expected | People | Found | Partly visible | Time |
+| --- | --- | --- | --- | --- | --- |
+| Flat lay, wide charcoal trousers | pants | 0 | upper, upper, dress, dress, skirt, skirt, pants, pants | 7 of 8 | 692 ms (model load) |
+| Flat lay, chocolate hijab | head | 0 | head, upper, upper | none | 142 ms |
+| Flat lay, chocolate loafers | shoes | 0 | upper, upper, pants, pants, shoes | 1 | 144 ms |
+| Flat lay, ivory hijab | head | 0 | head, upper x4, dress, dress | 3 | 147 ms |
+| Flat lay, ivory salwar | pants | 0 | pants | 1 | 144 ms |
+| Flat lay, ivory trousers | pants | 0 | pants | none | 140 ms |
+| Flat lay, ivory tunic | upper | 0 | upper x4, dress, dress | 6 | 138 ms |
+| Flat lay, mauve hijab | head | 0 | head, upper x3, dress | 3 | 151 ms |
+| Flat lay, navy blazer | upper | 0 | upper | none | 173 ms |
+| Flat lay, olive maxi dress | dress | 0 | dress | none | 173 ms |
+| Flat lay, sage embroidered kurta | upper | 0 | dress | none | 147 ms |
+| Flat lay, taupe abaya | dress | 0 | dress | 1 | 137 ms |
+| Flat lay, taupe bag | bag | 0 | bag | none | 137 ms |
+| Screenshot, outfit laid out: scarf, blazer, skirt, bag, loafers | head, upper, skirt, bag, shoes | 0 | upper, skirt | none | 745 ms (model load) |
+| Screenshot, one sneaker on white | shoes | 0 | pants, shoes | none | 162 ms |
+| Screenshot, look with dress, sandal, sunglasses and scarf | dress, shoes, sunglasses, head | 0 | upper, dress, shoes | none | 171 ms |
+
+Totals: 16 photos, 23 garments expected, 17 found with the right kind, 30 extra regions, 6 missed garments. The kurta counts as a miss because the parser calls it a dress. Most extra regions are small pieces of one garment that the model labels as another class, mostly on the sample garments. The missed ones are the scarf, bag, shoes and sunglasses in the two outfit screenshots.
