@@ -1,53 +1,15 @@
-export const categories = [
-  { id: "hijab", label: "Hijabs & scarves" },
-  { id: "top", label: "Tops" },
-  { id: "tunic", label: "Kurtas & tunics" },
-  { id: "bottom", label: "Trousers & skirts" },
-  { id: "dress", label: "Dresses & abayas" },
-  { id: "layer", label: "Layers" },
-  { id: "shoes", label: "Shoes" },
-  { id: "bag", label: "Bags" },
-  { id: "accessory", label: "Accessories" },
-] as const;
+import {
+  categories,
+  garmentKinds,
+  occasions,
+  styleOptions,
+  type Category,
+  type GarmentKind,
+  type Occasion,
+  type Style,
+} from "./taxonomy";
 
-export type Category = (typeof categories)[number]["id"];
-
-export const garmentKinds = [
-  { id: "hijab", label: "Hijab", category: "hijab" },
-  { id: "top", label: "Top", category: "top" },
-  { id: "tunic", label: "Tunic", category: "tunic" },
-  { id: "kurta", label: "Kurta", category: "tunic" },
-  { id: "kameez", label: "Kameez", category: "tunic" },
-  { id: "trousers", label: "Trousers", category: "bottom" },
-  { id: "shalwar", label: "Shalwar", category: "bottom" },
-  { id: "skirt", label: "Skirt", category: "bottom" },
-  { id: "dress", label: "Dress", category: "dress" },
-  { id: "abaya", label: "Abaya", category: "dress" },
-  { id: "blazer", label: "Blazer", category: "layer" },
-  { id: "cardigan", label: "Cardigan", category: "layer" },
-  { id: "jacket", label: "Jacket", category: "layer" },
-  { id: "coat", label: "Coat", category: "layer" },
-  { id: "shoes", label: "Shoes", category: "shoes" },
-  { id: "boots", label: "Boots", category: "shoes" },
-  { id: "bag", label: "Bag", category: "bag" },
-  { id: "dupatta", label: "Dupatta", category: "accessory" },
-] as const;
-
-export type GarmentKind = (typeof garmentKinds)[number]["id"];
-
-export const styleOptions = [
-  { id: "western", label: "Western" },
-  { id: "desi", label: "Desi" },
-] as const;
-export type Style = (typeof styleOptions)[number]["id"];
-
-export const occasions = [
-  { id: "work", label: "Work" },
-  { id: "everyday", label: "Everyday" },
-  { id: "dinner", label: "Dinner" },
-  { id: "celebration", label: "Celebration" },
-] as const;
-export type Occasion = (typeof occasions)[number]["id"];
+export * from "./taxonomy";
 
 export type Tone = "light" | "mid" | "dark";
 export type Warmth = "light" | "medium" | "warm";
@@ -187,18 +149,6 @@ export const emptyCloset: Closet = {
   styling: emptyStyling,
   imports: [],
 };
-
-export const categoryLabel = (id: Category) =>
-  categories.find((c) => c.id === id)?.label ?? id;
-
-export const kindLabel = (id: GarmentKind) =>
-  garmentKinds.find((kind) => kind.id === id)?.label ?? id;
-
-export const occasionLabel = (id: Occasion) =>
-  occasions.find((item) => item.id === id)?.label ?? id;
-
-export const styleLabel = (id: Style) =>
-  styleOptions.find((item) => item.id === id)?.label ?? id;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);

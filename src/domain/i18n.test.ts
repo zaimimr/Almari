@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { en, type Key } from "../i18n/en";
 import { nb } from "../i18n/nb";
 import { localeFor, translate } from "../i18n/translate";
+import { categories, garmentKinds, occasions, styleOptions } from "./taxonomy";
 
 const catalogs = { en, nb };
 
@@ -51,4 +52,30 @@ test("both catalogs have the same keys and the same placeholders", () => {
     assert.deepEqual(holes(nb[key]), holes(en[key]), key);
     assert.equal(/\u2014/.test(en[key] + nb[key]), false, key);
   }
+});
+
+test("English names match the taxonomy and Desi names stay the same in bokmål", () => {
+  for (const category of categories)
+    assert.equal(en[`category.${category.id}`], category.label);
+  for (const kind of garmentKinds)
+    assert.equal(en[`kind.${kind.id}`], kind.label);
+  for (const style of styleOptions)
+    assert.equal(en[`style.${style.id}`], style.label);
+  for (const occasion of occasions)
+    assert.equal(en[`occasion.${occasion.id}`], occasion.label);
+  const desi = [
+    "kurta",
+    "kurti",
+    "kameez",
+    "shalwar",
+    "churidar",
+    "sharara",
+    "gharara",
+    "lehenga",
+    "anarkali",
+    "abaya",
+    "khussa",
+    "dupatta",
+  ] as const;
+  for (const id of desi) assert.equal(nb[`kind.${id}`], en[`kind.${id}`], id);
 });
