@@ -15,6 +15,10 @@ xcrun coremlcompiler compile GarmentEncoder.mlpackage ../ios/Resources/
 
 `convert.py` writes `../ios/Resources/garment-labels.json` (version 2): one entry per subcategory in the `kind` group and one per style (`desi`, `western`) in the `style` group, each with the embeddings of all its descriptions. The subcategory order must match `offeredKinds` in `src/domain/taxonomy.ts`; `npm test` checks this. Recompiling `GarmentEncoder.mlmodelc` is only needed when the image model changes.
 
+## Attribute groups
+
+`labels.py` also describes length, sleeve, volume, pattern, pattern size, fabric and embellishment. The app scores the same image embedding against each group and keeps the best value as a suggestion. A gap under 0.01 between the two best values counts as unsure; only an unsure length or sleeve becomes a quick check. Attribute accuracy has not been measured yet. See-through and open front are never described, so they are never guessed.
+
 ## Evaluation
 
 Evaluation pending photos.

@@ -79,3 +79,59 @@ def recognize(kinds, styles, margin=MARGIN):
                 "subcategory" if close(kinds, inside) else
                 "style" if not fixed and close(styles, style_rank) else None)
     return category, kind, fixed or style_rank[:1], question
+
+ATTRIBUTES = {
+    "length": {
+        "hip": ["a short top that ends at the hip", "a hip-length tunic"],
+        "thigh": ["a long top that ends at mid-thigh", "a thigh-length tunic"],
+        "knee": ["a knee-length tunic", "a garment that ends at the knee"],
+        "calf": ["a calf-length dress", "a long tunic that ends at mid-calf"],
+        "ankle": ["an ankle-length maxi dress", "a floor-length garment that reaches the ankles"],
+    },
+    "sleeve": {
+        "sleeveless": ["a sleeveless garment", "a garment with no sleeves"],
+        "short": ["a garment with short sleeves", "a short-sleeved top"],
+        "elbow": ["a garment with elbow-length sleeves", "a top with three-quarter sleeves"],
+        "long": ["a garment with long sleeves to the wrist", "a long-sleeved top"],
+    },
+    "volume": {
+        "fitted": ["a fitted, close-fitting garment", "a slim-fit garment"],
+        "straight": ["a straight-cut garment", "a garment with a straight relaxed fit"],
+        "voluminous": ["a loose, flowing, voluminous garment", "a flared garment with a lot of fabric"],
+    },
+    "pattern": {
+        "solid": ["a plain garment in one solid colour"],
+        "print": ["a floral print garment", "a garment with a printed pattern"],
+        "stripe": ["a striped garment"],
+        "check": ["a checked or plaid garment"],
+        "embroidered": ["an embroidered garment", "a garment decorated with embroidery"],
+    },
+    "scale": {
+        "small": ["a garment with a small ditsy print"],
+        "medium": ["a garment with a medium-sized print"],
+        "large": ["a garment with a large bold print"],
+    },
+    "fabric": {
+        "lawn": ["a garment made of lawn, a fine lightweight cotton"],
+        "cotton": ["a cotton garment"],
+        "linen": ["a linen garment"],
+        "jersey": ["a jersey knit garment"],
+        "modal": ["a soft modal jersey garment"],
+        "chiffon": ["a sheer chiffon garment"],
+        "silk": ["a silk garment"],
+        "satin": ["a shiny satin garment"],
+        "velvet": ["a velvet garment"],
+        "wool": ["a wool garment"],
+        "knit": ["a chunky knitted garment"],
+        "denim": ["a denim garment"],
+        "khaddar": ["a khaddar garment, a coarse handwoven cotton"],
+        "karandi": ["a karandi garment, a textured winter fabric"],
+        "organza": ["a crisp organza garment"],
+        "net": ["a net mesh garment"],
+    },
+    "embellishment": {
+        "none": ["a plain garment without embellishment"],
+        "light": ["a garment with light embroidery or small details"],
+        "heavy": ["a heavily embellished garment with dense embroidery, beads and sequins"],
+    },
+}

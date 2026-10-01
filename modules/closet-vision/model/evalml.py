@@ -13,7 +13,8 @@ results=[]; ts=[]
 for path,truth,style,group in all_cases:
     t=time.time(); f=ml.predict({"image":prep(path)})["embedding"][0]; ts.append(time.time()-t)
     scores={"kind":{},"style":{}}
-    for g,v,E in rows: scores[g][v]=float((E@f).max())
+    for g,v,E in rows:
+        if g in scores: scores[g][v]=float((E@f).max())
     results.append((path,truth,style,group,scores))
 print(sys.argv[1], f"median {np.median(ts)*1000:.1f} ms")
 summary(results)
