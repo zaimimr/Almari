@@ -86,10 +86,23 @@ test("C04 origin is read after Made in, Laget i or Produsert i", () => {
     ["Made in Turkey\nTillverkad i Turkiet", "Turkey"],
     ["Made in", undefined],
     ["Made in\n100% cotton", undefined],
+    ["Made in\nPolyester 100%", undefined],
     ["100% cotton", undefined],
   ];
   for (const [text, origin] of cases)
     assert.equal(parseCareText(text).origin, origin, text);
+});
+
+test("C05a a prefix word does not flip the order of a percent-first line", () => {
+  for (const text of ["Body: 60% Cotton 40% Silk", "Shell 60% Cotton 40% Silk"])
+    assert.deepEqual(
+      parseCareText(text).materials,
+      [
+        { fibre: "cotton", percent: 60 },
+        { fibre: "silk", percent: 40 },
+      ],
+      text,
+    );
 });
 
 test("C05 nothing readable gives empty fields and odd numbers are skipped", () => {

@@ -62,7 +62,7 @@ const sizeAfterWord =
   /\b(?:size|str|størrelse|eur|eu)\b\.?\s*:?\s*(XXXL|XXL|XXS|XL|XS|S|M|L|\d{2})\b/iu;
 const sizeAlone = /^(XXXL|XXL|XXS|XL|XS|S|M|L)$/i;
 const madeIn =
-  /\b(?:made in|produced in|laget i|produsert i)\s+(\p{L}+(?:[ -]\p{L}+)*)/iu;
+  /\b(?:made in|produced in|laget i|produsert i)[ \t]+(\p{L}+(?:[ -]\p{L}+)*)/iu;
 
 function materialsIn(line: string): LabelMaterial[] {
   const pairs = (pattern: RegExp, fibreAt: 1 | 2) =>
@@ -72,7 +72,8 @@ function materialsIn(line: string): LabelMaterial[] {
       return fibre && percent <= 100 ? [{ fibre, percent }] : [];
     });
   const first = /^\s*\p{L}/u.test(line) ? pairs(fibreFirst, 1) : [];
-  return first.length ? first : pairs(percentFirst, 2);
+  const second = pairs(percentFirst, 2);
+  return first.length >= second.length && first.length ? first : second;
 }
 
 export function parseCareText(text: string): LabelFields {
