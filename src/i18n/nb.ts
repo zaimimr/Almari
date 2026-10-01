@@ -298,4 +298,97 @@ export const nb: Record<Key, string> = {
   "fibre.acrylic": "akryl",
   "fibre.modal": "modal",
   "fibre.lyocell": "lyocell",
+  "capture.found": "{count} plagg funnet i ett bilde",
+  "capture.foundOne": "1 plagg funnet i ett bilde",
+  "capture.review": "Se over",
+  "capture.group.title": "Plagg i dette bildet",
+  "capture.group.intro":
+    "Behold plaggene som er dine, og fjern resten. Hvert plagg du beholder, får sitt eget bilde i garderoben.",
+  "capture.group.gone": "Disse plaggene venter ikke lenger",
+  "capture.group.goneHint": "De andre bildene dine venter fortsatt.",
+  "capture.othersIgnored":
+    "Det var flere personer i bildet. Bare klærne til personen foran ble brukt.",
+  "capture.keep": "Behold",
+  "capture.drop": "Fjern",
+  "capture.adjust": "Juster utsnittet",
+  "capture.addPiece": "Legg til et plagg",
+  "capture.drawHint": "Dra over bildet for å tegne en ramme rundt plagget.",
+  "capture.useBox": "Bruk denne rammen",
+  "capture.cancel": "Avbryt",
+  "capture.done": "Ferdig",
+  "capture.larger": "Større",
+  "capture.smaller": "Mindre",
+  "capture.box": "Ramme rundt plagget",
+  "capture.photo": "Bildet med plaggene som ble funnet",
+  "capture.newPiece": "Nytt plagg",
+  "capture.partial": "Delvis synlig",
+  "capture.partialCheck":
+    "Bare en del av plagget vises i bildet, så lengden og ermene er gjetninger. Sjekk dem før du lagrer.",
+  "capture.retake": "Ta på nytt",
+  "capture.photoTip": "Bildetips",
+  "region.head": "Hijab eller skjerf",
+  "region.upper": "Overdel",
+  "region.skirt": "Skjørt",
+  "region.pants": "Bukse",
+  "region.dress": "Kjole eller abaya",
+  "region.belt": "Belte",
+  "region.shoes": "Sko",
+  "region.bag": "Veske",
+  "region.sunglasses": "Solbriller",
+  "advice.useAnyway": "Bruk likevel",
+  "advice.merged.title": "Bakgrunnen glir inn i plagget.",
+  "advice.merged.body":
+    "Prøv en ensfarget bakgrunn som skiller seg fra plagget, for eksempel et grått laken til hvite klær.",
+  "advice.clipped.title": "En del av plagget er kuttet bort.",
+  "advice.clipped.body":
+    "Gå litt bakover, så alle kanter, ermer og falder kommer med i bildet.",
+  "advice.blur.title": "Bildet ser uskarpt ut.",
+  "advice.blur.body":
+    "Hold telefonen stødig, trykk på plagget for å fokusere, og ta bildet.",
+  "advice.dark.title": "Bildet er ganske mørkt.",
+  "advice.dark.body":
+    "Gå nærmere et vindu i dagslys, så den ekte fargen vises.",
+  "advice.mixed-light.title": "Lyset er blandet.",
+  "advice.mixed-light.body":
+    "Slå av fargede lamper og bruk dagslys fra én side, så fargen blir riktig.",
+  "problem.camera-off":
+    "Kameratilgang er slått av. Du kan velge bilder i stedet, eller slå på kameratilgang i Innstillinger.",
+  "problem.unavailable":
+    "Bildet kunne ikke åpnes. Hvis det ligger i iCloud, koble til internett og prøv igjen, eller velg et annet bilde.",
+  "problem.low-space":
+    "iPhonen din har nesten ikke mer plass. Plaggene dine er tatt vare på. Frigjør litt plass, og prøv igjen.",
+  "problem.failed":
+    "Bildet kunne ikke legges til. De andre bildene dine er tatt vare på. Prøv igjen.",
+  "problem.chooseInstead": "Velg et bilde i stedet",
+  "problem.choosePhotosInstead": "Velg bilder i stedet",
+  "problem.openSettings": "Åpne Innstillinger",
+  "problem.tryAgain": "Prøv igjen",
+  "failure.storage":
+    "Det er ikke nok plass til å klargjøre bildet. Frigjør litt plass, og prøv på nytt.",
+  "failure.unreadable":
+    "Bildet kunne ikke leses. Ta det på nytt, eller fjern det.",
+  "failure.processing":
+    "Bildet kunne ikke klargjøres. Prøv på nytt, ta det på nytt, eller fjern det.",
+  "photo.enhancedImage": "Forbedret bilde til garderoben",
+  "photo.plainImage": "Enkelt bilde til garderoben",
+  "photo.enhanced": "Forbedret",
+  "photo.plain": "Enkel",
+  "duplicate.title": "Har du dette i garderoben fra før?",
+  "duplicate.named": "Det ligner veldig på {name}.",
+  "duplicate.unnamed": "Det ligner veldig på et annet plagg du har lagt til.",
+  "duplicate.same": "Samme plagg",
+  "duplicate.different": "Et annet plagg",
+  "tips.window": "Et plagg ved et vindu i mykt dagslys",
+  "tips.sheet": "Et hvitt plagg på et grått laken",
+  "tips.frame": "Et helt plagg innenfor bildet, med litt plass rundt",
+  "sets.select": "Velg",
+  "sets.hint":
+    "Velg plaggene i ett sett, for eksempel en kurta, shalwar og dupatta.",
+  "sets.link": "Disse hører sammen",
+  "sets.linked":
+    "Koblet sammen som et sett. Åpne et plagg for å se eller endre settet.",
+  "sets.linkFailed": "Plaggene kunne ikke kobles sammen. Prøv igjen.",
+  "sets.partOf": "Del av et sett",
+  "sets.remove": "Fjern fra settet",
+  "sets.removeFailed": "Plagget kunne ikke tas ut av settet. Prøv igjen.",
 };

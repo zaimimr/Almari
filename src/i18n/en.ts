@@ -297,6 +297,98 @@ export const en = {
   "fibre.acrylic": "acrylic",
   "fibre.modal": "modal",
   "fibre.lyocell": "lyocell",
+  "capture.found": "{count} pieces found in one photo",
+  "capture.foundOne": "1 piece found in one photo",
+  "capture.review": "Review",
+  "capture.group.title": "Pieces in this photo",
+  "capture.group.intro":
+    "Keep the pieces that are yours and drop the rest. Each piece you keep gets its own closet image.",
+  "capture.group.gone": "These pieces are no longer waiting",
+  "capture.group.goneHint": "Your other photos are still waiting.",
+  "capture.othersIgnored":
+    "Other people were in this photo. Only the clothes of the person in front were used.",
+  "capture.keep": "Keep",
+  "capture.drop": "Drop",
+  "capture.adjust": "Adjust crop",
+  "capture.addPiece": "Add a piece",
+  "capture.drawHint": "Drag across the photo to draw a box around the piece.",
+  "capture.useBox": "Use this box",
+  "capture.cancel": "Cancel",
+  "capture.done": "Done",
+  "capture.larger": "Larger",
+  "capture.smaller": "Smaller",
+  "capture.box": "Box around the piece",
+  "capture.photo": "The photo with the pieces found in it",
+  "capture.newPiece": "New piece",
+  "capture.partial": "Partly visible",
+  "capture.partialCheck":
+    "Only part of this piece shows in the photo, so its length and sleeves are guesses. Check them before you save it.",
+  "capture.retake": "Retake",
+  "capture.photoTip": "Photo tip",
+  "region.head": "Hijab or scarf",
+  "region.upper": "Top",
+  "region.skirt": "Skirt",
+  "region.pants": "Trousers",
+  "region.dress": "Dress or abaya",
+  "region.belt": "Belt",
+  "region.shoes": "Shoes",
+  "region.bag": "Bag",
+  "region.sunglasses": "Sunglasses",
+  "advice.useAnyway": "Use anyway",
+  "advice.merged.title": "The background blends in.",
+  "advice.merged.body":
+    "Try a plain background that contrasts with this piece, like a grey sheet for white clothes.",
+  "advice.clipped.title": "Part of this piece is cut off.",
+  "advice.clipped.body":
+    "Step back a little so every hem, sleeve and edge is in the photo.",
+  "advice.blur.title": "This photo looks blurry.",
+  "advice.blur.body":
+    "Hold your phone steady, tap the piece to focus, then take the photo.",
+  "advice.dark.title": "This photo is quite dark.",
+  "advice.dark.body":
+    "Move closer to a window in daylight so the real color shows.",
+  "advice.mixed-light.title": "The light is mixed.",
+  "advice.mixed-light.body":
+    "Turn off colored lamps and use daylight from one side so the color stays true.",
+  "problem.camera-off":
+    "Camera access is off. You can choose photos instead, or turn on camera access in Settings.",
+  "problem.unavailable":
+    "This photo could not be opened. If it is stored in iCloud, connect to the internet and try again, or choose another photo.",
+  "problem.low-space":
+    "Your iPhone is almost out of space. Your pieces are kept. Free up some space, then try again.",
+  "problem.failed":
+    "The photo could not be added. Your other photos are kept. Please try again.",
+  "problem.chooseInstead": "Choose a photo instead",
+  "problem.choosePhotosInstead": "Choose photos instead",
+  "problem.openSettings": "Open Settings",
+  "problem.tryAgain": "Try again",
+  "failure.storage":
+    "There is not enough space to prepare this photo. Free up some space, then retry.",
+  "failure.unreadable":
+    "This photo could not be read. Retake it, or remove it.",
+  "failure.processing":
+    "This photo could not be prepared. Retry, retake it, or remove it.",
+  "photo.enhancedImage": "Enhanced closet image",
+  "photo.plainImage": "Plain closet image",
+  "photo.enhanced": "Enhanced",
+  "photo.plain": "Plain",
+  "duplicate.title": "Is this already in your closet?",
+  "duplicate.named": "It looks very like {name}.",
+  "duplicate.unnamed": "It looks very like another piece you added.",
+  "duplicate.same": "Same piece",
+  "duplicate.different": "Different piece",
+  "tips.window": "A piece beside a window in soft daylight",
+  "tips.sheet": "A white piece on a grey sheet",
+  "tips.frame": "A whole piece inside the phone frame with space around it",
+  "sets.select": "Select",
+  "sets.hint":
+    "Choose the pieces of one set, like a kurta, shalwar and dupatta.",
+  "sets.link": "These belong together",
+  "sets.linked": "Linked as a set. Open a piece to see or change its set.",
+  "sets.linkFailed": "These pieces could not be linked. Please try again.",
+  "sets.partOf": "Part of a set",
+  "sets.remove": "Remove from this set",
+  "sets.removeFailed": "This piece could not leave its set. Please try again.",
 };
 
 export type Key = keyof typeof en;
