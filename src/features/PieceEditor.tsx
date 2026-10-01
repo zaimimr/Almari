@@ -10,11 +10,15 @@ import {
   type GarmentKind,
   type Style,
   categories,
-  garmentKinds,
+  fixedStyles,
+  isOffered,
+  kindsIn,
   styleOptions,
   savePiece,
   removePiece,
 } from "../domain/closet";
+import { confirmEdits } from "../domain/recognition";
+import { kindName, styleName, stylesName, t } from "../i18n";
 import { useCloset } from "../state/closet";
 import { keepPhoto, discardPhoto } from "../storage/local";
 import { photoSource } from "../ui/photos";
@@ -50,9 +54,10 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
     kind !== piece?.kind ||
     JSON.stringify(worn) !== JSON.stringify(piece?.styles) ||
     newImage;
-  const kindOptions = garmentKinds.filter(
-    (option) => option.category === category,
-  );
+  const kindOptions = category ? kindsIn(category) : [];
+  const fixed = kind ? fixedStyles(kind) : undefined;
+  const needsKind = (piece?.source ?? "owned") === "owned";
+  const kindMissing = needsKind && (!kind || !isOffered(kind));
   const allowClose = useDiscardChanges(dirty, busy);
 
   async function pick(source: "camera" | "library") {
@@ -88,7 +93,7 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
   }
 
   async function save() {
-    if (!image || !category || !name.trim() || busy) return;
+    if (!image || !category || !name.trim() || kindMissing || busy) return;
     setBusy(true);
     setError(null);
     let copiedPhoto: string | null = null;
@@ -96,20 +101,28 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
       const photo = newImage
         ? (copiedPhoto = await keepPhoto(image))
         : piece!.photo;
+      const chosenStyles = fixed ?? worn;
       await update((current) =>
-        savePiece(current, {
-          id,
-          name,
-          category,
-          photo,
-          createdAt: piece?.createdAt ?? new Date().toISOString(),
-          source: piece?.source ?? "owned",
-          ...(kind ? { kind } : {}),
-          ...(worn?.length ? { styles: worn } : {}),
-          ...(piece?.traits && category === piece.category
-            ? { traits: piece.traits }
-            : {}),
-        }),
+        savePiece(
+          current,
+          confirmEdits(piece, {
+            id,
+            name,
+            category,
+            photo,
+            createdAt: piece?.createdAt ?? new Date().toISOString(),
+            source: piece?.source ?? "owned",
+            ...(kind ? { kind } : {}),
+            ...(chosenStyles?.length ? { styles: chosenStyles } : {}),
+            ...(piece?.traits && category === piece.category
+              ? { traits: piece.traits }
+              : {}),
+            ...(!newImage && piece?.original
+              ? { original: piece.original }
+              : {}),
+            ...(!newImage && piece?.frame ? { frame: piece.frame } : {}),
+          }),
+        ),
       );
       if (piece && newImage)
         void discardPhoto(piece.photo).catch(() => undefined);
@@ -248,49 +261,66 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
           ))}
         </View>
       </View>
-      {kindOptions.length > 1 ? (
+      {kindOptions.length ? (
         <View style={styles.categorySection}>
-          <AppText style={styles.label}>Type (optional)</AppText>
+          <AppText style={styles.label}>
+            {needsKind ? t("piece.kind") : t("piece.kindOptional")}
+          </AppText>
           <View style={styles.categories}>
             {kindOptions.map((option) => (
               <Chip
                 key={option.id}
-                label={option.label}
+                label={kindName(option.id)}
                 selected={kind === option.id}
                 disabled={busy}
                 onPress={() =>
-                  setKind(kind === option.id ? undefined : option.id)
+                  setKind(
+                    !needsKind && kind === option.id ? undefined : option.id,
+                  )
                 }
               />
             ))}
           </View>
+          {kindMissing ? (
+            <AppText variant="caption" muted>
+              {t("piece.kindRequired")}
+            </AppText>
+          ) : null}
         </View>
       ) : null}
       <View style={styles.categorySection}>
-        <AppText style={styles.label}>Worn in (optional)</AppText>
-        <View style={styles.categories}>
-          {styleOptions.map((option) => {
-            const selected = Boolean(worn?.includes(option.id));
-            return (
-              <Chip
-                key={option.id}
-                label={`${option.label} outfits`}
-                selected={selected}
-                disabled={busy}
-                onPress={() =>
-                  setWorn((current = []) =>
-                    selected
-                      ? current.filter((item) => item !== option.id)
-                      : [...current, option.id],
-                  )
-                }
-              />
-            );
-          })}
-        </View>
-        <AppText variant="caption" muted>
-          Choose both for pieces you wear either way, like shoes or a hijab.
-        </AppText>
+        <AppText style={styles.label}>{t("piece.style")}</AppText>
+        {fixed ? (
+          <AppText muted>
+            {t("piece.styleFixed", { styles: stylesName(fixed) })}
+          </AppText>
+        ) : (
+          <>
+            <View style={styles.categories}>
+              {styleOptions.map((option) => {
+                const selected = Boolean(worn?.includes(option.id));
+                return (
+                  <Chip
+                    key={option.id}
+                    label={styleName(option.id)}
+                    selected={selected}
+                    disabled={busy}
+                    onPress={() =>
+                      setWorn((current = []) =>
+                        selected
+                          ? current.filter((item) => item !== option.id)
+                          : [...current, option.id],
+                      )
+                    }
+                  />
+                );
+              })}
+            </View>
+            <AppText variant="caption" muted>
+              {t("piece.styleHint")}
+            </AppText>
+          </>
+        )}
       </View>
       <ErrorMessage message={error} />
       <Button
@@ -300,7 +330,11 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
         }}
         busy={busy}
         disabled={
-          !image || !category || !name.trim() || Boolean(piece && !dirty)
+          !image ||
+          !category ||
+          !name.trim() ||
+          kindMissing ||
+          Boolean(piece && !dirty)
         }
       />
       <AppText variant="caption" muted>

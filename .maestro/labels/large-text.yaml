@@ -1,0 +1,24 @@
+appId: com.zaimimran.almari
+---
+- launchApp
+- tapOn: "Closet"
+- tapOn: "Add pieces"
+- tapOn: "Choose photos"
+- tapOn:
+    text: "Photo.*"
+    index: 0
+- tapOn: "Add"
+- extendedWaitUntil:
+    visible: ".*Quick check"
+    timeout: 60000
+- tapOn: ".*Quick check"
+- takeScreenshot: planning/build/labels/large-text-check-piece
+- scrollUntilVisible:
+    element: "Remove this photo"
+- takeScreenshot: planning/build/labels/large-text-check-piece-end
+- tapOn: "Remove this photo"
+- tapOn: "Close"
+- tapOn: "Sage embroidered kurta.*"
+- scrollUntilVisible:
+    element: "Style"
+- takeScreenshot: planning/build/labels/large-text-editor

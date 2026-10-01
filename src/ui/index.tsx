@@ -19,8 +19,9 @@ import {
   type Piece,
   type Category,
   categories,
-  categoryLabel,
+  isOffered,
 } from "../domain/closet";
+import { categoryName, kindName } from "../i18n";
 import { photoSource } from "./photos";
 import { theme } from "./theme";
 
@@ -320,11 +321,17 @@ export function PieceTile({
   compact?: boolean;
   selectedLabel?: string;
 }) {
+  const summary = [
+    categoryName(piece.category),
+    piece.kind && isOffered(piece.kind) ? kindName(piece.kind) : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`${piece.name}, ${categoryLabel(piece.category)}${selected ? `, ${selectedLabel.toLowerCase()}` : ""}`}
+      accessibilityLabel={`${piece.name}, ${summary}${selected ? `, ${selectedLabel.toLowerCase()}` : ""}`}
       accessibilityState={{ selected }}
       style={({ pressed }) => [styles.tile, pressed && styles.pressed]}
     >
@@ -352,7 +359,7 @@ export function PieceTile({
       </AppText>
       {!compact ? (
         <AppText variant="caption" muted>
-          {categoryLabel(piece.category)}
+          {summary}
           {piece.source === "sample" ? " · Sample" : ""}
         </AppText>
       ) : null}
