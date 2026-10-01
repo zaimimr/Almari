@@ -1,0 +1,6 @@
+appId: com.zaimimran.almari
+---
+- launchApp
+- tapOn: "Closet"
+- assertVisible: "All"
+- takeScreenshot: planning/build/labels/large-text-closet

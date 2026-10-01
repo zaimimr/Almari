@@ -1,13 +1,20 @@
 import { useState } from "react";
-import { FlatList, StyleSheet, View } from "react-native";
+import { FlatList, ScrollView, StyleSheet, View } from "react-native";
 import { Stack, router } from "expo-router";
 import { useCloset } from "../../../src/state/closet";
-import { type Category } from "../../../src/domain/closet";
+import { occasions } from "../../../src/domain/closet";
+import {
+  closetChips,
+  filterPieces,
+  noFilter,
+  type ClosetFilter,
+} from "../../../src/domain/closetFilters";
+import { categoryName, occasionName, styleName, t } from "../../../src/i18n";
 import {
   AppText,
   Button,
+  Chip,
   Field,
-  Filters,
   HeaderAction,
   Message,
   PieceTile,
@@ -15,18 +22,52 @@ import {
 import { addPiecesRoute } from "../../../src/state/imports";
 import { theme } from "../../../src/ui/theme";
 
+type FilterOption = {
+  key: string;
+  label: string;
+  selected: boolean;
+  change: Partial<ClosetFilter>;
+};
+
 export default function ClosetScreen() {
   const { closet } = useCloset();
-  const [category, setCategory] = useState<Category | "all">("all");
+  const [filter, setFilter] = useState<ClosetFilter>(noFilter);
   const [search, setSearch] = useState("");
   const sampleCount = closet.pieces.filter(
     (piece) => piece.source === "sample",
   ).length;
-  const filtered = closet.pieces.filter(
-    (piece) =>
-      (category === "all" || piece.category === category) &&
-      piece.name.toLowerCase().includes(search.trim().toLowerCase()),
+  const chips = closetChips(closet.pieces);
+  const query = search.trim().toLowerCase();
+  const filtered = filterPieces(closet.pieces, filter).filter((piece) =>
+    piece.name.toLowerCase().includes(query),
   );
+  const filterOptions: FilterOption[] = [
+    ...(["desi", "western"] as const).map((style) => ({
+      key: `style-${style}`,
+      label: styleName(style),
+      selected: filter.style === style,
+      change: { style: filter.style === style ? null : style },
+    })),
+    ...occasions.map((occasion) => ({
+      key: `occasion-${occasion.id}`,
+      label: occasionName(occasion.id),
+      selected: filter.occasion === occasion.id,
+      change: {
+        occasion: filter.occasion === occasion.id ? null : occasion.id,
+      },
+    })),
+    ...(["available", "away"] as const).map((availability) => ({
+      key: `availability-${availability}`,
+      label: t(
+        availability === "available" ? "closet.available" : "closet.away",
+      ),
+      selected: filter.availability === availability,
+      change: {
+        availability:
+          filter.availability === availability ? null : availability,
+      },
+    })),
+  ];
 
   return (
     <View style={styles.screen}>
@@ -78,7 +119,43 @@ export default function ClosetScreen() {
                   autoCorrect={false}
                   clearButtonMode="while-editing"
                 />
-                <Filters value={category} onChange={setCategory} />
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.chips}
+                  accessibilityLabel={t("closet.categories")}
+                >
+                  {chips.map((id) => (
+                    <Chip
+                      key={id}
+                      label={id === "all" ? t("closet.all") : categoryName(id)}
+                      selected={filter.category === id}
+                      onPress={() =>
+                        setFilter((current) => ({ ...current, category: id }))
+                      }
+                    />
+                  ))}
+                </ScrollView>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.chips}
+                  accessibilityLabel={t("closet.filters")}
+                >
+                  {filterOptions.map((option) => (
+                    <Chip
+                      key={option.key}
+                      label={option.label}
+                      selected={option.selected}
+                      onPress={() =>
+                        setFilter((current) => ({
+                          ...current,
+                          ...option.change,
+                        }))
+                      }
+                    />
+                  ))}
+                </ScrollView>
               </>
             ) : null}
           </View>
@@ -106,14 +183,14 @@ export default function ClosetScreen() {
           ) : (
             <Message
               title="No pieces found"
-              description="Try another name or category."
+              description={t("closet.noMatch")}
               action={
                 <Button
                   label="Clear filters"
                   secondary
                   onPress={() => {
                     setSearch("");
-                    setCategory("all");
+                    setFilter(noFilter);
                   }}
                 />
               }
@@ -149,6 +226,7 @@ const styles = StyleSheet.create({
   },
   intro: { gap: 20, paddingBottom: 24 },
   starter: { gap: 12 },
+  chips: { gap: 8, paddingVertical: 4 },
   row: { gap: 16 },
   cell: { width: "48%", flexGrow: 0 },
   empty: { gap: 20, paddingTop: 24 },
