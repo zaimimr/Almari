@@ -71,3 +71,30 @@ Known limitations:
 - The app grows by about 90 MB because of the model.
 
 Next: install the development build on her iPhone and try 10 to 20 of her real pieces, including hijabs, a white garment, embroidery, and a long dress. Then finish D2 quality hints and sets, or move on to D3.
+
+## Labels, capture and styling: Part 1, labels (done, 1 October 2026)
+
+What works:
+
+- Every piece has a category, a subcategory and a style. The taxonomy has 9 categories and 46 subcategories. Earlier ids stay valid; the general `shoes` and `bag` ids are kept for stored pieces but no longer offered, so their cards show only the category until she picks a subcategory.
+- Recognition pools subcategory scores per category (log-sum-exp), picks the best subcategory inside it, and takes the style from the subcategory when it is fixed or from the Desi and Western descriptions otherwise. A close call becomes one quick question, category first, then subcategory, then style.
+- Check this piece shows Category, Subcategory and Style, with the one question in place of the relevant heading. Kurtas, dupattas and other fixed subcategories show their style instead of a choice.
+- The piece editor shows Subcategory (required for her own pieces) and Style. Editing a piece keeps its original photo and position in the flat lay.
+- Closet cards read "Category · Subcategory".
+- The closet shows All plus one chip for each of the 9 categories, Hijabs & scarves first, and a second row of style, occasion and availability filters. Filters combine, and Clear filters resets them with the search.
+- New and changed texts follow the phone language: bokmål when the phone is set to Norwegian (including nynorsk and plain Norwegian), otherwise English. The catalogs are `src/i18n/en.ts` and `src/i18n/nb.ts`; a missing bokmål text fails typecheck.
+- What she picks or changes is stored as confirmed and is never replaced by later recognition (R01). Values the app proposed stay marked as proposed until she changes them.
+- The closet moved to version 3. The app writes `closet.v3` and reads `closet.v2`, then `closet.v1`, only when no newer snapshot exists. Older snapshots are never overwritten. Unfinished import jobs keep their state.
+- Needle is not used anywhere in the app. Recognition uses only the on-device classifier.
+
+Evidence: `npm run check` passes with 56 domain tests, including the migration from a realistic version 2 closet, the category pool, the fixed style table, one question when several things are unsure, and confirmed values surviving re-preparation. `npx expo-doctor` (21 of 21 checks) and `npx expo export --platform ios --platform web` pass. Recognition evaluation is pending photos: only the 13 sample garments were available, and on those the Core ML 8-bit model got category 13/13, subcategory 13/13 and style 13/13, with 6 quick checks. The 35 earlier web photos and the 20 extra photos still have to be collected, so the 48-photo and 20-photo numbers do not exist yet. Details in [the model README](../../modules/closet-vision/model/README.md). Screens were checked with Maestro on the Closet Development simulator (iOS 27.0), including accessibility extra large text and bokmål; screenshots are in [planning/build/labels](../build/labels).
+
+Known limitations:
+
+- Recognition accuracy on the new subcategories and styles is unmeasured beyond the 13 sample garments until the evaluation photos exist.
+- No photo exists yet for shirt, kameez, jacket, clutch, backpack, belt and dupatta, so those subcategories are untested.
+- Shawls and underscarves sit in Hijabs & scarves, so Today can still use a shawl in the hijab slot until the stylist rules in Part 6.
+- Screens and texts that were not changed in this part, including the tab bar, stay in English on a Norwegian phone until Part 8.
+- Pieces without occasion tags show under every occasion filter until she tags them. Unavailable shows nothing until Part 2 adds Mark as unavailable.
+- Owned pieces saved before this version have no record of whether their subcategory was proposed, so they count as confirmed and will not be re-labelled automatically.
+- The simulator cannot remove backgrounds, so every simulator import asks a quick check; real photos on her iPhone have not been tried with the new labels.
