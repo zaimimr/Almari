@@ -113,6 +113,13 @@ export const nb: Record<Key, string> = {
   "fact.sheer": "Gjennomsiktig",
   "fact.season": "Sesong",
   "fact.suggested": "Forslag: {value}",
+  "editor.details": "Detaljer",
+  "editor.detailsHint":
+    "Forslagene kommer fra bildet. Trykk på et valg for å bekrefte eller endre det.",
+  "source.proposed": "Foreslått fra bildet",
+  "source.label": "Fra vaskelappen",
+  "source.confirmed": "Bekreftet",
+  "source.none": "Ikke satt",
   "fact.looksRight": "Stemmer",
   "attribute.length": "Lengde",
   "attribute.sleeve": "Ermer",

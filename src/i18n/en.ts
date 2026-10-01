@@ -111,6 +111,13 @@ export const en = {
   "fact.sheer": "See-through",
   "fact.season": "Season",
   "fact.suggested": "Suggested: {value}",
+  "editor.details": "Details",
+  "editor.detailsHint":
+    "Suggestions come from the photo. Tap an option to confirm or change it.",
+  "source.proposed": "Suggested from the photo",
+  "source.label": "From the care label",
+  "source.confirmed": "Confirmed",
+  "source.none": "Not set",
   "fact.looksRight": "Looks right",
   "attribute.length": "Length",
   "attribute.sleeve": "Sleeves",

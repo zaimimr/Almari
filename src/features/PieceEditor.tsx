@@ -18,6 +18,11 @@ import {
   removePiece,
   usedIn,
 } from "../domain/closet";
+import {
+  confirmAttribute,
+  fitAttributes,
+  withDetails,
+} from "../domain/attributes";
 import { confirmEdits } from "../domain/recognition";
 import { categoryName, kindName, styleName, stylesName, t } from "../i18n";
 import { useCloset } from "../state/closet";
@@ -35,6 +40,7 @@ import {
 import { theme } from "../ui/theme";
 import { confirmAction } from "../ui/confirm";
 import { useDiscardChanges } from "../navigation/useDiscardChanges";
+import { AttributeEditor } from "./AttributeEditor";
 
 export function PieceEditor({ piece }: { piece?: Piece }) {
   const { closet, update } = useCloset();
@@ -47,6 +53,13 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
   const [worn, setWorn] = useState<Style[] | undefined>(piece?.styles);
   const [image, setImage] = useState<string | null>(piece?.photo ?? null);
   const [newImage, setNewImage] = useState(false);
+  const [details, setDetails] = useState<Pick<Piece, "attributes" | "sources">>(
+    { attributes: piece?.attributes, sources: piece?.sources },
+  );
+  const describes = piece?.source !== "sample";
+  const described = category
+    ? fitAttributes({ category, kind, ...details })
+    : null;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const dirty =
@@ -54,6 +67,11 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
     category !== (piece?.category ?? null) ||
     kind !== piece?.kind ||
     JSON.stringify(worn) !== JSON.stringify(piece?.styles) ||
+    JSON.stringify(details) !==
+      JSON.stringify({
+        attributes: piece?.attributes,
+        sources: piece?.sources,
+      }) ||
     newImage;
   const kindOptions = category ? kindsIn(category) : [];
   const fixed = kind ? fixedStyles(kind) : undefined;
@@ -103,28 +121,32 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
         ? (copiedPhoto = await keepPhoto(image))
         : piece!.photo;
       const chosenStyles = fixed ?? worn;
+      const base: Piece = {
+        id,
+        name,
+        category,
+        photo,
+        createdAt: piece?.createdAt ?? new Date().toISOString(),
+        source: piece?.source ?? "owned",
+        ...(kind ? { kind } : {}),
+        ...(chosenStyles?.length ? { styles: chosenStyles } : {}),
+        ...(piece?.traits && category === piece.category
+          ? { traits: piece.traits }
+          : {}),
+        ...(!newImage && piece?.original ? { original: piece.original } : {}),
+        ...(!newImage && piece?.frame ? { frame: piece.frame } : {}),
+        ...(!newImage && piece?.colors ? { colors: piece.colors } : {}),
+        ...(!newImage && piece?.embedding
+          ? { embedding: piece.embedding }
+          : {}),
+        ...(piece?.status ? { status: piece.status } : {}),
+        ...(piece?.away ? { away: piece.away } : {}),
+      };
+      const confirmed = confirmEdits(piece, base);
       await update((current) =>
         savePiece(
           current,
-          confirmEdits(piece, {
-            id,
-            name,
-            category,
-            photo,
-            createdAt: piece?.createdAt ?? new Date().toISOString(),
-            source: piece?.source ?? "owned",
-            ...(kind ? { kind } : {}),
-            ...(chosenStyles?.length ? { styles: chosenStyles } : {}),
-            ...(piece?.traits && category === piece.category
-              ? { traits: piece.traits }
-              : {}),
-            ...(!newImage && piece?.original
-              ? { original: piece.original }
-              : {}),
-            ...(!newImage && piece?.frame ? { frame: piece.frame } : {}),
-            ...(piece?.status ? { status: piece.status } : {}),
-            ...(piece?.away ? { away: piece.away } : {}),
-          }),
+          describes ? withDetails(confirmed, details) : confirmed,
         ),
       );
       if (piece && newImage)
@@ -329,6 +351,16 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
           </>
         )}
       </View>
+      {described && describes ? (
+        <AttributeEditor
+          piece={described}
+          disabled={busy}
+          onConfirm={(key, value) => {
+            const next = confirmAttribute(described, key, value);
+            setDetails({ attributes: next.attributes, sources: next.sources });
+          }}
+        />
+      ) : null}
       <ErrorMessage message={error} />
       <Button
         label={piece ? "Save changes" : "Add to closet"}
