@@ -1,6 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { fibreName, parseCareText, type LabelFields } from "./careLabel";
+import {
+  fibreName,
+  mergeCareLabel,
+  parseCareText,
+  readCareLabelText,
+  type LabelFields,
+  type LabelModel,
+} from "./careLabel";
 import { careLabelFixtures } from "./careLabelEval";
 
 const withoutBrand = (fields: LabelFields): LabelFields => {
@@ -95,4 +102,153 @@ test("C05 nothing readable gives empty fields and odd numbers are skipped", () =
     { fibre: "polyester", percent: 65 },
     { fibre: "viscose", percent: 35 },
   ]);
+});
+
+const blend = "H&M\n95% Cotton\n5% Elastane\nMade in Bangladesh\nSize S";
+
+test("C06 a perfect model answer fills the brand on every fixture", () => {
+  for (const fixture of careLabelFixtures)
+    assert.deepEqual(
+      mergeCareLabel(
+        parseCareText(fixture.text),
+        fixture.ideal ? JSON.stringify(fixture.ideal) : null,
+        fixture.text,
+      ),
+      fixture.expected,
+      fixture.id,
+    );
+});
+
+test("C07 the parser's values win over the model's", () => {
+  const json = JSON.stringify({
+    materials: [{ fibre: "Elastane", percent: 95 }],
+    size: "M",
+    brand: "H&M",
+    origin: "India",
+  });
+  assert.deepEqual(mergeCareLabel(parseCareText(blend), json, blend), {
+    materials: [
+      { fibre: "cotton", percent: 95 },
+      { fibre: "elastane", percent: 5 },
+    ],
+    size: "S",
+    brand: "H&M",
+    origin: "Bangladesh",
+  });
+});
+
+test("C08 model values that are not printed on the label are dropped", () => {
+  const text = "Fabric: Cotton Silk\nSapphire";
+  const json = JSON.stringify({
+    materials: [
+      { fibre: "Cotton", percent: 60 },
+      { fibre: "Silk", percent: 40 },
+      { fibre: "Kevlar", percent: 100 },
+      { fibre: "Wool", percent: 10 },
+    ],
+    size: "S",
+    brand: "Sapphire",
+    origin: "Pakistan",
+  });
+  assert.deepEqual(mergeCareLabel(parseCareText(text), json, text), {
+    materials: [
+      { fibre: "cotton", percent: null },
+      { fibre: "silk", percent: null },
+    ],
+    brand: "Sapphire",
+  });
+  const plain = "100% Cotton\nMade in Turkey";
+  assert.deepEqual(
+    mergeCareLabel(
+      parseCareText(plain),
+      JSON.stringify({ brand: "Cotton", size: "M" }),
+      plain,
+    ),
+    { materials: [{ fibre: "cotton", percent: 100 }], origin: "Turkey" },
+  );
+  const brand = "Cotton On\n100% Cotton";
+  assert.equal(
+    mergeCareLabel(
+      parseCareText(brand),
+      JSON.stringify({ brand: "Cotton On" }),
+      brand,
+    ).brand,
+    "Cotton On",
+  );
+});
+
+test("C09 broken or odd model output adds nothing", () => {
+  const text = "100% COTTON\nMade in Turkey";
+  const parsed = parseCareText(text);
+  for (const json of [
+    null,
+    "",
+    "{materials",
+    "[1, 2]",
+    '"Zara"',
+    '{"materials": "cotton"}',
+    '{"materials": [{"fibre": 3}], "brand": 42, "size": null}',
+  ])
+    assert.deepEqual(mergeCareLabel(parsed, json, text), parsed, String(json));
+});
+
+test("C10 the printed check ignores case but needs whole words", () => {
+  const text = "KAPPAHL\n100% VISKOSE\nPRODUSERT I TYRKIA";
+  const parsed = parseCareText(text);
+  assert.deepEqual(
+    mergeCareLabel(
+      parsed,
+      JSON.stringify({ brand: "Kappahl", origin: "Turkey" }),
+      text,
+    ),
+    { ...parsed, brand: "Kappahl" },
+  );
+  assert.deepEqual(
+    mergeCareLabel(parsed, JSON.stringify({ brand: "Kappahl AB" }), text),
+    parsed,
+  );
+  assert.deepEqual(
+    mergeCareLabel(parsed, JSON.stringify({ brand: "Kapp" }), text),
+    parsed,
+  );
+});
+
+function fakeModel(ready: boolean | Error, answer: string | null | Error) {
+  const asked: string[] = [];
+  const model: LabelModel = {
+    available: async () => {
+      if (ready instanceof Error) throw ready;
+      return ready;
+    },
+    extract: async (text) => {
+      asked.push(text);
+      if (answer instanceof Error) throw answer;
+      return answer;
+    },
+  };
+  return { model, asked };
+}
+
+test("C11 only the parser runs when the model is off, failing or not needed", async () => {
+  const parsed: LabelFields = parseCareText(blend);
+  const answer = JSON.stringify({ brand: "H&M" });
+  const off = fakeModel(false, answer);
+  assert.deepEqual(await readCareLabelText(blend, off.model), parsed);
+  assert.deepEqual(off.asked, []);
+  const on = fakeModel(true, answer);
+  assert.deepEqual(await readCareLabelText(blend, on.model), {
+    ...parsed,
+    brand: "H&M",
+  });
+  assert.deepEqual(on.asked, [blend]);
+  const throwing = fakeModel(true, new Error("model"));
+  assert.deepEqual(await readCareLabelText(blend, throwing.model), parsed);
+  const broken = fakeModel(new Error("availability"), answer);
+  assert.deepEqual(await readCareLabelText(blend, broken.model), parsed);
+  assert.deepEqual(broken.asked, []);
+  const empty = fakeModel(true, answer);
+  assert.deepEqual(await readCareLabelText(" \n ", empty.model), {
+    materials: [],
+  });
+  assert.deepEqual(empty.asked, []);
 });

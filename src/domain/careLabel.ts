@@ -86,3 +86,112 @@ export function parseCareText(text: string): LabelFields {
   if (origin) fields.origin = origin;
   return fields;
 }
+
+export type LabelModel = {
+  available(): Promise<boolean>;
+  extract(text: string): Promise<string | null>;
+};
+
+const limits = { fibre: 40, size: 20, brand: 40, origin: 40 };
+
+function escape(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function printed(value: string, text: string) {
+  const wanted = clean(value);
+  if (!wanted) return false;
+  return new RegExp(
+    `(^|[^\\p{L}\\p{N}])${escape(wanted)}(?=$|[^\\p{L}\\p{N}])`,
+    "u",
+  ).test(clean(text));
+}
+
+function printedPercent(percent: number, text: string) {
+  return new RegExp(`(^|[^\\p{N}])${percent}\\s*%`, "u").test(text);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isText(value: unknown, max: number): value is string {
+  return (
+    typeof value === "string" &&
+    value.trim().length > 0 &&
+    value.trim().length <= max
+  );
+}
+
+function isPercent(value: unknown): value is number {
+  return (
+    typeof value === "number" &&
+    Number.isInteger(value) &&
+    value >= 0 &&
+    value <= 100
+  );
+}
+
+function modelFields(json: string | null, text: string): LabelFields {
+  const empty: LabelFields = { materials: [] };
+  if (!json) return empty;
+  let value: unknown;
+  try {
+    value = JSON.parse(json);
+  } catch {
+    return empty;
+  }
+  if (!isRecord(value)) return empty;
+  const fields: LabelFields = {
+    materials: unique(
+      (Array.isArray(value.materials) ? value.materials : []).flatMap(
+        (item): LabelMaterial[] => {
+          if (!isRecord(item) || !isText(item.fibre, limits.fibre)) return [];
+          const fibre = fibreName(item.fibre);
+          if (!fibre || !printed(item.fibre, text)) return [];
+          const percent =
+            isPercent(item.percent) && printedPercent(item.percent, text)
+              ? item.percent
+              : null;
+          return [{ fibre, percent }];
+        },
+      ),
+    ),
+  };
+  for (const key of ["size", "brand", "origin"] as const) {
+    const found = value[key];
+    if (!isText(found, limits[key]) || !printed(found, text)) continue;
+    if (key !== "size" && fibreByWord.has(clean(found))) continue;
+    fields[key] = key === "size" ? found.trim().toUpperCase() : found.trim();
+  }
+  return fields;
+}
+
+export function mergeCareLabel(
+  parsed: LabelFields,
+  modelJson: string | null,
+  text: string,
+): LabelFields {
+  const model = modelFields(modelJson, text);
+  const merged: LabelFields = {
+    materials: parsed.materials.length ? parsed.materials : model.materials,
+  };
+  for (const key of ["size", "brand", "origin"] as const) {
+    const value = parsed[key] ?? model[key];
+    if (value) merged[key] = value;
+  }
+  return merged;
+}
+
+export async function readCareLabelText(
+  text: string,
+  model: LabelModel,
+): Promise<LabelFields> {
+  const parsed = parseCareText(text);
+  if (!text.trim()) return parsed;
+  const json = await model
+    .available()
+    .then((ready) => (ready ? model.extract(text) : null))
+    .catch(() => null);
+  return mergeCareLabel(parsed, json, text);
+}
