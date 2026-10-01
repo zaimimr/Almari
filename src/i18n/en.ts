@@ -111,6 +111,8 @@ export const en = {
   "fact.sheer": "See-through",
   "fact.season": "Season",
   "fact.suggested": "Suggested: {value}",
+  "question.length": "Where does it end?",
+  "question.sleeve": "How long are the sleeves?",
   "editor.details": "Details",
   "editor.detailsHint":
     "Suggestions come from the photo. Tap an option to confirm or change it.",

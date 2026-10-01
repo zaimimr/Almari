@@ -11,10 +11,16 @@ import {
   type Style,
 } from "../../src/domain/closet";
 import {
+  optionsFor,
+  type AttributeKey,
+  type AttributeValue,
+} from "../../src/domain/attributes";
+import {
   correctImport,
   nameFor,
   removeImport,
 } from "../../src/domain/importing";
+import { attributeLabelKey, attributeValueKey } from "../../src/domain/facts";
 import { rankCategories, rankKinds } from "../../src/domain/recognition";
 import {
   categoryName,
@@ -22,6 +28,7 @@ import {
   styleName,
   stylesName,
   t,
+  type Key,
 } from "../../src/i18n";
 import { useCloset } from "../../src/state/closet";
 import { discardImportFiles } from "../../src/state/imports";
@@ -39,6 +46,11 @@ import {
   Screen,
 } from "../../src/ui";
 import { theme } from "../../src/ui/theme";
+
+const attributeQuestions: Partial<Record<AttributeKey, Key>> = {
+  length: "question.length",
+  sleeve: "question.sleeve",
+};
 
 type StyleChoice = Style | "both";
 
@@ -89,6 +101,7 @@ export default function CheckPiece() {
     Boolean(job?.keepOriginal || !job?.prepared?.cutout),
   );
   const [showAll, setShowAll] = useState(false);
+  const [answer, setAnswer] = useState<AttributeValue | undefined>(undefined);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -107,6 +120,13 @@ export default function CheckPiece() {
 
   const prepared = job.prepared;
   const checks = job.checks ?? [];
+  const attributeAsked = job.attributeCheck;
+  const attributeSuggested = attributeAsked
+    ? job.attributes?.[attributeAsked]
+    : undefined;
+  const attributeQuestion = attributeAsked
+    ? attributeQuestions[attributeAsked]
+    : undefined;
   const question = checks.includes("uncertain")
     ? (job.question ?? "subcategory")
     : null;
@@ -149,6 +169,9 @@ export default function CheckPiece() {
           styles: fixed ? undefined : chosenStyles,
           name: name.trim(),
           keepOriginal,
+          ...(attributeAsked && answer !== undefined
+            ? { attribute: { key: attributeAsked, value: answer } }
+            : {}),
         }),
       );
       router.back();
@@ -274,6 +297,30 @@ export default function CheckPiece() {
           onChange={(choice) => setChosenStyles(stylesOf(choice))}
         />
       )}
+      {attributeAsked ? (
+        <View style={styles.section}>
+          <AppText style={styles.label}>
+            {t(attributeQuestion ?? attributeLabelKey(attributeAsked))}
+          </AppText>
+          <View style={styles.chips}>
+            {optionsFor(attributeAsked).map((option) => (
+              <Chip
+                key={String(option.id)}
+                label={t(attributeValueKey(attributeAsked, option.id))}
+                selected={answer === option.id}
+                onPress={() => setAnswer(option.id)}
+              />
+            ))}
+          </View>
+          {attributeSuggested !== undefined ? (
+            <AppText variant="caption" muted>
+              {t("fact.suggested", {
+                value: t(attributeValueKey(attributeAsked, attributeSuggested)),
+              })}
+            </AppText>
+          ) : null}
+        </View>
+      ) : null}
       <Field
         label={t("piece.name")}
         value={name}

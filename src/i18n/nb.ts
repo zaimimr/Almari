@@ -113,6 +113,8 @@ export const nb: Record<Key, string> = {
   "fact.sheer": "Gjennomsiktig",
   "fact.season": "Sesong",
   "fact.suggested": "Forslag: {value}",
+  "question.length": "Hvor langt går det?",
+  "question.sleeve": "Hvor lange er ermene?",
   "editor.details": "Detaljer",
   "editor.detailsHint":
     "Forslagene kommer fra bildet. Trykk på et valg for å bekrefte eller endre det.",
