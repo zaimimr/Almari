@@ -101,6 +101,25 @@ test("C04 origin is read after Made in, Laget i or Produsert i", () => {
     assert.equal(parseCareText(text).origin, origin, text);
 });
 
+test("C04b a multilingual origin line keeps at most two words", () => {
+  const origin = parseCareText(
+    "Made in Bangladesh Fabriqué au Bangladesh Hecho en Bangladesh",
+  ).origin;
+  assert.ok(origin?.startsWith("Bangladesh"));
+  assert.ok(origin!.split(/[ -]/).length <= 2);
+});
+
+test("C12b a long typed fibre stays within the limit after lowercasing", () => {
+  const typed = labelFromDraft("a.jpg", {
+    materials: [{ fibre: "İ".repeat(40), percent: "" }],
+    size: "",
+    brand: "",
+    origin: "",
+  });
+  assert.ok(typed.materials[0]!.fibre.length <= 40);
+  assert.ok(isCareLabel(typed));
+});
+
 test("C05a a prefix word does not flip the order of a percent-first line", () => {
   for (const text of ["Body: 60% Cotton 40% Silk", "Shell 60% Cotton 40% Silk"])
     assert.deepEqual(

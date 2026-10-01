@@ -36,14 +36,16 @@ export default function CareLabelScreen() {
   const [draft, setDraft] = useState<LabelDraft>(() =>
     draftFromLabel(saved, fibreLabel),
   );
-  const [found, setFound] = useState(Boolean(saved));
+  const [found, setFound] = useState(saved ? hasLabelFields(saved) : false);
   const [busy, setBusy] = useState(false);
   const [reading, setReading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const unsaved = useRef<string | null>(null);
+  const closed = useRef(false);
 
   useEffect(
     () => () => {
+      closed.current = true;
       if (unsaved.current)
         void discardPhoto(unsaved.current).catch(() => undefined);
     },
@@ -75,6 +77,10 @@ export default function CareLabelScreen() {
       if (result.canceled || !asset) return;
       setReading(true);
       const read = await readCareLabel(asset.uri, `${id}-${randomUUID()}`);
+      if (closed.current) {
+        void discardPhoto(read.photo).catch(() => undefined);
+        return;
+      }
       if (unsaved.current)
         void discardPhoto(unsaved.current).catch(() => undefined);
       unsaved.current = read.photo;
@@ -230,7 +236,7 @@ export default function CareLabelScreen() {
                   label={t("careLabel.removeFibre", { number: index + 1 })}
                   danger
                   compact
-                  disabled={busy}
+                  disabled={busy || reading}
                   onPress={() =>
                     change({
                       materials: draft.materials.filter(
@@ -245,7 +251,7 @@ export default function CareLabelScreen() {
               label={t("careLabel.addFibre")}
               secondary
               compact
-              disabled={busy}
+              disabled={busy || reading}
               onPress={() =>
                 change({
                   materials: [...draft.materials, { fibre: "", percent: "" }],
@@ -289,7 +295,7 @@ export default function CareLabelScreen() {
         <Button
           label={t("careLabel.remove")}
           danger
-          disabled={busy}
+          disabled={busy || reading}
           onPress={() => {
             void remove();
           }}

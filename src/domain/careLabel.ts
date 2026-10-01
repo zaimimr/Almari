@@ -65,7 +65,7 @@ const sizeAfterWord =
   /\b(?:size|str|størrelse|eur|eu)\b\.?\s*:?\s*(XXXL|XXL|XXS|XL|XS|S|M|L|\d{2})\b/iu;
 const sizeAlone = /^(XXXL|XXL|XXS|XL|XS|S|M|L)$/i;
 const madeIn =
-  /\b(?:made in|produced in|laget i|produsert i)[ \t]+(\p{L}+(?:[ -]\p{L}+)*)/iu;
+  /\b(?:made in|produced in|laget i|produsert i)[ \t]+(\p{L}+(?:[ -]\p{L}+)?)/iu;
 
 function materialsIn(line: string): LabelMaterial[] {
   const pairs = (pattern: RegExp, fibreAt: 1 | 2) =>
@@ -257,13 +257,13 @@ export function draftFromLabel(
 export function labelFromDraft(photo: string, draft: LabelDraft): CareLabel {
   const materials = unique(
     draft.materials.flatMap((item): LabelMaterial[] => {
-      const typed = item.fibre.trim().slice(0, limits.fibre);
+      const typed = item.fibre.trim().toLowerCase().slice(0, limits.fibre);
       if (!typed) return [];
       const digits = item.percent.trim().replace(/\s*%$/, "");
       const percent = /^\d{1,3}$/.test(digits) ? Number(digits) : null;
       return [
         {
-          fibre: fibreName(typed) ?? typed.toLowerCase(),
+          fibre: fibreName(typed) ?? typed,
           percent: percent !== null && percent <= 100 ? percent : null,
         },
       ];

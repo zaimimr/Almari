@@ -261,7 +261,7 @@ export const en = {
     "Nothing could be read from this label. You can fill it in yourself or take another photo.",
   "careLabel.madeOf": "What it is made of",
   "careLabel.fibre": "Fibre {number}",
-  "careLabel.percent": "Percent, fibre {number}",
+  "careLabel.percent": "Percent of fibre {number}",
   "careLabel.removeFibre": "Remove fibre {number}",
   "careLabel.addFibre": "Add a fibre",
   "careLabel.size": "Size",

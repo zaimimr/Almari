@@ -264,7 +264,7 @@ export const nb: Record<Key, string> = {
     "Ingenting kunne leses fra denne lappen. Du kan fylle inn selv eller ta et nytt bilde.",
   "careLabel.madeOf": "Hva det er laget av",
   "careLabel.fibre": "Fiber {number}",
-  "careLabel.percent": "Prosent, fiber {number}",
+  "careLabel.percent": "Prosent av fiber {number}",
   "careLabel.removeFibre": "Fjern fiber {number}",
   "careLabel.addFibre": "Legg til en fiber",
   "careLabel.size": "Størrelse",
