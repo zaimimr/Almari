@@ -77,3 +77,28 @@ The model could not be recorded on 2 October 2026: `SystemLanguageModel.default.
 The parser's rules were written together with these fixtures, so its score is optimistic. Her own labels are the real test. Time per label on the Mac: not measured.
 
 To record again once Apple Intelligence has downloaded the model, build and run `care_labels.swift` together with `ios/CareLabelModel.swift` as in Task 5 Step 2 of the care label plan, check that it prints `available true`, then run `npm test`.
+
+## Clothes parser
+
+`ios/Resources/ClothesParser.mlmodelc` is `mattmdjaga/segformer_b2_clothes` from Hugging Face: SegFormer B2 fine-tuned for clothes parsing on `mattmdjaga/human_parsing_dataset`, which is based on the ATR dataset. It is converted to Core ML with 8-bit weights by `parser.py`.
+
+- Input `image`: RGB, fixed at 512 by 512. The photo, or the largest person in it, is stretched to this size, as the model's own image processor does. ImageNet normalisation is inside the converted model.
+- Output `logits`: float32, 18 by 512 by 512, upsampled bilinearly from the model's quarter-size output. Classes in order: Background, Hat, Hair, Sunglasses, Upper-clothes, Skirt, Pants, Dress, Belt, Left-shoe, Right-shoe, Face, Left-leg, Right-leg, Left-arm, Right-arm, Bag, Scarf.
+- Size: 27 MB compiled, 27.9 MB as a package.
+- Core ML 8-bit against PyTorch on the 13 sample garments: mean pixel agreement 0.997.
+
+### Clothes parser licence
+
+The model card lists the licence as "other" and links the NVIDIA Source Code License for SegFormer (https://github.com/NVlabs/SegFormer/blob/master/LICENSE). It says: "The Work and any derivative works thereof only may be used or intended for use non-commercially", where non-commercially means for research or evaluation purposes only. ATR is a research dataset.
+
+This app is a personal project used on one phone, with no sales and no public release. Before any public or commercial release the licence must be reviewed again, and the parser replaced by a model with a permissive licence or licensed from NVIDIA.
+
+### Clothes parser rebuild
+
+```sh
+uv venv --python 3.12 .venv
+VIRTUAL_ENV=.venv uv pip install "torch==2.7.0" "torchvision==0.22.0" transformers sentencepiece protobuf pillow coremltools
+.venv/bin/python parser.py
+.venv/bin/python parsercheck.py
+xcrun coremlcompiler compile ClothesParser.mlpackage ../ios/Resources/
+```

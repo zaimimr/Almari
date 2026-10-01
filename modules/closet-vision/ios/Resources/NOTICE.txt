@@ -1,1 +1,3 @@
 GarmentEncoder is derived from SigLIP 2 (google/siglip2-base-patch16-224) by Google, licensed under the Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0). It was converted to Core ML and its weights were quantized to 8 bits.
+
+ClothesParser is derived from mattmdjaga/segformer_b2_clothes, a fine-tuned NVIDIA SegFormer B2, licensed under the NVIDIA Source Code License for SegFormer (https://github.com/NVlabs/SegFormer/blob/master/LICENSE) for non-commercial use only. It was converted to Core ML and its weights were quantized to 8 bits.
