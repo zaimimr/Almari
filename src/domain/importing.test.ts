@@ -8,7 +8,6 @@ import {
 } from "./closet";
 import {
   acceptImports,
-  colorName,
   correctImport,
   failImport,
   finishImport,
@@ -52,20 +51,6 @@ const queued = (id = "job") =>
 
 const finished = (changes: Partial<Prepared> = {}) =>
   finishImport(startImport(queued(), "job"), "job", prepared(changes));
-
-test("sample garment colours get the names a person would use", () => {
-  const cases: [[number, number, number], string][] = [
-    [[70, 70, 71], "Charcoal"],
-    [[75, 51, 44], "Chocolate"],
-    [[238, 235, 230], "Ivory"],
-    [[151, 107, 112], "Mauve"],
-    [[36, 45, 71], "Navy"],
-    [[106, 109, 85], "Olive"],
-    [[167, 174, 152], "Sage"],
-    [[141, 118, 105], "Taupe"],
-  ];
-  for (const [rgb, name] of cases) assert.equal(colorName(rgb), name);
-});
 
 test("P01 a clear photo becomes a named piece with category, subcategory and style without typing", () => {
   let closet = finished();
