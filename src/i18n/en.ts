@@ -236,6 +236,67 @@ export const en = {
   "piece.missing.title": "This piece is no longer here",
   "piece.missing.description": "You can find your other pieces in the closet.",
   "piece.missing.action": "Go to closet",
+  "careLabel.title": "Care label",
+  "careLabel.offerTitle": "Add the care label?",
+  "careLabel.offerBody":
+    "Photograph the label sewn inside this piece to record what it is made of, its size and where it was made. You can also add it later from the piece.",
+  "careLabel.add": "Add care label",
+  "careLabel.change": "Change care label",
+  "careLabel.skip": "Skip",
+  "careLabel.done": "Done",
+  "careLabel.viewOrEdit": "View or edit care label",
+  "careLabel.pieceHint":
+    "Photograph the label sewn inside this piece to record what it is made of.",
+  "careLabel.pieceEmpty":
+    "The label photo is saved. Nothing has been filled in yet.",
+  "careLabel.intro":
+    "Photograph the label sewn inside this piece. Hold it flat in good light so the text fills the photo. The label photo stays on this iPhone and is not shown in your closet.",
+  "careLabel.takePhoto": "Take a photo",
+  "careLabel.takeAnother": "Take another photo",
+  "careLabel.choosePhoto": "Choose a photo",
+  "careLabel.reading": "Reading the label",
+  "careLabel.found":
+    "Check what was read. Fields that could not be read are left empty.",
+  "careLabel.nothingFound":
+    "Nothing could be read from this label. You can fill it in yourself or take another photo.",
+  "careLabel.madeOf": "What it is made of",
+  "careLabel.fibre": "Fibre {number}",
+  "careLabel.percent": "Percent, fibre {number}",
+  "careLabel.removeFibre": "Remove fibre {number}",
+  "careLabel.addFibre": "Add a fibre",
+  "careLabel.size": "Size",
+  "careLabel.brand": "Brand",
+  "careLabel.origin": "Made in",
+  "careLabel.save": "Save care label",
+  "careLabel.remove": "Remove care label",
+  "careLabel.removeTitle": "Remove the care label?",
+  "careLabel.removeBody":
+    "This removes the label photo and what it says from this piece.",
+  "careLabel.removeConfirm": "Remove",
+  "careLabel.photo": "Care label photo",
+  "careLabel.cameraOff":
+    "Camera access is off. You can choose a photo, or turn on camera access in Settings.",
+  "careLabel.unreadable":
+    "This label could not be read. Try another photo with the text flat and in focus.",
+  "careLabel.saveFailed":
+    "This care label could not be saved. Please try again.",
+  "careLabel.removeFailed":
+    "This care label could not be removed. Please try again.",
+  "careLabel.lineSize": "Size {size}",
+  "careLabel.lineBrand": "Brand {brand}",
+  "careLabel.lineOrigin": "Made in {origin}",
+  "fibre.cotton": "cotton",
+  "fibre.polyester": "polyester",
+  "fibre.viscose": "viscose",
+  "fibre.elastane": "elastane",
+  "fibre.wool": "wool",
+  "fibre.cashmere": "cashmere",
+  "fibre.silk": "silk",
+  "fibre.linen": "linen",
+  "fibre.polyamide": "polyamide",
+  "fibre.acrylic": "acrylic",
+  "fibre.modal": "modal",
+  "fibre.lyocell": "lyocell",
 };
 
 export type Key = keyof typeof en;

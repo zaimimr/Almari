@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { en, type Key } from "../i18n/en";
 import { nb } from "../i18n/nb";
 import { localeFor, translate } from "../i18n/translate";
+import { draftFromLabel, knownFibres, labelFromDraft } from "./careLabel";
 import { categories, garmentKinds, occasions, styleOptions } from "./taxonomy";
 
 const catalogs = { en, nb };
@@ -78,4 +79,20 @@ test("English names match the taxonomy and Desi names stay the same in bokmål",
     "dupatta",
   ] as const;
   for (const id of desi) assert.equal(nb[`kind.${id}`], en[`kind.${id}`], id);
+});
+
+test("every known fibre has a name in both catalogs that reads back as the same fibre", () => {
+  for (const fibre of knownFibres) {
+    const key = `fibre.${fibre}` as Key;
+    assert.equal(en[key], fibre, fibre);
+    for (const catalog of [en, nb]) {
+      const shown = draftFromLabel(
+        { materials: [{ fibre, percent: 40 }] },
+        (id) => catalog[`fibre.${id}` as Key],
+      );
+      assert.deepEqual(labelFromDraft("label.jpg", shown).materials, [
+        { fibre, percent: 40 },
+      ]);
+    }
+  }
 });

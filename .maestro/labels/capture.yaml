@@ -38,6 +38,7 @@ appId: com.zaimimran.almari
 - assertVisible: "Desi, set by the subcategory"
 - takeScreenshot: planning/build/labels/check-piece-kurti
 - tapOn: "Looks right"
+- tapOn: "Skip"
 - tapOn: "Add 1 ready piece"
 - assertVisible: ".*Kurtas & tunics · Kurti.*"
 - takeScreenshot: planning/build/labels/closet-card

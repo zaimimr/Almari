@@ -30,6 +30,7 @@ import {
   t,
   type Key,
 } from "../../src/i18n";
+import { labelLines } from "../../src/state/careLabel";
 import { useCloset } from "../../src/state/closet";
 import { discardImportFiles } from "../../src/state/imports";
 import { photoUri } from "../../src/storage/local";
@@ -101,6 +102,7 @@ export default function CheckPiece() {
     Boolean(job?.keepOriginal || !job?.prepared?.cutout),
   );
   const [showAll, setShowAll] = useState(false);
+  const [step, setStep] = useState<"piece" | "label">("piece");
   const [answer, setAnswer] = useState<AttributeValue | undefined>(undefined);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -116,6 +118,45 @@ export default function CheckPiece() {
           }
         />
       </Screen>
+    );
+
+  if (step === "label")
+    return (
+      <FormScreen>
+        <Stack.Screen
+          options={{
+            headerLeft: () => (
+              <HeaderAction
+                label={t("careLabel.done")}
+                onPress={() => router.back()}
+              />
+            ),
+          }}
+        />
+        <AppText variant="heading">{t("careLabel.offerTitle")}</AppText>
+        <AppText>{t("careLabel.offerBody")}</AppText>
+        {job.label
+          ? labelLines(job.label).map((line) => (
+              <AppText key={line} muted>
+                {line}
+              </AppText>
+            ))
+          : null}
+        <Button
+          label={job.label ? t("careLabel.change") : t("careLabel.add")}
+          onPress={() =>
+            router.push({
+              pathname: "/label/[id]",
+              params: { id: job.id, target: "import" },
+            })
+          }
+        />
+        <Button
+          label={job.label ? t("careLabel.done") : t("careLabel.skip")}
+          secondary
+          onPress={() => router.back()}
+        />
+      </FormScreen>
     );
 
   const prepared = job.prepared;
@@ -174,7 +215,7 @@ export default function CheckPiece() {
             : {}),
         }),
       );
-      router.back();
+      setStep("label");
     } catch {
       setError(t("capture.saveFailed"));
     } finally {
@@ -323,6 +364,7 @@ export default function CheckPiece() {
       ) : null}
       <Field
         label={t("piece.name")}
+        testID="check-name"
         value={name}
         onChangeText={setName}
         maxLength={80}

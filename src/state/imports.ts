@@ -24,6 +24,7 @@ export function discardImportFiles(job: ImportJob, keepOriginal = false) {
     keepOriginal ? null : job.source,
     job.prepared?.cutout,
     job.prepared?.thumbnail,
+    job.label?.photo,
   ];
   for (const file of files)
     if (file) void discardPhoto(file).catch(() => undefined);

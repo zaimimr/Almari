@@ -18,7 +18,9 @@ import {
 import { dropFromToday } from "../../src/domain/today";
 import { MissingPiece } from "../../src/features/MissingPiece";
 import { t } from "../../src/i18n";
+import { labelLines } from "../../src/state/careLabel";
 import { useCloset } from "../../src/state/closet";
+import { canPrepareOnDevice } from "../../src/state/imports";
 import {
   AppText,
   Button,
@@ -175,6 +177,34 @@ export default function PieceDetail() {
           </View>
         ) : null}
       </View>
+      {piece.source === "owned" && canPrepareOnDevice ? (
+        <View style={styles.section} testID="piece-care-label">
+          <AppText style={styles.label}>{t("careLabel.title")}</AppText>
+          {piece.label && labelLines(piece.label).length ? (
+            labelLines(piece.label).map((line) => (
+              <AppText key={line}>{line}</AppText>
+            ))
+          ) : (
+            <AppText variant="caption" muted>
+              {piece.label
+                ? t("careLabel.pieceEmpty")
+                : t("careLabel.pieceHint")}
+            </AppText>
+          )}
+          <Button
+            label={piece.label ? t("careLabel.viewOrEdit") : t("careLabel.add")}
+            secondary
+            compact
+            disabled={busy}
+            onPress={() =>
+              router.push({
+                pathname: "/label/[id]",
+                params: { id: pieceId, target: "piece" },
+              })
+            }
+          />
+        </View>
+      ) : null}
       <View style={styles.section} testID="piece-availability">
         <AppText style={styles.label}>{t("piece.away.title")}</AppText>
         <AppText variant="caption" muted>

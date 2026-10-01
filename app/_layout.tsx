@@ -39,6 +39,10 @@ export default function RootLayout() {
             options={{ title: "Check this piece" }}
           />
           <Stack.Screen
+            name="label/[id]"
+            options={{ title: t("careLabel.title") }}
+          />
+          <Stack.Screen
             name="today/adjust"
             options={{ title: "Adjust today", presentation: "modal" }}
           />

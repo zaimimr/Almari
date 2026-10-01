@@ -142,6 +142,7 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
           : {}),
         ...(piece?.status ? { status: piece.status } : {}),
         ...(piece?.away ? { away: piece.away } : {}),
+        ...(piece?.label ? { label: piece.label } : {}),
       };
       const confirmed = confirmEdits(piece, base);
       await update((current) =>
@@ -182,6 +183,8 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
       void discardPhoto(piece.photo).catch(() => undefined);
       if (piece.original && piece.original !== piece.photo)
         void discardPhoto(piece.original).catch(() => undefined);
+      if (piece.label)
+        void discardPhoto(piece.label.photo).catch(() => undefined);
       allowClose();
       router.dismissTo("/closet");
     } catch {

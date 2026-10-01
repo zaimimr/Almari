@@ -16,4 +16,5 @@ appId: com.zaimimran.almari
       text: "Looks right"
     direction: DOWN
 - tapOn: "Looks right"
+- tapOn: "Skip"
 - assertVisible: "Sage kurta, Ready"
