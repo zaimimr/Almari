@@ -218,6 +218,7 @@ export const en = {
     "Chips with a dashed outline and a question mark are guesses. Tap one to confirm or change it.",
   "piece.fact.known": "{label}: {value}",
   "piece.fact.guess": "{label}: {value}, a guess. Tap to confirm or change.",
+  "piece.fact.guessFixed": "{label}: {value}, a guess.",
   "piece.fact.notNow": "Not now",
   "piece.away.title": "Mark as unavailable",
   "piece.away.wash": "In the wash",

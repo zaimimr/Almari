@@ -67,6 +67,7 @@ export function AttributeEditor({
             {source === "proposed" && value !== undefined ? (
               <Button
                 label={t("fact.looksRight")}
+                accessibilityLabel={`${name}: ${t("fact.looksRight")}`}
                 secondary
                 compact
                 disabled={disabled}

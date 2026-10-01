@@ -221,6 +221,7 @@ export const nb: Record<Key, string> = {
   "piece.fact.known": "{label}: {value}",
   "piece.fact.guess":
     "{label}: {value}, en gjetning. Trykk for å bekrefte eller endre.",
+  "piece.fact.guessFixed": "{label}: {value}, en gjetning.",
   "piece.fact.notNow": "Ikke nå",
   "piece.away.title": "Merk som utilgjengelig",
   "piece.away.wash": "Til vask",

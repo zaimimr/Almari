@@ -155,6 +155,7 @@ export default function PieceDetail() {
                 <View style={styles.action}>
                   <Button
                     label={t("fact.looksRight")}
+                    accessibilityLabel={`${t(choice.label)}: ${t("fact.looksRight")}`}
                     compact
                     busy={busy}
                     onPress={() => confirm(open, choice.current!)}
@@ -239,7 +240,7 @@ function FactChip({
         testID={`fact-${fact.key}`}
         accessible
         accessibilityLabel={t(
-          guess ? "piece.fact.guess" : "piece.fact.known",
+          guess ? "piece.fact.guessFixed" : "piece.fact.known",
           vars,
         )}
         style={[styles.fact, guess && styles.guess]}

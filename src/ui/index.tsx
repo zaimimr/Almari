@@ -81,8 +81,10 @@ export function Button({
   disabled,
   busy,
   compact,
+  accessibilityLabel,
 }: {
   label: string;
+  accessibilityLabel?: string;
   onPress: () => void;
   secondary?: boolean;
   danger?: boolean;
@@ -99,7 +101,7 @@ export function Button({
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={label}
+      accessibilityLabel={accessibilityLabel ?? label}
       accessibilityState={{ disabled: Boolean(unavailable), busy }}
       disabled={unavailable}
       onPress={onPress}
@@ -133,7 +135,13 @@ export function HeaderAction({
       accessibilityLabel={label}
       style={styles.headerAction}
     >
-      <AppText style={styles.link}>{label}</AppText>
+      <AppText
+        numberOfLines={1}
+        maxFontSizeMultiplier={1.3}
+        style={styles.link}
+      >
+        {label}
+      </AppText>
     </Pressable>
   );
 }
