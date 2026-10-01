@@ -1,6 +1,7 @@
 import {
   categories,
   fixedStyles,
+  isAvailable,
   type Category,
   type Occasion,
   type Piece,
@@ -23,8 +24,6 @@ export const noFilter: ClosetFilter = {
   availability: null,
 };
 
-type Filterable = Piece & { status?: string };
-
 export function closetChips(_pieces: readonly Piece[]): (Category | "all")[] {
   return ["all", ...categories.map((category) => category.id)];
 }
@@ -32,14 +31,10 @@ export function closetChips(_pieces: readonly Piece[]): (Category | "all")[] {
 const stylesOf = (piece: Piece): readonly Style[] =>
   piece.styles ?? (piece.kind ? fixedStyles(piece.kind) : undefined) ?? [];
 
-const availabilityOf = (piece: Filterable): Availability | null =>
-  piece.status === undefined
-    ? "available"
-    : piece.status === "away"
-      ? "away"
-      : null;
+const availabilityOf = (piece: Piece): Availability | null =>
+  isAvailable(piece) ? "available" : piece.status === "away" ? "away" : null;
 
-export function filterPieces<T extends Filterable>(
+export function filterPieces<T extends Piece>(
   pieces: readonly T[],
   filter: ClosetFilter,
 ): T[] {

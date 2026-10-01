@@ -41,6 +41,10 @@ export type Sources = Partial<Record<SourceKey, Source>>;
 
 export type QuickCheck = "category" | "subcategory" | "style";
 
+export type AwayReason = "wash" | "lent" | "repair";
+
+export const awayReasons: readonly AwayReason[] = ["wash", "lent", "repair"];
+
 export type Piece = {
   id: string;
   name: string;
@@ -57,6 +61,8 @@ export type Piece = {
   attributes?: Attributes;
   colors?: Swatch[];
   embedding?: string;
+  status?: "away" | "archived";
+  away?: AwayReason;
 };
 
 export type Prepared = {
@@ -295,7 +301,16 @@ function isPiece(value: unknown): value is Piece {
     optional(value.sources, isSources) &&
     optional(value.attributes, isAttributes) &&
     optional(value.colors, isSwatches) &&
-    optional(value.embedding, isEmbedding)
+    optional(value.embedding, isEmbedding) &&
+    optional(
+      value.status,
+      (status): status is "away" | "archived" =>
+        status === "away" || status === "archived",
+    ) &&
+    optional(value.away, (reason): reason is AwayReason =>
+      awayReasons.includes(reason as AwayReason),
+    ) &&
+    (value.status === "away") === (value.away !== undefined)
   );
 }
 
@@ -670,4 +685,26 @@ export function removePiece(closet: Closet, id: string): Closet {
     ...closet,
     pieces: closet.pieces.filter((piece) => piece.id !== id),
   };
+}
+
+export const isAvailable = (piece: Piece) => piece.status === undefined;
+
+export function setAway(
+  closet: Closet,
+  id: string,
+  reason: AwayReason | null,
+): Closet {
+  if (!closet.pieces.some((piece) => piece.id === id)) return closet;
+  return {
+    ...closet,
+    pieces: closet.pieces.map((piece): Piece => {
+      if (piece.id !== id) return piece;
+      const { status: _status, away: _away, ...rest } = piece;
+      return reason ? { ...rest, status: "away", away: reason } : rest;
+    }),
+  };
+}
+
+export function usedIn(closet: Closet, id: string) {
+  return closet.looks.filter((look) => look.pieceIds.includes(id)).length;
 }

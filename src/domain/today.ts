@@ -272,3 +272,21 @@ export function setWardrobe(
   };
   return ensureToday(next, clock);
 }
+
+export function dropFromToday(closet: Closet, id: string): Closet {
+  const today = closet.styling.today;
+  if (!today) return closet;
+  const restyle = (session: Session) =>
+    session.pieceIds.includes(id) && !session.request.keptIds.includes(id)
+      ? sessionFor(
+          closet,
+          session.request,
+          today.localDate,
+          session.revision + 1,
+        )
+      : session;
+  const everyday = restyle(today.everyday);
+  const occasion = today.occasion ? restyle(today.occasion) : null;
+  if (everyday === today.everyday && occasion === today.occasion) return closet;
+  return withToday(closet, { ...today, everyday, occasion });
+}

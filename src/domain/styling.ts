@@ -1,4 +1,5 @@
 import {
+  isAvailable,
   kindLabel,
   styleLabel,
   type OutfitRequest,
@@ -377,7 +378,7 @@ export function styleOutfits(
     problems: Problem[],
   ): StyleResult => ({ status, outfits: [], problems, limited: false });
   const pool = closetPieces.filter(
-    (piece) => piece.source === request.wardrobe,
+    (piece) => piece.source === request.wardrobe && isAvailable(piece),
   );
   if (!pool.length)
     return fail("missing", [
@@ -405,7 +406,11 @@ export function styleOutfits(
       missingKept.map((id) => ({
         code: "kept-missing",
         severity: "missing",
-        message: "A piece you chose to keep is no longer in this closet.",
+        message: closetPieces.some(
+          (piece) => piece.id === id && piece.source === request.wardrobe,
+        )
+          ? "A piece you chose to keep is marked unavailable."
+          : "A piece you chose to keep is no longer in this closet.",
         ids: [id],
         actions: [{ type: "release", id }],
       })),
@@ -613,15 +618,16 @@ export function replacementsFor(
   currentIds: string[],
   targetId: string,
 ): Replacement[] {
-  const pool = closetPieces.filter(
+  const wardrobe = closetPieces.filter(
     (piece) => piece.source === request.wardrobe,
   );
-  const target = pool.find((piece) => piece.id === targetId);
+  const pool = wardrobe.filter(isAvailable);
+  const target = wardrobe.find((piece) => piece.id === targetId);
   if (!target) return [];
   const role = roleOf(target);
   const others = currentIds
     .filter((id) => id !== targetId)
-    .flatMap((id) => pool.filter((piece) => piece.id === id));
+    .flatMap((id) => wardrobe.filter((piece) => piece.id === id));
   return pool
     .filter(
       (piece) =>

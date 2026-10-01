@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import type { Piece } from "./closet";
+import { emptyCloset, setAway, type Piece } from "./closet";
+import { addSampleWardrobe } from "./samples";
 import {
   closetChips,
   filterPieces,
@@ -96,4 +97,27 @@ test("pieces without a status count as available and away pieces only show under
     "away",
     "archived",
   ]);
+});
+
+test("a piece marked unavailable shows only under Unavailable", () => {
+  const closet = setAway(
+    addSampleWardrobe(emptyCloset),
+    "sample-mauve-hijab",
+    "wash",
+  );
+  const shown = (availability: "available" | "away" | null) =>
+    filterPieces(closet.pieces, { ...noFilter, availability }).map(
+      (piece) => piece.id,
+    );
+  assert.deepEqual(shown("away"), ["sample-mauve-hijab"]);
+  assert.equal(shown("available").length, closet.pieces.length - 1);
+  assert.equal(shown("available").includes("sample-mauve-hijab"), false);
+  assert.equal(shown(null).length, closet.pieces.length);
+  assert.deepEqual(
+    filterPieces(setAway(closet, "sample-mauve-hijab", null).pieces, {
+      ...noFilter,
+      availability: "away",
+    }),
+    [],
+  );
 });
