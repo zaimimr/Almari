@@ -10,7 +10,6 @@ import {
   kindsIn,
   offeredKinds,
   retiredKinds,
-  stylesLabel,
   type GarmentKind,
 } from "./taxonomy";
 
@@ -149,8 +148,6 @@ test("fixed styles follow the agreed table", () => {
     assert.deepEqual(fixedStyles(kind.id), expected, kind.id);
   }
   assert.equal(decided, 18);
-  assert.equal(stylesLabel(["desi"]), "Desi");
-  assert.equal(stylesLabel(["western", "desi"]), "Western and Desi");
 });
 
 test("the bundled label file describes every offered subcategory and both styles", () => {

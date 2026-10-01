@@ -112,9 +112,6 @@ export function fixedStyles(id: GarmentKind): Style[] | undefined {
   return styles ? [...styles] : undefined;
 }
 
-export const categoryLabel = (id: Category) =>
-  categories.find((c) => c.id === id)?.label ?? id;
-
 export const kindLabel = (id: GarmentKind) =>
   garmentKinds.find((kind) => kind.id === id)?.label ?? id;
 
@@ -123,6 +120,3 @@ export const occasionLabel = (id: Occasion) =>
 
 export const styleLabel = (id: Style) =>
   styleOptions.find((item) => item.id === id)?.label ?? id;
-
-export const stylesLabel = (styles: readonly Style[]) =>
-  styles.map(styleLabel).join(" and ");

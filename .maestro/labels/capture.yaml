@@ -8,7 +8,7 @@ appId: com.zaimimran.almari
     optional: true
 - tapOn: "Choose photos"
 - tapOn:
-    text: "Photo, [^,]+, [0-9:]+"
+    text: "Photo, [^,]+, [0-9:]+.*"
     index: 0
 - tapOn: "Add|Done"
 - extendedWaitUntil:
@@ -18,7 +18,7 @@ appId: com.zaimimran.almari
 - assertVisible: "Category|Is this in .*"
 - scrollUntilVisible:
     element: "Kurti"
-- assertVisible: "Subcategory|Is this a .*"
+- assertVisible: "Subcategory|Is this .* or .*\\?"
 - assertVisible: "Kurtas & tunics"
 - assertVisible: "Kurti"
 - takeScreenshot: planning/build/labels/check-piece

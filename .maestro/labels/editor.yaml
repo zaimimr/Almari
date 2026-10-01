@@ -29,6 +29,9 @@ appId: com.zaimimran.almari
     text: "Save changes"
     enabled: false
 - tapOn: "Blouse"
+- assertVisible:
+    text: "Desi"
+    selected: false
 - tapOn: "Western"
 - takeScreenshot: planning/build/labels/editor-owned
 - scrollUntilVisible:

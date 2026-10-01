@@ -21,7 +21,7 @@ import {
   categories,
   isOffered,
 } from "../domain/closet";
-import { categoryName, kindName } from "../i18n";
+import { categoryName, kindName, t } from "../i18n";
 import { photoSource } from "./photos";
 import { theme } from "./theme";
 
@@ -360,7 +360,7 @@ export function PieceTile({
       {!compact ? (
         <AppText variant="caption" muted>
           {summary}
-          {piece.source === "sample" ? " · Sample" : ""}
+          {piece.source === "sample" ? ` · ${t("closet.sample")}` : ""}
         </AppText>
       ) : null}
     </Pressable>

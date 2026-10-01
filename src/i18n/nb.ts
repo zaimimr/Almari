@@ -105,6 +105,7 @@ export const nb: Record<Key, string> = {
   "closet.all": "Alle",
   "closet.categories": "Kategorier",
   "closet.filters": "Filtre",
+  "closet.sample": "Eksempel",
   "closet.available": "Tilgjengelig",
   "closet.away": "Utilgjengelig",
   "closet.noMatch": "Prøv et annet navn eller filter.",

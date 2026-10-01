@@ -8,7 +8,7 @@ appId: com.zaimimran.almari
     optional: true
 - tapOn: "Choose photos"
 - tapOn:
-    text: "Photo, [^,]+, [0-9:]+"
+    text: "Photo, [^,]+, [0-9:]+.*"
     index: 0
 - tapOn: "Add|Done"
 - extendedWaitUntil:

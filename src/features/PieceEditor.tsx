@@ -18,7 +18,7 @@ import {
   removePiece,
 } from "../domain/closet";
 import { confirmEdits } from "../domain/recognition";
-import { kindName, styleName, stylesName, t } from "../i18n";
+import { categoryName, kindName, styleName, stylesName, t } from "../i18n";
 import { useCloset } from "../state/closet";
 import { keepPhoto, discardPhoto } from "../storage/local";
 import { photoSource } from "../ui/photos";
@@ -231,7 +231,7 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
         returnKeyType="done"
       />
       <View style={styles.categorySection}>
-        <AppText style={styles.label}>Category</AppText>
+        <AppText style={styles.label}>{t("piece.category")}</AppText>
         <View style={styles.categories}>
           {categories.map((option) => (
             <Pressable
@@ -243,7 +243,10 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
               }}
               disabled={busy}
               onPress={() => {
-                if (option.id !== category) setKind(undefined);
+                if (option.id !== category) {
+                  setKind(undefined);
+                  if (fixed) setWorn(undefined);
+                }
                 setCategory(option.id);
               }}
               style={[
@@ -255,7 +258,7 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
                 variant="caption"
                 style={category === option.id ? styles.selectedText : undefined}
               >
-                {option.label}
+                {categoryName(option.id)}
               </AppText>
             </Pressable>
           ))}
@@ -273,11 +276,14 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
                 label={kindName(option.id)}
                 selected={kind === option.id}
                 disabled={busy}
-                onPress={() =>
-                  setKind(
-                    !needsKind && kind === option.id ? undefined : option.id,
-                  )
-                }
+                onPress={() => {
+                  const next =
+                    !needsKind && kind === option.id ? undefined : option.id;
+                  setKind(next);
+                  const nextFixed = next ? fixedStyles(next) : undefined;
+                  if (nextFixed) setWorn(nextFixed);
+                  else if (fixed) setWorn(undefined);
+                }}
               />
             ))}
           </View>

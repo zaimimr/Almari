@@ -37,6 +37,18 @@ Photos still needed, one garment per JPEG, with source and licence recorded in `
 
 Subcategories without a dedicated photo: shirt, kameez, jacket, clutch, backpack, belt, dupatta. On 1 October 2026, before the new subcategories, the Core ML model had 46/48 garment types and 47/48 categories right.
 
+## Earlier baseline, 1 October 2026
+
+Before the subcategory and style labels, `zeroshot.py` and `evalml.py` scored the 13 sample garments plus 35 public web photos (`truth.py`). The web photos are not committed.
+
+| Model | Garment type correct | Category correct | Time per photo |
+| --- | --- | --- | --- |
+| OpenAI CLIP ViT-B/32 (PyTorch) | 35/48 | 41/48 | 53 ms, Mac CPU |
+| SigLIP 2 base (PyTorch) | 47/48 | 47/48 | 85 ms, Mac CPU |
+| SigLIP 2 base, Core ML 8-bit | 46/48 | 47/48 | 13.5 ms, Mac |
+
+Both Core ML misses (a scarf read as a dupatta, trousers read as shalwar) had a margin under 0.01 between the first two guesses. The app asks for a quick check below that margin. On the iOS 27 simulator, 8 of 8 imported web photos were classified correctly on CPU. Timing on an iPhone 16 Pro has not been measured.
+
 Once the photos exist, run:
 
 ```bash

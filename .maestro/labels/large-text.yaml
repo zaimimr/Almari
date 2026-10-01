@@ -7,7 +7,7 @@ appId: com.zaimimran.almari
     element: "Choose photos"
 - tapOn: "Choose photos"
 - tapOn:
-    text: "Photo, [^,]+, [0-9:]+"
+    text: "Photo, [^,]+, [0-9:]+.*"
     index: 0
 - tapOn: "Add|Done"
 - scrollUntilVisible:

@@ -1,3 +1,5 @@
+import math
+
 DESI = ["desi"]
 BOTH = ["western", "desi"]
 
@@ -54,8 +56,6 @@ STYLES = {
  "desi": ["a South Asian embroidered garment", "a Pakistani or Indian outfit piece"],
  "western": ["a Western garment", "a plain Western fashion piece"],
 }
-
-import math
 
 MARGIN = 0.01
 SCALE = 100.0

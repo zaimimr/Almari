@@ -83,7 +83,7 @@ export const en = {
   "capture.several":
     "There may be more than one piece here. Check that the prepared image shows only this piece, or remove it and photograph each piece on its own.",
   "capture.askCategory": "Is this in {first} or {second}?",
-  "capture.askKind": "Is this a {first} or a {second}?",
+  "capture.askKind": "Is this {first} or {second}?",
   "capture.askStyle": "Is this Desi or Western?",
   "capture.somethingElse": "Something else",
   "capture.looksRight": "Looks right",
@@ -103,6 +103,7 @@ export const en = {
   "closet.all": "All",
   "closet.categories": "Categories",
   "closet.filters": "Filters",
+  "closet.sample": "Sample",
   "closet.available": "Available",
   "closet.away": "Unavailable",
   "closet.noMatch": "Try another name or filter.",
