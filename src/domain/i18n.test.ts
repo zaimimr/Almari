@@ -49,6 +49,6 @@ test("both catalogs have the same keys and the same placeholders", () => {
   for (const key of Object.keys(en) as Key[]) {
     assert.ok(nb[key].trim(), key);
     assert.deepEqual(holes(nb[key]), holes(en[key]), key);
-    assert.equal(/—/.test(en[key] + nb[key]), false, key);
+    assert.equal(/\u2014/.test(en[key] + nb[key]), false, key);
   }
 });
