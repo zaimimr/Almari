@@ -72,18 +72,21 @@ enum GarmentRegions {
     var seen = [Bool](repeating: false, count: total)
     var parts: [(kind: Int, pixels: [Int])] = []
     for start in 0..<total where kinds[start] >= 0 && !seen[start] {
-      let kind = kinds[start]
+      let first = kinds[start]
       var stack = [start]
       var pixels: [Int] = []
+      var tally = [Int](repeating: 0, count: garmentOrder.count)
       seen[start] = true
       while let index = stack.popLast() {
         pixels.append(index)
-        for case let next? in neighbours(index) where !seen[next] && kinds[next] == kind {
+        tally[kinds[index]] += 1
+        for case let next? in neighbours(index) where !seen[next] && (person ? kinds[next] == first : kinds[next] >= 0) {
           seen[next] = true
           stack.append(next)
         }
       }
       if Double(pixels.count) / Double(total) >= minComponentShare {
+        let kind = tally.indices.max { tally[$0] == tally[$1] ? $0 > $1 : tally[$0] < tally[$1] } ?? first
         parts.append((kind, pixels))
       }
     }

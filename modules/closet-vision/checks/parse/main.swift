@@ -62,6 +62,16 @@ check(touching.map(\.kind) == ["head"], "hat and scarf gave \(describe(touching)
 let apart = GarmentRegions.find(grid([(.hat, 40, 1, 60, 5), (.scarf, 35, 10, 65, 20)]), person: true)
 check(apart.map(\.kind) == ["head"], "hat and scarf on one person gave \(describe(apart))")
 
+let blob = GarmentRegions.find(
+  grid([(.upper, 30, 10, 70, 30), (.pants, 30, 31, 70, 50), (.dress, 30, 51, 70, 55)]), person: false)
+check(blob.count == 1 && blob.first?.kind == "upper", "mixed blob gave \(describe(blob))")
+let personBlob = GarmentRegions.find(
+  grid([(.upper, 30, 10, 70, 30), (.pants, 30, 31, 70, 50)]), person: true)
+check(personBlob.map(\.kind) == ["upper", "pants"], "person blob gave \(describe(personBlob))")
+
+check(!ClothesParser.showsPerson(skin: 99, mask: 10000), "skin just below the threshold counted as a person")
+check(ClothesParser.showsPerson(skin: 100, mask: 10000), "skin at the threshold not counted as a person")
+
 check(GarmentRegions.find(grid([(.hair, 0, 0, 99, 99)]), person: true).isEmpty, "hair became a garment")
 
 let arguments = CommandLine.arguments

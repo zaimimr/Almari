@@ -109,25 +109,27 @@ xcrun coremlcompiler compile ClothesParser.mlpackage ../ios/Resources/
 
 To rerun on her own photos, put them in `~/Almari-test-photos` and run `dist/closet-parse-check modules/closet-vision/ios/Resources/ClothesParser.mlmodelc ~/Almari-test-photos dist/parse-photos`. Photos and cutouts stay on the Mac and are not committed. Replace this table with one row per photo, using a description instead of the file name.
 
-Vision reports one person on every one of these flat lay photos, so the parser only counts a person when the parsed area has at least 1 percent hair, face, arm or leg pixels. Otherwise it parses the whole photo as a flat lay with people 0. The 1 percent threshold was set on flat lays only and has to be checked against worn outfits.
+Vision reports one person on every one of these flat lay photos. The parser counts a person only when Vision finds exactly one and at least 1 percent of that person's mask pixels are hair, face, arm or leg. Otherwise it parses the whole photo as a flat lay with people 0. With more than one person the gate is skipped. The 1 percent threshold has not been validated on worn photos, there are none in the repo, so a covered worn outfit could be read as a flat lay until it is tested on real photos.
+
+Without a person, touching garment pixels of any class form one area and the area takes the class with most pixels. A single garment that the model labels with mixed classes therefore stays one region, but it may get the wrong kind.
 
 | Photo | Expected | People | Found | Partly visible | Time |
 | --- | --- | --- | --- | --- | --- |
-| Flat lay, wide charcoal trousers | pants | 0 | upper, upper, dress, dress, skirt, skirt, pants, pants | 7 of 8 | 692 ms (model load) |
-| Flat lay, chocolate hijab | head | 0 | head, upper, upper | none | 142 ms |
-| Flat lay, chocolate loafers | shoes | 0 | upper, upper, pants, pants, shoes | 1 | 144 ms |
-| Flat lay, ivory hijab | head | 0 | head, upper x4, dress, dress | 3 | 147 ms |
-| Flat lay, ivory salwar | pants | 0 | pants | 1 | 144 ms |
-| Flat lay, ivory trousers | pants | 0 | pants | none | 140 ms |
-| Flat lay, ivory tunic | upper | 0 | upper x4, dress, dress | 6 | 138 ms |
-| Flat lay, mauve hijab | head | 0 | head, upper x3, dress | 3 | 151 ms |
-| Flat lay, navy blazer | upper | 0 | upper | none | 173 ms |
-| Flat lay, olive maxi dress | dress | 0 | dress | none | 173 ms |
-| Flat lay, sage embroidered kurta | upper | 0 | dress | none | 147 ms |
-| Flat lay, taupe abaya | dress | 0 | dress | 1 | 137 ms |
-| Flat lay, taupe bag | bag | 0 | bag | none | 137 ms |
-| Screenshot, outfit laid out: scarf, blazer, skirt, bag, loafers | head, upper, skirt, bag, shoes | 0 | upper, skirt | none | 745 ms (model load) |
-| Screenshot, one sneaker on white | shoes | 0 | pants, shoes | none | 162 ms |
-| Screenshot, look with dress, sandal, sunglasses and scarf | dress, shoes, sunglasses, head | 0 | upper, dress, shoes | none | 171 ms |
+| Flat lay, wide charcoal trousers | pants | 0 | upper | none | 671 ms (model load) |
+| Flat lay, chocolate hijab | head | 0 | upper | none | 127 ms |
+| Flat lay, chocolate loafers | shoes | 0 | pants, pants | none | 134 ms |
+| Flat lay, ivory hijab | head | 0 | head | none | 126 ms |
+| Flat lay, ivory salwar | pants | 0 | pants | 1 | 128 ms |
+| Flat lay, ivory trousers | pants | 0 | pants | none | 133 ms |
+| Flat lay, ivory tunic | upper | 0 | dress | none | 130 ms |
+| Flat lay, mauve hijab | head | 0 | head | none | 129 ms |
+| Flat lay, navy blazer | upper | 0 | upper | none | 128 ms |
+| Flat lay, olive maxi dress | dress | 0 | dress | none | 132 ms |
+| Flat lay, sage embroidered kurta | upper | 0 | dress | none | 125 ms |
+| Flat lay, taupe abaya | dress | 0 | dress | 1 | 126 ms |
+| Flat lay, taupe bag | bag | 0 | bag | none | 132 ms |
+| Screenshot, outfit laid out: scarf, blazer, skirt, bag, loafers | head, upper, skirt, bag, shoes | 0 | upper | none | 680 ms (model load) |
+| Screenshot, one sneaker on white | shoes | 0 | shoes | none | 129 ms |
+| Screenshot, look with dress, sandal, sunglasses and scarf | dress, shoes, sunglasses, head | 0 | dress | none | 125 ms |
 
-Totals: 16 photos, 23 garments expected, 17 found with the right kind, 30 extra regions, 6 missed garments. The kurta counts as a miss because the parser calls it a dress. Most extra regions are small pieces of one garment that the model labels as another class, mostly on the sample garments. The missed ones are the scarf, bag, shoes and sunglasses in the two outfit screenshots.
+Totals: 16 photos, 23 garments expected, 11 found with the right kind, 6 extra regions of the wrong kind, 12 missed garments. 12 of the 13 sample garments give a single region, but 4 of those carry the wrong kind (charcoal trousers read as upper, chocolate hijab as upper, tunic and kurta as dress) and the loafers give two pants regions. Pieces that touch in an outfit photo merge into one region, which is why the two outfit screenshots give one region each.

@@ -100,22 +100,22 @@ final class ClothesParser {
 
   static let skinShare = 0.01
 
+  static func showsPerson(skin: Int, mask: Int) -> Bool {
+    mask > 0 && Double(skin) / Double(mask) >= skinShare
+  }
+
   func parse(_ image: CIImage) throws -> ClothesParse {
     let extent = image.extent
     guard let picture = context.createCGImage(image, from: extent) else { throw ParseError.unreadable }
     let found = person(in: picture, extent: extent)
     let result = try parse(image, found: found)
-    guard found != nil, !showsPerson(result.grid) else { return result }
-    return try parse(image, found: nil)
+    guard let found, found.count == 1, !Self.showsPerson(skin: result.skin, mask: result.mask) else {
+      return result.parse
+    }
+    return try parse(image, found: nil).parse
   }
 
-  private func showsPerson(_ grid: LabelGrid) -> Bool {
-    let body: Set<ClothesClass> = [.hair, .face, .leftLeg, .rightLeg, .leftArm, .rightArm]
-    let count = grid.labels.reduce(0) { body.contains(ClothesClass(rawValue: Int($1)) ?? .background) ? $0 + 1 : $0 }
-    return Double(count) / Double(grid.labels.count) >= Self.skinShare
-  }
-
-  private func parse(_ image: CIImage, found: Person?) throws -> ClothesParse {
+  private func parse(_ image: CIImage, found: Person?) throws -> (parse: ClothesParse, skin: Int, mask: Int) {
     let extent = image.extent
     let area = found?.area ?? extent
     let side = CGFloat(Self.side)
@@ -149,6 +149,9 @@ final class ClothesParser {
         }
       }
     }
+    var skin = 0
+    var inside = 0
+    let body: Set<UInt8> = Set([ClothesClass.hair, .face, .leftLeg, .rightLeg, .leftArm, .rightArm].map { UInt8($0.rawValue) })
     if let found {
       for y in 0..<Self.side {
         for x in 0..<Self.side {
@@ -156,13 +159,19 @@ final class ClothesParser {
           let py = (extent.height - area.maxY + (CGFloat(y) + 0.5) / side * area.height) / extent.height
           let mx = min(found.width - 1, Int(px * CGFloat(found.width)))
           let my = min(found.height - 1, Int(py * CGFloat(found.height)))
-          if found.mask[my * found.width + mx] != found.label { labels[y * Self.side + x] = 0 }
+          if found.mask[my * found.width + mx] != found.label {
+            labels[y * Self.side + x] = 0
+          } else {
+            inside += 1
+            if body.contains(labels[y * Self.side + x]) { skin += 1 }
+          }
         }
       }
     }
-    return ClothesParse(
+    let parse = ClothesParse(
       grid: LabelGrid(width: Self.side, height: Self.side, labels: labels), area: area, extent: extent,
       people: found?.count ?? 0)
+    return (parse, skin, inside)
   }
 
   private func person(in picture: CGImage, extent: CGRect) -> Person? {
@@ -219,6 +228,7 @@ final class ClothesParser {
       x: left * extent.width, y: (1 - bottom) * extent.height,
       width: (right - left) * extent.width, height: (bottom - top) * extent.height
     ).integral.intersection(extent)
+    guard !area.isEmpty else { return nil }
     return Person(
       count: observation.allInstances.count, area: area, mask: mask, width: width, height: height, label: label)
   }

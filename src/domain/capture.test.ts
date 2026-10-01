@@ -74,16 +74,6 @@ test("a flat lay with several pieces gives one proposal each, larger first", () 
   assert.equal(categoryForRegion("shoes"), null);
 });
 
-test("a flat lay split into several regions of one kind stays one whole-photo piece", () => {
-  const split = [
-    region("pants", 0.3),
-    region("pants", 0.1),
-    region("pants", 0.05),
-  ];
-  assert.deepEqual(proposalsFromRegions(split, 0).proposals, []);
-  assert.equal(proposalsFromRegions(split, 1).proposals.length, 3);
-});
-
 test("a box drawn in any direction stays inside the photo", () => {
   assert.deepEqual(boxFrom({ x: 0.75, y: 0.875 }, { x: 0.25, y: 0.125 }), {
     x: 0.25,

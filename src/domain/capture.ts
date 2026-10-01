@@ -37,9 +37,8 @@ export function proposalsFromRegions(
   people: number,
 ): CapturePlan {
   const notice = people > 1 ? "others-ignored" : null;
-  const oneGarment =
-    people === 0 && regions.every((region) => region.kind === regions[0]!.kind);
-  if (!regions.length || oneGarment) return { proposals: [], people, notice };
+  if (!regions.length || (people === 0 && regions.length === 1))
+    return { proposals: [], people, notice };
   const proposals = [...regions]
     .sort(
       (a, b) =>
