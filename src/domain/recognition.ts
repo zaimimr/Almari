@@ -9,6 +9,14 @@ import {
   type LabelScore,
   type Style,
 } from "./taxonomy";
+import {
+  applicableAttributes,
+  choices,
+  formalityFor,
+  type AttributeKey,
+  type Attributes,
+  type ChoiceKey,
+} from "./attributes";
 import type { Piece, QuickCheck, Sources } from "./closet";
 
 export const margin = 0.01;
@@ -172,4 +180,56 @@ export function confirmEdits(before: Piece | undefined, after: Piece): Piece {
   }
   const { sources: _previous, ...rest } = after;
   return Object.keys(sources).length ? { ...rest, sources } : rest;
+}
+
+export const askedAttributes: AttributeKey[] = ["length", "sleeve"];
+
+export type AttributeProposal = {
+  attributes: Attributes;
+  uncertain: AttributeKey[];
+};
+
+export function proposeAttributes(
+  labels: LabelScore[],
+  piece: { category: Category; kind?: GarmentKind },
+): AttributeProposal {
+  const attributes: Attributes = {};
+  const uncertain: AttributeKey[] = [];
+  const allowed = applicableAttributes(piece.category, piece.kind);
+  for (const key of Object.keys(choices) as ChoiceKey[]) {
+    if (!allowed.includes(key)) continue;
+    if (
+      key === "scale" &&
+      (!attributes.pattern || attributes.pattern === "solid")
+    )
+      continue;
+    const ranked = labels
+      .filter(
+        (label) =>
+          label.group === key &&
+          choices[key].some((option) => option.id === label.value),
+      )
+      .sort((a, b) => b.score - a.score);
+    const top = ranked[0];
+    if (!top) continue;
+    Object.assign(attributes, { [key]: top.value });
+    if (ranked[1] && top.score - ranked[1].score < margin) uncertain.push(key);
+  }
+  attributes.formality = formalityFor({
+    category: piece.category,
+    kind: piece.kind,
+    fabric: attributes.fabric,
+    embellishment: attributes.embellishment,
+  });
+  return { attributes, uncertain };
+}
+
+export function attributeCheck(
+  proposal: AttributeProposal,
+  alreadyAsking: boolean,
+): AttributeKey | null {
+  if (alreadyAsking) return null;
+  return (
+    askedAttributes.find((key) => proposal.uncertain.includes(key)) ?? null
+  );
 }

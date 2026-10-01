@@ -95,7 +95,16 @@ export const occasions = [
 
 export type Occasion = (typeof occasions)[number]["id"];
 
-export type LabelGroup = "kind" | "style";
+export type LabelGroup =
+  | "kind"
+  | "style"
+  | "length"
+  | "sleeve"
+  | "volume"
+  | "pattern"
+  | "scale"
+  | "fabric"
+  | "embellishment";
 
 export type LabelScore = { group: LabelGroup; value: string; score: number };
 
