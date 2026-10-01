@@ -1,0 +1,269 @@
+[
+  {
+    "id": "en-zara",
+    "language": "en",
+    "text": "ZARA\nMADE IN MOROCCO\nFABRICADO EN MARRUECOS\n100% COTTON\nEUR M  USA M  MEX 28",
+    "ideal": {
+      "materials": [{ "fibre": "COTTON", "percent": 100 }],
+      "size": "M",
+      "brand": "ZARA",
+      "origin": "MOROCCO"
+    },
+    "expected": {
+      "materials": [{ "fibre": "cotton", "percent": 100 }],
+      "size": "M",
+      "brand": "ZARA",
+      "origin": "MOROCCO"
+    }
+  },
+  {
+    "id": "en-blend",
+    "language": "en",
+    "text": "H&M\n95% Cotton\n5% Elastane\nMade in Bangladesh\nSize S",
+    "ideal": {
+      "materials": [
+        { "fibre": "Cotton", "percent": 95 },
+        { "fibre": "Elastane", "percent": 5 }
+      ],
+      "size": "S",
+      "brand": "H&M",
+      "origin": "Bangladesh"
+    },
+    "expected": {
+      "materials": [
+        { "fibre": "cotton", "percent": 95 },
+        { "fibre": "elastane", "percent": 5 }
+      ],
+      "size": "S",
+      "brand": "H&M",
+      "origin": "Bangladesh"
+    }
+  },
+  {
+    "id": "en-shell-lining",
+    "language": "en",
+    "text": "Shell: 100% Polyester\nLining: 100% Viscose\nMade in China\nUK 12 EUR 40",
+    "ideal": {
+      "materials": [
+        { "fibre": "Polyester", "percent": 100 },
+        { "fibre": "Viscose", "percent": 100 }
+      ],
+      "size": "40",
+      "origin": "China"
+    },
+    "expected": {
+      "materials": [
+        { "fibre": "polyester", "percent": 100 },
+        { "fibre": "viscose", "percent": 100 }
+      ],
+      "size": "40",
+      "origin": "China"
+    }
+  },
+  {
+    "id": "en-wool-coat",
+    "language": "en",
+    "text": "100% WOOL\nEXCLUSIVE OF TRIMS\nDRY CLEAN ONLY\nMADE IN ITALY",
+    "ideal": {
+      "materials": [{ "fibre": "WOOL", "percent": 100 }],
+      "origin": "ITALY"
+    },
+    "expected": {
+      "materials": [{ "fibre": "wool", "percent": 100 }],
+      "origin": "ITALY"
+    }
+  },
+  {
+    "id": "en-silk-scarf",
+    "language": "en",
+    "text": "100% SILK\n90 x 90 cm\nHAND WASH",
+    "ideal": { "materials": [{ "fibre": "SILK", "percent": 100 }] },
+    "expected": { "materials": [{ "fibre": "silk", "percent": 100 }] }
+  },
+  {
+    "id": "en-acrylic-knit",
+    "language": "en",
+    "text": "62% ACRYLIC 30% NYLON 8% MODAL\nRN 52469 CA 23456\nXL",
+    "ideal": {
+      "materials": [
+        { "fibre": "ACRYLIC", "percent": 62 },
+        { "fibre": "NYLON", "percent": 30 },
+        { "fibre": "MODAL", "percent": 8 }
+      ],
+      "size": "XL"
+    },
+    "expected": {
+      "materials": [
+        { "fibre": "acrylic", "percent": 62 },
+        { "fibre": "polyamide", "percent": 30 },
+        { "fibre": "modal", "percent": 8 }
+      ],
+      "size": "XL"
+    }
+  },
+  {
+    "id": "en-linen-fibre-first",
+    "language": "en",
+    "text": "Linen 55% Cotton 45%\nSize L",
+    "ideal": {
+      "materials": [
+        { "fibre": "Linen", "percent": 55 },
+        { "fibre": "Cotton", "percent": 45 }
+      ],
+      "size": "L"
+    },
+    "expected": {
+      "materials": [
+        { "fibre": "linen", "percent": 55 },
+        { "fibre": "cotton", "percent": 45 }
+      ],
+      "size": "L"
+    }
+  },
+  {
+    "id": "en-origin-only",
+    "language": "en",
+    "text": "Made in Turkey",
+    "ideal": { "origin": "Turkey" },
+    "expected": { "materials": [], "origin": "Turkey" }
+  },
+  {
+    "id": "en-unreadable",
+    "language": "en",
+    "text": "1¦ ~ .\nIII 0 ;",
+    "ideal": null,
+    "expected": { "materials": [] }
+  },
+  {
+    "id": "nb-bomull",
+    "language": "nb",
+    "text": "100% BOMULL\nProdusert i Tyrkia\nStr. M",
+    "ideal": {
+      "materials": [{ "fibre": "BOMULL", "percent": 100 }],
+      "size": "M",
+      "origin": "Tyrkia"
+    },
+    "expected": {
+      "materials": [{ "fibre": "cotton", "percent": 100 }],
+      "size": "M",
+      "origin": "Tyrkia"
+    }
+  },
+  {
+    "id": "nb-ull-polyamid",
+    "language": "nb",
+    "text": "Varetype: Genser\n70% ull\n30% polyamid\nStørrelse: L\nLaget i Kina\nVask på 30 °C",
+    "ideal": {
+      "materials": [
+        { "fibre": "ull", "percent": 70 },
+        { "fibre": "polyamid", "percent": 30 }
+      ],
+      "size": "L",
+      "origin": "Kina"
+    },
+    "expected": {
+      "materials": [
+        { "fibre": "wool", "percent": 70 },
+        { "fibre": "polyamide", "percent": 30 }
+      ],
+      "size": "L",
+      "origin": "Kina"
+    }
+  },
+  {
+    "id": "nb-viskose",
+    "language": "nb",
+    "text": "Kappahl\n100% viskose\nStr 38\nMade in India",
+    "ideal": {
+      "materials": [{ "fibre": "viskose", "percent": 100 }],
+      "size": "38",
+      "brand": "Kappahl",
+      "origin": "India"
+    },
+    "expected": {
+      "materials": [{ "fibre": "viscose", "percent": 100 }],
+      "size": "38",
+      "brand": "Kappahl",
+      "origin": "India"
+    }
+  },
+  {
+    "id": "nb-merino",
+    "language": "nb",
+    "text": "Merinoull 80%\nPolyamid 20%\nStr: S\nProdusert i Litauen",
+    "ideal": {
+      "materials": [
+        { "fibre": "Merinoull", "percent": 80 },
+        { "fibre": "Polyamid", "percent": 20 }
+      ],
+      "size": "S",
+      "origin": "Litauen"
+    },
+    "expected": {
+      "materials": [
+        { "fibre": "wool", "percent": 80 },
+        { "fibre": "polyamide", "percent": 20 }
+      ],
+      "size": "S",
+      "origin": "Litauen"
+    }
+  },
+  {
+    "id": "mixed-nordic",
+    "language": "mixed",
+    "text": "100% cotton\n100% bomull\n100% Baumwolle\n100% coton\nMade in Turkey\nTillverkad i Turkiet\nEUR 36",
+    "ideal": {
+      "materials": [
+        { "fibre": "cotton", "percent": 100 },
+        { "fibre": "bomull", "percent": 100 },
+        { "fibre": "Baumwolle", "percent": 100 },
+        { "fibre": "coton", "percent": 100 }
+      ],
+      "size": "36",
+      "origin": "Turkey"
+    },
+    "expected": {
+      "materials": [{ "fibre": "cotton", "percent": 100 }],
+      "size": "36",
+      "origin": "Turkey"
+    }
+  },
+  {
+    "id": "mixed-urdu-lawn",
+    "language": "mixed",
+    "text": "Khaadi\nFabric: Lawn\n100% Cotton\nMade in Pakistan\nSize: M",
+    "ideal": {
+      "materials": [{ "fibre": "Cotton", "percent": 100 }],
+      "size": "M",
+      "brand": "Khaadi",
+      "origin": "Pakistan"
+    },
+    "expected": {
+      "materials": [{ "fibre": "cotton", "percent": 100 }],
+      "size": "M",
+      "brand": "Khaadi",
+      "origin": "Pakistan"
+    }
+  },
+  {
+    "id": "mixed-urdu-silk",
+    "language": "mixed",
+    "text": "Sapphire\nKapra: Cotton Silk\n60% Cotton 40% Silk\nSize: S\nپاکستان میں تیار کردہ",
+    "ideal": {
+      "materials": [
+        { "fibre": "Cotton", "percent": 60 },
+        { "fibre": "Silk", "percent": 40 }
+      ],
+      "size": "S",
+      "brand": "Sapphire"
+    },
+    "expected": {
+      "materials": [
+        { "fibre": "cotton", "percent": 60 },
+        { "fibre": "silk", "percent": 40 }
+      ],
+      "size": "S",
+      "brand": "Sapphire"
+    }
+  }
+]
