@@ -341,10 +341,10 @@ export const nb: Record<Key, string> = {
     "Prøv en ensfarget bakgrunn som skiller seg fra plagget, for eksempel et grått laken til hvite klær.",
   "advice.clipped.title": "En del av plagget er kuttet bort.",
   "advice.clipped.body":
-    "Gå litt bakover, så alle kanter, ermer og falder kommer med i bildet.",
+    "Gå litt bakover, så alle kanter og ermer kommer med i bildet.",
   "advice.blur.title": "Bildet ser uskarpt ut.",
   "advice.blur.body":
-    "Hold telefonen stødig, trykk på plagget for å fokusere, og ta bildet.",
+    "Hold telefonen støtt, trykk på plagget for å fokusere, og ta bildet.",
   "advice.dark.title": "Bildet er ganske mørkt.",
   "advice.dark.body":
     "Gå nærmere et vindu i dagslys, så den ekte fargen vises.",
