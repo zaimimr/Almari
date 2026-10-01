@@ -1,0 +1,15 @@
+appId: com.zaimimran.almari
+name: Care label in bokmål
+---
+- tapOn: "Closet|Klesskap|Garderobe"
+- tapOn: "Label test dress.*"
+- scrollUntilVisible:
+    element: "Se eller endre vaskelapp"
+    direction: DOWN
+- assertVisible: "95% bomull, 5% elastan"
+- assertVisible: "Størrelse S"
+- takeScreenshot: planning/build/care-label/piece-nb
+- tapOn: "Se eller endre vaskelapp"
+- assertVisible: "Hva det er laget av"
+- assertVisible: "bomull"
+- takeScreenshot: planning/build/care-label/label-nb
