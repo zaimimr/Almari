@@ -1,0 +1,15 @@
+appId: com.zaimimran.almari
+---
+- launchApp
+- tapOn: "Closet"
+- tapOn: "Seed kurta.*"
+- tapOn: "Edit"
+- scrollUntilVisible:
+    element:
+      text: "Remove piece"
+    direction: DOWN
+- tapOn: "Remove piece"
+- tapOn: "Remove"
+- assertVisible: "Add pieces"
+- assertNotVisible: "Seed kurta.*"
+- assertNotVisible: "This piece is no longer here"

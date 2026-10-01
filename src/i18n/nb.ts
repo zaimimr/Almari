@@ -202,4 +202,31 @@ export const nb: Record<Key, string> = {
   "colour.lavender": "Lavendel",
   "colour.purple": "Lilla",
   "colour.plum": "Plomme",
+  "piece.title": "Ditt plagg",
+  "piece.edit": "Endre",
+  "piece.edit.title": "Endre plagg",
+  "piece.facts.title": "Detaljer",
+  "piece.facts.none": "Ingen detaljer ennå.",
+  "piece.facts.hint":
+    "Felt med stiplet kant og spørsmålstegn er gjetninger. Trykk på et for å bekrefte eller endre det.",
+  "piece.fact.known": "{label}: {value}",
+  "piece.fact.guess":
+    "{label}: {value}, en gjetning. Trykk for å bekrefte eller endre.",
+  "piece.fact.notNow": "Ikke nå",
+  "piece.away.title": "Merk som utilgjengelig",
+  "piece.away.wash": "Til vask",
+  "piece.away.lent": "Lånt bort",
+  "piece.away.repair": "Må repareres",
+  "piece.away.hint":
+    "Velg hvorfor det er borte. Det blir værende i garderoben, men tas ikke med i antrekksforslag.",
+  "piece.away.status":
+    "Utilgjengelig: {reason}. Tas ikke med i antrekksforslag før du merker det som tilgjengelig.",
+  "piece.away.back": "Merk som tilgjengelig",
+  "piece.usedIn.none": "Ikke med i noen lagrede antrekk ennå",
+  "piece.usedIn.one": "Brukt i 1 lagret antrekk",
+  "piece.usedIn.other": "Brukt i {count} lagrede antrekk",
+  "piece.error.save": "Endringen kunne ikke lagres. Prøv igjen.",
+  "piece.missing.title": "Dette plagget er ikke her lenger",
+  "piece.missing.description": "Du finner de andre plaggene dine i garderoben.",
+  "piece.missing.action": "Gå til garderoben",
 };

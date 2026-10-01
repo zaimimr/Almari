@@ -16,6 +16,7 @@ import {
   styleOptions,
   savePiece,
   removePiece,
+  usedIn,
 } from "../domain/closet";
 import { confirmEdits } from "../domain/recognition";
 import { categoryName, kindName, styleName, stylesName, t } from "../i18n";
@@ -121,6 +122,8 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
               ? { original: piece.original }
               : {}),
             ...(!newImage && piece?.frame ? { frame: piece.frame } : {}),
+            ...(piece?.status ? { status: piece.status } : {}),
+            ...(piece?.away ? { away: piece.away } : {}),
           }),
         ),
       );
@@ -140,9 +143,7 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
 
   async function remove() {
     if (!piece || busy) return;
-    const uses = closet.looks.filter((look) =>
-      look.pieceIds.includes(piece.id),
-    ).length;
+    const uses = usedIn(closet, piece.id);
     const confirmed = await confirmAction(
       "Remove this piece?",
       uses
@@ -158,7 +159,7 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
       if (piece.original && piece.original !== piece.photo)
         void discardPhoto(piece.original).catch(() => undefined);
       allowClose();
-      router.back();
+      router.dismissTo("/closet");
     } catch {
       setError("This piece could not be removed. Please try again.");
     } finally {
@@ -170,7 +171,7 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
     <FormScreen>
       <Stack.Screen
         options={{
-          title: piece ? "Your piece" : "Add a piece",
+          title: piece ? t("piece.edit.title") : "Add a piece",
           headerLeft: () => (
             <HeaderAction
               label={piece ? "Back" : "Cancel"}

@@ -200,6 +200,32 @@ export const en = {
   "colour.lavender": "Lavender",
   "colour.purple": "Purple",
   "colour.plum": "Plum",
+  "piece.title": "Your piece",
+  "piece.edit": "Edit",
+  "piece.edit.title": "Edit piece",
+  "piece.facts.title": "Details",
+  "piece.facts.none": "No details yet.",
+  "piece.facts.hint":
+    "Chips with a dashed outline and a question mark are guesses. Tap one to confirm or change it.",
+  "piece.fact.known": "{label}: {value}",
+  "piece.fact.guess": "{label}: {value}, a guess. Tap to confirm or change.",
+  "piece.fact.notNow": "Not now",
+  "piece.away.title": "Mark as unavailable",
+  "piece.away.wash": "In the wash",
+  "piece.away.lent": "Lent out",
+  "piece.away.repair": "Needs repair",
+  "piece.away.hint":
+    "Choose why it is away. It stays in your closet but is left out of outfit suggestions.",
+  "piece.away.status":
+    "Unavailable: {reason}. Left out of outfit suggestions until you mark it available.",
+  "piece.away.back": "Mark as available",
+  "piece.usedIn.none": "Not in any saved looks yet",
+  "piece.usedIn.one": "Used in 1 saved look",
+  "piece.usedIn.other": "Used in {count} saved looks",
+  "piece.error.save": "This change could not be saved. Please try again.",
+  "piece.missing.title": "This piece is no longer here",
+  "piece.missing.description": "You can find your other pieces in the closet.",
+  "piece.missing.action": "Go to closet",
 };
 
 export type Key = keyof typeof en;

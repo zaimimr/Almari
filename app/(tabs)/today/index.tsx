@@ -1,6 +1,7 @@
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { Stack, router } from "expo-router";
 import {
+  isAvailable,
   kindLabel,
   occasionLabel,
   styleLabel,
@@ -197,7 +198,7 @@ function TodayContent() {
     return piece ? [piece] : [];
   });
   const pool = closet.pieces.filter(
-    (piece) => piece.source === request.wardrobe,
+    (piece) => piece.source === request.wardrobe && isAvailable(piece),
   );
   const reviewProblems = showOutfit
     ? evaluateOutfit(pieces, request, pool)

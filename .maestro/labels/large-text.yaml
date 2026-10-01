@@ -17,12 +17,14 @@ appId: com.zaimimran.almari
 - takeScreenshot: planning/build/labels/large-text-check-piece
 - scrollUntilVisible:
     element: "Remove this photo"
+    visibilityPercentage: 50
 - takeScreenshot: planning/build/labels/large-text-check-piece-end
 - tapOn: "Remove this photo"
 - tapOn: "Close"
 - scrollUntilVisible:
     element: "Sage embroidered kurta.*"
 - tapOn: "Sage embroidered kurta.*"
+- tapOn: "Edit"
 - scrollUntilVisible:
     element: "Style"
 - takeScreenshot: planning/build/labels/large-text-editor

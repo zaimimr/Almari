@@ -6,6 +6,7 @@ appId: com.zaimimran.almari
     element: "Sage embroidered kurta, Kurtas & tunics · Kurta"
 - assertVisible: "Sage embroidered kurta, Kurtas & tunics · Kurta"
 - tapOn: "Sage embroidered kurta.*"
+- tapOn: "Edit"
 - scrollUntilVisible:
     element: "Subcategory \\(optional\\)"
 - scrollUntilVisible:
@@ -13,10 +14,12 @@ appId: com.zaimimran.almari
 - assertVisible: "Desi, set by the subcategory"
 - takeScreenshot: planning/build/labels/editor-sample
 - tapOn: "Back"
+- tapOn: "Back"
 - scrollUntilVisible:
     element: "Kurti.*"
     direction: UP
 - tapOn: "Kurti.*"
+- tapOn: "Edit"
 - scrollUntilVisible:
     element: "Subcategory"
 - tapOn: "Tops"
@@ -37,5 +40,6 @@ appId: com.zaimimran.almari
 - scrollUntilVisible:
     element: "Save changes"
 - tapOn: "Save changes"
+- tapOn: "Back"
 - assertVisible: ".*Tops · Blouse.*"
 - takeScreenshot: planning/build/labels/closet-cards
