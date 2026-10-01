@@ -318,5 +318,19 @@ public class ClosetVisionModule: Module {
     AsyncFunction("prepare") { (sourceUri: String, id: String) throws -> PreparedGarment in
       try GarmentPipeline.shared.prepare(sourceUri: sourceUri, id: id)
     }
+
+    AsyncFunction("readLabel") { (sourceUri: String, id: String) throws -> ReadLabelResult in
+      try CareLabelReader.shared.read(sourceUri: sourceUri, id: id)
+    }
+
+    AsyncFunction("labelModelAvailable") { () -> Bool in
+      CareLabelModel.isAvailable()
+    }
+
+    AsyncFunction("extractLabel") { (text: String) async -> LabelExtraction in
+      var result = LabelExtraction()
+      result.json = await CareLabelModel.extract(text)
+      return result
+    }
   }
 }

@@ -26,3 +26,7 @@ export type PreparedGarment = {
   height: number;
   milliseconds: Record<string, number>;
 };
+
+export type ReadLabelResult = { photo: string; lines: string[] };
+
+export type LabelExtraction = { json: string | null };
