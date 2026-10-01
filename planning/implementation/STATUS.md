@@ -126,3 +126,26 @@ Known limitations:
 - Used in counts saved looks only. The wear count arrives with Wore this in Part 6.
 - A piece whose photo is replaced in the editor loses its colours and embedding and is not re-prepared, because the one-time pass has already run.
 - Screens that existed before this part still have English-only text; Part 8 moves them into the catalog.
+
+## Part 3: Care label (done, 1 October 2026)
+
+What works:
+
+- After Looks right in Check this piece she is asked "Add the care label?" with Add care label or Skip. A label can also be added, viewed, edited and removed later from the item page. All new text is in English and bokmål.
+- The label photo is read on the phone with Apple Vision (English, Norwegian bokmål, German, French and Turkish). The photo is stored with the piece, shown only on the Care label screen, and deleted with the label, the piece or an unfinished import.
+- A rules parser reads fibres with percentages, size and origin in English and Norwegian. When Apple Intelligence is on, the on-device language model fills only fields the parser left empty, usually the brand. A model value is kept only when it is printed on the label. When Apple Intelligence is off, still downloading or does not support the phone's language, only the parser runs and the screen does not mention it. Fields that cannot be read stay empty and editable.
+- Fibres are stored as one English name and shown in the app's language. Cotton, linen, wool, cashmere, silk and modal set the piece's fabric with source label. A fabric she confirmed is never replaced, and removing the label clears only a fabric that came from it. Washing and care symbols are not stored.
+
+Evidence: 16 fixture labels in `src/domain/fixtures/care-labels.json`. Domain tests C01 to C23 cover the parser, fibre names, sizes, origin, merging, broken model output, the model being off, drafts, the fabric rules, storage and the recorded evaluation. `npm run check` passes with 130 tests, `npx expo-doctor` passes 21 of 21 checks, `npx expo export --platform ios --platform web` finishes, and no Needle traces remain in the code. Parser accuracy is recorded in the [model README](../../modules/closet-vision/model/README.md): the parser alone got 45 of 50 facts right and 0 wrong. Model recording pending: the Apple Intelligence model was not ready on this Mac, so the model rows are not measured. Rerun the `care_labels` tool when the model is available. Screens were checked with Maestro in English, in bokmål and with larger text. Screenshots are in [planning/build/care-label](../build/care-label). The simulator made no outside network connections while reading a label.
+
+Known limitations:
+
+- Brand comes only from the language model, so on a phone without Apple Intelligence she types it herself, and model accuracy is unmeasured until the recording is rerun.
+- The 5 facts the parser missed on the fixtures are all brands.
+- The parser's fixture score is optimistic because its rules and the fixtures were written together. Her own labels are the real test.
+- Urdu script is not supported by Vision text recognition.
+
+Before the TestFlight build is signed off on her iPhone:
+
+- Read three real labels with Apple Intelligence on and three with it off, and note the time per label.
+- Network check: turn on Settings, Privacy and Security, App Privacy Report, read three labels, and confirm Almari shows no network activity from label reading.

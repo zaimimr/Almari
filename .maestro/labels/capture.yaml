@@ -9,7 +9,7 @@ appId: com.zaimimran.almari
 - tapOn: "Choose photos"
 - tapOn:
     text: "Photo, [^,]+, [0-9:]+.*"
-    index: 0
+    index: 1
 - tapOn: "Add|Done"
 - extendedWaitUntil:
     visible: ".*, Quick check"
@@ -37,6 +37,9 @@ appId: com.zaimimran.almari
 - tapOn: "Kurti"
 - assertVisible: "Desi, set by the subcategory"
 - takeScreenshot: planning/build/labels/check-piece-kurti
+- scrollUntilVisible:
+    element: "Looks right"
+    direction: DOWN
 - tapOn: "Looks right"
 - tapOn: "Skip"
 - tapOn: "Add 1 ready piece"
