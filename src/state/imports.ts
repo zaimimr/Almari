@@ -5,9 +5,13 @@ import ClosetVision, {
 import type { ClosetRepository } from "../domain/repository";
 import type { ImportJob, Prepared } from "../domain/closet";
 import {
+  attributeRefreshVersion,
   failImport,
   finishImport,
+  finishRefresh,
+  piecesToRefresh,
   recoverImports,
+  refreshPiece,
   startImport,
 } from "../domain/importing";
 import { discardPhoto, photoUri } from "../storage/local";
@@ -88,6 +92,56 @@ export function useImportRunner(repository: ClosetRepository, ready: boolean) {
     return () => {
       stopped = true;
       unsubscribe();
+    };
+  }, [repository, ready]);
+}
+
+const wait = (milliseconds: number) =>
+  new Promise((resolve) => setTimeout(resolve, milliseconds));
+
+export function useAttributeRefresh(
+  repository: ClosetRepository,
+  ready: boolean,
+) {
+  useEffect(() => {
+    if (!ready || !canPrepareOnDevice) return;
+    let stopped = false;
+    const importing = () =>
+      repository
+        .getSnapshot()
+        .imports.some(
+          (job) => job.state === "queued" || job.state === "preparing",
+        );
+    const run = async () => {
+      if (
+        (repository.getSnapshot().attributeRefresh ?? 0) >=
+        attributeRefreshVersion
+      )
+        return;
+      for (const piece of piecesToRefresh(repository.getSnapshot())) {
+        while (!stopped && importing()) await wait(2000);
+        if (stopped) return;
+        try {
+          const result = await ClosetVision.prepare(
+            photoUri(piece.original ?? piece.photo),
+            `${piece.id}-refresh`,
+          );
+          for (const file of [result.original, result.cutout, result.thumbnail])
+            if (file && file !== piece.photo && file !== piece.original)
+              void discardPhoto(file).catch(() => undefined);
+          if (stopped) return;
+          await repository.update((closet) =>
+            refreshPiece(closet, piece.id, preparedFrom(result)),
+          );
+        } catch {
+          continue;
+        }
+      }
+      if (!stopped) await repository.update(finishRefresh);
+    };
+    void run().catch(() => undefined);
+    return () => {
+      stopped = true;
     };
   }, [repository, ready]);
 }
