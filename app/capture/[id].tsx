@@ -126,8 +126,8 @@ export default function CheckPiece() {
     : null;
 
   function chooseKind(next: GarmentKind) {
-    if (name === nameFor(kind!, prepared.color))
-      setName(nameFor(next, prepared.color));
+    if (name === nameFor(kind!, prepared.palette))
+      setName(nameFor(next, prepared.palette));
     setKind(next);
     const nextFixed = fixedStyles(next);
     if (nextFixed) setChosenStyles(nextFixed);

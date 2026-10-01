@@ -49,7 +49,8 @@ export function useImportRunner(repository: ClosetRepository, ready: boolean) {
             frame: result.frame,
             instances: result.instances,
             labels: result.labels,
-            color: result.color,
+            palette: result.color ? [{ rgb: result.color, share: 1 }] : [],
+            embedding: null,
           };
           const current = repository
             .getSnapshot()

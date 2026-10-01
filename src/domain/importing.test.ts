@@ -38,7 +38,8 @@ const prepared = (changes: Partial<Prepared> = {}): Prepared => ({
   frame: { x: 0.2, y: 0, width: 0.6, height: 1 },
   instances: 1,
   labels: kurtaLabels,
-  color: [167, 174, 152],
+  palette: [{ rgb: [167, 174, 152], share: 1 }],
+  embedding: null,
   ...changes,
 });
 
@@ -75,13 +76,16 @@ test("P01 a clear photo becomes a named piece with category, subcategory and sty
 });
 
 test("close calls, missing cutouts, and several garments ask for a quick check", () => {
-  let closet = finished({ labels: closeLabels, color: [151, 107, 112] });
+  let closet = finished({
+    labels: closeLabels,
+    palette: [{ rgb: [151, 107, 112], share: 1 }],
+  });
   let job = closet.imports[0]!;
   assert.equal(job.state, "review");
   assert.deepEqual(job.checks, ["uncertain"]);
   assert.equal(job.question, "category");
   assert.equal(acceptImports(closet).pieces.length, 0);
-  const plain = finished({ cutout: null, color: null }).imports[0]!;
+  const plain = finished({ cutout: null, palette: [] }).imports[0]!;
   assert.deepEqual(plain.checks, ["no-cutout"]);
   assert.equal(plain.name, "Kurta");
   assert.deepEqual(finished({ instances: 2 }).imports[0]!.checks, ["several"]);

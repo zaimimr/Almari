@@ -8,9 +8,15 @@ import {
   saveLook,
   savePiece,
   type Piece,
+  type Prepared,
 } from "./closet";
 import { closetV2, ids } from "./closet-v2.fixture";
-import { acceptImports, correctImport } from "./importing";
+import {
+  acceptImports,
+  correctImport,
+  queueImport,
+  startImport,
+} from "./importing";
 import {
   ClosetRepository,
   keyedStorage,
@@ -409,9 +415,17 @@ test("a version 2 closet opens as version 3 with every piece, look, Today sessio
     closetV2.imports.map(({ prepared: _prepared, ...job }) => job),
   );
   const ready = migrated.imports.find((job) => job.id === ids.ready)!;
-  const { kinds: _kinds, ...oldPrepared } = closetV2.imports[2]!.prepared!;
+  const {
+    kinds: _kinds,
+    color,
+    ...oldPrepared
+  } = closetV2.imports[2]!.prepared!;
   const { labels, ...newPrepared } = ready.prepared!;
-  assert.deepEqual(newPrepared, oldPrepared);
+  assert.deepEqual(newPrepared, {
+    ...oldPrepared,
+    palette: [{ rgb: color, share: 1 }],
+    embedding: null,
+  });
   assert.deepEqual(labels, [
     { group: "kind", value: "kurta", score: 0.1412 },
     { group: "kind", value: "tunic", score: 0.1187 },
@@ -473,4 +487,84 @@ test("label groups added by a newer native module do not lock the closet", () =>
     ],
   };
   assert.equal(decodeCloset(JSON.stringify(closet)).imports.length, 1);
+});
+
+const described: Piece = {
+  ...hijab,
+  id: "described",
+  kind: "hijab",
+  attributes: {
+    pattern: "print",
+    scale: "small",
+    fabric: "chiffon",
+    formality: 2,
+  },
+  sources: {
+    pattern: "proposed",
+    scale: "proposed",
+    fabric: "confirmed",
+    formality: "proposed",
+  },
+  colors: [
+    { rgb: [151, 107, 112], share: 0.62 },
+    { rgb: [238, 235, 230], share: 0.21 },
+  ],
+  embedding: "f".repeat(1024),
+};
+
+test("pieces keep attributes, sources, colours and the embedding through a reopen", () => {
+  const closet = savePiece(emptyCloset, described);
+  const reopened = decodeCloset(JSON.stringify(closet));
+  assert.deepEqual(reopened.pieces[0], described);
+});
+
+test("invalid attributes, colours, embeddings and sources are refused", () => {
+  const broken: Partial<Piece>[] = [
+    { attributes: { length: "floor" as never } },
+    { attributes: { formality: 9 as never } },
+    { colors: [{ rgb: [300, 0, 0], share: 0.5 }] },
+    { embedding: "short" },
+    { sources: { fabric: "guessed" as never } },
+    { sources: { colour: "confirmed" } as never },
+  ];
+  for (const change of broken)
+    assert.throws(() => savePiece(emptyCloset, { ...described, ...change }));
+});
+
+test("an import job from before palettes keeps its colour as the only swatch", () => {
+  let closet = queueImport(emptyCloset, {
+    id: "job",
+    source: "job-original.jpg",
+    createdAt: "2026-10-01T08:00:00Z",
+  });
+  closet = startImport(closet, "job");
+  const stored = JSON.parse(JSON.stringify(closet));
+  stored.imports[0].prepared = {
+    original: "job-original.jpg",
+    cutout: null,
+    thumbnail: null,
+    frame: null,
+    instances: 0,
+    labels: [],
+    color: [151, 107, 112],
+  };
+  const reopened = decodeCloset(JSON.stringify(stored));
+  const prepared = reopened.imports[0]!.prepared as Prepared;
+  assert.deepEqual(prepared.palette, [{ rgb: [151, 107, 112], share: 1 }]);
+  assert.equal(prepared.embedding, null);
+  assert.equal("color" in prepared, false);
+  stored.imports[0].prepared.color = null;
+  assert.deepEqual(
+    (decodeCloset(JSON.stringify(stored)).imports[0]!.prepared as Prepared)
+      .palette,
+    [],
+  );
+});
+
+test("the refresh marker survives reopening and must be a whole number", () => {
+  const marked = { ...emptyCloset, attributeRefresh: 1 };
+  assert.equal(decodeCloset(JSON.stringify(marked)).attributeRefresh, 1);
+  assert.throws(() =>
+    decodeCloset(JSON.stringify({ ...emptyCloset, attributeRefresh: "yes" })),
+  );
 });

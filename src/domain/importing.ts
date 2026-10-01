@@ -11,16 +11,15 @@ import {
   type Sources,
   type Style,
 } from "./closet";
-import { colorName } from "./color";
+import { colorName, type Swatch } from "./color";
 import { recognize } from "./recognition";
 
-export type CheckReason = "uncertain" | "no-cutout" | "several";
+export type CheckReason = "uncertain" | "no-cutout" | "several" | "attribute";
 
-export function nameFor(kind: GarmentKind, color: Prepared["color"]) {
-  const label = kindLabel(kind).toLowerCase();
-  if (!color) return kindLabel(kind);
-  const shade = colorName(color);
-  return `${shade} ${label}`;
+export function nameFor(kind: GarmentKind, palette: Swatch[]) {
+  const top = palette[0];
+  if (!top) return kindLabel(kind);
+  return `${colorName(top.rgb)} ${kindLabel(kind).toLowerCase()}`;
 }
 
 export function queueImport(
@@ -80,7 +79,7 @@ export function finishImport(
       state: checks.length ? "review" : "ready",
       prepared,
       kind: recognition.kind,
-      name: nameFor(recognition.kind, prepared.color),
+      name: nameFor(recognition.kind, prepared.palette),
       styles,
       question: recognition.question ?? undefined,
       sources,
@@ -132,8 +131,8 @@ export function correctImport(
     const styles = fixed ?? (change.styles?.length ? change.styles : previous);
     const renamed =
       change.name ??
-      (change.kind && job.name === nameFor(job.kind!, job.prepared!.color)
-        ? nameFor(kind, job.prepared!.color)
+      (change.kind && job.name === nameFor(job.kind!, job.prepared!.palette)
+        ? nameFor(kind, job.prepared!.palette)
         : job.name!);
     const sources: Sources = {
       kind: change.kind ? "confirmed" : (job.sources?.kind ?? "proposed"),

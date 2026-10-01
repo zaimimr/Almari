@@ -9,7 +9,13 @@ import {
   type Occasion,
   type Style,
 } from "./taxonomy";
-import type { Attributes } from "./attributes";
+import {
+  attributeKeys,
+  isAttributes,
+  type AttributeKey,
+  type Attributes,
+} from "./attributes";
+import { isSwatches, type Swatch } from "./color";
 
 export * from "./taxonomy";
 
@@ -48,6 +54,9 @@ export type Piece = {
   original?: string;
   frame?: Frame;
   sources?: Sources;
+  attributes?: Attributes;
+  colors?: Swatch[];
+  embedding?: string;
 };
 
 export type Prepared = {
@@ -57,7 +66,8 @@ export type Prepared = {
   frame: Frame | null;
   instances: number;
   labels: LabelScore[];
-  color: [number, number, number] | null;
+  palette: Swatch[];
+  embedding: string | null;
 };
 
 export type ImportJob = {
@@ -73,7 +83,10 @@ export type ImportJob = {
   styles?: Style[];
   question?: QuickCheck;
   sources?: Sources;
-  checks?: ("uncertain" | "no-cutout" | "several")[];
+  attributes?: Attributes;
+  attributeSources?: Sources;
+  attributeCheck?: AttributeKey;
+  checks?: ("uncertain" | "no-cutout" | "several" | "attribute")[];
   keepOriginal?: boolean;
   error?: string;
 };
@@ -147,6 +160,7 @@ export type Closet = {
   styling: Styling;
   imports: ImportJob[];
   photoTipsSeen?: boolean;
+  attributeRefresh?: number;
 };
 
 export const emptyStyling: Styling = {
@@ -224,7 +238,12 @@ function isTraits(value: unknown): value is Traits {
   );
 }
 
-const sourceKeys: readonly SourceKey[] = ["kind", "styles"];
+const sourceKeys: readonly SourceKey[] = [
+  "kind",
+  "styles",
+  "sheer",
+  ...attributeKeys,
+];
 
 const sourceValues = ["proposed", "label", "confirmed"];
 
@@ -238,6 +257,17 @@ function isSources(value: unknown): value is Sources {
     )
   );
 }
+
+const isEmbedding = (value: unknown): value is string =>
+  typeof value === "string" && /^[A-Za-z0-9+/]{1024}$/.test(value);
+
+const isRgb = (value: unknown): value is [number, number, number] =>
+  Array.isArray(value) &&
+  value.length === 3 &&
+  value.every((part) => typeof part === "number");
+
+const isWholeNumber = (value: unknown): value is number =>
+  Number.isInteger(value);
 
 function isPieceBase(value: unknown): value is Record<string, unknown> {
   return (
@@ -262,7 +292,10 @@ function isPiece(value: unknown): value is Piece {
     optional(value.traits, isTraits) &&
     optional(value.original, isString) &&
     optional(value.frame, isFrame) &&
-    optional(value.sources, isSources)
+    optional(value.sources, isSources) &&
+    optional(value.attributes, isAttributes) &&
+    optional(value.colors, isSwatches) &&
+    optional(value.embedding, isEmbedding)
   );
 }
 
@@ -294,15 +327,15 @@ function isPrepared(value: unknown): value is Prepared {
     Number.isInteger(value.instances) &&
     Array.isArray(value.labels) &&
     value.labels.every(isLabelScore) &&
-    (value.color === null ||
-      (Array.isArray(value.color) &&
-        value.color.length === 3 &&
-        value.color.every((part) => typeof part === "number")))
+    (value.palette === undefined
+      ? value.color === null || isRgb(value.color)
+      : isSwatches(value.palette) &&
+        (value.embedding === null || isEmbedding(value.embedding)))
   );
 }
 
 const jobStates = ["queued", "preparing", "ready", "review", "failed"];
-const checkReasons = ["uncertain", "no-cutout", "several"];
+const checkReasons = ["uncertain", "no-cutout", "several", "attribute"];
 const quickChecks = ["category", "subcategory", "style"];
 
 function isImportJob(value: unknown): value is ImportJob {
@@ -326,6 +359,11 @@ function isImportJob(value: unknown): value is ImportJob {
       quickChecks.includes(item as string),
     ) &&
     optional(value.sources, isSources) &&
+    optional(value.attributes, isAttributes) &&
+    optional(value.attributeSources, isSources) &&
+    optional(value.attributeCheck, (key): key is AttributeKey =>
+      attributeKeys.includes(key as AttributeKey),
+    ) &&
     optional(
       value.checks,
       (list): list is string[] =>
@@ -522,7 +560,26 @@ function migrateV2(value: Record<string, unknown>): Record<string, unknown> {
   };
 }
 
-export function decodeCloset(
+type LegacyPrepared = Omit<Prepared, "palette" | "embedding"> & {
+  color?: [number, number, number] | null;
+  palette?: Swatch[];
+};
+
+function withPalette(job: ImportJob): ImportJob {
+  const prepared = job.prepared as LegacyPrepared | undefined;
+  if (!prepared || prepared.palette) return job;
+  const { color, ...rest } = prepared;
+  return {
+    ...job,
+    prepared: {
+      ...rest,
+      palette: color ? [{ rgb: color, share: 1 }] : [],
+      embedding: null,
+    },
+  };
+}
+
+function decodeStored(
   raw: string | null,
   sampleTraits: Record<string, SampleTraits> = {},
 ): Closet {
@@ -548,7 +605,8 @@ export function decodeCloset(
       (list): list is ImportJob[] =>
         Array.isArray(list) && list.every(isImportJob),
     ) ||
-    !optional(value.photoTipsSeen, isBoolean)
+    !optional(value.photoTipsSeen, isBoolean) ||
+    !optional(value.attributeRefresh, isWholeNumber)
   ) {
     throw unreadable();
   }
@@ -556,6 +614,11 @@ export function decodeCloset(
     ...(value as Closet),
     imports: (value.imports as ImportJob[]) ?? [],
   };
+}
+
+export function decodeCloset(...args: Parameters<typeof decodeStored>): Closet {
+  const closet = decodeStored(...args);
+  return { ...closet, imports: closet.imports.map(withPalette) };
 }
 
 export function savePiece(closet: Closet, piece: Piece): Closet {
