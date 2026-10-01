@@ -34,6 +34,28 @@ export type Traits = {
 
 export type Frame = { x: number; y: number; width: number; height: number };
 
+export const garmentRegionKinds = [
+  "head",
+  "upper",
+  "skirt",
+  "pants",
+  "dress",
+  "belt",
+  "shoes",
+  "bag",
+  "sunglasses",
+] as const;
+
+export type GarmentRegionKind = (typeof garmentRegionKinds)[number];
+
+export type GarmentRegion = {
+  kind: GarmentRegionKind;
+  cutout: string;
+  frame: Frame;
+  share: number;
+  partial: boolean;
+};
+
 export type Source = "proposed" | "label" | "confirmed";
 
 export type SourceKey = keyof Attributes | "kind" | "styles";
