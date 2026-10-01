@@ -6,6 +6,24 @@ export interface ClosetStorage {
   write(value: string): Promise<void>;
 }
 
+export const closetKeys = ["closet.v3", "closet.v2", "closet.v1"] as const;
+
+export function keyedStorage(
+  get: (key: string) => Promise<string | null>,
+  set: (key: string, value: string) => Promise<void>,
+): ClosetStorage {
+  return {
+    async read() {
+      for (const key of closetKeys) {
+        const value = await get(key);
+        if (value !== null) return value;
+      }
+      return null;
+    },
+    write: (value) => set(closetKeys[0], value),
+  };
+}
+
 export class ClosetRepository {
   private snapshot: Closet = emptyCloset;
   private initialized = false;

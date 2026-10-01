@@ -1,19 +1,9 @@
-import type { ClosetStorage } from "../domain/repository";
+import { keyedStorage, type ClosetStorage } from "../domain/repository";
 
-const key = "closet.v2";
-const previousKey = "closet.v1";
-
-export const closetStorage: ClosetStorage = {
-  async read() {
-    return (
-      window.localStorage.getItem(key) ??
-      window.localStorage.getItem(previousKey)
-    );
-  },
-  async write(value) {
-    window.localStorage.setItem(key, value);
-  },
-};
+export const closetStorage: ClosetStorage = keyedStorage(
+  async (key) => window.localStorage.getItem(key),
+  async (key, value) => window.localStorage.setItem(key, value),
+);
 
 export async function keepPhoto(uri: string): Promise<string> {
   const response = await fetch(uri);

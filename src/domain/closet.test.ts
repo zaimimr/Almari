@@ -9,7 +9,13 @@ import {
   savePiece,
   type Piece,
 } from "./closet";
-import { ClosetRepository, type ClosetStorage } from "./repository";
+import { closetV2, ids } from "./closet-v2.fixture";
+import { acceptImports, correctImport } from "./importing";
+import {
+  ClosetRepository,
+  keyedStorage,
+  type ClosetStorage,
+} from "./repository";
 import {
   addSampleWardrobe,
   sampleCatalogVersion,
@@ -278,7 +284,7 @@ test("an old closet migrates without losing edits, removals, or saved looks", as
   const repository = new ClosetRepository(storage);
   await repository.load();
   const migrated = repository.getSnapshot();
-  assert.equal(migrated.version, 2);
+  assert.equal(migrated.version, 3);
   assert.deepEqual(
     migrated.pieces.map((piece) => [piece.id, piece.source]),
     [
@@ -359,4 +365,112 @@ test("piece sources accept only known fields and origins", () => {
       sources: { colour: "proposed" },
     } as unknown as Piece),
   );
+});
+
+function keyed(entries: Record<string, string>) {
+  const store = new Map(Object.entries(entries));
+  const storage = keyedStorage(
+    async (key) => store.get(key) ?? null,
+    async (key, value) => {
+      store.set(key, value);
+    },
+  );
+  return { store, storage };
+}
+
+test("the newest stored closet wins and older keys are never written", async () => {
+  const v1 = JSON.stringify(v1Snapshot());
+  const v2 = JSON.stringify(closetV2);
+  const { store, storage } = keyed({ "closet.v1": v1, "closet.v2": v2 });
+  assert.equal(await storage.read(), v2);
+  await storage.write("{}");
+  assert.equal(await storage.read(), "{}");
+  assert.equal(store.get("closet.v3"), "{}");
+  assert.equal(store.get("closet.v2"), v2);
+  assert.equal(store.get("closet.v1"), v1);
+  assert.equal(await keyed({ "closet.v1": v1 }).storage.read(), v1);
+  assert.equal(await keyed({}).storage.read(), null);
+});
+
+test("a version 2 closet opens as version 3 with every piece, look, Today session and import kept", async () => {
+  const raw = JSON.stringify(closetV2);
+  const { store, storage } = keyed({ "closet.v2": raw });
+  const repository = new ClosetRepository(storage);
+  await repository.load();
+  const migrated = repository.getSnapshot();
+  assert.equal(migrated.version, 3);
+  assert.deepEqual(migrated.pieces, closetV2.pieces);
+  assert.deepEqual(migrated.looks, closetV2.looks);
+  assert.deepEqual(migrated.styling, closetV2.styling);
+  assert.equal(migrated.sampleCatalog, 2);
+  assert.equal(migrated.photoTipsSeen, true);
+  assert.deepEqual(
+    migrated.imports.map(({ prepared: _prepared, ...job }) => job),
+    closetV2.imports.map(({ prepared: _prepared, ...job }) => job),
+  );
+  const ready = migrated.imports.find((job) => job.id === ids.ready)!;
+  const { kinds: _kinds, ...oldPrepared } = closetV2.imports[2]!.prepared!;
+  const { labels, ...newPrepared } = ready.prepared!;
+  assert.deepEqual(newPrepared, oldPrepared);
+  assert.deepEqual(labels, [
+    { group: "kind", value: "kurta", score: 0.1412 },
+    { group: "kind", value: "tunic", score: 0.1187 },
+    { group: "kind", value: "dress", score: 0.0973 },
+    { group: "kind", value: "abaya", score: 0.0911 },
+    { group: "kind", value: "top", score: 0.0802 },
+  ]);
+
+  await repository.update((closet) =>
+    correctImport(acceptImports(closet), ids.review, { kind: "hijab" }),
+  );
+  const saved = repository.getSnapshot();
+  const piece = saved.pieces.find((item) => item.id === ids.ready)!;
+  assert.equal(piece.category, "tunic");
+  assert.deepEqual(piece.styles, ["desi"]);
+  assert.deepEqual(piece.sources, { kind: "proposed", styles: "proposed" });
+  const review = saved.imports.find((job) => job.id === ids.review)!;
+  assert.equal(review.state, "ready");
+  assert.equal(review.name, "Hijab");
+  assert.deepEqual(review.sources, { kind: "confirmed", styles: "confirmed" });
+  assert.deepEqual(
+    saved.imports.map((job) => job.state),
+    ["queued", "preparing", "ready", "failed"],
+  );
+
+  assert.equal(store.get("closet.v2"), raw);
+  assert.equal(JSON.parse(store.get("closet.v3")!).version, 3);
+  const reopened = new ClosetRepository(storage);
+  await reopened.load();
+  assert.deepEqual(reopened.getSnapshot(), JSON.parse(JSON.stringify(saved)));
+});
+
+test("label groups added by a newer native module do not lock the closet", () => {
+  const closet = {
+    ...emptyCloset,
+    imports: [
+      {
+        id: "job",
+        source: "job.jpg",
+        createdAt: "2026-10-01T08:00:00Z",
+        state: "review",
+        attempts: 1,
+        prepared: {
+          original: "job.jpg",
+          cutout: null,
+          thumbnail: null,
+          frame: null,
+          instances: 0,
+          labels: [
+            { group: "length", value: "ankle", score: 0.2 },
+            { group: "kind", value: "kurta", score: 0.14 },
+          ],
+          color: null,
+        },
+        kind: "kurta",
+        name: "Kurta",
+        checks: ["no-cutout"],
+      },
+    ],
+  };
+  assert.equal(decodeCloset(JSON.stringify(closet)).imports.length, 1);
 });

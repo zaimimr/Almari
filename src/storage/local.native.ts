@@ -1,18 +1,15 @@
 import Storage from "expo-sqlite/kv-store";
 import { Directory, File, Paths } from "expo-file-system";
 import { randomUUID } from "expo-crypto";
-import type { ClosetStorage } from "../domain/repository";
+import { keyedStorage, type ClosetStorage } from "../domain/repository";
 import { isSamplePhoto } from "../domain/samples";
 
-const key = "closet.v2";
-const previousKey = "closet.v1";
 const photos = new Directory(Paths.document, "closet-photos");
 
-export const closetStorage: ClosetStorage = {
-  read: async () =>
-    (await Storage.getItem(key)) ?? (await Storage.getItem(previousKey)),
-  write: (value) => Storage.setItem(key, value),
-};
+export const closetStorage: ClosetStorage = keyedStorage(
+  (key) => Storage.getItem(key),
+  (key, value) => Storage.setItem(key, value),
+);
 
 export async function keepPhoto(uri: string): Promise<string> {
   photos.create({ intermediates: true, idempotent: true });

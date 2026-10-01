@@ -48,7 +48,11 @@ export function useImportRunner(repository: ClosetRepository, ready: boolean) {
             thumbnail: result.thumbnail,
             frame: result.frame,
             instances: result.instances,
-            kinds: result.kinds,
+            labels: result.kinds.map((entry) => ({
+              group: "kind" as const,
+              value: entry.kind,
+              score: entry.score,
+            })),
             color: result.color,
           };
           const current = repository

@@ -5,6 +5,7 @@ import {
   styleOptions,
   type Category,
   type GarmentKind,
+  type LabelScore,
   type Occasion,
   type Style,
 } from "./taxonomy";
@@ -56,7 +57,7 @@ export type Prepared = {
   thumbnail: string | null;
   frame: Frame | null;
   instances: number;
-  kinds: { kind: string; score: number }[];
+  labels: LabelScore[];
   color: [number, number, number] | null;
 };
 
@@ -70,6 +71,9 @@ export type ImportJob = {
   kind?: GarmentKind;
   name?: string;
   alternatives?: GarmentKind[];
+  styles?: Style[];
+  question?: QuickCheck;
+  sources?: Sources;
   checks?: ("uncertain" | "no-cutout" | "several")[];
   keepOriginal?: boolean;
   error?: string;
@@ -137,7 +141,7 @@ export type Styling = {
 };
 
 export type Closet = {
-  version: 2;
+  version: 3;
   pieces: Piece[];
   looks: Look[];
   sampleCatalog: number;
@@ -153,7 +157,7 @@ export const emptyStyling: Styling = {
 };
 
 export const emptyCloset: Closet = {
-  version: 2,
+  version: 3,
   pieces: [],
   looks: [],
   sampleCatalog: 0,
@@ -200,6 +204,10 @@ const isStyle = (value: unknown): value is Style =>
   isOneOf(styleOptions, value);
 const isKind = (value: unknown): value is GarmentKind =>
   isOneOf(garmentKinds, value);
+const isStyles = (value: unknown): value is Style[] =>
+  Array.isArray(value) &&
+  value.every(isStyle) &&
+  new Set(value).size === value.length;
 
 function isTraits(value: unknown): value is Traits {
   return (
@@ -249,13 +257,7 @@ function isPiece(value: unknown): value is Piece {
     (value.kind === undefined ||
       garmentKinds.find((kind) => kind.id === value.kind)?.category ===
         value.category) &&
-    optional(
-      value.styles,
-      (list): list is Style[] =>
-        Array.isArray(list) &&
-        list.every(isStyle) &&
-        new Set(list).size === list.length,
-    ) &&
+    optional(value.styles, isStyles) &&
     optional(value.traits, isTraits) &&
     optional(value.original, isString) &&
     optional(value.frame, isFrame) &&
@@ -272,6 +274,15 @@ function isFrame(value: unknown): value is Frame {
   );
 }
 
+function isLabelScore(value: unknown): value is LabelScore {
+  return (
+    isRecord(value) &&
+    isString(value.group) &&
+    isString(value.value) &&
+    typeof value.score === "number"
+  );
+}
+
 function isPrepared(value: unknown): value is Prepared {
   return (
     isRecord(value) &&
@@ -280,13 +291,8 @@ function isPrepared(value: unknown): value is Prepared {
     (value.thumbnail === null || isString(value.thumbnail)) &&
     (value.frame === null || isFrame(value.frame)) &&
     Number.isInteger(value.instances) &&
-    Array.isArray(value.kinds) &&
-    value.kinds.every(
-      (entry) =>
-        isRecord(entry) &&
-        isString(entry.kind) &&
-        typeof entry.score === "number",
-    ) &&
+    Array.isArray(value.labels) &&
+    value.labels.every(isLabelScore) &&
     (value.color === null ||
       (Array.isArray(value.color) &&
         value.color.length === 3 &&
@@ -296,6 +302,7 @@ function isPrepared(value: unknown): value is Prepared {
 
 const jobStates = ["queued", "preparing", "ready", "review", "failed"];
 const checkReasons = ["uncertain", "no-cutout", "several"];
+const quickChecks = ["category", "subcategory", "style"];
 
 function isImportJob(value: unknown): value is ImportJob {
   return (
@@ -313,6 +320,11 @@ function isImportJob(value: unknown): value is ImportJob {
       (list): list is GarmentKind[] =>
         Array.isArray(list) && list.every(isKind),
     ) &&
+    optional(value.styles, isStyles) &&
+    optional(value.question, (item): item is QuickCheck =>
+      quickChecks.includes(item as string),
+    ) &&
+    optional(value.sources, isSources) &&
     optional(
       value.checks,
       (list): list is string[] =>
@@ -469,7 +481,7 @@ export function migrateV1(
     },
   );
   return {
-    version: 2,
+    version: 3,
     pieces,
     looks: value.looks,
     sampleCatalog: value.sampleWardrobeAdded ? 1 : 0,
@@ -478,17 +490,50 @@ export function migrateV1(
   };
 }
 
+function upgradeJob(job: unknown): unknown {
+  if (
+    !isRecord(job) ||
+    !isRecord(job.prepared) ||
+    !Array.isArray(job.prepared.kinds)
+  )
+    return job;
+  const { kinds, ...prepared } = job.prepared;
+  return {
+    ...job,
+    prepared: {
+      ...prepared,
+      labels: (kinds as unknown[]).map((entry) =>
+        isRecord(entry)
+          ? { group: "kind", value: entry.kind, score: entry.score }
+          : entry,
+      ),
+    },
+  };
+}
+
+function migrateV2(value: Record<string, unknown>): Record<string, unknown> {
+  return {
+    ...value,
+    version: 3,
+    imports: Array.isArray(value.imports)
+      ? value.imports.map(upgradeJob)
+      : value.imports,
+  };
+}
+
 export function decodeCloset(
   raw: string | null,
   sampleTraits: Record<string, SampleTraits> = {},
 ): Closet {
   if (raw === null) return emptyCloset;
-  const value: unknown = JSON.parse(raw);
-  if (isRecord(value) && value.version === 1)
-    return migrateV1(value, sampleTraits);
+  const parsed: unknown = JSON.parse(raw);
+  if (isRecord(parsed) && parsed.version === 1)
+    return migrateV1(parsed, sampleTraits);
+  const value =
+    isRecord(parsed) && parsed.version === 2 ? migrateV2(parsed) : parsed;
   if (
     !isRecord(value) ||
-    value.version !== 2 ||
+    value.version !== 3 ||
     !Number.isInteger(value.sampleCatalog) ||
     !Array.isArray(value.pieces) ||
     !Array.isArray(value.looks) ||

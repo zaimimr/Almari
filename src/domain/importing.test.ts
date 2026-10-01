@@ -1,13 +1,17 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { decodeCloset, emptyCloset, type Prepared } from "./closet";
+import {
+  decodeCloset,
+  emptyCloset,
+  type LabelScore,
+  type Prepared,
+} from "./closet";
 import {
   acceptImports,
   colorName,
   correctImport,
   failImport,
   finishImport,
-  propose,
   queueImport,
   recoverImports,
   removeImport,
@@ -15,17 +19,26 @@ import {
   startImport,
 } from "./importing";
 
+const kurtaLabels: LabelScore[] = [
+  { group: "kind", value: "kurta", score: 0.14 },
+  { group: "kind", value: "tunic", score: 0.1 },
+  { group: "kind", value: "dress", score: 0.08 },
+  { group: "style", value: "desi", score: 0.09 },
+  { group: "style", value: "western", score: 0.05 },
+];
+
+const closeLabels: LabelScore[] = [
+  { group: "kind", value: "dupatta", score: 0.12 },
+  { group: "kind", value: "hijab", score: 0.116 },
+];
+
 const prepared = (changes: Partial<Prepared> = {}): Prepared => ({
   original: "job-original.jpg",
   cutout: "job.png",
   thumbnail: "job-thumb.png",
   frame: { x: 0.2, y: 0, width: 0.6, height: 1 },
   instances: 1,
-  kinds: [
-    { kind: "kurta", score: 0.14 },
-    { kind: "tunic", score: 0.1 },
-    { kind: "dress", score: 0.08 },
-  ],
+  labels: kurtaLabels,
   color: [167, 174, 152],
   ...changes,
 });
@@ -36,6 +49,9 @@ const queued = (id = "job") =>
     source: `${id}-original.jpg`,
     createdAt: "2026-10-01T08:00:00Z",
   });
+
+const finished = (changes: Partial<Prepared> = {}) =>
+  finishImport(startImport(queued(), "job"), "job", prepared(changes));
 
 test("sample garment colours get the names a person would use", () => {
   const cases: [[number, number, number], string][] = [
@@ -51,14 +67,13 @@ test("sample garment colours get the names a person would use", () => {
   for (const [rgb, name] of cases) assert.equal(colorName(rgb), name);
 });
 
-test("P01 a clear photo becomes a named, categorized piece without typing", () => {
-  const proposal = propose(prepared());
-  assert.equal(proposal.kind, "kurta");
-  assert.equal(proposal.name, "Sage kurta");
-  assert.deepEqual(proposal.checks, []);
-  let closet = startImport(queued(), "job");
-  closet = finishImport(closet, "job", prepared());
-  assert.equal(closet.imports[0]!.state, "ready");
+test("P01 a clear photo becomes a named piece with category, subcategory and style without typing", () => {
+  let closet = finished();
+  const job = closet.imports[0]!;
+  assert.equal(job.state, "ready");
+  assert.equal(job.name, "Sage kurta");
+  assert.equal(job.question, undefined);
+  assert.deepEqual(job.checks, []);
   closet = acceptImports(closet);
   assert.equal(closet.imports.length, 0);
   const piece = closet.pieces[0]!;
@@ -66,6 +81,7 @@ test("P01 a clear photo becomes a named, categorized piece without typing", () =
   assert.equal(piece.category, "tunic");
   assert.equal(piece.kind, "kurta");
   assert.deepEqual(piece.styles, ["desi"]);
+  assert.deepEqual(piece.sources, { kind: "proposed", styles: "proposed" });
   assert.equal(piece.photo, "job.png");
   assert.equal(piece.original, "job-original.jpg");
   assert.deepEqual(piece.frame, prepared().frame);
@@ -74,44 +90,51 @@ test("P01 a clear photo becomes a named, categorized piece without typing", () =
 });
 
 test("close calls, missing cutouts, and several garments ask for a quick check", () => {
-  const close = propose(
-    prepared({
-      kinds: [
-        { kind: "dupatta", score: 0.12 },
-        { kind: "hijab", score: 0.116 },
-      ],
-    }),
-  );
-  assert.deepEqual(close.checks, ["uncertain"]);
-  assert.deepEqual(close.alternatives, ["dupatta", "hijab"]);
-  assert.deepEqual(propose(prepared({ cutout: null, color: null })).checks, [
-    "no-cutout",
-  ]);
-  assert.equal(propose(prepared({ cutout: null, color: null })).name, "Kurta");
-  assert.deepEqual(propose(prepared({ instances: 2 })).checks, ["several"]);
-
-  let closet = finishImport(
-    startImport(queued(), "job"),
-    "job",
-    prepared({
-      kinds: [
-        { kind: "dupatta", score: 0.12 },
-        { kind: "hijab", score: 0.116 },
-      ],
-      color: [151, 107, 112],
-    }),
-  );
-  assert.equal(closet.imports[0]!.state, "review");
+  let closet = finished({ labels: closeLabels, color: [151, 107, 112] });
+  let job = closet.imports[0]!;
+  assert.equal(job.state, "review");
+  assert.deepEqual(job.checks, ["uncertain"]);
+  assert.equal(job.question, "category");
   assert.equal(acceptImports(closet).pieces.length, 0);
+  const plain = finished({ cutout: null, color: null }).imports[0]!;
+  assert.deepEqual(plain.checks, ["no-cutout"]);
+  assert.equal(plain.name, "Kurta");
+  assert.deepEqual(finished({ instances: 2 }).imports[0]!.checks, ["several"]);
+
   closet = correctImport(closet, "job", { kind: "hijab" });
-  assert.equal(closet.imports[0]!.state, "ready");
-  assert.equal(closet.imports[0]!.name, "Mauve hijab");
+  job = closet.imports[0]!;
+  assert.equal(job.state, "ready");
+  assert.equal(job.name, "Mauve hijab");
+  assert.equal(job.question, undefined);
   closet = acceptImports(closet);
   assert.equal(closet.pieces[0]!.category, "hijab");
+  assert.deepEqual(closet.pieces[0]!.styles, ["western", "desi"]);
+  assert.deepEqual(closet.pieces[0]!.sources, {
+    kind: "confirmed",
+    styles: "confirmed",
+  });
+});
+
+test("a style she picks in review is stored as confirmed", () => {
+  const unsure: LabelScore[] = [
+    { group: "kind", value: "trousers", score: 0.14 },
+    { group: "kind", value: "skirt", score: 0.1 },
+    { group: "style", value: "western", score: 0.07 },
+    { group: "style", value: "desi", score: 0.069 },
+  ];
+  let closet = finished({ labels: unsure });
+  assert.equal(closet.imports[0]!.question, "style");
+  assert.deepEqual(closet.imports[0]!.styles, ["western"]);
+  closet = acceptImports(correctImport(closet, "job", { styles: ["desi"] }));
+  assert.deepEqual(closet.pieces[0]!.styles, ["desi"]);
+  assert.deepEqual(closet.pieces[0]!.sources, {
+    kind: "proposed",
+    styles: "confirmed",
+  });
 });
 
 test("keep original saves the untouched photo without cutout bounds", () => {
-  let closet = finishImport(startImport(queued(), "job"), "job", prepared());
+  let closet = finished();
   closet = acceptImports(correctImport(closet, "job", { keepOriginal: true }));
   assert.equal(closet.pieces[0]!.photo, "job-original.jpg");
   assert.equal(closet.pieces[0]!.frame, undefined);

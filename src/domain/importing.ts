@@ -1,5 +1,6 @@
 import {
-  garmentKinds,
+  categoryOf,
+  fixedStyles,
   kindLabel,
   savePiece,
   type Closet,
@@ -7,8 +8,10 @@ import {
   type ImportJob,
   type Piece,
   type Prepared,
+  type Sources,
   type Style,
 } from "./closet";
+import { recognize } from "./recognition";
 
 const palette: [string, number, number, number][] = [
   ["Black", 25, 25, 27],
@@ -79,54 +82,13 @@ export function colorName(rgb: [number, number, number]) {
   return best.name;
 }
 
-const sharedKinds: GarmentKind[] = ["hijab", "shoes", "boots", "bag"];
-const desiKinds: GarmentKind[] = ["kurta", "kameez", "shalwar", "dupatta"];
-
-export function stylesForKind(kind: GarmentKind): Style[] | undefined {
-  if (sharedKinds.includes(kind)) return ["western", "desi"];
-  if (desiKinds.includes(kind)) return ["desi"];
-  return undefined;
-}
-
 export type CheckReason = "uncertain" | "no-cutout" | "several";
-
-export type Proposal = {
-  kind: GarmentKind;
-  name: string;
-  alternatives: GarmentKind[];
-  checks: CheckReason[];
-};
-
-const uncertainMargin = 0.01;
-
-function isKind(value: string): value is GarmentKind {
-  return garmentKinds.some((kind) => kind.id === value);
-}
 
 export function nameFor(kind: GarmentKind, color: Prepared["color"]) {
   const label = kindLabel(kind).toLowerCase();
   if (!color) return kindLabel(kind);
   const shade = colorName(color);
   return `${shade} ${label}`;
-}
-
-export function propose(prepared: Prepared): Proposal {
-  const ranked = prepared.kinds
-    .filter((entry) => isKind(entry.kind))
-    .sort((a, b) => b.score - a.score);
-  const top = ranked[0];
-  const kind = (top?.kind ?? "top") as GarmentKind;
-  const checks: CheckReason[] = [];
-  if (!top || (ranked[1] && top.score - ranked[1].score < uncertainMargin))
-    checks.push("uncertain");
-  if (!prepared.cutout) checks.push("no-cutout");
-  if (prepared.instances > 1) checks.push("several");
-  return {
-    kind,
-    name: nameFor(kind, prepared.color),
-    alternatives: ranked.slice(0, 3).map((entry) => entry.kind as GarmentKind),
-    checks,
-  };
 }
 
 export function queueImport(
@@ -172,15 +134,25 @@ export function finishImport(
 ): Closet {
   return updateJob(closet, id, (job) => {
     if (job.state !== "preparing") return job;
-    const proposal = propose(prepared);
+    const recognition = recognize(prepared.labels);
+    const checks: CheckReason[] = [];
+    if (recognition.question) checks.push("uncertain");
+    if (!prepared.cutout) checks.push("no-cutout");
+    if (prepared.instances > 1) checks.push("several");
+    const styles = recognition.styles.length ? recognition.styles : undefined;
+    const sources: Sources = styles
+      ? { kind: "proposed", styles: "proposed" }
+      : { kind: "proposed" };
     return {
       ...job,
-      state: proposal.checks.length ? "review" : "ready",
+      state: checks.length ? "review" : "ready",
       prepared,
-      kind: proposal.kind,
-      name: proposal.name,
-      alternatives: proposal.alternatives,
-      checks: proposal.checks,
+      kind: recognition.kind,
+      name: nameFor(recognition.kind, prepared.color),
+      styles,
+      question: recognition.question ?? undefined,
+      sources,
+      checks,
       error: undefined,
     };
   });
@@ -213,21 +185,40 @@ export function recoverImports(closet: Closet): Closet {
 export function correctImport(
   closet: Closet,
   id: string,
-  change: { kind?: GarmentKind; name?: string; keepOriginal?: boolean },
+  change: {
+    kind?: GarmentKind;
+    styles?: Style[];
+    name?: string;
+    keepOriginal?: boolean;
+  },
 ): Closet {
   return updateJob(closet, id, (job) => {
     if (job.state !== "ready" && job.state !== "review") return job;
     const kind = change.kind ?? job.kind!;
+    const fixed = fixedStyles(kind);
+    const previous = fixedStyles(job.kind!) ? undefined : job.styles;
+    const styles = fixed ?? (change.styles?.length ? change.styles : previous);
     const renamed =
       change.name ??
       (change.kind && job.name === nameFor(job.kind!, job.prepared!.color)
         ? nameFor(kind, job.prepared!.color)
         : job.name!);
+    const sources: Sources = {
+      kind: change.kind ? "confirmed" : (job.sources?.kind ?? "proposed"),
+    };
+    if (styles)
+      sources.styles =
+        change.styles?.length || (fixed && change.kind)
+          ? "confirmed"
+          : (job.sources?.styles ?? "proposed");
     return {
       ...job,
       kind,
+      styles,
       name: renamed,
       keepOriginal: change.keepOriginal ?? job.keepOriginal,
+      sources,
+      question: undefined,
       checks: [],
       state: "ready",
     };
@@ -241,15 +232,18 @@ export function removeImport(closet: Closet, id: string): Closet {
 export function pieceFromImport(job: ImportJob): Piece | null {
   if (job.state !== "ready" || !job.prepared || !job.kind || !job.name)
     return null;
-  const kind = garmentKinds.find((item) => item.id === job.kind)!;
   const useCutout = Boolean(job.prepared.cutout) && !job.keepOriginal;
-  const styles = stylesForKind(job.kind);
+  const styles = job.styles ?? fixedStyles(job.kind);
+  const sources: Sources =
+    job.sources ??
+    (styles ? { kind: "proposed", styles: "proposed" } : { kind: "proposed" });
   return {
     id: job.id,
     name: job.name,
-    category: kind.category,
+    category: categoryOf(job.kind),
     kind: job.kind,
     ...(styles ? { styles } : {}),
+    sources,
     photo: useCutout ? job.prepared.cutout! : job.prepared.original,
     original: job.prepared.original,
     ...(useCutout && job.prepared.frame ? { frame: job.prepared.frame } : {}),
