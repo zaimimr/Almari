@@ -393,6 +393,7 @@ export const en = {
     "You have used today's studio photos. Try again tomorrow.",
   "photo.studioNote": "Studio sends this photo to Cloudflare.",
   "cutout.adjust": "Adjust cut-out",
+  "cutout.byHand": "Cut out by hand",
   "cutout.restore": "Restore",
   "cutout.erase": "Erase",
   "cutout.brush": "Brush",

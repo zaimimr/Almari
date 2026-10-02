@@ -97,6 +97,8 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
   const photoPiece =
     piece && !newImage && image ? { ...piece, photo: image } : null;
   const variant = photoPiece ? pieceVariant(photoPiece) : null;
+  const cutout = photoPiece ? pieceCutout(photoPiece) : null;
+  const cutoutSource = cutout && (variant || !cutout.cutout) ? cutout : null;
   const studio = useStudioMaker();
   const studioMade = Boolean(photoPiece?.variants?.studio);
   const studioOffered = studioMade || studioAvailable;
@@ -314,9 +316,9 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
           ) : null}
         </View>
       ) : null}
-      {photoPiece && variant && canPrepareOnDevice && pieceCutout(piece!) ? (
+      {photoPiece && canPrepareOnDevice && cutoutSource ? (
         <Button
-          label={t("cutout.adjust")}
+          label={cutoutSource.cutout ? t("cutout.adjust") : t("cutout.byHand")}
           secondary
           compact
           disabled={busy || studio.making}

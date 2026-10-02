@@ -63,7 +63,7 @@ export default function AdjustCutout() {
     return (
       <Screen centered>
         <Message
-          title={t("cutout.adjust")}
+          title={source.cutout ? t("cutout.adjust") : t("cutout.byHand")}
           description={t("cutout.failed")}
           action={
             <Button label={t("common.goBack")} onPress={() => router.back()} />
@@ -108,6 +108,7 @@ export default function AdjustCutout() {
     <View style={styles.screen}>
       <Stack.Screen
         options={{
+          title: source.cutout ? t("cutout.adjust") : t("cutout.byHand"),
           headerLeft: () => (
             <HeaderAction
               label={t("common.cancel")}
@@ -121,7 +122,7 @@ export default function AdjustCutout() {
           ref={editor}
           style={StyleSheet.absoluteFill}
           original={photoUri(source.original)}
-          cutout={photoUri(source.cutout)}
+          cutout={source.cutout ? photoUri(source.cutout) : null}
           area={source.area}
           mode={mode}
           brushSize={brushSizes[brush]}

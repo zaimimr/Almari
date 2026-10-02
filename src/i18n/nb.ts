@@ -394,6 +394,7 @@ export const nb: Record<Key, string> = {
     "Du har brukt opp dagens studiobilder. Prøv igjen i morgen.",
   "photo.studioNote": "Studio sender bildet til Cloudflare.",
   "cutout.adjust": "Juster utklipp",
+  "cutout.byHand": "Klipp ut selv",
   "cutout.restore": "Gjenopprett",
   "cutout.erase": "Visk ut",
   "cutout.brush": "Pensel",

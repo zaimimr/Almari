@@ -8,6 +8,7 @@ import {
 } from "./closet";
 import {
   acceptImports,
+  correctImport,
   finishImport,
   queueImport,
   removeImport,
@@ -78,10 +79,10 @@ test("a piece from a cut-out keeps where the cut-out sits on its original photo"
   assert.deepEqual(pieceCutout(older)?.area, null);
 });
 
-test("only pieces and imports with a cut-out and their original photo can be adjusted", () => {
+test("only pieces and imports with their original photo can be adjusted", () => {
   const kept = acceptImports(finished()).pieces[0]!;
   assert.equal(pieceCutout({ ...kept, original: undefined }), null);
-  assert.equal(pieceCutout({ ...kept, variants: undefined }), null);
+  assert.equal(pieceCutout({ ...kept, variants: { plain: "job.png" } }), null);
   assert.equal(pieceCutout({ ...kept, source: "sample" }), null);
   const job = finished().imports[0]!;
   assert.deepEqual(importCutout(job), {
@@ -90,8 +91,81 @@ test("only pieces and imports with a cut-out and their original photo can be adj
     area,
   });
   assert.equal(importCutout({ ...job, state: "preparing" }), null);
-  assert.equal(importCutout(finished({ cutout: null }).imports[0]!), null);
   assert.equal(importCutout(finished({ enhanced: null }).imports[0]!), null);
+});
+
+const uncut = (): Closet =>
+  finished({
+    cutout: null,
+    enhanced: null,
+    thumbnail: null,
+    frame: null,
+    area: undefined,
+    palette: [],
+  });
+
+test("a piece or import with no cut-out can be cut out by hand from its original photo", () => {
+  const closet = uncut();
+  assert.deepEqual(importCutout(closet.imports[0]!), {
+    original: "job-original.jpg",
+    cutout: null,
+    area: null,
+  });
+  const piece = acceptImports(
+    correctImport(closet, "job", { keepOriginal: true }),
+  ).pieces[0]!;
+  assert.equal(piece.photo, "job-original.jpg");
+  assert.deepEqual(pieceCutout(piece), {
+    original: "job-original.jpg",
+    cutout: null,
+    area: null,
+  });
+});
+
+test("cutting out an import by hand gives it the normal cut-out photos", () => {
+  const closet = uncut();
+  const before = { ...closet.imports[0]!, keepOriginal: true };
+  assert.deepEqual(before.checks, ["no-cutout"]);
+  const next = replaceImportCutout(
+    { ...closet, imports: [before] },
+    "job",
+    edit,
+  );
+  const job = next.imports[0]!;
+  assert.equal(job.prepared?.cutout, "job-cut-1.png");
+  assert.equal(job.prepared?.enhanced, "job-cut-1-enhanced.png");
+  assert.equal(job.prepared?.thumbnail, "job-cut-1-thumb.png");
+  assert.deepEqual(job.prepared?.area, edit.area);
+  assert.deepEqual(job.checks, []);
+  assert.equal(job.keepOriginal, undefined);
+  assert.deepEqual(importCutout(job)?.cutout, "job-cut-1.png");
+  const piece = acceptImports(
+    correctImport(next, "job", { variant: "enhanced" }),
+  ).pieces[0]!;
+  assert.equal(piece.photo, "job-cut-1-enhanced.png");
+  assert.deepEqual(piece.variants, {
+    enhanced: "job-cut-1-enhanced.png",
+    plain: "job-cut-1.png",
+  });
+  assert.deepEqual(piece.frame, edit.frame);
+});
+
+test("cutting out a piece by hand switches it from the original photo to the enhanced cut-out", () => {
+  const closet = acceptImports(
+    correctImport(uncut(), "job", { keepOriginal: true }),
+  );
+  const next = replacePieceCutout(closet, "job", edit);
+  const piece = next.pieces[0]!;
+  assert.equal(piece.photo, "job-cut-1-enhanced.png");
+  assert.deepEqual(piece.variants, {
+    enhanced: "job-cut-1-enhanced.png",
+    plain: "job-cut-1.png",
+  });
+  assert.deepEqual(piece.frame, edit.frame);
+  assert.deepEqual(piece.cutoutArea, edit.area);
+  assert.equal(piece.original, "job-original.jpg");
+  assert.deepEqual(pieceCutout(piece)?.cutout, "job-cut-1.png");
+  assert.deepEqual(leftoverFiles(closet, next, edit), ["job-cut-1-thumb.png"]);
 });
 
 test("an adjusted cut-out replaces the plain and enhanced photos of the piece she sees", () => {
@@ -200,5 +274,6 @@ test("the photo chosen in the editor follows the adjusted cut-out", () => {
   assert.equal(editedPhoto("a.png", before, after), "b.png");
   assert.equal(editedPhoto("a-enhanced.png", before, after), "b-enhanced.png");
   assert.equal(editedPhoto("s.jpg", before, after), "s.jpg");
-  assert.equal(editedPhoto("a.png", undefined, after), "a.png");
+  assert.equal(editedPhoto("a.png", before, undefined), "a.png");
+  assert.equal(editedPhoto("o.jpg", undefined, after), "b-enhanced.png");
 });

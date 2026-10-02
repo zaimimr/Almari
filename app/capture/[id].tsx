@@ -115,8 +115,16 @@ export default function CheckPiece() {
   const [keepOriginal, setKeepOriginal] = useState(
     Boolean(job?.keepOriginal || !job?.prepared?.cutout),
   );
+  const [shownCutout, setShownCutout] = useState(job?.prepared?.cutout);
   const [showAll, setShowAll] = useState(false);
   const [variant, setVariant] = useState<Variant>(job?.variant ?? "enhanced");
+  if (job?.prepared?.cutout !== shownCutout) {
+    if (!shownCutout) {
+      setKeepOriginal(false);
+      setVariant("enhanced");
+    }
+    setShownCutout(job?.prepared?.cutout);
+  }
   const [problem, setProblem] = useState<CaptureProblem | null>(null);
   const retake = useRetake();
   const [step, setStep] = useState<"piece" | "label">("piece");
@@ -370,7 +378,7 @@ export default function CheckPiece() {
           void makeStudio();
         }}
       />
-      {canPrepareOnDevice && !keepOriginal && importCutout(job) ? (
+      {canPrepareOnDevice && !keepOriginal && importCutout(job)?.cutout ? (
         <Button
           label={t("cutout.adjust")}
           secondary
@@ -421,6 +429,20 @@ export default function CheckPiece() {
       {advice ? problemNotice : null}
       {checks.includes("no-cutout") ? (
         <AppText>{t("capture.noCutout")}</AppText>
+      ) : null}
+      {canPrepareOnDevice && importCutout(job)?.cutout === null ? (
+        <Button
+          label={t("cutout.byHand")}
+          secondary
+          compact
+          disabled={busy || studio.making}
+          onPress={() =>
+            router.push({
+              pathname: "/cutout/[id]",
+              params: { id: job.id, target: "import" },
+            })
+          }
+        />
       ) : null}
       {checks.includes("several") ? (
         <AppText>{t("capture.several")}</AppText>

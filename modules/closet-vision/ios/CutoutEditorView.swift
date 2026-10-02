@@ -99,8 +99,9 @@ final class CutoutEditorView: ExpoView, UIScrollViewDelegate {
   func scrollViewDidZoom(_ scrollView: UIScrollView) { center() }
 
   func load() {
-    guard let original, let cutout else { return }
-    let key = "\(original)|\(cutout)"
+    guard let original else { return }
+    let cutout = self.cutout
+    let key = "\(original)|\(cutout ?? "")"
     guard key != requested else { return }
     requested = key
     let known = CutoutMapping.rect(area)
@@ -166,8 +167,13 @@ final class CutoutEditorView: ExpoView, UIScrollViewDelegate {
     uri.hasPrefix("file://") ? URL(string: uri)! : URL(fileURLWithPath: uri)
   }
 
-  private static func prepare(original: String, cutout: String, area: CGRect?) throws -> Prepared {
+  private static func prepare(original: String, cutout: String?, area: CGRect?) throws -> Prepared {
     let working = try GarmentPipeline.shared.workingPhoto(sourceUri: original)
+    guard let cutout else {
+      return Prepared(
+        photo: working.image, picture: working.picture,
+        alpha: [UInt8](repeating: 0, count: working.picture.width * working.picture.height))
+    }
     guard let source = CGImageSourceCreateWithURL(url(cutout) as CFURL, nil),
       let cut = CGImageSourceCreateImageAtIndex(source, 0, nil)
     else { throw PrepareError.unreadable }

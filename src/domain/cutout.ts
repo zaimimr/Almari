@@ -11,7 +11,7 @@ export type CutoutEdit = {
 
 export type CutoutSource = {
   original: string;
-  cutout: string;
+  cutout: string | null;
   area: Frame | null;
 };
 
@@ -24,6 +24,8 @@ export type BrushSize = keyof typeof brushSizes;
 export function pieceCutout(piece: Piece): CutoutSource | null {
   const plain = piece.variants?.plain;
   if (piece.source !== "owned" || !piece.original) return null;
+  if (!plain && !piece.variants?.enhanced)
+    return { original: piece.original, cutout: null, area: null };
   if (!plain || !piece.variants?.enhanced) return null;
   return {
     original: piece.original,
@@ -35,7 +37,10 @@ export function pieceCutout(piece: Piece): CutoutSource | null {
 export function importCutout(job: ImportJob): CutoutSource | null {
   if (job.state !== "ready" && job.state !== "review") return null;
   const prepared = job.prepared;
-  if (!prepared?.cutout || !prepared.enhanced) return null;
+  if (!prepared) return null;
+  if (!prepared.cutout)
+    return { original: prepared.original, cutout: null, area: null };
+  if (!prepared.enhanced) return null;
   return {
     original: prepared.original,
     cutout: prepared.cutout,
@@ -49,10 +54,12 @@ export function replacePieceCutout(
   edit: CutoutEdit,
 ): Closet {
   const piece = closet.pieces.find((item) => item.id === id);
-  if (!piece || !pieceCutout(piece)) return closet;
-  const { plain, enhanced } = piece.variants!;
-  const photo =
-    piece.photo === plain
+  const source = piece ? pieceCutout(piece) : null;
+  if (!piece || !source) return closet;
+  const { plain, enhanced } = piece.variants ?? {};
+  const photo = !source.cutout
+    ? edit.enhanced
+    : piece.photo === plain
       ? edit.cutout
       : piece.photo === enhanced
         ? edit.enhanced
@@ -66,7 +73,7 @@ export function replacePieceCutout(
       enhanced: edit.enhanced,
     },
     cutoutArea: edit.area,
-    ...(piece.frame ? { frame: edit.frame } : {}),
+    ...(piece.frame || !source.cutout ? { frame: edit.frame } : {}),
   };
   return {
     ...closet,
@@ -80,9 +87,16 @@ export function replaceImportCutout(
   edit: CutoutEdit,
 ): Closet {
   const job = closet.imports.find((item) => item.id === id);
-  if (!job?.prepared || !importCutout(job)) return closet;
+  const source = job ? importCutout(job) : null;
+  if (!job?.prepared || !source) return closet;
   const next: ImportJob = {
     ...job,
+    ...(source.cutout
+      ? {}
+      : {
+          keepOriginal: undefined,
+          checks: job.checks?.filter((check) => check !== "no-cutout"),
+        }),
     prepared: {
       ...job.prepared,
       cutout: edit.cutout,
@@ -119,7 +133,8 @@ export function editedPhoto(
   before: Piece["variants"],
   after: Piece["variants"],
 ): string {
-  if (!before || !after) return photo;
+  if (!after) return photo;
+  if (!before) return after.enhanced ?? photo;
   if (photo === before.plain && after.plain) return after.plain;
   if (photo === before.enhanced && after.enhanced) return after.enhanced;
   return photo;

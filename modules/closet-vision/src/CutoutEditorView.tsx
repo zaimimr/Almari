@@ -6,7 +6,7 @@ import type { CutoutEditorHandle } from "./ClosetVision.types";
 export type CutoutEditorProps = {
   style?: StyleProp<ViewStyle>;
   original: string;
-  cutout: string;
+  cutout: string | null;
   area?: { x: number; y: number; width: number; height: number } | null;
   mode: "restore" | "erase";
   brushSize: number;
