@@ -3,11 +3,22 @@ import ExpoModulesCore
 import Foundation
 import Vision
 
+struct SelfiePoint: Record {
+  @Field var part: String = "skin"
+  @Field var x: Double = 0
+  @Field var y: Double = 0
+  @Field var radius: Double = 0
+}
+
 struct SelfieResult: Record {
   @Field var skin: [Double]? = nil
   @Field var hair: [Double]? = nil
   @Field var eyes: [Double]? = nil
   @Field var light: String = "ok"
+  @Field var points: [SelfiePoint] = []
+  @Field var gains: [Double] = [1, 1, 1]
+  @Field var width: Double = 0
+  @Field var height: Double = 0
 }
 
 private struct Colour {
@@ -97,11 +108,15 @@ private struct Bitmap {
   }
 
   func every(_ wanted: UInt8) -> [Colour] {
+    everyPoint(wanted).map { $0.colour }
+  }
+
+  func everyPoint(_ wanted: UInt8) -> [(colour: Colour, point: CGPoint)] {
     guard parse != nil else { return [] }
-    var found: [Colour] = []
+    var found: [(colour: Colour, point: CGPoint)] = []
     for y in stride(from: 0, to: height, by: 2) {
       for x in stride(from: 0, to: width, by: 2) where label(x, y) == wanted {
-        found.append(colour(x, y))
+        found.append((colour(x, y), CGPoint(x: x, y: y)))
       }
     }
     return found
@@ -132,9 +147,37 @@ final class SelfieColours {
   private let backgroundClass = UInt8(ClothesClass.background.rawValue)
   private let hairClass = UInt8(ClothesClass.hair.rawValue)
   private let faceClass = UInt8(ClothesClass.face.rawValue)
+  private let lock = NSLock()
+  private var cached: (uri: String, bitmap: Bitmap)?
+
+  private static let trims: [String: (Double, Double)] = [
+    "skin": (0.1, 0.9), "eyes": (0.2, 0.7), "hair": (0.05, 0.9),
+  ]
+
+  func sample(uri: String, part: String, x: Double, y: Double, radius: Double, gains: [Double]) throws -> [Double]? {
+    lock.lock()
+    let hit = cached?.uri == uri ? cached?.bitmap : nil
+    lock.unlock()
+    let bitmap = try hit ?? load(uri, parse: false).0
+    if hit == nil {
+      lock.lock()
+      cached = (uri, bitmap)
+      lock.unlock()
+    }
+    guard gains.count == 3, let trim = Self.trims[part] else { return nil }
+    let balance = Colour(r: gains[0], g: gains[1], b: gains[2])
+    let width = CGFloat(bitmap.width)
+    let pixels = bitmap.disc(
+      CGPoint(x: CGFloat(x) * width, y: CGFloat(y) * CGFloat(bitmap.height)), radius: CGFloat(radius) * width
+    ).map { $0.balanced(balance) }
+    return Colour.mean(Colour.trimmed(pixels, from: trim.0, to: trim.1))?.lab
+  }
 
   func analyze(uri: String) throws -> SelfieResult {
-    let (bitmap, cgImage) = try load(uri)
+    let (bitmap, cgImage) = try load(uri, parse: true)
+    lock.lock()
+    cached = (uri, bitmap)
+    lock.unlock()
     let request = VNDetectFaceLandmarksRequest()
     #if targetEnvironment(simulator)
       if let devices = try? request.supportedComputeStageDevices {
@@ -227,14 +270,40 @@ final class SelfieColours {
       Colour.trimmed(balance(bitmap.disc(eye.pupil, radius: max(1, 0.22 * eye.width))), from: 0.2, to: 0.7)
     }
     result.eyes = Colour.mean(irises)?.lab
-    let hair = bitmap.every(hairClass)
+    let hair = bitmap.everyPoint(hairClass)
+    var hairPoint = CGPoint(
+      x: face.boundingBox.midX * size.width,
+      y: max(0, (1 - face.boundingBox.maxY) * size.height - 0.08 * faceHeight))
     if bitmap.parse != nil, Double(hair.count) >= 0.03 * Double(faceWidth * faceHeight) / 4 {
-      result.hair = Colour.mean(Colour.trimmed(balance(hair), from: 0.05, to: 0.9))?.lab
+      result.hair = Colour.mean(Colour.trimmed(balance(hair.map { $0.colour }), from: 0.05, to: 0.9))?.lab
+      let centre = CGPoint(
+        x: hair.map { $0.point.x }.reduce(0, +) / CGFloat(hair.count),
+        y: hair.map { $0.point.y }.reduce(0, +) / CGFloat(hair.count))
+      hairPoint =
+        hair.min(by: {
+          hypot($0.point.x - centre.x, $0.point.y - centre.y) < hypot($1.point.x - centre.x, $1.point.y - centre.y)
+        })?.point ?? hairPoint
     }
+    let point = { (part: String, at: CGPoint, radius: CGFloat) -> SelfiePoint in
+      var item = SelfiePoint()
+      item.part = part
+      item.x = Double(at.x / size.width)
+      item.y = Double(at.y / size.height)
+      item.radius = Double(radius / size.width)
+      return item
+    }
+    result.points = [
+      point("skin", CGPoint(x: eyes[0].centre.x, y: eyes[0].centre.y + 0.18 * faceHeight), 0.06 * faceWidth),
+      point("hair", hairPoint, 0.06 * faceWidth),
+      point("eyes", eyes[0].pupil, max(1, 0.22 * eyes[0].width)),
+    ]
+    result.gains = [gains.r, gains.g, gains.b]
+    result.width = Double(size.width)
+    result.height = Double(size.height)
     return result
   }
 
-  private func load(_ uri: String) throws -> (Bitmap, CGImage) {
+  private func load(_ uri: String, parse wantsParse: Bool) throws -> (Bitmap, CGImage) {
     let url = uri.hasPrefix("file://") ? URL(string: uri)! : URL(fileURLWithPath: uri)
     guard var image = CIImage(contentsOf: url, options: [.applyOrientationProperty: true]) else {
       throw PrepareError.unreadable
@@ -252,7 +321,7 @@ final class SelfieColours {
     context.render(
       image, toBitmap: &pixels, rowBytes: width * 4, bounds: bounds, format: .RGBA8,
       colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
-    let parse = GarmentPipeline.shared.parseSelfie(image)
+    let parse = wantsParse ? GarmentPipeline.shared.parseSelfie(image) : nil
     return (Bitmap(width: width, height: height, pixels: pixels, parse: parse), cgImage)
   }
 }

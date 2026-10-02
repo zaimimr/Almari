@@ -67,11 +67,30 @@ export type PrepareOptions = {
   crop?: { x: number; y: number; width: number; height: number };
 };
 
+export type CameraFrame = {
+  face: { x: number; y: number; width: number; height: number } | null;
+  brightness: number | null;
+  yaw: number | null;
+  roll: number | null;
+  motion: number;
+};
+
+export type SelfiePoint = {
+  part: "skin" | "hair" | "eyes";
+  x: number;
+  y: number;
+  radius: number;
+};
+
 export type SelfieReading = {
   skin: [number, number, number] | null;
   hair: [number, number, number] | null;
   eyes: [number, number, number] | null;
   light: "ok" | "dark" | "mixed";
+  points: SelfiePoint[];
+  gains: [number, number, number];
+  width: number;
+  height: number;
 };
 
 export type City = { name: string; latitude: number; longitude: number };

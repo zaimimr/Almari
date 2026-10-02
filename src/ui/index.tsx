@@ -59,9 +59,13 @@ export function Screen({
   );
 }
 
-export function FormScreen({ children }: PropsWithChildren) {
+export function FormScreen({
+  children,
+  scrollEnabled,
+}: PropsWithChildren<{ scrollEnabled?: boolean }>) {
   return (
     <ScrollView
+      scrollEnabled={scrollEnabled}
       keyboardShouldPersistTaps="handled"
       keyboardDismissMode="on-drag"
       automaticallyAdjustKeyboardInsets

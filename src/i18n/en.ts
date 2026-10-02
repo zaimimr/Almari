@@ -1211,6 +1211,16 @@ export const en = {
   "build.swapTitle": "Swap {name}",
   "build.swapDone": "Done",
   "build.swapNone": "No other piece fits here.",
+  "selfie.take": "Take photo",
+  "selfie.guide.find": "Look into the camera",
+  "selfie.guide.dark": "Face a window for more light",
+  "selfie.guide.closer": "Move closer",
+  "selfie.guide.back": "Move back a little",
+  "selfie.guide.centre": "Fit your face in the oval",
+  "selfie.guide.straight": "Look straight at the camera",
+  "selfie.guide.still": "Hold still",
+  "selfie.guide.ready": "Ready",
+  "colours.photo": "Your selfie with the sample points",
 };
 
 export type Key = keyof typeof en;

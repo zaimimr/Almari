@@ -6,6 +6,7 @@ import type {
   PrepareOptions,
   PreparedGarment,
   ReadLabelResult,
+  SelfiePoint,
   SelfieReading,
 } from "./ClosetVision.types";
 
@@ -25,6 +26,11 @@ export default {
     Promise.resolve({ json: null }),
   analyzeSelfie: (_uri: string): Promise<SelfieReading> =>
     Promise.reject(new Error("unavailable")),
+  sampleSelfie: async (
+    _uri: string,
+    _point: SelfiePoint,
+    _gains: [number, number, number],
+  ): Promise<[number, number, number] | null> => null,
   geocodeCity: async (_name: string): Promise<City | null> => null,
   forecast: async (
     _latitude: number,

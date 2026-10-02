@@ -1,20 +1,25 @@
-import { useState, type PropsWithChildren } from "react";
+import { useEffect, useRef, useState, type PropsWithChildren } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { router } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
-import ClosetVision from "../../modules/closet-vision/src";
+import ClosetVision, {
+  type SelfieReading,
+} from "../../modules/closet-vision/src";
 import type { ColourProfile } from "../../src/domain/closet";
 import {
   adjustColours,
   bestColours,
   fromSelfie,
   labHex,
+  resampleColours,
   type Retake,
 } from "../../src/domain/colourAnalysis";
 import { applyAnswer } from "../../src/domain/onboarding";
 import { clockFor } from "../../src/domain/today";
 import { seasonLabel } from "../../src/features/colourText";
 import { OnboardingBar } from "../../src/features/OnboardingBar";
+import { SamplePoints } from "../../src/features/SamplePoints";
+import { SelfieCamera } from "../../src/features/SelfieCamera";
 import { t } from "../../src/i18n";
 import { useCloset } from "../../src/state/closet";
 import { discardTemporary } from "../../src/storage/local";
@@ -31,53 +36,75 @@ type Phase =
   | { kind: "intro" }
   | { kind: "measuring" }
   | { kind: "retake"; reason: Retake | "failed" }
-  | { kind: "result"; profile: ColourProfile };
+  | {
+      kind: "result";
+      profile: ColourProfile;
+      photo: { uri: string; reading: SelfieReading };
+    };
+
+type Camera = "pending" | "on" | "off" | "denied";
 
 export default function Colours() {
   const { update } = useCloset();
   const [phase, setPhase] = useState<Phase>({ kind: "intro" });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [camera, setCamera] = useState<Camera>(() =>
+    ClosetVision.isAvailable() ? "pending" : "off",
+  );
+  const [dragging, setDragging] = useState(false);
+  const kept = useRef<string | null>(null);
 
-  async function take(source: "camera" | "library") {
+  function discard() {
+    const uri = kept.current;
+    kept.current = null;
+    if (uri) void discardTemporary(uri).catch(() => undefined);
+  }
+
+  useEffect(() => {
+    if (!ClosetVision.isAvailable()) return;
+    ImagePicker.requestCameraPermissionsAsync()
+      .then((permission) => setCamera(permission.granted ? "on" : "denied"))
+      .catch(() => setCamera("off"));
+  }, []);
+
+  useEffect(() => discard, []);
+
+  async function measure(uri: string) {
     setError(null);
-    let uri: string | undefined;
-    try {
-      if (source === "camera") {
-        const permission = await ImagePicker.requestCameraPermissionsAsync();
-        if (!permission.granted) return setError(t("colours.cameraOff"));
-      }
-      const picked =
-        source === "camera"
-          ? await ImagePicker.launchCameraAsync({
-              mediaTypes: ["images"],
-              cameraType: ImagePicker.CameraType.front,
-              quality: 1,
-              exif: false,
-            })
-          : await ImagePicker.launchImageLibraryAsync({
-              mediaTypes: ["images"],
-              quality: 1,
-              exif: false,
-            });
-      if (picked.canceled) return;
-      uri = picked.assets[0]?.uri;
-    } catch {
-      return setError(t("colours.cameraFailed"));
-    }
-    if (!uri) return;
+    discard();
+    kept.current = uri;
     setPhase({ kind: "measuring" });
     try {
-      const outcome = fromSelfie(await ClosetVision.analyzeSelfie(uri));
-      setPhase(
-        "retake" in outcome
-          ? { kind: "retake", reason: outcome.retake }
-          : { kind: "result", profile: outcome.profile },
-      );
+      const reading = await ClosetVision.analyzeSelfie(uri);
+      const outcome = fromSelfie(reading);
+      if ("retake" in outcome) {
+        discard();
+        setPhase({ kind: "retake", reason: outcome.retake });
+      } else
+        setPhase({
+          kind: "result",
+          profile: outcome.profile,
+          photo: { uri, reading },
+        });
     } catch {
+      discard();
       setPhase({ kind: "retake", reason: "failed" });
-    } finally {
-      void discardTemporary(uri).catch(() => undefined);
+    }
+  }
+
+  async function pick() {
+    setError(null);
+    try {
+      const picked = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        quality: 1,
+        exif: false,
+      });
+      const uri = picked.canceled ? undefined : picked.assets[0]?.uri;
+      if (uri) await measure(uri);
+    } catch {
+      setError(t("colours.cameraFailed"));
     }
   }
 
@@ -93,6 +120,7 @@ export default function Colours() {
           clockFor(new Date()),
         ),
       );
+      discard();
       router.back();
     } catch {
       setError(t("colours.saveFailed"));
@@ -100,24 +128,6 @@ export default function Colours() {
       setBusy(false);
     }
   }
-
-  const pickers = (
-    <>
-      <Button
-        label={t("colours.camera")}
-        onPress={() => {
-          void take("camera");
-        }}
-      />
-      <Button
-        label={t("colours.library")}
-        secondary
-        onPress={() => {
-          void take("library");
-        }}
-      />
-    </>
-  );
 
   if (phase.kind === "measuring")
     return (
@@ -130,11 +140,27 @@ export default function Colours() {
     );
 
   if (phase.kind === "result") {
-    const profile = phase.profile;
+    const { profile, photo } = phase;
     const set = (change: Parameters<typeof adjustColours>[1]) =>
-      setPhase({ kind: "result", profile: adjustColours(profile, change) });
+      setPhase({ ...phase, profile: adjustColours(profile, change) });
     return (
-      <Shell>
+      <Shell scrollEnabled={!dragging}>
+        <SamplePoints
+          uri={photo.uri}
+          reading={photo.reading}
+          profile={profile}
+          onDragging={setDragging}
+          onSample={(part, lab) =>
+            setPhase((current) =>
+              current.kind === "result"
+                ? {
+                    ...current,
+                    profile: resampleColours(current.profile, part, lab),
+                  }
+                : current,
+            )
+          }
+        />
         <AppText style={styles.label}>{t("colours.measured")}</AppText>
         <View style={styles.measured}>
           {(["skin", "hair", "eyes"] as const).map((part) => {
@@ -212,7 +238,10 @@ export default function Colours() {
           label={t("colours.tryAgain")}
           secondary
           disabled={busy}
-          onPress={() => setPhase({ kind: "intro" })}
+          onPress={() => {
+            discard();
+            setPhase({ kind: "intro" });
+          }}
         />
       </Shell>
     );
@@ -225,18 +254,37 @@ export default function Colours() {
           <AppText>{t(`colours.retake.${phase.reason}`)}</AppText>
         </View>
       ) : null}
+      {camera === "on" ? (
+        <SelfieCamera
+          disabled={busy}
+          onCapture={(uri) => {
+            void measure(uri);
+          }}
+          onUnavailable={() => setCamera("off")}
+        />
+      ) : null}
+      {camera === "denied" ? <AppText>{t("colours.cameraOff")}</AppText> : null}
       <AppText>{t("colours.tips")}</AppText>
       <AppText muted>{t("colours.hijab")}</AppText>
       <AppText variant="caption" muted>
         {t("colours.deleted")}
       </AppText>
       <ErrorMessage message={error} />
-      {pickers}
+      <Button
+        label={t("colours.library")}
+        secondary={camera === "on"}
+        onPress={() => {
+          void pick();
+        }}
+      />
     </Shell>
   );
 }
 
-function Shell({ children }: PropsWithChildren) {
+function Shell({
+  children,
+  scrollEnabled,
+}: PropsWithChildren<{ scrollEnabled?: boolean }>) {
   return (
     <View style={styles.screen}>
       <OnboardingBar
@@ -246,7 +294,7 @@ function Shell({ children }: PropsWithChildren) {
           onPress: () => router.back(),
         }}
       />
-      <FormScreen>
+      <FormScreen scrollEnabled={scrollEnabled}>
         <AppText variant="title" accessibilityRole="header">
           {t("colours.title")}
         </AppText>

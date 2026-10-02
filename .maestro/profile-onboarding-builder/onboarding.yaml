@@ -1,0 +1,79 @@
+appId: com.zaimimran.almari
+---
+- launchApp:
+    clearState: true
+- assertVisible: "Step 1 of 6"
+- assertNotVisible: "Back"
+- takeScreenshot: planning/build/profile-onboarding-builder/01-first-step${SUFFIX}
+- scrollUntilVisible:
+    element: "Always"
+    direction: DOWN
+- tapOn: "Always"
+- scrollUntilVisible:
+    element: "Next"
+    direction: DOWN
+- tapOn: "Next"
+- assertVisible: "Step 2 of 6"
+- tapOn: "Back"
+- assertVisible: "Step 1 of 6"
+- scrollUntilVisible:
+    element:
+      text: "Always"
+      selected: true
+    direction: DOWN
+- scrollUntilVisible:
+    element: "Skip"
+    direction: DOWN
+- tapOn: "Skip"
+- scrollUntilVisible:
+    element: "Skip"
+    direction: DOWN
+- tapOn: "Skip"
+- assertVisible: "Step 3 of 6"
+- scrollUntilVisible:
+    element: "Hourglass"
+    direction: DOWN
+- tapOn: "Hourglass"
+- scrollUntilVisible:
+    element: "Pear"
+    direction: UP
+- takeScreenshot: planning/build/profile-onboarding-builder/02-body-shapes${SUFFIX}
+- scrollUntilVisible:
+    element: "Next"
+    direction: DOWN
+- tapOn: "Next"
+- assertVisible: "Step 4 of 6"
+- tapOn: "Back"
+- assertVisible: "Step 3 of 6"
+- scrollUntilVisible:
+    element:
+      text: "Hourglass"
+      selected: true
+    direction: DOWN
+- scrollUntilVisible:
+    element: "Skip"
+    direction: DOWN
+- tapOn: "Skip"
+- scrollUntilVisible:
+    element: "Skip"
+    direction: DOWN
+- tapOn: "Skip"
+- assertVisible: "Step 5 of 6"
+- scrollUntilVisible:
+    element: "Take a selfie"
+    direction: DOWN
+- tapOn: "Take a selfie"
+- assertVisible: "Colour analysis"
+- scrollUntilVisible:
+    element: "Choose a recent selfie"
+    direction: DOWN
+- takeScreenshot: planning/build/profile-onboarding-builder/03-colours${SUFFIX}
+- tapOn: "Back"
+- assertVisible: "Step 5 of 6"
+- scrollUntilVisible:
+    element: "Skip"
+    direction: DOWN
+- tapOn: "Skip"
+- assertVisible: "You are set"
+- tapOn: "Back"
+- assertVisible: "Step 5 of 6"

@@ -10,6 +10,7 @@ import {
   depthOf,
   fromSelfie,
   labHex,
+  resampleColours,
   seasonFor,
   seasonFromSwatch,
   skinSwatches,
@@ -250,4 +251,28 @@ test("best colours give six Lab colours per season with the expected character",
     assert.ok(mean(season, 1) < 25, season);
   for (const season of ["clear-spring", "clear-winter"] as const)
     assert.ok(mean(season, 1) > 45, season);
+});
+
+test("moving a sample point re-reads that colour and the season with it", () => {
+  const measured = analyseColours([70, 10, 20], [30, 5, 10], [35, 5, 10]);
+  assert.equal(measured.season, "light-spring");
+  const deeper = resampleColours(measured, "skin", [40, 14, 12]);
+  assert.deepEqual(deeper.skin, [40, 14, 12]);
+  assert.equal(deeper.depth, "deep");
+  assert.equal(deeper.undertone, "cool");
+  assert.equal(deeper.season, "deep-winter");
+  assert.equal(deeper.source, "measured");
+  const hair = resampleColours(measured, "hair", [80, 2, 8]);
+  assert.deepEqual(hair.hair, [80, 2, 8]);
+  assert.deepEqual(hair.skin, measured.skin);
+  assert.equal(
+    hair.contrast,
+    contrastOf([
+      [70, 10, 20],
+      [80, 2, 8],
+      [35, 5, 10],
+    ]),
+  );
+  const eyes = resampleColours(measured, "eyes", [60, 0, 5]);
+  assert.deepEqual(eyes.eyes, [60, 0, 5]);
 });

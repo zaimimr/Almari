@@ -102,6 +102,15 @@ export function adjustColours(
   };
 }
 
+export function resampleColours(
+  profile: ColourProfile,
+  part: "skin" | "hair" | "eyes",
+  lab: Lab,
+): ColourProfile {
+  const next = { ...profile, [part]: lab };
+  return analyseColours(next.skin ?? lab, next.hair, next.eyes);
+}
+
 export function fromSelfie(
   reading: SelfieReading,
 ): { profile: ColourProfile } | { retake: Retake } {

@@ -12,6 +12,9 @@ export type {
   PreparedGarment,
   Quality,
   ReadLabelResult,
+  SelfiePoint,
   SelfieReading,
   Swatch,
 } from "./ClosetVision.types";
+export { SelfieCameraView } from "./SelfieCameraView";
+export type { SelfieCameraHandle } from "./SelfieCameraView";

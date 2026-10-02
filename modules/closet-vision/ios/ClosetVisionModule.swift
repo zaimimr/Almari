@@ -457,6 +457,11 @@ public class ClosetVisionModule: Module {
       try SelfieColours.shared.analyze(uri: uri)
     }
 
+    AsyncFunction("sampleSelfie") { (uri: String, point: SelfiePoint, gains: [Double]) throws -> [Double]? in
+      try SelfieColours.shared.sample(
+        uri: uri, part: point.part, x: point.x, y: point.y, radius: point.radius, gains: gains)
+    }
+
     AsyncFunction("geocodeCity") { (name: String) async -> CityResult? in
       await WeatherLookup.city(name)
     }
@@ -481,6 +486,14 @@ public class ClosetVisionModule: Module {
       var result = LabelExtraction()
       result.json = await CareLabelModel.extract(text)
       return result
+    }
+
+    View(SelfieCameraView.self) {
+      Events("onReading", "onState")
+
+      AsyncFunction("capture") { (view: SelfieCameraView, promise: Promise) in
+        view.capture(promise)
+      }
     }
   }
 }

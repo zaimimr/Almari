@@ -1,0 +1,28 @@
+appId: com.zaimimran.almari
+---
+- runFlow: ../stylist/start.yaml
+- tapOn: "Looks"
+- tapOn: "Build a look"
+- assertVisible: "Fill the rest"
+- tapOn: "Ivory longline tunic.*"
+- assertVisible: "1 piece in your look"
+- takeScreenshot: planning/build/profile-onboarding-builder/06-builder-ranked${SUFFIX}
+- tapOn: "Fill the rest"
+- assertVisible: ".* pieces in your look"
+- assertVisible:
+    id: "look-name"
+    text: ".*tunic.*"
+- takeScreenshot: planning/build/profile-onboarding-builder/07-builder-filled${SUFFIX}
+- tapOn:
+    id: "outfit-piece-sample-.*-hijab"
+- assertVisible: "Swap .* hijab"
+- takeScreenshot: planning/build/profile-onboarding-builder/08-builder-swap${SUFFIX}
+- tapOn: "Done"
+- tapOn:
+    id: "look-name"
+- eraseText: 40
+- inputText: "My Eid look"
+- hideKeyboard
+- tapOn: "Save look"
+- assertVisible: "My Eid look"
+- takeScreenshot: planning/build/profile-onboarding-builder/09-builder-saved${SUFFIX}

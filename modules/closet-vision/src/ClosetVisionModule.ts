@@ -7,6 +7,7 @@ import type {
   PrepareOptions,
   PreparedGarment,
   ReadLabelResult,
+  SelfiePoint,
   SelfieReading,
 } from "./ClosetVision.types";
 
@@ -22,6 +23,11 @@ declare class ClosetVisionModule extends NativeModule {
   labelModelAvailable(): Promise<boolean>;
   extractLabel(text: string): Promise<LabelExtraction>;
   analyzeSelfie(uri: string): Promise<SelfieReading>;
+  sampleSelfie(
+    uri: string,
+    point: SelfiePoint,
+    gains: [number, number, number],
+  ): Promise<[number, number, number] | null>;
   geocodeCity(name: string): Promise<City | null>;
   forecast(latitude: number, longitude: number): Promise<ForecastResult | null>;
 }
@@ -44,6 +50,11 @@ export default native ?? {
     Promise.resolve({ json: null }),
   analyzeSelfie: (_uri: string): Promise<SelfieReading> =>
     Promise.reject(new Error("unavailable")),
+  sampleSelfie: async (
+    _uri: string,
+    _point: SelfiePoint,
+    _gains: [number, number, number],
+  ): Promise<[number, number, number] | null> => null,
   geocodeCity: async (_name: string): Promise<City | null> => null,
   forecast: async (
     _latitude: number,
