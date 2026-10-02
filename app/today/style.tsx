@@ -3,6 +3,12 @@ import { StyleSheet, View } from "react-native";
 import { Stack, router } from "expo-router";
 import type { CardLayout, StyleProfile } from "../../src/domain/closet";
 import { saveProfile } from "../../src/domain/feedback";
+import {
+  engineChoices,
+  engineName,
+  setEngine,
+  type EngineChoice,
+} from "../../src/domain/scoring/engine";
 import { t, type Key } from "../../src/i18n";
 import { useCloset } from "../../src/state/closet";
 import { useDiscardChanges } from "../../src/navigation/useDiscardChanges";
@@ -92,7 +98,12 @@ function settingOptions() {
     id,
     label: t(`style.wedding.${id}`),
   }));
+  const engineOptions = engineChoices.map((id) => ({
+    id,
+    label: engineName(id),
+  }));
   return {
+    engineOptions,
     belt,
     topLength,
     bottoms,
@@ -140,16 +151,21 @@ export default function StyleSettings() {
     region,
     layouts,
     weddingColours,
+    engineOptions,
   } = settingOptions();
   const { closet, update } = useCloset();
   const saved = closet.styling.profile;
   const [profile, setProfile] = useState(saved);
   const [layout, setLayout] = useState<CardLayout>(closet.styling.layout);
+  const [engine, setEngineChoice] = useState<EngineChoice>(
+    closet.styling.engine,
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const dirty =
     JSON.stringify(profile) !== JSON.stringify(saved) ||
-    layout !== closet.styling.layout;
+    layout !== closet.styling.layout ||
+    engine !== closet.styling.engine;
   const allowClose = useDiscardChanges(dirty, busy);
   const set = (changes: Partial<StyleProfile>) =>
     setProfile((current) => ({ ...current, ...changes }));
@@ -170,7 +186,10 @@ export default function StyleSettings() {
           dupattaExpected: profile.dupattaExpected,
           region: profile.region,
         });
-        return { ...next, styling: { ...next.styling, layout } };
+        return setEngine(
+          { ...next, styling: { ...next.styling, layout } },
+          engine,
+        );
       });
       allowClose();
       router.back();
@@ -212,6 +231,23 @@ export default function StyleSettings() {
         value={layout}
         disabled={busy}
         onChange={setLayout}
+      />
+      <ChoiceGroup
+        label={t("stylist.label")}
+        options={engineOptions}
+        value={engine}
+        disabled={busy}
+        onChange={setEngineChoice}
+      />
+      <AppText variant="caption" muted>
+        {t("stylist.help")}
+      </AppText>
+      <Button
+        label={t("stylist.results")}
+        secondary
+        compact
+        disabled={busy}
+        onPress={() => router.push("/today/stylist-results")}
       />
       <Setting
         label={t("style.belt")}

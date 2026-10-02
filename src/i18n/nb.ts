@@ -815,4 +815,17 @@ export const nb: Record<Key, string> = {
   "looks.open": "Åpne {name}",
   "piece.styleThis": "Style dette plagget",
   "piece.styleError": "Dette plagget kunne ikke styles. Prøv igjen.",
+  "stylist.label": "Stilist",
+  "stylist.help":
+    "Sammenlign bytter mellom Regler og Modell for hvert nye forslag. I dag-siden viser ikke hvem av dem som satte sammen et antrekk.",
+  "stylist.results": "Resultater fra sammenligningen",
+  "stylist.intro":
+    "Med Sammenlign bytter Regler og Modell på å sette sammen hvert nye forslag. Tallene kommer fra tilbakemeldingene dine på hver av dem.",
+  "stylist.wouldWear": "Ville brukt, blant de tre første: {rate}",
+  "stylist.notMyStyle": "Ikke min stil: {rate}",
+  "stylist.wore": "Brukte dette: {count}",
+  "stylist.unreadOne":
+    "Modell trenger en bildeavlesning av hvert plagg. 1 av plaggene dine mangler det, så Regler setter sammen forslagene som kan ta det med.",
+  "stylist.unreadMany":
+    "Modell trenger en bildeavlesning av hvert plagg. {count} av plaggene dine mangler det, så Regler setter sammen forslagene som kan ta dem med.",
 };

@@ -803,6 +803,19 @@ export const en = {
   "looks.open": "Open {name}",
   "piece.styleThis": "Style this piece",
   "piece.styleError": "This piece could not be styled. Please try again.",
+  "stylist.label": "Stylist",
+  "stylist.help":
+    "Compare takes turns between Rules and Model for each new suggestion. Today does not show which one styled an outfit.",
+  "stylist.results": "Compare results",
+  "stylist.intro":
+    "With Compare, Rules and Model take turns styling each new suggestion. These numbers come from your feedback on each.",
+  "stylist.wouldWear": "Would wear, first three: {rate}",
+  "stylist.notMyStyle": "Not my style: {rate}",
+  "stylist.wore": "Wore this: {count}",
+  "stylist.unreadOne":
+    "Model needs a photo reading of every piece. 1 of your pieces has none, so Rules styles the requests that could include it.",
+  "stylist.unreadMany":
+    "Model needs a photo reading of every piece. {count} of your pieces have none, so Rules styles the requests that could include them.",
 };
 
 export type Key = keyof typeof en;

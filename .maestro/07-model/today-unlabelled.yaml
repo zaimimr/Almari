@@ -1,0 +1,16 @@
+appId: com.zaimimran.almari
+---
+- launchApp
+- scrollUntilVisible:
+    element: "Not for me"
+- assertNotVisible: "Rules"
+- assertNotVisible: "Model"
+- tapOn:
+    text: "Change"
+    index: 0
+- scrollUntilVisible:
+    element: "A little inspiration for today."
+    direction: UP
+- assertNotVisible: "Rules"
+- assertNotVisible: "Model"
+- takeScreenshot: planning/build/model/today-compare

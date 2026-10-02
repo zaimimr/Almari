@@ -1,0 +1,46 @@
+appId: com.zaimimran.almari
+---
+- launchApp
+- scrollUntilVisible:
+    element: "Stilinnstillinger"
+    speed: 90
+    timeout: 180000
+- tapOn: "Stilinnstillinger"
+- scrollUntilVisible:
+    element:
+      text: "Sammenlign"
+    speed: 90
+    timeout: 180000
+- tapOn: "Sammenlign"
+- scrollUntilVisible:
+    element: "Sammenlign bytter mellom Regler og Modell for hvert nye forslag. I dag-siden viser ikke hvem av dem som satte sammen et antrekk."
+    visibilityPercentage: 10
+    speed: 90
+    timeout: 180000
+- takeScreenshot: planning/build/model/style-settings-stylist-nb
+- scrollUntilVisible:
+    element:
+      text: "Resultater fra sammenligningen"
+    visibilityPercentage: 10
+    speed: 60
+    timeout: 180000
+- tapOn: "Resultater fra sammenligningen"
+- scrollUntilVisible:
+    element: "Regler"
+    visibilityPercentage: 10
+    speed: 60
+    timeout: 180000
+- scrollUntilVisible:
+    element: "Modell"
+    visibilityPercentage: 10
+    speed: 60
+    timeout: 180000
+- takeScreenshot: planning/build/model/compare-results-nb
+- swipe:
+    start: 50%, 12%
+    end: 50%, 90%
+- scrollUntilVisible:
+    element: "Lagre stilinnstillinger"
+    speed: 90
+    timeout: 180000
+- tapOn: "Lagre stilinnstillinger"
