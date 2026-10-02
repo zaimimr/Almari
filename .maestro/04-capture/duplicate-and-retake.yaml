@@ -1,0 +1,61 @@
+appId: com.zaimimran.almari
+env:
+  SUFFIX: ""
+---
+- launchApp:
+    permissions:
+      camera: deny
+      photos: allow
+- tapOn: "Closet"
+- tapOn: "Add pieces"
+- tapOn:
+    text: "Skip"
+    optional: true
+- tapOn: "Choose photos"
+- tapOn:
+    text: "Photo, [^,]+, [0-9:]+.*"
+    index: 0
+- tapOn: "Add|Done"
+- extendedWaitUntil:
+    notVisible: "Preparing"
+    timeout: 90000
+- tapOn: "Choose photos"
+- tapOn:
+    text: "Photo, [^,]+, [0-9:]+.*"
+    index: 0
+- tapOn: "Add|Done"
+- extendedWaitUntil:
+    notVisible: "Preparing"
+    timeout: 90000
+- tapOn:
+    text: "[^,]+, Quick check"
+    index: 1
+- scrollUntilVisible:
+    element:
+      text: "Different piece"
+    direction: DOWN
+- assertVisible: "Is this already in your closet?"
+- assertVisible: "Same piece"
+- assertVisible: "Different piece"
+- takeScreenshot: planning/build/04-capture/duplicate${SUFFIX}
+- tapOn: "Different piece"
+- assertNotVisible: "Same piece"
+- scrollUntilVisible:
+    element:
+      text: "Retake"
+    direction: DOWN
+- tapOn: "Retake"
+- scrollUntilVisible:
+    element:
+      text: "Choose a photo instead"
+    direction: DOWN
+- assertVisible: "Open Settings"
+- tapOn: "Choose a photo instead"
+- tapOn:
+    text: "Photo, [^,]+, [0-9:]+.*"
+    index: 1
+- tapOn:
+    text: "Add|Done"
+    optional: true
+- assertVisible: "Take a photo"
+- takeScreenshot: planning/build/04-capture/after-retake${SUFFIX}

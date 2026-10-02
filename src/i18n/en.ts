@@ -74,7 +74,6 @@ export const en = {
   "capture.gone.description": "Your other photos are still in Add pieces.",
   "capture.saveFailed": "This piece could not be updated. Please try again.",
   "capture.removeFailed": "This photo could not be removed. Please try again.",
-  "capture.preparedImage": "Prepared closet image",
   "capture.usePrepared": "Use prepared",
   "capture.originalPhoto": "Original photo",
   "capture.keepOriginal": "Keep original",

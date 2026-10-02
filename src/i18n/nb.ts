@@ -76,7 +76,6 @@ export const nb: Record<Key, string> = {
   "capture.gone.description": "De andre bildene dine venter fortsatt.",
   "capture.saveFailed": "Plagget kunne ikke oppdateres. Prøv igjen.",
   "capture.removeFailed": "Bildet kunne ikke fjernes. Prøv igjen.",
-  "capture.preparedImage": "Klargjort bilde til garderoben",
   "capture.usePrepared": "Bruk klargjort",
   "capture.originalPhoto": "Originalbilde",
   "capture.keepOriginal": "Behold originalen",

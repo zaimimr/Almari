@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { StyleSheet, View } from "react-native";
-import { Image } from "expo-image";
+import { Linking, StyleSheet, View } from "react-native";
 import { Stack, router, useLocalSearchParams } from "expo-router";
 import {
   categoryOf,
@@ -9,6 +8,7 @@ import {
   type GarmentKind,
   type QuickCheck,
   type Style,
+  type Variant,
 } from "../../src/domain/closet";
 import {
   optionsFor,
@@ -17,10 +17,13 @@ import {
 } from "../../src/domain/attributes";
 import {
   correctImport,
+  dismissAdvice,
+  keepDuplicate,
   nameFor,
   removeImport,
 } from "../../src/domain/importing";
 import { attributeLabelKey, attributeValueKey } from "../../src/domain/facts";
+import { adviceFor } from "../../src/domain/quality";
 import { rankCategories, rankKinds } from "../../src/domain/recognition";
 import {
   categoryName,
@@ -33,7 +36,12 @@ import {
 import { labelLines } from "../../src/state/careLabel";
 import { useCloset } from "../../src/state/closet";
 import { changeImports } from "../../src/state/imports";
-import { photoUri } from "../../src/storage/local";
+import { PhotoChoice } from "../../src/features/PhotoChoice";
+import {
+  problemMessages,
+  useRetake,
+  type CaptureProblem,
+} from "../../src/features/Retake";
 import {
   AppText,
   Button,
@@ -44,9 +52,9 @@ import {
   FormScreen,
   HeaderAction,
   Message,
+  Notice,
   Screen,
 } from "../../src/ui";
-import { theme } from "../../src/ui/theme";
 
 const attributeQuestions: Partial<Record<AttributeKey, Key>> = {
   length: "question.length",
@@ -102,6 +110,9 @@ export default function CheckPiece() {
     Boolean(job?.keepOriginal || !job?.prepared?.cutout),
   );
   const [showAll, setShowAll] = useState(false);
+  const [variant, setVariant] = useState<Variant>(job?.variant ?? "enhanced");
+  const [problem, setProblem] = useState<CaptureProblem | null>(null);
+  const retake = useRetake();
   const [step, setStep] = useState<"piece" | "label">("piece");
   const [answer, setAnswer] = useState<AttributeValue | undefined>(undefined);
   const [busy, setBusy] = useState(false);
@@ -210,6 +221,7 @@ export default function CheckPiece() {
           styles: fixed ? undefined : chosenStyles,
           name: name.trim(),
           keepOriginal,
+          variant,
           ...(attributeAsked && answer !== undefined
             ? { attribute: { key: attributeAsked, value: answer } }
             : {}),
@@ -234,6 +246,40 @@ export default function CheckPiece() {
     }
   }
 
+  async function retakeFrom(from: "camera" | "library") {
+    if (busy) return;
+    setBusy(true);
+    setProblem(null);
+    setError(null);
+    const result = await retake(job!, from);
+    setBusy(false);
+    if (result === "done") router.back();
+    else if (result !== "cancelled") setProblem(result);
+  }
+
+  async function keepAsIs() {
+    try {
+      await update((current) => dismissAdvice(current, job!.id));
+    } catch {
+      setError(t("capture.saveFailed"));
+    }
+  }
+
+  async function differentPiece() {
+    try {
+      await update((current) => keepDuplicate(current, job!.id));
+    } catch {
+      setError(t("capture.saveFailed"));
+    }
+  }
+
+  const duplicateName = job.duplicateOf
+    ? (closet.pieces.find((item) => item.id === job.duplicateOf)?.name ??
+      closet.imports.find((item) => item.id === job.duplicateOf)?.name ??
+      null)
+    : null;
+  const advice = job.advice ? adviceFor(job.advice) : null;
+
   return (
     <FormScreen>
       <Stack.Screen
@@ -246,40 +292,45 @@ export default function CheckPiece() {
           ),
         }}
       />
-      <View style={styles.compare}>
-        {prepared.cutout ? (
-          <View style={styles.half}>
-            <View style={[styles.photo, !keepOriginal && styles.photoSelected]}>
-              <Image
-                source={{ uri: photoUri(prepared.cutout) }}
-                style={styles.image}
-                contentFit="contain"
-                accessibilityLabel={t("capture.preparedImage")}
-              />
-            </View>
-            <Chip
-              label={t("capture.usePrepared")}
-              selected={!keepOriginal}
-              onPress={() => setKeepOriginal(false)}
-            />
-          </View>
-        ) : null}
-        <View style={styles.half}>
-          <View style={[styles.photo, keepOriginal && styles.photoSelected]}>
-            <Image
-              source={{ uri: photoUri(prepared.original) }}
-              style={styles.image}
-              contentFit="contain"
-              accessibilityLabel={t("capture.originalPhoto")}
-            />
-          </View>
-          <Chip
-            label={t("capture.keepOriginal")}
-            selected={keepOriginal}
-            onPress={() => setKeepOriginal(true)}
-          />
-        </View>
-      </View>
+      <PhotoChoice
+        prepared={prepared}
+        keepOriginal={keepOriginal}
+        variant={variant}
+        onChange={(choice) => {
+          setKeepOriginal(choice.keepOriginal);
+          setVariant(choice.variant);
+        }}
+      />
+      {job.duplicateOf ? (
+        <Notice
+          title={t("duplicate.title")}
+          message={
+            duplicateName
+              ? t("duplicate.named", { name: duplicateName })
+              : t("duplicate.unnamed")
+          }
+          actions={[
+            { label: t("duplicate.same"), onPress: () => void remove() },
+            {
+              label: t("duplicate.different"),
+              onPress: () => void differentPiece(),
+            },
+          ]}
+        />
+      ) : null}
+      {advice ? (
+        <Notice
+          title={t(advice.title)}
+          message={t(advice.body)}
+          actions={[
+            {
+              label: t("capture.retake"),
+              onPress: () => void retakeFrom("camera"),
+            },
+            { label: t("advice.useAnyway"), onPress: () => void keepAsIs() },
+          ]}
+        />
+      ) : null}
       {checks.includes("no-cutout") ? (
         <AppText>{t("capture.noCutout")}</AppText>
       ) : null}
@@ -384,6 +435,38 @@ export default function CheckPiece() {
           void save();
         }}
       />
+      {problem ? (
+        <Notice
+          message={t(problemMessages[problem])}
+          actions={
+            problem === "camera-off"
+              ? [
+                  {
+                    label: t("problem.chooseInstead"),
+                    onPress: () => void retakeFrom("library"),
+                  },
+                  {
+                    label: t("problem.openSettings"),
+                    onPress: () => void Linking.openSettings(),
+                  },
+                ]
+              : [
+                  {
+                    label: t("problem.tryAgain"),
+                    onPress: () => void retakeFrom("library"),
+                  },
+                ]
+          }
+        />
+      ) : null}
+      <Button
+        label={t("capture.retake")}
+        secondary
+        disabled={busy}
+        onPress={() => {
+          void retakeFrom("camera");
+        }}
+      />
       <Button
         label={t("capture.remove")}
         danger
@@ -397,25 +480,6 @@ export default function CheckPiece() {
 }
 
 const styles = StyleSheet.create({
-  compare: { flexDirection: "row", gap: 12 },
-  half: { flex: 1, gap: 8, alignItems: "center" },
-  photo: {
-    width: "100%",
-    aspectRatio: 0.8,
-    borderRadius: theme.radius,
-    borderCurve: "continuous",
-    borderWidth: 1,
-    borderColor: theme.colors.line,
-    overflow: "hidden",
-    padding: 6,
-    backgroundColor: theme.colors.background,
-  },
-  photoSelected: {
-    borderColor: theme.colors.accent,
-    borderWidth: 2,
-    padding: 5,
-  },
-  image: { width: "100%", height: "100%" },
   section: { gap: 12 },
   label: { fontWeight: "600" },
   chips: { flexDirection: "row", flexWrap: "wrap", gap: 8 },

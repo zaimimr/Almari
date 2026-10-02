@@ -187,6 +187,34 @@ export function Message({
   );
 }
 
+export function Notice({
+  title,
+  message,
+  actions,
+}: {
+  title?: string;
+  message: string;
+  actions: { label: string; onPress: () => void }[];
+}) {
+  return (
+    <View style={styles.notice} accessibilityLiveRegion="polite">
+      {title ? <AppText style={styles.label}>{title}</AppText> : null}
+      <AppText>{message}</AppText>
+      <View style={styles.choices}>
+        {actions.map((action, index) => (
+          <Button
+            key={action.label}
+            label={action.label}
+            secondary={index > 0}
+            compact
+            onPress={action.onPress}
+          />
+        ))}
+      </View>
+    </View>
+  );
+}
+
 export function Filters({
   value,
   onChange,
@@ -437,6 +465,15 @@ export const styles = StyleSheet.create({
     maxWidth: 460,
     width: "100%",
     alignSelf: "center",
+  },
+  notice: {
+    gap: theme.space.md,
+    padding: theme.space.lg,
+    borderRadius: theme.radius,
+    borderCurve: "continuous",
+    borderWidth: 1,
+    borderColor: theme.colors.line,
+    backgroundColor: theme.colors.surface,
   },
   filters: { gap: 8, paddingVertical: 4 },
   chip: {
