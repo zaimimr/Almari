@@ -1,4 +1,5 @@
-import type { Closet, Piece } from "./closet";
+import type { Attributes } from "./attributes";
+import { savePiece, type Closet, type Piece, type Traits } from "./closet";
 
 export function setArchived(
   closet: Closet,
@@ -17,4 +18,33 @@ export function setArchived(
 
 export function shelf(pieces: Piece[], archived: boolean) {
   return pieces.filter((piece) => (piece.status === "archived") === archived);
+}
+
+export type Confirmation = {
+  attributes?: Partial<Attributes>;
+  traits?: Partial<Pick<Traits, "warmth" | "rain" | "snow" | "open">>;
+};
+
+export function confirmPiece(
+  closet: Closet,
+  id: string,
+  change: Confirmation,
+): Closet {
+  const piece = closet.pieces.find((item) => item.id === id);
+  if (!piece) return closet;
+  const keys = [
+    ...Object.keys(change.attributes ?? {}),
+    ...Object.keys(change.traits ?? {}),
+  ];
+  return savePiece(closet, {
+    ...piece,
+    ...(change.attributes
+      ? { attributes: { ...piece.attributes, ...change.attributes } }
+      : {}),
+    ...(change.traits ? { traits: { ...piece.traits, ...change.traits } } : {}),
+    sources: {
+      ...piece.sources,
+      ...Object.fromEntries(keys.map((key) => [key, "confirmed" as const])),
+    },
+  });
 }

@@ -7,6 +7,7 @@ import {
   type Piece,
   type Style,
 } from "./closet";
+import { coverageProblems } from "./coverage";
 
 export type Role =
   | "main"
@@ -48,7 +49,8 @@ export type ProblemAction =
   | { type: "clear-excluded" }
   | { type: "choose-pieces" }
   | { type: "add-pieces" }
-  | { type: "use-samples" };
+  | { type: "use-samples" }
+  | { type: "check-piece"; id: string; ask: "sleeve" | "length" };
 
 export type Problem = {
   code:
@@ -60,7 +62,9 @@ export type Problem = {
     | "missing-role"
     | "incomplete"
     | "weather-gap"
-    | "style-unknown";
+    | "style-unknown"
+    | "coverage"
+    | "coverage-unknown";
   severity: "conflict" | "missing" | "review";
   message: string;
   ids: string[];
@@ -252,6 +256,18 @@ export function evaluateOutfit(
     problems.push(
       missing(`Add a ${kindLabel(request.garmentType).toLowerCase()}.`),
     );
+  const worn = (role: Role) => outfit.find((piece) => roleOf(piece) === role);
+  problems.push(
+    ...coverageProblems(
+      {
+        main: worn("main"),
+        bottom: worn("bottom"),
+        layer: worn("layer"),
+        outer: worn("outer"),
+      },
+      request.coverage,
+    ),
+  );
   problems.push(...weatherProblems(outfit, request, pool));
   const unmarked = outfit.filter(
     (piece) =>
@@ -540,9 +556,19 @@ export function styleOutfits(
   const reviews: Candidate[] = [];
   let count = 0;
   let limited = false;
+  let coverageBlocked = false;
   const consider = (ids: Piece[]) => {
     const problems = evaluateOutfit(ids, request, pool);
-    if (problems.some((problem) => problem.severity !== "review")) return;
+    if (problems.some((problem) => problem.severity !== "review")) {
+      if (
+        problems.every(
+          (problem) =>
+            problem.severity === "review" || problem.code === "coverage",
+        )
+      )
+        coverageBlocked = true;
+      return;
+    }
     const { score, reasons } = scoreOutfit(ids, request);
     const candidate = {
       ids: ids.map((piece) => piece.id),
@@ -594,18 +620,24 @@ export function styleOutfits(
     status: "missing",
     outfits: [],
     problems: [
-      {
-        code: "incomplete",
-        severity: "missing",
-        message: limited
-          ? "There are too many combinations to check at once. Keep a piece or choose a garment type to narrow the search."
-          : "These choices do not make a complete outfit.",
-        ids: [],
-        actions: [
-          ...(type ? [{ type: "clear-type" as const }] : []),
-          { type: "choose-pieces" },
-        ],
-      },
+      coverageBlocked && !limited
+        ? {
+            code: "coverage",
+            severity: "missing",
+            message: t("coverage.none"),
+            ids: [],
+            actions: [{ type: "add-pieces" }],
+          }
+        : {
+            code: "incomplete",
+            severity: "missing",
+            message: limited ? t("styling.tooMany") : t("styling.incomplete"),
+            ids: [],
+            actions: [
+              ...(type ? [{ type: "clear-type" as const }] : []),
+              { type: "choose-pieces" },
+            ],
+          },
     ],
     limited,
   };

@@ -43,6 +43,7 @@ const catalog: CatalogPiece[] = [
     kind: "tunic",
     styles: ["western"],
     traits: { tone: "light", occasions: ["work", "everyday"] },
+    attributes: { sleeve: "long", length: "thigh" },
   },
   {
     id: "sample-sage-kurta",
@@ -54,6 +55,7 @@ const catalog: CatalogPiece[] = [
       tone: "mid",
       occasions: ["work", "everyday", "dinner", "celebration"],
     },
+    attributes: { sleeve: "long", length: "knee" },
   },
   {
     id: "sample-navy-blazer",
@@ -62,6 +64,7 @@ const catalog: CatalogPiece[] = [
     kind: "blazer",
     styles: ["western"],
     traits: { tone: "dark", occasions: ["work", "dinner"], warmth: "medium" },
+    attributes: { sleeve: "long", length: "thigh" },
   },
   {
     id: "sample-taupe-abaya",
@@ -75,6 +78,7 @@ const catalog: CatalogPiece[] = [
       warmth: "light",
       open: true,
     },
+    attributes: { sleeve: "long", length: "ankle" },
   },
   {
     id: "sample-ivory-trousers",
@@ -134,6 +138,7 @@ catalog.push({
   kind: "dress",
   styles: ["western"],
   traits: { tone: "mid", occasions: ["work", "everyday", "dinner"] },
+  attributes: { sleeve: "long", length: "ankle" },
   source: "sample",
   photo: "sample:olive-maxi-dress",
   createdAt: "2026-10-01T09:00:00.000Z",
@@ -176,4 +181,26 @@ export function addSampleWardrobe(closet: Closet): Closet {
     sampleCatalog: sampleCatalogVersion,
     pieces: [...closet.pieces, ...additions],
   };
+}
+
+export function withSampleAttributes(closet: Closet): Closet {
+  let changed = false;
+  const pieces = closet.pieces.map((piece) => {
+    const fixture = samplePieces.find((item) => item.id === piece.id);
+    if (
+      piece.source !== "sample" ||
+      !fixture?.attributes ||
+      fixture.category !== piece.category ||
+      Object.keys(fixture.attributes).every(
+        (key) => piece.attributes && key in piece.attributes,
+      )
+    )
+      return piece;
+    changed = true;
+    return {
+      ...piece,
+      attributes: { ...fixture.attributes, ...piece.attributes },
+    };
+  });
+  return changed ? { ...closet, pieces } : closet;
 }

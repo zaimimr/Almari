@@ -1,10 +1,12 @@
-import type {
-  Closet,
-  EverydayStyle,
-  OutfitRequest,
-  Session,
-  TodayState,
-  WardrobeMode,
+import {
+  coverageNeedFor,
+  type Closet,
+  type Coverage,
+  type EverydayStyle,
+  type OutfitRequest,
+  type Session,
+  type TodayState,
+  type WardrobeMode,
 } from "./closet";
 import { styleOutfits, type StyleResult } from "./styling";
 
@@ -29,6 +31,7 @@ export function clockFor(now: Date, timeZone?: string): Clock {
 export function everydayRequest(
   preset: EverydayStyle,
   wardrobe: WardrobeMode,
+  level: Coverage | null,
 ): OutfitRequest {
   return {
     occasion: preset.occasion,
@@ -39,7 +42,14 @@ export function everydayRequest(
     weather: { source: "unknown" },
     hijab: preset.hijab,
     wardrobe,
+    ...(coverageNeedFor(level, preset.coverage)
+      ? { coverage: coverageNeedFor(level, preset.coverage) }
+      : {}),
   };
+}
+
+function coverageLevel(closet: Closet) {
+  return closet.styling.profile?.coverageLevel ?? null;
 }
 
 function seedFor(localDate: string, request: OutfitRequest) {
@@ -104,7 +114,7 @@ export function ensureToday(closet: Closet, clock: Clock): Closet {
   if (current?.localDate === clock.localDate) return closet;
   const everyday = sessionFor(
     closet,
-    everydayRequest(preset, closet.styling.wardrobe),
+    everydayRequest(preset, closet.styling.wardrobe, coverageLevel(closet)),
     clock.localDate,
     (current?.everyday.revision ?? 0) + 1,
   );
@@ -142,7 +152,11 @@ export function saveEverydayStyle(
     presetVersion: version,
     everyday: sessionFor(
       saved,
-      everydayRequest(saved.styling.everyday!, saved.styling.wardrobe),
+      everydayRequest(
+        saved.styling.everyday!,
+        saved.styling.wardrobe,
+        coverageLevel(saved),
+      ),
       today.localDate,
       today.everyday.revision + 1,
     ),

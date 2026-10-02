@@ -41,6 +41,7 @@ import {
   OutfitCollage,
   PiecePhoto,
 } from "../../../src/ui";
+import { t } from "../../../src/i18n";
 import { addPiecesRoute } from "../../../src/state/imports";
 import { theme } from "../../../src/ui/theme";
 
@@ -164,6 +165,11 @@ function TodayContent() {
         return run((current) =>
           setWardrobe(current, "sample", clockFor(new Date())),
         );
+      case "check-piece":
+        return router.push({
+          pathname: "/today/check",
+          params: { id: action.id, ask: action.ask },
+        });
     }
   }
 
@@ -185,6 +191,8 @@ function TodayContent() {
         return "Add a piece";
       case "use-samples":
         return "Use the sample closet";
+      case "check-piece":
+        return t("check.action");
     }
   }
 

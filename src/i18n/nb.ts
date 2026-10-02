@@ -395,4 +395,41 @@ export const nb: Record<Key, string> = {
     "Et plagg du valgte å beholde, finnes ikke lenger i denne garderoben.",
   "styling.keptUnavailable":
     "Et plagg du valgte å beholde, er merket som utilgjengelig eller arkivert.",
+
+  "coverage.anyLength": "Hvilken som helst lengde",
+  "coverage.toElbow": "Til albuen",
+  "coverage.toWrist": "Til håndleddet",
+  "coverage.toCalf": "Til midt på leggen",
+  "coverage.toAnkle": "Til ankelen",
+  "coverage.neither": "Ingen av delene",
+  "coverage.seeThrough": "Gjennomsiktig",
+  "coverage.notSeeThrough": "Ikke gjennomsiktig",
+  "coverage.opensFront": "Åpen foran",
+  "coverage.closedFront": "Lukket foran",
+  "coverage.both": "Begge deler",
+  "coverage.sheerSleeves":
+    "{name} kan være gjennomsiktig, så ermene er ikke bekreftet.",
+  "coverage.sheerLength":
+    "{name} kan være gjennomsiktig, så lengden er ikke bekreftet.",
+  "coverage.openLength":
+    "{name} kan være åpen foran, så lengden er ikke bekreftet.",
+  "coverage.sleeveUnknown": "Ermelengden på {name} er ikke bekreftet ennå.",
+  "coverage.lengthUnknown": "Lengden på {name} er ikke bekreftet ennå.",
+  "coverage.noSleevesElbow":
+    "Ingenting i dette antrekket har tette ermer til albuen.",
+  "coverage.noSleevesWrist":
+    "Ingenting i dette antrekket har tette ermer til håndleddet.",
+  "coverage.noHemCalf": "Ingenting i dette antrekket når til midt på leggen.",
+  "coverage.noHemAnkle": "Ingenting i dette antrekket når til ankelen.",
+  "coverage.none":
+    "Ingen kombinasjon i denne garderoben oppfyller valgene dine for ermer og lengde.",
+  "coverage.askBoth": "Er {name} gjennomsiktig, eller åpen foran?",
+  "coverage.askOpen": "Er {name} åpen foran?",
+  "coverage.askSheer": "Er {name} gjennomsiktig?",
+  "coverage.askSleeve": "Hvor lange er ermene på {name}?",
+  "coverage.askLength": "Hvor langt når {name} på deg?",
+  "check.action": "Svar på ett spørsmål",
+  "styling.tooMany":
+    "Det er for mange kombinasjoner å sjekke på én gang. Behold et plagg eller velg en plaggtype for å snevre inn søket.",
+  "styling.incomplete": "Disse valgene gir ikke et helt antrekk.",
 };
