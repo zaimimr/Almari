@@ -467,6 +467,13 @@ function TodayContent() {
         </View>
       ) : null}
 
+      <Button
+        label={t("style.title")}
+        secondary
+        compact
+        disabled={busy}
+        onPress={() => router.push("/today/style")}
+      />
       <View style={styles.notes}>
         {request.hijab === null ? (
           <AppText variant="caption" muted>

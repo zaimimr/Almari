@@ -1,0 +1,33 @@
+appId: com.zaimimran.almari
+---
+- runFlow: start.yaml
+- scrollUntilVisible:
+    element: "Style settings"
+- tapOn: "Style settings"
+- assertVisible: "People and families see these differently.*"
+- assertVisible: "Edit your answers"
+- assertVisible:
+    text: "With reasons"
+    selected: true
+- takeScreenshot: planning/build/stylist/style-settings
+- tapOn: "With reasons and coverage checks"
+- tapOn: "Avoid white at weddings"
+- tapOn: "I like it"
+- scrollUntilVisible:
+    element: "Save style settings"
+- tapOn: "Save style settings"
+- assertVisible: "A little inspiration for today."
+- assertVisible: "Neckline is not checked."
+- scrollUntilVisible:
+    element: "Style settings"
+- tapOn: "Style settings"
+- assertVisible:
+    text: "Avoid white at weddings"
+    selected: true
+- assertVisible:
+    text: "I like it"
+    selected: true
+- assertVisible:
+    text: "With reasons and coverage checks"
+    selected: true
+- tapOn: "Cancel"
