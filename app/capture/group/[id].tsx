@@ -78,7 +78,9 @@ export default function CapturePieces() {
       </Screen>
     );
 
-  const source = jobs[0]!.source;
+  const scanned = new Set(jobs.map((job) => job.source)).size > 1;
+  const source =
+    jobs.find((job) => job.id === drawing?.job)?.source ?? jobs[0]!.source;
   const othersIgnored = jobs.some((job) => (job.people ?? 0) > 1);
   const fit =
     stage.width && stage.height
@@ -270,7 +272,7 @@ export default function CapturePieces() {
     <View style={styles.screen}>
       <Stack.Screen
         options={{
-          title: t("capture.group.title"),
+          title: scanned ? t("scan.reviewTitle") : t("capture.group.title"),
           headerLeft: () => (
             <HeaderAction
               label={t("capture.cancel")}
@@ -286,7 +288,7 @@ export default function CapturePieces() {
             {t("capture.othersIgnored")}
           </AppText>
         ) : null}
-        {photo(null)}
+        {scanned ? null : photo(null)}
         {jobs.map((job, index) => {
           const thumb = job.prepared?.thumbnail ?? job.region?.cutout ?? null;
           const isDropped = dropped.includes(job.id);
@@ -343,11 +345,13 @@ export default function CapturePieces() {
             </View>
           );
         })}
-        <Button
-          label={t("capture.addPiece")}
-          secondary
-          onPress={() => setDrawing({ job: null, box: startBox })}
-        />
+        {scanned ? null : (
+          <Button
+            label={t("capture.addPiece")}
+            secondary
+            onPress={() => setDrawing({ job: null, box: startBox })}
+          />
+        )}
       </FormScreen>
       <SafeAreaView edges={["bottom"]} style={styles.footer}>
         <View style={styles.footerContent}>

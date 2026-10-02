@@ -144,7 +144,7 @@ final class GarmentPipeline {
     return Bundle(url: url)
   }
 
-  private var photos: URL {
+  var photos: URL {
     FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
       .appendingPathComponent("closet-photos", isDirectory: true)
   }
@@ -185,8 +185,7 @@ final class GarmentPipeline {
     queue.sync { try? loadParser().parse(image) }
   }
 
-  private func loadParser() throws -> ClothesParser {
-    if let parser { return parser }
+  func makeParser() throws -> ClothesParser {
     guard let bundle, let url = bundle.url(forResource: "ClothesParser", withExtension: "mlmodelc") else {
       throw PrepareError.resources
     }
@@ -196,7 +195,12 @@ final class GarmentPipeline {
     #else
       configuration.computeUnits = .all
     #endif
-    let loaded = ClothesParser(model: try MLModel(contentsOf: url, configuration: configuration), context: context)
+    return ClothesParser(model: try MLModel(contentsOf: url, configuration: configuration), context: context)
+  }
+
+  private func loadParser() throws -> ClothesParser {
+    if let parser { return parser }
+    let loaded = try makeParser()
     parser = loaded
     return loaded
   }
@@ -474,6 +478,34 @@ public class ClosetVisionModule: Module {
       try GarmentPipeline.shared.parseGarments(sourceUri: sourceUri, id: id)
     }
 
+    View(SelfieCameraView.self) {
+      Events("onReading", "onState")
+
+      AsyncFunction("capture") { (view: SelfieCameraView, promise: Promise) in
+        view.capture(promise)
+      }
+    }
+
+    View(LiveScanView.self) {
+      Events("onFrame", "onCamera")
+
+      Prop("facing") { (view: LiveScanView, facing: String?) in
+        view.facing = facing ?? "back"
+      }
+
+      Prop("active") { (view: LiveScanView, active: Bool?) in
+        view.active = active ?? false
+      }
+
+      Prop("fps") { (view: LiveScanView, fps: Double?) in
+        view.fps = fps ?? 4
+      }
+
+      AsyncFunction("capture") { (view: LiveScanView, id: String, box: [String: Double], kind: String, promise: Promise) in
+        view.capture(id: id, box: box, kind: kind, promise: promise)
+      }.runOnQueue(.main)
+    }
+
     AsyncFunction("readLabel") { (sourceUri: String, id: String) throws -> ReadLabelResult in
       try CareLabelReader.shared.read(sourceUri: sourceUri, id: id)
     }
@@ -486,14 +518,6 @@ public class ClosetVisionModule: Module {
       var result = LabelExtraction()
       result.json = await CareLabelModel.extract(text)
       return result
-    }
-
-    View(SelfieCameraView.self) {
-      Events("onReading", "onState")
-
-      AsyncFunction("capture") { (view: SelfieCameraView, promise: Promise) in
-        view.capture(promise)
-      }
     }
   }
 }

@@ -1,4 +1,5 @@
 export { default } from "./ClosetVisionModule";
+export { LiveScanView, type LiveScanProps } from "./LiveScanView";
 export type {
   City,
   ForecastResult,
@@ -8,10 +9,14 @@ export type {
   LabelExtraction,
   LabelGroup,
   LabelScore,
+  LiveScanHandle,
   PrepareOptions,
   PreparedGarment,
   Quality,
   ReadLabelResult,
+  ScanCameraState,
+  ScanCapture,
+  ScanFrameEvent,
   SelfiePoint,
   SelfieReading,
   Swatch,

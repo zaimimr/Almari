@@ -105,3 +105,30 @@ export type ForecastResult = {
   }[];
   attribution: { logo: string; url: string };
 };
+
+export type ScanCapture = {
+  photo: string;
+  region: GarmentRegion | null;
+  box: { x: number; y: number; width: number; height: number };
+  milliseconds: Record<string, number>;
+};
+
+export type ScanFrameEvent = {
+  at: number;
+  cols: number;
+  rows: number;
+  labels: string;
+  colours: string;
+  hands: number[][];
+  milliseconds: Record<string, number>;
+};
+
+export type ScanCameraState = "ready" | "unavailable" | "denied";
+
+export type LiveScanHandle = {
+  capture(
+    id: string,
+    box: { x: number; y: number; width: number; height: number },
+    kind: string,
+  ): Promise<ScanCapture>;
+};

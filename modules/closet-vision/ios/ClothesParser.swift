@@ -115,6 +115,10 @@ final class ClothesParser {
     return try parse(image, found: nil).parse
   }
 
+  func parseWhole(_ image: CIImage) throws -> ClothesParse {
+    try parse(image, found: nil).parse
+  }
+
   private func parse(_ image: CIImage, found: Person?) throws -> (parse: ClothesParse, skin: Int, mask: Int) {
     let extent = image.extent
     let area = found?.area ?? extent

@@ -277,6 +277,13 @@ export default function AddPieces() {
               }}
             />
           </View>
+          <View style={styles.action}>
+            <Button
+              label={t("scan.title")}
+              secondary
+              onPress={() => router.push("/capture/scan")}
+            />
+          </View>
         </View>
         {problem ? (
           <Notice
@@ -310,13 +317,17 @@ export default function AddPieces() {
           </AppText>
         ) : null}
         {captures.map((capture) => {
-          const count = captureJobs(closet, capture).length;
+          const found = captureJobs(closet, capture);
+          const count = found.length;
+          const scanned = new Set(found.map((job) => job.source)).size > 1;
           return (
             <View key={capture} style={styles.capture}>
               <AppText>
-                {count === 1
-                  ? t("capture.foundOne")
-                  : t("capture.found", { count })}
+                {scanned
+                  ? t("scan.found", { count })
+                  : count === 1
+                    ? t("capture.foundOne")
+                    : t("capture.found", { count })}
               </AppText>
               <Button
                 label={t("capture.review")}
