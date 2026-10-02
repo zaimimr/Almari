@@ -1,10 +1,54 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import worker, { type Env } from "./index";
 import { studioPrompt } from "./prompt";
-import { isInstallId, maxImageBytes, parseStudioRequest } from "./request";
+import {
+  imageSize,
+  imageType,
+  isInstallId,
+  maxImageBytes,
+  parseStudioRequest,
+} from "./request";
 
-const png = (size = 4) =>
-  new File([new Uint8Array(size)], "cutout.png", { type: "image/png" });
+function pngBytes(width: number, height: number, size = 24) {
+  const bytes = new Uint8Array(Math.max(size, 24));
+  bytes.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  const view = new DataView(bytes.buffer);
+  view.setUint32(16, width);
+  view.setUint32(20, height);
+  return bytes;
+}
+
+function jpegBytes(width: number, height: number) {
+  return new Uint8Array([
+    0xff,
+    0xd8,
+    0xff,
+    0xe0,
+    0x00,
+    0x04,
+    0x00,
+    0x00,
+    0xff,
+    0xc0,
+    0x00,
+    0x11,
+    0x08,
+    height >> 8,
+    height & 0xff,
+    width >> 8,
+    width & 0xff,
+    0x03,
+    0x00,
+    0x00,
+    0x00,
+    0x00,
+  ]);
+}
+
+const png = (size = 24, width = 400, height = 300) =>
+  new File([pngBytes(width, height, size)], "cutout.png", {
+    type: "image/png",
+  });
 
 function form(fields: Record<string, string | File>) {
   const body = new FormData();
@@ -52,6 +96,17 @@ describe("studioPrompt", () => {
     });
     expect(prompt).toContain('The owner calls it "Denim shorts".');
     expect(prompt).toContain("Its main colour is light blue.");
+  });
+});
+
+describe("image header", () => {
+  it("reads png and jpeg sizes and types", () => {
+    expect(imageSize(pngBytes(500, 320))).toEqual({ width: 500, height: 320 });
+    expect(imageSize(jpegBytes(480, 500))).toEqual({ width: 480, height: 500 });
+    expect(imageSize(new Uint8Array(30))).toBeNull();
+    expect(imageType(pngBytes(1, 1))).toBe("image/png");
+    expect(imageType(jpegBytes(1, 1))).toBe("image/jpeg");
+    expect(imageType(new TextEncoder().encode("img"))).toBeNull();
   });
 });
 
@@ -119,14 +174,18 @@ describe("parseStudioRequest", () => {
 });
 
 describe("worker", () => {
-  afterEach(() => vi.unstubAllGlobals());
-
-  function setup(counts: Record<string, string> = {}) {
+  function setup(
+    counts: Record<string, string> = {},
+    run: (model: string, input: unknown) => Promise<unknown> = async () => ({
+      image: btoa(String.fromCharCode(...jpegBytes(1024, 1024))),
+    }),
+  ) {
     const store = new Map(Object.entries(counts));
+    const ai = { run: vi.fn(run) };
     const env = {
-      GEMINI_API_KEY: "key",
+      AI: ai,
       APP_TOKEN: "secret",
-      GEMINI_MODEL: "gemini-3.1-flash-image",
+      STUDIO_MODEL: "@cf/black-forest-labs/flux-2-klein-9b",
       DAILY_LIMIT: "2",
       GLOBAL_DAILY_LIMIT: "100",
       LIMITS: {
@@ -138,7 +197,7 @@ describe("worker", () => {
     const ctx = {
       waitUntil: (promise: Promise<unknown>) => waits.push(promise),
     } as unknown as ExecutionContext;
-    return { env, ctx, store, waits };
+    return { env, ctx, store, waits, ai };
   }
 
   const day = new Date().toISOString().slice(0, 10);
@@ -178,41 +237,44 @@ describe("worker", () => {
     expect(response.status).toBe(413);
   });
 
+  it("rejects images larger than the model takes", async () => {
+    const context = setup();
+    const response = await call(
+      context,
+      {},
+      form({ image: png(24, 1024, 300), category: "top" }),
+    );
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: "dimensions" });
+    expect(context.ai.run).not.toHaveBeenCalled();
+  });
+
   it("stops at the daily limit", async () => {
-    const fetch = vi.fn();
-    vi.stubGlobal("fetch", fetch);
-    const response = await call(setup({ [`install:${install}:${day}`]: "2" }));
-    expect(response.status).toBe(429);
-    expect(fetch).not.toHaveBeenCalled();
+    const context = setup({ [`install:${install}:${day}`]: "2" });
+    expect((await call(context)).status).toBe(429);
+    expect(context.ai.run).not.toHaveBeenCalled();
   });
 
   it("returns the generated image and counts it", async () => {
-    const fetch = vi.fn(async () =>
-      Response.json({
-        candidates: [
-          {
-            content: {
-              parts: [
-                { inlineData: { mimeType: "image/png", data: btoa("img") } },
-              ],
-            },
-          },
-        ],
-      }),
-    );
-    vi.stubGlobal("fetch", fetch);
     const context = setup();
     const response = await call(context);
     expect(response.status).toBe(200);
-    expect(response.headers.get("content-type")).toBe("image/png");
-    expect(new TextDecoder().decode(await response.arrayBuffer())).toBe("img");
-    const [url, init] = fetch.mock.calls[0] as unknown as [string, RequestInit];
-    expect(url).toContain("gemini-3.1-flash-image:generateContent");
-    expect(new Headers(init.headers).get("x-goog-api-key")).toBe("key");
-    const sent = JSON.parse(String(init.body));
-    expect(sent.contents[0].parts[0].text).toContain("It must stay jeans.");
-    expect(sent.contents[0].parts[1].inlineData.mimeType).toBe("image/png");
-    expect(sent.generationConfig.responseModalities).toEqual(["IMAGE"]);
+    expect(response.headers.get("content-type")).toBe("image/jpeg");
+    expect(new Uint8Array(await response.arrayBuffer())).toEqual(
+      jpegBytes(1024, 1024),
+    );
+    const [model, input] = context.ai.run.mock.calls[0] as unknown as [
+      string,
+      { multipart: { body: ReadableStream; contentType: string } },
+    ];
+    expect(model).toBe("@cf/black-forest-labs/flux-2-klein-9b");
+    const sent = await new Response(input.multipart.body, {
+      headers: { "content-type": input.multipart.contentType },
+    }).formData();
+    expect(String(sent.get("prompt"))).toContain("It must stay jeans.");
+    expect(sent.get("input_image_0")).toBeInstanceOf(Blob);
+    expect(sent.get("width")).toBe("1024");
+    expect(sent.get("height")).toBe("1024");
     await Promise.all(context.waits);
     expect(context.store.get(`install:${install}:${day}`)).toBe("1");
     expect(context.store.get(`all:${day}`)).toBe("1");
@@ -220,12 +282,15 @@ describe("worker", () => {
 
   it("reports a failed generation without counting it", async () => {
     vi.spyOn(console, "error").mockImplementation(() => undefined);
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => Response.json({ candidates: [] })),
-    );
-    const context = setup();
-    expect((await call(context)).status).toBe(502);
-    expect(context.store.size).toBe(0);
+    for (const run of [
+      async () => ({}),
+      async () => {
+        throw new Error("model");
+      },
+    ]) {
+      const context = setup({}, run);
+      expect((await call(context)).status).toBe(502);
+      expect(context.store.size).toBe(0);
+    }
   });
 });

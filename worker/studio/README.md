@@ -1,6 +1,6 @@
 # Almari studio worker
 
-Turns a piece cutout into a studio photo with Gemini. The app posts multipart form data (`image`, `category`, optional `kind`, `name`, `colour`) with `X-App-Token: <APP_TOKEN>` and `X-Install-Id`.
+Turns a piece cutout into a studio photo with Workers AI (`STUDIO_MODEL` in `wrangler.jsonc`). The app posts multipart form data (`image` as PNG or JPEG of at most 512x512, `category`, optional `kind`, `name`, `colour`) with `X-App-Token: <APP_TOKEN>` and `X-Install-Id`.
 
 ## Deploy
 
@@ -8,7 +8,6 @@ Turns a piece cutout into a studio photo with Gemini. The app posts multipart fo
 cd worker/studio
 npm install
 npx wrangler login
-npx wrangler secret put GEMINI_API_KEY
 openssl rand -hex 32 | tee /dev/stderr | npx wrangler secret put APP_TOKEN
 npx wrangler deploy
 ```

@@ -4,8 +4,9 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-10-01",
   "observability": { "enabled": true },
+  "ai": { "binding": "AI" },
   "vars": {
-    "GEMINI_MODEL": "gemini-3.1-flash-image",
+    "STUDIO_MODEL": "@cf/black-forest-labs/flux-2-klein-9b",
     "DAILY_LIMIT": "30",
     "GLOBAL_DAILY_LIMIT": "1000",
   },
