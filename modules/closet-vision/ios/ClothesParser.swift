@@ -43,9 +43,13 @@ struct ClothesParse {
     ]
   }
 
-  func cutout(_ photo: CIImage, region: FoundRegion) -> CIImage {
-    let frame = normalizedFrame(of: region).insetBy(dx: -0.02, dy: -0.02)
+  func cutoutFrame(of region: FoundRegion) -> CGRect {
+    normalizedFrame(of: region).insetBy(dx: -0.02, dy: -0.02)
       .intersection(CGRect(x: 0, y: 0, width: 1, height: 1))
+  }
+
+  func cutout(_ photo: CIImage, region: FoundRegion) -> CIImage {
+    let frame = cutoutFrame(of: region)
     let rect = CGRect(
       x: frame.minX * extent.width, y: (1 - frame.maxY) * extent.height,
       width: frame.width * extent.width, height: frame.height * extent.height

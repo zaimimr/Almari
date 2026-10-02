@@ -11,11 +11,14 @@ export type LiveScanProps = {
   style?: StyleProp<ViewStyle>;
   facing: "front" | "back";
   active: boolean;
+  frozen?: boolean;
   fps: number;
   onFrame: (event: { nativeEvent: ScanFrameEvent }) => void;
   onCamera: (event: { nativeEvent: { state: ScanCameraState } }) => void;
   ref?: Ref<LiveScanHandle>;
 };
 
-export const LiveScanView: ComponentType<LiveScanProps> =
-  requireNativeView("ClosetVision", "LiveScanView");
+export const LiveScanView: ComponentType<LiveScanProps> = requireNativeView(
+  "ClosetVision",
+  "LiveScanView",
+);

@@ -109,6 +109,10 @@ export type ForecastResult = {
 export type ScanCapture = {
   photo: string;
   region: GarmentRegion | null;
+  sticker: {
+    name: string;
+    frame: { x: number; y: number; width: number; height: number };
+  } | null;
   box: { x: number; y: number; width: number; height: number };
   milliseconds: Record<string, number>;
 };

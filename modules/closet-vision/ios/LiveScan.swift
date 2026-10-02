@@ -5,9 +5,15 @@ import ExpoModulesCore
 import UIKit
 import Vision
 
+struct ScanStickerRecord: Record {
+  @Field var name: String = ""
+  @Field var frame: [String: Double] = [:]
+}
+
 struct ScanCaptureRecord: Record {
   @Field var photo: String = ""
   @Field var region: GarmentRegionRecord? = nil
+  @Field var sticker: ScanStickerRecord? = nil
   @Field var box: [String: Double] = [:]
   @Field var milliseconds: [String: Int] = [:]
 }
@@ -102,7 +108,7 @@ final class FrameReader {
   }
 
   func cutHeld(data: Data, id: String, box: CGRect, kind: String, folder: URL) throws
-    -> GarmentRegionRecord?
+    -> (region: GarmentRegionRecord, sticker: ScanStickerRecord?)?
   {
     guard let classes = Self.held[kind], let loaded = CIImage(data: data, options: [.applyOrientationProperty: true])
     else { return nil }
@@ -125,24 +131,55 @@ final class FrameReader {
     let wanted = Set(classes.map { UInt8($0.rawValue) })
     guard let region = largest(parse.grid, kind: kind, wanted: wanted), region.share >= 0.02 else { return nil }
     let name = "\(id)-region-1.png"
+    let cut = parse.cutout(crop, region: region)
     try parser.context.writePNGRepresentation(
-      of: parse.cutout(crop, region: region), to: folder.appendingPathComponent(name), format: .RGBA8,
+      of: cut, to: folder.appendingPathComponent(name), format: .RGBA8,
       colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
-    let local = parse.normalizedFrame(of: region)
     let photoArea = CGRect(
       x: rect.minX / width, y: 1 - rect.maxY / height, width: rect.width / width, height: rect.height / height)
+    let place = { (local: CGRect) -> [String: Double] in
+      [
+        "x": Double(photoArea.minX + local.minX * photoArea.width),
+        "y": Double(photoArea.minY + local.minY * photoArea.height),
+        "width": Double(local.width * photoArea.width),
+        "height": Double(local.height * photoArea.height),
+      ]
+    }
     var record = GarmentRegionRecord()
     record.kind = kind
     record.cutout = name
-    record.frame = [
-      "x": Double(photoArea.minX + local.minX * photoArea.width),
-      "y": Double(photoArea.minY + local.minY * photoArea.height),
-      "width": Double(local.width * photoArea.width),
-      "height": Double(local.height * photoArea.height),
-    ]
+    record.frame = place(parse.normalizedFrame(of: region))
     record.share = region.share * Double(photoArea.width * photoArea.height)
     record.partial = false
-    return record
+    let stickerName = "\(id)-sticker.png"
+    guard let pad = try? writeSticker(cut, to: folder.appendingPathComponent(stickerName)) else {
+      return (record, nil)
+    }
+    var outlined = ScanStickerRecord()
+    outlined.name = stickerName
+    outlined.frame = place(
+      parse.cutoutFrame(of: region).insetBy(dx: -pad / rect.width, dy: -pad / rect.height))
+    return (record, outlined)
+  }
+
+  private func writeSticker(_ cut: CIImage, to url: URL) throws -> CGFloat {
+    let scale = min(1, 720 / max(cut.extent.width, cut.extent.height))
+    let small = cut.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
+    let pad = (max(small.extent.width, small.extent.height) * 0.03).rounded(.up)
+    let zero = CIVector(x: 0, y: 0, z: 0, w: 0)
+    let outline = small.applyingFilter(
+      "CIColorMatrix",
+      parameters: [
+        "inputRVector": zero, "inputGVector": zero, "inputBVector": zero,
+        "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 1), "inputBiasVector": CIVector(x: 1, y: 1, z: 1, w: 0),
+      ]
+    ).applyingFilter("CIMorphologyMaximum", parameters: [kCIInputRadiusKey: pad * 0.8])
+    let canvas = small.extent.insetBy(dx: -pad, dy: -pad)
+    let image = small.composited(over: outline).composited(over: CIImage(color: .clear)).cropped(to: canvas)
+      .transformed(by: CGAffineTransform(translationX: -canvas.minX, y: -canvas.minY))
+    try parser.context.writePNGRepresentation(
+      of: image, to: url, format: .RGBA8, colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
+    return pad / scale
   }
 
   private func largest(_ grid: LabelGrid, kind: String, wanted: Set<UInt8>) -> FoundRegion? {
@@ -194,6 +231,9 @@ final class LiveScanView: ExpoView, AVCaptureVideoDataOutputSampleBufferDelegate
     didSet { if active != oldValue { configure() } }
   }
   var fps: Double = 4
+  var frozen = false {
+    didSet { preview.connection?.isEnabled = !frozen }
+  }
 
   private let session = AVCaptureSession()
   private let video = AVCaptureVideoDataOutput()
@@ -329,7 +369,9 @@ final class LiveScanView: ExpoView, AVCaptureVideoDataOutputSampleBufferDelegate
           try data.write(to: folder.appendingPathComponent(name))
           var record = ScanCaptureRecord()
           record.photo = name
-          record.region = (try? reader.cutHeld(data: data, id: id, box: held, kind: kind, folder: folder)) ?? nil
+          let cut = (try? reader.cutHeld(data: data, id: id, box: held, kind: kind, folder: folder)) ?? nil
+          record.region = cut?.region
+          record.sticker = cut?.sticker
           record.box = [
             "x": Double(held.minX), "y": Double(held.minY), "width": Double(held.width), "height": Double(held.height),
           ]
