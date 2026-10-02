@@ -1,3 +1,5 @@
+import { t } from "../i18n";
+
 export const categories = [
   { id: "hijab", label: "Hijabs & scarves" },
   { id: "top", label: "Tops" },
@@ -87,10 +89,13 @@ export const offeredKinds = garmentKinds.filter(
 );
 
 export const occasions = [
-  { id: "work", label: "Work" },
-  { id: "everyday", label: "Everyday" },
-  { id: "dinner", label: "Dinner" },
-  { id: "celebration", label: "Celebration" },
+  { id: "everyday", formality: 1 },
+  { id: "work", formality: 2 },
+  { id: "dinner", formality: 3 },
+  { id: "eid", formality: 4 },
+  { id: "party", formality: 4 },
+  { id: "wedding", formality: 5 },
+  { id: "barat", formality: 6 },
 ] as const;
 
 export type Occasion = (typeof occasions)[number]["id"];
@@ -124,8 +129,15 @@ export function fixedStyles(id: GarmentKind): Style[] | undefined {
 export const kindLabel = (id: GarmentKind) =>
   garmentKinds.find((kind) => kind.id === id)?.label ?? id;
 
-export const occasionLabel = (id: Occasion) =>
-  occasions.find((item) => item.id === id)?.label ?? id;
+export const occasionLabel = (id: Occasion) => t(`occasion.${id}`);
+
+export const occasionPhrase = (id: Occasion) => t(`occasion.${id}.phrase`);
+
+export const occasionOptions = () =>
+  occasions.map((occasion) => ({
+    id: occasion.id,
+    label: occasionLabel(occasion.id),
+  }));
 
 export const styleLabel = (id: Style) =>
   styleOptions.find((item) => item.id === id)?.label ?? id;

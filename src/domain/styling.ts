@@ -6,6 +6,8 @@ import {
   type Piece,
   type Style,
 } from "./closet";
+import { t } from "../i18n";
+import type { ScoreContext, Scorer } from "./scoring/types";
 
 export type Role =
   | "main"
@@ -89,6 +91,9 @@ export function roleOf(piece: Piece): Role {
       return piece.traits?.open === false ? "main" : "outer";
     case "coat":
       return "outer";
+    case "shawl":
+    case "underscarf":
+      return "accessory";
     default:
       break;
   }
@@ -277,66 +282,6 @@ export function hash(text: string) {
   return value >>> 0;
 }
 
-function lower(piece: Piece) {
-  return piece.name.charAt(0).toLowerCase() + piece.name.slice(1);
-}
-
-export function scoreOutfit(outfit: Piece[], request: OutfitRequest) {
-  let score = 0;
-  const reasons: string[] = [];
-  const byRole = (role: Role) => outfit.find((piece) => roleOf(piece) === role);
-  const main = byRole("main");
-  const hijab = byRole("hijab");
-  const bottom = byRole("bottom");
-  const layer = byRole("layer") ?? byRole("outer");
-  const shoes = byRole("shoes");
-  const tagged = outfit.filter((piece) => piece.traits?.occasions);
-  const suited = tagged.filter((piece) =>
-    piece.traits!.occasions!.includes(request.occasion),
-  );
-  score += suited.length - (tagged.length - suited.length) * 1.5;
-  if (tagged.length && suited.length === tagged.length)
-    reasons.push(
-      `Every piece is marked for ${request.occasion === "everyday" ? "everyday wear" : request.occasion}.`,
-    );
-  const weather = request.weather;
-  if (layer && weather.source === "manual" && weather.warmth !== "warm") {
-    score += weather.warmth === "cold" ? 2 : 0.5;
-    reasons.push(
-      `The ${lower(layer)} adds a layer for a ${weather.warmth} day.`,
-    );
-  } else if (layer && request.occasion === "work") score += 0.5;
-  if (
-    byRole("layer") &&
-    byRole("outer") &&
-    !(weather.source === "manual" && weather.warmth === "cold")
-  )
-    score -= 1.5;
-  if (main && bottom && roleOf(main) === "main" && !needsBottom(main))
-    score -= 1.5;
-  if (hijab?.traits?.tone && main?.traits?.tone) {
-    if (hijab.traits.tone !== main.traits.tone) {
-      score += 1;
-      reasons.push(
-        `The ${lower(hijab)} brings contrast to the ${lower(main)}.`,
-      );
-    } else score -= 0.5;
-    const echoes = [layer, shoes].find(
-      (piece) => piece && piece.traits?.tone === hijab.traits!.tone,
-    );
-    if (echoes) {
-      score += 0.5;
-      if (hijab.traits.tone !== main.traits.tone)
-        reasons.push(`It echoes the ${lower(echoes)}.`);
-    }
-  }
-  const tones = [main, bottom, hijab]
-    .map((piece) => piece?.traits?.tone)
-    .filter(Boolean);
-  if (tones.length === 3 && tones.every((tone) => tone === "light")) score -= 1;
-  return { score, reasons: reasons.slice(0, 2) };
-}
-
 function difference(a: string[], b: string[]) {
   const set = new Set(a);
   return b.filter((id) => !set.has(id)).length;
@@ -372,6 +317,8 @@ export function styleOutfits(
   closetPieces: Piece[],
   request: OutfitRequest,
   seed: string,
+  scorer: Scorer,
+  context: ScoreContext,
 ): StyleResult {
   const fail = (
     status: "conflict" | "missing",
@@ -397,6 +344,24 @@ export function styleOutfits(
       },
     ]);
 
+  const keptAway = closetPieces.filter(
+    (piece) =>
+      request.keptIds.includes(piece.id) &&
+      piece.source === request.wardrobe &&
+      piece.status,
+  );
+  if (keptAway.length)
+    return fail(
+      "missing",
+      keptAway.map((piece) => ({
+        code: "kept-missing",
+        severity: "missing",
+        message: t("stylist.keptAway", { name: piece.name }),
+        ids: [piece.id],
+        actions: [{ type: "release", id: piece.id }],
+      })),
+    );
+
   const missingKept = request.keptIds.filter(
     (id) => !pool.some((piece) => piece.id === id),
   );
@@ -406,11 +371,7 @@ export function styleOutfits(
       missingKept.map((id) => ({
         code: "kept-missing",
         severity: "missing",
-        message: closetPieces.some(
-          (piece) => piece.id === id && piece.source === request.wardrobe,
-        )
-          ? "A piece you chose to keep is marked unavailable."
-          : "A piece you chose to keep is no longer in this closet.",
+        message: "A piece you chose to keep is no longer in this closet.",
         ids: [id],
         actions: [{ type: "release", id }],
       })),
@@ -542,7 +503,7 @@ export function styleOutfits(
   const consider = (ids: Piece[]) => {
     const problems = evaluateOutfit(ids, request, pool);
     if (problems.some((problem) => problem.severity !== "review")) return;
-    const { score, reasons } = scoreOutfit(ids, request);
+    const { score, reasons } = scorer.score(ids, request, context);
     const candidate = {
       ids: ids.map((piece) => piece.id),
       score,
@@ -550,6 +511,33 @@ export function styleOutfits(
       problems,
     };
     (problems.length ? reviews : outfits).push(candidate);
+  };
+  const extras = [
+    keptRole("bag").length ? [] : eligibleRole("bag"),
+    request.style === "desi" && !kept.some((piece) => piece.kind === "dupatta")
+      ? eligible.filter((piece) => piece.kind === "dupatta")
+      : [],
+  ];
+  const accessorise = (candidate: Candidate): Candidate => {
+    let best = candidate;
+    for (const options of extras) {
+      const start = best;
+      for (const extra of options) {
+        const pieces = [...start.ids, extra.id].map((id) =>
+          pool.find((piece) => piece.id === id)!,
+        );
+        if (
+          evaluateOutfit(pieces, request, pool).some(
+            (problem) => problem.severity !== "review",
+          )
+        )
+          continue;
+        const result = scorer.score(pieces, request, context);
+        if (result.score > best.score)
+          best = { ...candidate, ids: [...start.ids, extra.id], ...result };
+      }
+    }
+    return best;
   };
   const expand = (prefix: Piece[], rest: Piece[][][]) => {
     if (limited) return;
@@ -576,12 +564,12 @@ export function styleOutfits(
   if (outfits.length)
     return {
       status: "ready",
-      outfits: diversify(outfits, seed),
+      outfits: diversify(outfits, seed).map(accessorise),
       problems: [],
       limited,
     };
   if (reviews.length) {
-    const ordered = diversify(reviews, seed);
+    const ordered = diversify(reviews, seed).map(accessorise);
     return {
       status: "review",
       outfits: ordered,
@@ -617,6 +605,8 @@ export function replacementsFor(
   request: OutfitRequest,
   currentIds: string[],
   targetId: string,
+  scorer: Scorer,
+  context: ScoreContext,
 ): Replacement[] {
   const wardrobe = closetPieces.filter(
     (piece) => piece.source === request.wardrobe,
@@ -642,7 +632,7 @@ export function replacementsFor(
       return {
         piece,
         problems: evaluateOutfit(outfit, request, pool),
-        score: scoreOutfit(outfit, request).score,
+        score: scorer.score(outfit, request, context).score,
       };
     })
     .filter(({ problems }) =>

@@ -14,6 +14,8 @@ import {
 } from "./closet";
 import { addSampleWardrobe } from "./samples";
 import { replacementsFor } from "./styling";
+import { rulesScorer } from "./scoring/rulesScorer";
+import { scoreContext } from "./scoring/taste";
 import {
   activeSession,
   dropFromToday,
@@ -124,6 +126,8 @@ test("unavailable pieces are left out of suggestions and Change a piece", () => 
       session.request,
       session.pieceIds,
       hijab,
+      rulesScorer,
+      scoreContext(closet),
     ).map((option) => option.piece.id);
   const before = options(today);
   assert.ok(before.length >= 2);
@@ -163,7 +167,7 @@ test("a kept piece that becomes unavailable stays on Today and is explained with
   assert.equal(result.problems[0]!.code, "kept-missing");
   assert.equal(
     result.problems[0]!.message,
-    "A piece you chose to keep is marked unavailable.",
+    `${byId(away, hijab).name} is marked as unavailable right now.`,
   );
   assert.deepEqual(result.problems[0]!.actions, [
     { type: "release", id: hijab },
@@ -177,6 +181,13 @@ test("a kept piece that became unavailable does not break Change a piece for ano
   const other = session.pieceIds.find((id) => id !== hijab)!;
   const away = setAway(toggleKeep(today, hijab), hijab, "lent");
   assert.doesNotThrow(() =>
-    replacementsFor(away.pieces, session.request, session.pieceIds, other),
+    replacementsFor(
+      away.pieces,
+      session.request,
+      session.pieceIds,
+      other,
+      rulesScorer,
+      scoreContext(away),
+    ),
   );
 });

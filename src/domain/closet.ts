@@ -14,6 +14,7 @@ import {
   isAttributes,
   type AttributeKey,
   type Attributes,
+  type Length,
 } from "./attributes";
 import { isCareLabel, withCareLabel, type CareLabel } from "./careLabel";
 import { isSwatches, type Swatch } from "./color";
@@ -165,6 +166,7 @@ export type Look = {
   name: string;
   pieceIds: string[];
   createdAt: string;
+  occasion?: Occasion;
 };
 
 export type HijabPreference = "always" | "not-needed" | null;
@@ -178,6 +180,101 @@ export type Weather =
       precipitation: "dry" | "rain" | "snow";
       exposure: "mostly-indoors" | "time-outside" | null;
     };
+
+export type Coverage = "full" | "moderate" | "own";
+
+export const bodyShapes = [
+  "pear",
+  "apple",
+  "hourglass",
+  "rectangle",
+  "inverted-triangle",
+  "athletic",
+] as const;
+export type BodyShape = (typeof bodyShapes)[number];
+
+export const seasons = [
+  "light-spring",
+  "warm-spring",
+  "clear-spring",
+  "light-summer",
+  "cool-summer",
+  "soft-summer",
+  "soft-autumn",
+  "warm-autumn",
+  "deep-autumn",
+  "deep-winter",
+  "cool-winter",
+  "clear-winter",
+] as const;
+export type Season = (typeof seasons)[number];
+
+export type ColourProfile = {
+  skin: [number, number, number] | null;
+  hair: [number, number, number] | null;
+  eyes: [number, number, number] | null;
+  undertone: "warm" | "cool" | "neutral";
+  depth: "light" | "medium" | "deep";
+  contrast: "low" | "medium" | "high";
+  season: Season;
+  source: "measured" | "swatch" | "confirmed";
+};
+
+export type StyleProfile = {
+  coverageLevel: Coverage | null;
+  heightCm: number | null;
+  bodyShape: BodyShape | null;
+  fit: "loose" | "structured" | "depends" | null;
+  colourLean: "bold" | "soft" | "depends" | null;
+  styleLean: "desi" | "western" | "both" | null;
+  colour: ColourProfile | null;
+  beltOverOuter: boolean | null;
+  minTopLength: Length | null;
+  bottoms: "trousers" | "skirts" | "both" | null;
+  printOnPrint: boolean | null;
+  avoidAtWeddings: ("white" | "black")[];
+  dupattaExpected: boolean | null;
+  region: "south-asian" | "gulf" | "turkish" | "western-europe" | null;
+};
+
+export const settingKeys = [
+  "beltOverOuter",
+  "minTopLength",
+  "bottoms",
+  "printOnPrint",
+  "avoidAtWeddings",
+  "dupattaExpected",
+  "region",
+] as const;
+
+export type SettingKey = (typeof settingKeys)[number];
+
+export type Taste = {
+  weights: Record<string, number>;
+  pairs: Record<string, { worn: number; rejected: number }>;
+};
+
+export type FeedbackKind =
+  | "wore"
+  | "saved"
+  | "swap"
+  | "too-formal"
+  | "too-plain"
+  | "too-warm"
+  | "not-my-style";
+
+export type FeedbackEvent = {
+  id: string;
+  at: string;
+  kind: FeedbackKind;
+  pieceIds: string[];
+  request: OutfitRequest;
+  engine: Engine;
+  cursor?: number;
+  swap?: { from: string; to: string };
+  undone?: boolean;
+  against?: string[];
+};
 
 export type EverydayStyle = {
   version: number;
@@ -198,12 +295,15 @@ export type OutfitRequest = {
   wardrobe: WardrobeMode;
 };
 
+export type Engine = "rules" | "model";
+
 export type Session = {
   revision: number;
   request: OutfitRequest;
   cursor: number;
   pieceIds: string[];
   previousPieceIds: string[] | null;
+  engine?: Engine;
 };
 
 export type TodayState = {
@@ -219,6 +319,9 @@ export type Styling = {
   everyday: EverydayStyle | null;
   wardrobe: WardrobeMode;
   today: TodayState | null;
+  profile: StyleProfile;
+  taste: Taste;
+  engine: Engine | "compare";
 };
 
 export type Closet = {
@@ -228,14 +331,37 @@ export type Closet = {
   sampleCatalog: number;
   styling: Styling;
   imports: ImportJob[];
+  feedback: FeedbackEvent[];
   photoTipsSeen?: boolean;
   attributeRefresh?: number;
 };
+
+export const neutralProfile: StyleProfile = {
+  coverageLevel: null,
+  heightCm: null,
+  bodyShape: null,
+  fit: null,
+  colourLean: null,
+  styleLean: null,
+  colour: null,
+  beltOverOuter: null,
+  minTopLength: null,
+  bottoms: null,
+  printOnPrint: null,
+  avoidAtWeddings: [],
+  dupattaExpected: null,
+  region: null,
+};
+
+export const emptyTaste: Taste = { weights: {}, pairs: {} };
 
 export const emptyStyling: Styling = {
   everyday: null,
   wardrobe: "sample",
   today: null,
+  profile: neutralProfile,
+  taste: emptyTaste,
+  engine: "rules",
 };
 
 export const emptyCloset: Closet = {
@@ -245,6 +371,7 @@ export const emptyCloset: Closet = {
   sampleCatalog: 0,
   styling: emptyStyling,
   imports: [],
+  feedback: [],
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -591,6 +718,114 @@ function isRequest(value: unknown): value is OutfitRequest {
   );
 }
 
+const isUnsetOr =
+  (options: readonly unknown[]) =>
+  (value: unknown): boolean =>
+    value === undefined || value === null || options.includes(value);
+
+function hasSettings(value: unknown) {
+  return (
+    isRecord(value) &&
+    isUnsetOr([true, false])(value.beltOverOuter) &&
+    isUnsetOr(["hip", "thigh", "knee", "calf", "ankle"])(value.minTopLength) &&
+    isUnsetOr(["trousers", "skirts", "both"])(value.bottoms) &&
+    isUnsetOr([true, false])(value.printOnPrint) &&
+    (value.avoidAtWeddings === undefined ||
+      (Array.isArray(value.avoidAtWeddings) &&
+        value.avoidAtWeddings.every(
+          (item) => item === "white" || item === "black",
+        ))) &&
+    isUnsetOr([true, false])(value.dupattaExpected) &&
+    isUnsetOr(["south-asian", "gulf", "turkish", "western-europe"])(
+      value.region,
+    )
+  );
+}
+
+function isTaste(value: unknown): value is Taste {
+  return (
+    isRecord(value) &&
+    isRecord(value.weights) &&
+    Object.values(value.weights).every(
+      (weight) => typeof weight === "number" && Number.isFinite(weight),
+    ) &&
+    isRecord(value.pairs) &&
+    Object.values(value.pairs).every(
+      (pair) => isRecord(pair) && isCount(pair.worn) && isCount(pair.rejected),
+    )
+  );
+}
+
+const isEngine = (value: unknown): value is Engine =>
+  value === "rules" || value === "model";
+
+const feedbackKinds: FeedbackKind[] = [
+  "wore",
+  "saved",
+  "swap",
+  "too-formal",
+  "too-plain",
+  "too-warm",
+  "not-my-style",
+];
+
+function isFeedbackEvent(value: unknown): value is FeedbackEvent {
+  return (
+    isRecord(value) &&
+    isString(value.id) &&
+    isString(value.at) &&
+    feedbackKinds.includes(value.kind as FeedbackKind) &&
+    isUniqueStrings(value.pieceIds) &&
+    isRequest(value.request) &&
+    isEngine(value.engine) &&
+    optional(
+      value.swap,
+      (swap): swap is { from: string; to: string } =>
+        isRecord(swap) && isString(swap.from) && isString(swap.to),
+    ) &&
+    optional(value.undone, isBoolean) &&
+    optional(value.against, isUniqueStrings)
+  );
+}
+
+function hasStylistState(closet: Closet) {
+  const stored = closet as unknown as Record<string, unknown>;
+  const styling = closet.styling as unknown as Record<string, unknown>;
+  const sessions = closet.styling.today
+    ? [closet.styling.today.everyday, closet.styling.today.occasion]
+    : [];
+  return (
+    (styling.profile === undefined || hasSettings(styling.profile)) &&
+    optional(styling.taste, isTaste) &&
+    optional(
+      styling.engine,
+      (engine): engine is Engine | "compare" =>
+        isEngine(engine) || engine === "compare",
+    ) &&
+    optional(
+      stored.feedback,
+      (list): list is FeedbackEvent[] =>
+        Array.isArray(list) && list.every(isFeedbackEvent),
+    ) &&
+    closet.looks.every((look) => optional(look.occasion, isOccasion)) &&
+    sessions.every((session) => !session || optional(session.engine, isEngine))
+  );
+}
+
+function withStylistState(closet: Closet): Closet {
+  if (!hasStylistState(closet)) throw unreadable();
+  return {
+    ...closet,
+    feedback: closet.feedback ?? [],
+    styling: {
+      ...closet.styling,
+      profile: { ...neutralProfile, ...closet.styling.profile },
+      taste: closet.styling.taste ?? emptyTaste,
+      engine: closet.styling.engine ?? "rules",
+    },
+  };
+}
+
 function isSession(value: unknown): value is Session {
   return (
     isRecord(value) &&
@@ -681,6 +916,7 @@ export function migrateV1(
     sampleCatalog: value.sampleWardrobeAdded ? 1 : 0,
     styling: emptyStyling,
     imports: [],
+    feedback: [],
   };
 }
 
@@ -734,12 +970,33 @@ function withPalette(job: ImportJob): ImportJob {
   };
 }
 
+export function renameCelebration(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(renameCelebration);
+  if (!isRecord(value)) return value;
+  return Object.fromEntries(
+    Object.entries(value).map(([key, item]) => [
+      key,
+      key === "occasion" && item === "celebration"
+        ? "party"
+        : key === "occasions" && Array.isArray(item)
+          ? [
+              ...new Set(
+                item.map((entry) =>
+                  entry === "celebration" ? "party" : entry,
+                ),
+              ),
+            ]
+          : renameCelebration(item),
+    ]),
+  );
+}
+
 function decodeStored(
   raw: string | null,
   sampleTraits: Record<string, SampleTraits> = {},
 ): Closet {
   if (raw === null) return emptyCloset;
-  const parsed: unknown = JSON.parse(raw);
+  const parsed = renameCelebration(JSON.parse(raw));
   if (isRecord(parsed) && parsed.version === 1)
     return migrateV1(parsed, sampleTraits);
   const value =
@@ -765,10 +1022,10 @@ function decodeStored(
   ) {
     throw unreadable();
   }
-  return {
+  return withStylistState({
     ...(value as Closet),
     imports: (value.imports as ImportJob[]) ?? [],
-  };
+  });
 }
 
 export function decodeCloset(...args: Parameters<typeof decodeStored>): Closet {

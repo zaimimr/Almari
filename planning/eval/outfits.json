@@ -1,0 +1,162 @@
+{
+  "version": 1,
+  "rater": "developer smoke set from the sample closet, replace with her ratings",
+  "closet": null,
+  "outfits": [
+    {
+      "id": "w1",
+      "occasion": "work",
+      "style": "western",
+      "pieceIds": [
+        "sample-ivory-tunic",
+        "sample-charcoal-trousers",
+        "sample-chocolate-hijab",
+        "sample-navy-blazer",
+        "sample-chocolate-loafers",
+        "sample-taupe-bag"
+      ],
+      "rating": "would-wear"
+    },
+    {
+      "id": "w2",
+      "occasion": "work",
+      "style": "western",
+      "pieceIds": [
+        "sample-ivory-tunic",
+        "sample-charcoal-trousers",
+        "sample-mauve-hijab",
+        "sample-chocolate-loafers"
+      ],
+      "rating": "ok"
+    },
+    {
+      "id": "w3",
+      "occasion": "work",
+      "style": "western",
+      "pieceIds": [
+        "sample-ivory-tunic",
+        "sample-ivory-trousers",
+        "sample-ivory-hijab",
+        "sample-chocolate-loafers"
+      ],
+      "rating": "no",
+      "note": "all light, washed out"
+    },
+    {
+      "id": "w4",
+      "occasion": "work",
+      "style": "western",
+      "pieceIds": [
+        "sample-olive-maxi-dress",
+        "sample-ivory-hijab",
+        "sample-navy-blazer",
+        "sample-taupe-abaya",
+        "sample-chocolate-loafers"
+      ],
+      "rating": "no",
+      "note": "two layers indoors"
+    },
+    {
+      "id": "w5",
+      "occasion": "work",
+      "style": "western",
+      "pieceIds": [
+        "sample-olive-maxi-dress",
+        "sample-chocolate-hijab",
+        "sample-navy-blazer",
+        "sample-chocolate-loafers",
+        "sample-taupe-bag"
+      ],
+      "rating": "would-wear"
+    },
+    {
+      "id": "e1",
+      "occasion": "everyday",
+      "style": "western",
+      "pieceIds": [
+        "sample-olive-maxi-dress",
+        "sample-ivory-hijab",
+        "sample-chocolate-loafers"
+      ],
+      "rating": "would-wear"
+    },
+    {
+      "id": "e2",
+      "occasion": "everyday",
+      "style": "western",
+      "pieceIds": [
+        "sample-ivory-tunic",
+        "sample-charcoal-trousers",
+        "sample-chocolate-hijab",
+        "sample-taupe-abaya",
+        "sample-chocolate-loafers"
+      ],
+      "rating": "would-wear"
+    },
+    {
+      "id": "e3",
+      "occasion": "everyday",
+      "style": "western",
+      "pieceIds": [
+        "sample-ivory-tunic",
+        "sample-ivory-trousers",
+        "sample-ivory-hijab",
+        "sample-chocolate-loafers"
+      ],
+      "rating": "no",
+      "note": "all light, washed out"
+    },
+    {
+      "id": "e4",
+      "occasion": "everyday",
+      "style": "western",
+      "pieceIds": [
+        "sample-olive-maxi-dress",
+        "sample-charcoal-trousers",
+        "sample-mauve-hijab",
+        "sample-navy-blazer",
+        "sample-taupe-abaya",
+        "sample-chocolate-loafers"
+      ],
+      "rating": "no",
+      "note": "maxi over trousers and two layers"
+    },
+    {
+      "id": "d1",
+      "occasion": "party",
+      "style": "desi",
+      "pieceIds": [
+        "sample-sage-kurta",
+        "sample-ivory-salwar",
+        "sample-ivory-hijab",
+        "sample-chocolate-loafers"
+      ],
+      "rating": "would-wear"
+    },
+    {
+      "id": "d2",
+      "occasion": "party",
+      "style": "desi",
+      "pieceIds": [
+        "sample-sage-kurta",
+        "sample-ivory-salwar",
+        "sample-mauve-hijab",
+        "sample-chocolate-loafers"
+      ],
+      "rating": "ok"
+    },
+    {
+      "id": "d3",
+      "occasion": "party",
+      "style": "desi",
+      "pieceIds": [
+        "sample-sage-kurta",
+        "sample-charcoal-trousers",
+        "sample-chocolate-hijab",
+        "sample-chocolate-loafers"
+      ],
+      "rating": "no",
+      "note": "jersey hijab and work trousers at a party"
+    }
+  ]
+}

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { Stack, router, useLocalSearchParams } from "expo-router";
 import {
-  occasions,
+  occasionOptions,
   styleOptions,
   type GarmentKind,
   type OutfitRequest,
@@ -155,7 +155,7 @@ export default function AdjustToday() {
       </AppText>
       <ChoiceGroup
         label="Occasion"
-        options={occasions}
+        options={occasionOptions()}
         value={request.occasion}
         disabled={busy}
         onChange={(occasion) => set({ occasion })}

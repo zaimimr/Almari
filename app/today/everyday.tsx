@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Stack, router } from "expo-router";
 import {
-  occasions,
+  occasionOptions,
   styleOptions,
   type HijabPreference,
   type Occasion,
@@ -82,7 +82,7 @@ export default function EverydayStyle() {
       ) : null}
       <ChoiceGroup
         label="Usual occasion"
-        options={occasions}
+        options={occasionOptions()}
         value={occasion}
         disabled={busy}
         onChange={setOccasion}

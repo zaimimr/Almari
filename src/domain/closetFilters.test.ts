@@ -29,7 +29,7 @@ const hijab = piece("hijab", {
   category: "hijab",
   kind: "hijab",
   styles: ["western", "desi"],
-  traits: { occasions: ["work", "celebration"] },
+  traits: { occasions: ["work", "party"] },
 });
 const kurta = piece("kurta", { category: "tunic", kind: "kurta" });
 const shoes = piece("shoes", { category: "shoes" });
@@ -70,9 +70,7 @@ test("category, style and occasion filters combine", () => {
     "shoes",
   ]);
   assert.deepEqual(ids({ occasion: "everyday" }), ["kurta", "shoes"]);
-  assert.deepEqual(ids({ occasion: "celebration", style: "western" }), [
-    "hijab",
-  ]);
+  assert.deepEqual(ids({ occasion: "party", style: "western" }), ["hijab"]);
   assert.deepEqual(ids({ category: "tunic", occasion: "work" }), ["kurta"]);
   assert.deepEqual(ids({ category: "shoes", style: "western" }), []);
 });

@@ -14,8 +14,10 @@ const catalog: CatalogPiece[] = [
     styles: both,
     traits: {
       tone: "mid",
-      occasions: ["work", "everyday", "dinner", "celebration"],
+      occasions: ["everyday", "work", "dinner", "eid", "party", "wedding"],
     },
+    attributes: { pattern: "solid", fabric: "chiffon", formality: 3 },
+    colors: [{ rgb: [153, 108, 115], share: 1 }],
   },
   {
     id: "sample-ivory-hijab",
@@ -25,8 +27,10 @@ const catalog: CatalogPiece[] = [
     styles: both,
     traits: {
       tone: "light",
-      occasions: ["work", "everyday", "dinner", "celebration"],
+      occasions: ["everyday", "work", "dinner", "eid", "party", "wedding"],
     },
+    attributes: { pattern: "solid", fabric: "modal", formality: 2 },
+    colors: [{ rgb: [236, 231, 218], share: 1 }],
   },
   {
     id: "sample-chocolate-hijab",
@@ -34,7 +38,9 @@ const catalog: CatalogPiece[] = [
     category: "hijab",
     kind: "hijab",
     styles: both,
-    traits: { tone: "dark", occasions: ["work", "everyday"] },
+    traits: { tone: "dark", occasions: ["everyday", "work"] },
+    attributes: { pattern: "solid", fabric: "jersey", formality: 1 },
+    colors: [{ rgb: [78, 52, 42], share: 1 }],
   },
   {
     id: "sample-ivory-tunic",
@@ -42,7 +48,17 @@ const catalog: CatalogPiece[] = [
     category: "tunic",
     kind: "tunic",
     styles: ["western"],
-    traits: { tone: "light", occasions: ["work", "everyday"] },
+    traits: { tone: "light", occasions: ["everyday", "work"] },
+    attributes: {
+      length: "thigh",
+      sleeve: "long",
+      volume: "straight",
+      pattern: "solid",
+      fabric: "cotton",
+      embellishment: "none",
+      formality: 2,
+    },
+    colors: [{ rgb: [236, 231, 218], share: 1 }],
   },
   {
     id: "sample-sage-kurta",
@@ -52,8 +68,21 @@ const catalog: CatalogPiece[] = [
     styles: ["desi"],
     traits: {
       tone: "mid",
-      occasions: ["work", "everyday", "dinner", "celebration"],
+      occasions: ["everyday", "work", "dinner", "eid", "party"],
     },
+    attributes: {
+      length: "knee",
+      sleeve: "long",
+      volume: "straight",
+      pattern: "embroidered",
+      fabric: "cotton",
+      embellishment: "light",
+      formality: 3,
+    },
+    colors: [
+      { rgb: [160, 170, 145], share: 0.8 },
+      { rgb: [236, 231, 218], share: 0.2 },
+    ],
   },
   {
     id: "sample-navy-blazer",
@@ -61,7 +90,21 @@ const catalog: CatalogPiece[] = [
     category: "layer",
     kind: "blazer",
     styles: ["western"],
-    traits: { tone: "dark", occasions: ["work", "dinner"], warmth: "medium" },
+    traits: {
+      tone: "dark",
+      occasions: ["work", "dinner"],
+      warmth: "medium",
+    },
+    attributes: {
+      length: "thigh",
+      sleeve: "long",
+      volume: "straight",
+      pattern: "solid",
+      fabric: "wool",
+      embellishment: "none",
+      formality: 3,
+    },
+    colors: [{ rgb: [35, 45, 75], share: 1 }],
   },
   {
     id: "sample-taupe-abaya",
@@ -71,10 +114,20 @@ const catalog: CatalogPiece[] = [
     styles: ["western"],
     traits: {
       tone: "mid",
-      occasions: ["work", "everyday", "dinner"],
+      occasions: ["everyday", "work", "dinner"],
       warmth: "light",
       open: true,
     },
+    attributes: {
+      length: "ankle",
+      sleeve: "long",
+      volume: "voluminous",
+      pattern: "solid",
+      fabric: "chiffon",
+      embellishment: "none",
+      formality: 2,
+    },
+    colors: [{ rgb: [142, 120, 106], share: 1 }],
   },
   {
     id: "sample-ivory-trousers",
@@ -82,7 +135,16 @@ const catalog: CatalogPiece[] = [
     category: "bottom",
     kind: "trousers",
     styles: both,
-    traits: { tone: "light", occasions: ["work", "everyday", "dinner"] },
+    traits: { tone: "light", occasions: ["everyday", "work", "dinner"] },
+    attributes: {
+      length: "ankle",
+      volume: "voluminous",
+      pattern: "solid",
+      fabric: "linen",
+      embellishment: "none",
+      formality: 2,
+    },
+    colors: [{ rgb: [236, 231, 218], share: 1 }],
   },
   {
     id: "sample-charcoal-trousers",
@@ -90,7 +152,16 @@ const catalog: CatalogPiece[] = [
     category: "bottom",
     kind: "trousers",
     styles: both,
-    traits: { tone: "dark", occasions: ["work", "everyday"] },
+    traits: { tone: "dark", occasions: ["everyday", "work"] },
+    attributes: {
+      length: "ankle",
+      volume: "voluminous",
+      pattern: "solid",
+      fabric: "wool",
+      embellishment: "none",
+      formality: 2,
+    },
+    colors: [{ rgb: [62, 62, 64], share: 1 }],
   },
   {
     id: "sample-ivory-salwar",
@@ -100,8 +171,17 @@ const catalog: CatalogPiece[] = [
     styles: ["desi"],
     traits: {
       tone: "light",
-      occasions: ["everyday", "dinner", "celebration"],
+      occasions: ["everyday", "dinner", "eid", "party"],
     },
+    attributes: {
+      length: "ankle",
+      volume: "voluminous",
+      pattern: "solid",
+      fabric: "cotton",
+      embellishment: "none",
+      formality: 2,
+    },
+    colors: [{ rgb: [236, 231, 218], share: 1 }],
   },
   {
     id: "sample-chocolate-loafers",
@@ -109,7 +189,9 @@ const catalog: CatalogPiece[] = [
     category: "shoes",
     kind: "loafers",
     styles: both,
-    traits: { tone: "dark", occasions: ["work", "everyday", "dinner"] },
+    traits: { tone: "dark", occasions: ["everyday", "work", "dinner"] },
+    attributes: { formality: 2 },
+    colors: [{ rgb: [78, 52, 42], share: 1 }],
   },
   {
     id: "sample-taupe-bag",
@@ -117,7 +199,9 @@ const catalog: CatalogPiece[] = [
     category: "bag",
     kind: "handbag",
     styles: both,
-    traits: { tone: "mid", occasions: ["work", "everyday", "dinner"] },
+    traits: { tone: "mid", occasions: ["everyday", "work", "dinner"] },
+    attributes: { formality: 2 },
+    colors: [{ rgb: [142, 120, 106], share: 1 }],
   },
 ].map((piece) => ({
   ...piece,
@@ -133,14 +217,24 @@ catalog.push({
   category: "dress",
   kind: "dress",
   styles: ["western"],
-  traits: { tone: "mid", occasions: ["work", "everyday", "dinner"] },
+  traits: { tone: "mid", occasions: ["everyday", "work", "dinner"] },
+  attributes: {
+    length: "ankle",
+    sleeve: "long",
+    volume: "straight",
+    pattern: "solid",
+    fabric: "cotton",
+    embellishment: "none",
+    formality: 2,
+  },
+  colors: [{ rgb: [107, 108, 78], share: 1 }],
   source: "sample",
   photo: "sample:olive-maxi-dress",
   createdAt: "2026-10-01T09:00:00.000Z",
   catalog: 2,
 });
 
-export const sampleCatalogVersion = 2;
+export const sampleCatalogVersion = 3;
 
 export const samplePieces: Piece[] = catalog.map(
   ({ catalog: _catalog, ...piece }) => piece,
@@ -162,6 +256,20 @@ export function isSamplePhoto(photo: string) {
   return photo.startsWith("sample:");
 }
 
+function refreshed(piece: Piece): Piece {
+  const fixture = samplePieces.find((item) => item.id === piece.id);
+  if (!fixture || piece.source !== "sample") return piece;
+  if (fixture.category !== piece.category) return piece;
+  return {
+    ...piece,
+    kind: fixture.kind,
+    styles: fixture.styles,
+    traits: fixture.traits,
+    attributes: fixture.attributes,
+    colors: fixture.colors,
+  };
+}
+
 export function addSampleWardrobe(closet: Closet): Closet {
   if (closet.sampleCatalog >= sampleCatalogVersion) return closet;
   const existingIds = new Set(closet.pieces.map((piece) => piece.id));
@@ -174,6 +282,6 @@ export function addSampleWardrobe(closet: Closet): Closet {
   return {
     ...closet,
     sampleCatalog: sampleCatalogVersion,
-    pieces: [...closet.pieces, ...additions],
+    pieces: [...closet.pieces.map(refreshed), ...additions],
   };
 }

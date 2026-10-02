@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppState } from "react-native";
 import type { Closet, Piece, Weather } from "../../domain/closet";
 import { occasionLabel, styleLabel } from "../../domain/closet";
@@ -16,10 +16,18 @@ export function useToday() {
   const [busy, setBusy] = useState(false);
   const today = closet.styling.today;
   const session = today ? activeSession(today) : null;
-  const result =
-    today && session
-      ? resultFor(closet, session.request, today.localDate)
-      : null;
+  const result = useMemo(
+    () =>
+      today
+        ? resultFor(
+            closet,
+            activeSession(today).request,
+            today.localDate,
+            activeSession(today).engine ?? "rules",
+          )
+        : null,
+    [closet, today],
+  );
   const pieces = session
     ? session.pieceIds.flatMap((id) => {
         const piece = closet.pieces.find((item) => item.id === id);

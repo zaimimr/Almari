@@ -3,17 +3,19 @@ import { Stack, router } from "expo-router";
 import {
   isAvailable,
   kindLabel,
-  occasionLabel,
+  occasionPhrase,
   styleLabel,
   type GarmentKind,
   type OutfitRequest,
   type Piece,
 } from "../../../src/domain/closet";
+import { t } from "../../../src/i18n";
 import {
   evaluateOutfit,
-  scoreOutfit,
   type ProblemAction,
 } from "../../../src/domain/styling";
+import { rulesScorer } from "../../../src/domain/scoring/rulesScorer";
+import { scoreContext } from "../../../src/domain/scoring/taste";
 import {
   applyRequest,
   backToEveryday,
@@ -203,7 +205,9 @@ function TodayContent() {
   const reviewProblems = showOutfit
     ? evaluateOutfit(pieces, request, pool)
     : [];
-  const reasons = showOutfit ? scoreOutfit(pieces, request).reasons : [];
+  const reasons = showOutfit
+    ? rulesScorer.score(pieces, request, scoreContext(closet)).reasons
+    : [];
   const last =
     result.outfits.length > 0 && session.cursor >= result.outfits.length - 1;
   const source =
@@ -213,7 +217,9 @@ function TodayContent() {
     <>
       <AppText variant="heading">
         {today.active === "occasion"
-          ? `Styled for ${occasionLabel(request.occasion).toLowerCase()}.`
+          ? t("today.styledFor", {
+              occasion: occasionPhrase(request.occasion),
+            })
           : "A little inspiration for today."}
       </AppText>
       <View style={styles.context}>
