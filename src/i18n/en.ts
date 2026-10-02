@@ -676,6 +676,12 @@ export const en = {
   "settings.privacy":
     "Everything stays on this phone. There is no account and no login. Only the position of your city is sent to get the weather.",
   "settings.version": "Version {version}",
+  "reason.face-best-colour-hijab":
+    "The {a} is one of your best colours near your face.",
+  "reason.face-best-colour-top":
+    "The {a} is one of your best colours near your face.",
+  "reason.face-best-colour-dupatta":
+    "The {a} is one of your best colours near your face.",
 };
 
 export type Key = keyof typeof en;

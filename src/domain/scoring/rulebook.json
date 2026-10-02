@@ -18,7 +18,8 @@
     "accentJoinDE": 12,
     "contrastDL": 25,
     "lightL": 75,
-    "paletteShare": 0.15
+    "paletteShare": 0.15,
+    "bestDE": 10
   },
   "rules": [
     {
@@ -1390,6 +1391,42 @@
       "when": { "profile": { "region": ["western-europe"] } },
       "if": { "has": { "kind": ["blazer", "coat", "cardigan"] } },
       "weight": 0.3
+    },
+    {
+      "id": "face-best-colour-hijab",
+      "source": "colour:best-colours",
+      "layer": "color",
+      "if": { "has": { "role": ["hijab"], "bestColour": true } },
+      "weight": 0.5,
+      "reason": true
+    },
+    {
+      "id": "face-best-colour-top",
+      "source": "colour:best-colours",
+      "layer": "color",
+      "if": { "has": { "role": ["main"], "bestColour": true } },
+      "weight": 0.4,
+      "reason": true
+    },
+    {
+      "id": "face-best-colour-dupatta",
+      "source": "colour:best-colours",
+      "layer": "color",
+      "if": { "has": { "kind": ["dupatta"], "bestColour": true } },
+      "weight": 0.3,
+      "reason": true
+    },
+    {
+      "id": "face-undertone-clash",
+      "source": "colour:undertone",
+      "layer": "color",
+      "if": {
+        "any": [
+          { "has": { "role": ["hijab", "main"], "undertoneClash": true } },
+          { "has": { "kind": ["dupatta"], "undertoneClash": true } }
+        ]
+      },
+      "weight": -0.3
     },
     {
       "id": "accent-single",

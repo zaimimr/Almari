@@ -7,6 +7,8 @@ import {
   type StyleProfile,
 } from "../closet";
 import { formalityFor } from "../attributes";
+import { deltaE, type Lab } from "../color";
+import { bestColours } from "../colourAnalysis";
 import { t, type Key } from "../../i18n";
 import { en } from "../../i18n/en";
 import { roleOf, type Role } from "../styling";
@@ -14,6 +16,7 @@ import {
   colorFacts,
   colorMetric,
   colorRelation,
+  toneSide,
   type ColorFacts,
 } from "./harmony";
 import type {
@@ -42,6 +45,7 @@ type Scope = {
   thresholds: Thresholds;
   outfit: Facts[];
   metrics: Map<string, number | null>;
+  best: Lab[] | null;
 };
 
 type Outcome = { ok: boolean; bound: Facts[]; certain: boolean };
@@ -104,7 +108,12 @@ function proposed(piece: Piece, key: SourceKey) {
   return piece.sources?.[key] === "proposed";
 }
 
-function certainFor(facts: Facts, selector: Selector) {
+function certainFor(facts: Facts, selector: Selector, scope: Scope) {
+  if (
+    (selector.bestColour || selector.undertoneClash) &&
+    scope.profile.colour?.source !== "confirmed"
+  )
+    return false;
   return (Object.keys(selector) as (keyof Selector)[]).every((key) => {
     const source = selectorSources[key];
     return !source || !proposed(facts.piece, source);
@@ -153,6 +162,22 @@ function matches(facts: Facts, selector: Selector, scope: Scope): boolean {
     if (!minimum || !attributes.length) return false;
     if (lengths.indexOf(attributes.length) >= lengths.indexOf(minimum))
       return false;
+  }
+  if (selector.bestColour) {
+    const tone = facts.color.main;
+    if (!tone || !scope.best) return false;
+    if (
+      !scope.best.some((lab) => deltaE(tone.lab, lab) < scope.thresholds.bestDE)
+    )
+      return false;
+  }
+  if (selector.undertoneClash) {
+    const tone = facts.color.main;
+    const undertone = scope.profile.colour?.undertone;
+    if (!tone || !undertone || undertone === "neutral") return false;
+    if (tone.lch[1] < scope.thresholds.vividChroma) return false;
+    const side = toneSide(tone);
+    if (!side || side === undertone) return false;
   }
   return true;
 }
@@ -282,7 +307,7 @@ function evaluate(condition: Condition, scope: Scope): Outcome {
     return {
       ok: found.length >= min && found.length <= max,
       bound: found,
-      certain: found.every((facts) => certainFor(facts, condition.has)),
+      certain: found.every((facts) => certainFor(facts, condition.has, scope)),
     };
   }
   if ("pair" in condition) {
@@ -298,7 +323,8 @@ function evaluate(condition: Condition, scope: Scope): Outcome {
           return {
             ok: true,
             bound: [a, b],
-            certain: certainFor(a, first) && certainFor(b, second),
+            certain:
+              certainFor(a, first, scope) && certainFor(b, second, scope),
           };
     return no;
   }
@@ -359,6 +385,7 @@ export function ruleHits(
     thresholds: book.thresholds,
     outfit: factsFor(pieces, book.thresholds),
     metrics: new Map(),
+    best: profile.colour ? bestColours(profile.colour) : null,
   };
   return book.rules.flatMap((rule) => {
     if (!applies(rule, request, profile)) return [];

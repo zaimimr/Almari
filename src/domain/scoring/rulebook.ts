@@ -39,6 +39,8 @@ export type Selector = {
   formality?: { min?: number; max?: number };
   tagged?: "occasion" | "other";
   belowMinLength?: boolean;
+  bestColour?: true;
+  undertoneClash?: true;
 };
 
 export type Relation =
@@ -120,6 +122,7 @@ export type Thresholds = {
   contrastDL: number;
   lightL: number;
   paletteShare: number;
+  bestDE: number;
 };
 
 export type RuleBook = {
@@ -258,6 +261,7 @@ const thresholdKeys: (keyof Thresholds)[] = [
   "contrastDL",
   "lightL",
   "paletteShare",
+  "bestDE",
 ];
 
 function fail(path: string, problem: string): never {
@@ -291,7 +295,14 @@ function checkSelector(value: unknown, path: string) {
   const selector = record(value, path);
   only(
     selector,
-    [...Object.keys(listValues), "formality", "tagged", "belowMinLength"],
+    [
+      ...Object.keys(listValues),
+      "formality",
+      "tagged",
+      "belowMinLength",
+      "bestColour",
+      "undertoneClash",
+    ],
     path,
   );
   for (const [key, allowed] of Object.entries(listValues))
@@ -311,6 +322,9 @@ function checkSelector(value: unknown, path: string) {
     fail(`${path}.tagged`, "must be occasion or other");
   if (selector.belowMinLength !== undefined && selector.belowMinLength !== true)
     fail(`${path}.belowMinLength`, "must be true");
+  for (const key of ["bestColour", "undertoneClash"])
+    if (selector[key] !== undefined && selector[key] !== true)
+      fail(`${path}.${key}`, "must be true");
 }
 
 function checkCondition(value: unknown, path: string) {

@@ -688,4 +688,10 @@ export const nb: Record<Key, string> = {
   "settings.privacy":
     "Alt blir på denne telefonen. Det finnes ingen konto og ingen innlogging. Bare posisjonen til byen din sendes for å hente været.",
   "settings.version": "Versjon {version}",
+  "reason.face-best-colour-hijab":
+    "Fargen på {a} er en av dine beste farger nær ansiktet.",
+  "reason.face-best-colour-top":
+    "Fargen på {a} er en av dine beste farger nær ansiktet.",
+  "reason.face-best-colour-dupatta":
+    "Fargen på {a} er en av dine beste farger nær ansiktet.",
 };
