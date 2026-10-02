@@ -57,7 +57,7 @@ jobs:
     name: ios -> TestFlight
     needs: prepare
     # Xcode 26 for the iOS 26 deployment target.
-    runs-on: macos-26
+    runs-on: xcode-27
     timeout-minutes: 90
     env:
       APPLE_TEAM_ID: 9L246T935B

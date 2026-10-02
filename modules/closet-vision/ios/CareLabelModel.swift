@@ -57,15 +57,10 @@ enum CareLabelModel {
       if #available(iOS 26.0, macOS 26.0, *) {
         do {
           let session = LanguageModelSession(instructions: instructions)
-          #if compiler(>=6.4)
-            let options = GenerationOptions(samplingMode: .greedy)
-          #else
-            let options = GenerationOptions(sampling: .greedy)
-          #endif
           let response = try await session.respond(
             to: label,
             generating: CareLabelFields.self,
-            options: options
+            options: GenerationOptions(samplingMode: .greedy)
           )
           return response.content.generatedContent.jsonString
         } catch {
