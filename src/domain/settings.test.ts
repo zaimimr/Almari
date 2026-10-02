@@ -105,3 +105,19 @@ test("reset returns the sample closet and every file of hers to delete", () => {
   assert.ok(files.every((file) => !file.startsWith("sample:")));
   assert.deepEqual(decodeCloset(JSON.stringify(closet)), closet);
 });
+
+test("the scan starts on auto and a manual choice survives a reopen and a reset", () => {
+  assert.equal(decodeCloset(null).styling.scan, "auto");
+  const start = used();
+  const closet: Closet = {
+    ...start,
+    styling: { ...start.styling, scan: "manual" },
+  };
+  assert.equal(decodeCloset(JSON.stringify(closet)).styling.scan, "manual");
+  assert.equal(resetCloset(closet).closet.styling.scan, "manual");
+  const raw = JSON.parse(JSON.stringify(closet));
+  delete raw.styling.scan;
+  assert.equal(decodeCloset(JSON.stringify(raw)).styling.scan, "auto");
+  raw.styling.scan = "burst";
+  assert.throws(() => decodeCloset(JSON.stringify(raw)));
+});

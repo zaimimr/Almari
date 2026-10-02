@@ -1,18 +1,20 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { emptyCloset, type Closet } from "./closet";
+import { emptyCloset, type Closet, type ScanMode } from "./closet";
 import { toLab, type Rgb } from "./color";
 import {
   addScanCapture,
   baselineMs,
   heldPiece,
   holdMs,
+  previewBox,
   readFrame,
   restartScan,
   scanCols,
   scanRows,
   scanSpeed,
   scanStep,
+  shutter,
   startScan,
   type ScanFrame,
   type ScanState,
@@ -89,11 +91,11 @@ function withBaseline(): ScanState {
   return state;
 }
 
-function run(state: ScanState, frames: ScanFrame[]) {
+function run(state: ScanState, frames: ScanFrame[], mode?: ScanMode) {
   const captures = [];
   const statuses = [];
   for (const item of frames) {
-    const step = scanStep(state, item);
+    const step = scanStep(state, item, mode);
     state = step.state;
     statuses.push(step.status);
     if (step.capture) captures.push(step.capture);
@@ -250,6 +252,54 @@ test("start again keeps the duplicate guard and waits for a new baseline", () =>
   const restarted = restartScan(state);
   assert.equal(restarted.baseline, null);
   assert.deepEqual(restarted.last, state.last);
+});
+
+test("manual waits for the shutter and takes the piece in the latest frame", () => {
+  const holding = (at: number) => frame(at, [...her, heldDress], edgeHands);
+  const { state, captures, statuses } = run(
+    withBaseline(),
+    [frame(2000, her), holding(2250), holding(3500)],
+    "manual",
+  );
+  assert.equal(captures.length, 0);
+  assert.deepEqual(statuses, ["show", "ready", "ready"]);
+  const taken = shutter(state);
+  assert.equal(taken.capture?.kind, "dress");
+  assert.equal(taken.state.held, null);
+  assert.equal(taken.state.last?.kind, "dress");
+  assert.equal(shutter(taken.state).capture, null);
+  const auto = run(taken.state, [holding(3750), holding(4500)]);
+  assert.equal(auto.captures.length, 0);
+});
+
+test("the shutter takes nothing when no piece is held", () => {
+  const { state } = run(withBaseline(), [frame(2000, her)], "manual");
+  assert.deepEqual(shutter(state), { state, capture: null });
+  const looking = scanStep(startScan, frame(0, her), "manual");
+  assert.equal(looking.status, "find");
+  assert.equal(shutter(looking.state).capture, null);
+});
+
+test("a frame box lands on the letterboxed preview, mirrored for the front camera", () => {
+  const box = { x: 0.1, y: 0.2, width: 0.4, height: 0.5 };
+  assert.deepEqual(previewBox(box, { width: 300, height: 500 }, 3 / 4), {
+    x: 30,
+    y: 130,
+    width: 120,
+    height: 200,
+  });
+  assert.deepEqual(previewBox(box, { width: 400, height: 400 }, 3 / 4), {
+    x: 80,
+    y: 80,
+    width: 120,
+    height: 200,
+  });
+  assert.deepEqual(previewBox(box, { width: 300, height: 400 }, 3 / 4, true), {
+    x: 150,
+    y: 80,
+    width: 120,
+    height: 200,
+  });
 });
 
 test("scan speed is frames per second and the median parse time", () => {

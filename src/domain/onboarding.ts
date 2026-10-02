@@ -174,6 +174,7 @@ export function resetCloset(closet: Closet): {
         ...emptyCloset.styling,
         language: closet.styling.language,
         studio: closet.styling.studio,
+        scan: closet.styling.scan,
       },
     }),
     files: closetFiles(closet),

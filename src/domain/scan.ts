@@ -1,4 +1,10 @@
-import type { Closet, Frame, GarmentRegion, ImportJob } from "./closet";
+import type {
+  Closet,
+  Frame,
+  GarmentRegion,
+  ImportJob,
+  ScanMode,
+} from "./closet";
 import { deltaE, toLab, type Lab } from "./color";
 
 export const scanFps = 4;
@@ -65,15 +71,17 @@ export type ScanState = {
   seenSince: number | null;
   hold: { since: number; box: Frame; colour: Lab } | null;
   last: { kind: HeldKind; colour: Lab } | null;
+  held: HeldPiece | null;
 };
 
-export type ScanStatus = "find" | "show" | "hold" | "taken";
+export type ScanStatus = "find" | "show" | "hold" | "taken" | "ready";
 
 export const startScan: ScanState = {
   baseline: null,
   seenSince: null,
   hold: null,
   last: null,
+  held: null,
 };
 
 const bytes = (value: string) =>
@@ -219,6 +227,7 @@ export function overlap(a: Frame, b: Frame) {
 export function scanStep(
   state: ScanState,
   frame: ScanFrame,
+  mode: ScanMode = "auto",
 ): { state: ScanState; status: ScanStatus; capture: HeldPiece | null } {
   if (!state.baseline) {
     const body = bodyCells(frame.labels);
@@ -242,6 +251,12 @@ export function scanStep(
     };
   }
   const held = heldPiece(state.baseline, frame);
+  if (mode === "manual")
+    return {
+      state: { ...state, hold: null, held },
+      status: held ? "ready" : "show",
+      capture: null,
+    };
   if (!held)
     return { state: { ...state, hold: null }, status: "show", capture: null };
   if (
@@ -274,6 +289,41 @@ export function scanStep(
     },
     status: "hold",
     capture: null,
+  };
+}
+
+export function shutter(state: ScanState): {
+  state: ScanState;
+  capture: HeldPiece | null;
+} {
+  const held = state.held;
+  if (!held) return { state, capture: null };
+  return {
+    state: {
+      ...state,
+      hold: null,
+      held: null,
+      last: { kind: held.kind, colour: held.colour },
+    },
+    capture: held,
+  };
+}
+
+export function previewBox(
+  box: Frame,
+  view: { width: number; height: number },
+  aspect: number,
+  mirrored = false,
+): Frame {
+  const width = Math.min(view.width, view.height * aspect);
+  const height = width / aspect;
+  return {
+    x:
+      (view.width - width) / 2 +
+      (mirrored ? 1 - box.x - box.width : box.x) * width,
+    y: (view.height - height) / 2 + box.y * height,
+    width: box.width * width,
+    height: box.height * height,
   };
 }
 

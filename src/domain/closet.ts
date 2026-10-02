@@ -371,6 +371,8 @@ export type CardLayout = "minimal" | "reasons" | "full";
 
 export type Language = "system" | "en" | "nb";
 
+export type ScanMode = "auto" | "manual";
+
 export type EverydayStyle = {
   version: number;
   occasion: Occasion;
@@ -426,6 +428,7 @@ export type Styling = {
   layout: CardLayout;
   language: Language;
   studio: boolean;
+  scan: ScanMode;
 };
 
 export type Closet = {
@@ -473,6 +476,7 @@ export const emptyStyling: Styling = {
   layout: "reasons",
   language: "system",
   studio: false,
+  scan: "auto",
 };
 
 export const emptyCloset: Closet = {
@@ -1252,6 +1256,7 @@ function withOnboardingState(closet: Closet): Closet {
     layout: stored.layout ?? "reasons",
     language: stored.language ?? "system",
     studio: stored.studio ?? false,
+    scan: stored.scan ?? "auto",
   };
   if (
     !isProfile(styling.profile) ||
@@ -1261,7 +1266,8 @@ function withOnboardingState(closet: Closet): Closet {
     !isBoolean(styling.onboarded) ||
     !["minimal", "reasons", "full"].includes(styling.layout as string) ||
     !["system", "en", "nb"].includes(styling.language as string) ||
-    !isBoolean(styling.studio)
+    !isBoolean(styling.studio) ||
+    !["auto", "manual"].includes(styling.scan as string)
   )
     throw unreadable();
   return { ...closet, styling: styling as Styling };
