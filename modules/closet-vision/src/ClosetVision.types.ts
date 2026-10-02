@@ -66,3 +66,23 @@ export type PrepareOptions = {
   cutout?: string;
   crop?: { x: number; y: number; width: number; height: number };
 };
+
+export type SelfieReading = {
+  skin: [number, number, number] | null;
+  hair: [number, number, number] | null;
+  eyes: [number, number, number] | null;
+  light: "ok" | "dark" | "mixed";
+};
+
+export type City = { name: string; latitude: number; longitude: number };
+
+export type ForecastResult = {
+  hours: {
+    at: string;
+    celsius: number;
+    precipitation: "none" | "rain" | "snow";
+    chance: number;
+    windMs: number;
+  }[];
+  attribution: { logo: string; url: string };
+};

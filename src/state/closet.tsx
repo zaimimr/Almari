@@ -1,4 +1,5 @@
 import {
+  Fragment,
   createContext,
   useContext,
   useEffect,
@@ -8,6 +9,7 @@ import {
 } from "react";
 import { ClosetRepository } from "../domain/repository";
 import { addSampleWardrobe, sampleCatalogVersion } from "../domain/samples";
+import { locale, setLanguage } from "../i18n";
 import { closetStorage } from "../storage/local";
 import { useAttributeRefresh, useImportRunner } from "./imports";
 import { Button, Message, Screen } from "../ui";
@@ -20,6 +22,10 @@ export function ClosetProvider({ children }: PropsWithChildren) {
     "loading",
   );
   const [attempt, setAttempt] = useState(0);
+  const language = useSyncExternalStore(
+    repository.subscribe,
+    () => repository.getSnapshot().styling.language,
+  );
   useImportRunner(repository, status === "ready");
   useAttributeRefresh(repository, status === "ready");
 
@@ -71,7 +77,12 @@ export function ClosetProvider({ children }: PropsWithChildren) {
     );
   }
 
-  return <Context.Provider value={repository}>{children}</Context.Provider>;
+  setLanguage(language);
+  return (
+    <Context.Provider value={repository}>
+      <Fragment key={locale}>{children}</Fragment>
+    </Context.Provider>
+  );
 }
 
 export function useCloset() {

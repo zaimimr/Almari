@@ -516,7 +516,7 @@ export function styleOutfits(
   if (gaps.length) return fail("missing", gaps);
 
   const warm =
-    request.weather.source === "manual" && request.weather.warmth === "warm";
+    request.weather.source !== "unknown" && request.weather.warmth === "warm";
   const layerOptions = (role: "layer" | "outer") => {
     if (keptRole(role).length) return [keptRole(role)];
     const options = eligibleRole(role).filter(

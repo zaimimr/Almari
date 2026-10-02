@@ -30,3 +30,5 @@ export async function discardPhoto(_photo: string) {}
 export function lowOnSpace() {
   return false;
 }
+
+export async function discardTemporary(_uri: string) {}

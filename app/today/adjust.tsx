@@ -15,6 +15,8 @@ import {
   saveEverydayStyle,
   startOccasion,
 } from "../../src/domain/today";
+import { forecastWeather } from "../../src/domain/weather";
+import { t } from "../../src/i18n";
 import { useCloset } from "../../src/state/closet";
 import { useDiscardChanges } from "../../src/navigation/useDiscardChanges";
 import {
@@ -85,6 +87,17 @@ export default function AdjustToday() {
 
   const weather = request.weather;
   const manual: Manual | null = weather.source === "manual" ? weather : null;
+  const fresh = forecastWeather(
+    closet.styling.forecast,
+    today.localDate,
+    today.timeZone,
+  );
+  const weatherChoices: {
+    id: "forecast" | (typeof warmthOptions)[number]["id"];
+    label: string;
+  }[] = fresh
+    ? [{ id: "forecast", label: t("adjust.useForecast") }, ...warmthOptions]
+    : [...warmthOptions];
   const set = (changes: Partial<OutfitRequest>) =>
     setRequest((current) => (current ? { ...current, ...changes } : current));
   const setManual = (changes: Partial<Manual>) =>
@@ -122,7 +135,11 @@ export default function AdjustToday() {
             : current;
         return newOccasion
           ? startOccasion(withPreset, request)
-          : applyRequest(withPreset, request, session.revision);
+          : applyRequest(
+              withPreset,
+              request,
+              activeSession(withPreset.styling.today!).revision,
+            );
       });
       allowClose();
       router.back();
@@ -179,13 +196,21 @@ export default function AdjustToday() {
       <View style={styles.group}>
         <ChoiceGroup
           label="Weather"
-          options={warmthOptions}
-          value={manual ? manual.warmth : "unset"}
+          options={weatherChoices}
+          value={
+            manual
+              ? manual.warmth
+              : weather.source === "forecast"
+                ? "forecast"
+                : "unset"
+          }
           disabled={busy}
           onChange={(value) =>
             value === "unset"
               ? set({ weather: { source: "unknown" } })
-              : setManual({ warmth: value })
+              : value === "forecast"
+                ? fresh && set({ weather: fresh })
+                : setManual({ warmth: value })
           }
         />
         {manual ? (

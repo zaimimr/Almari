@@ -1,0 +1,21 @@
+appId: com.zaimimran.almari
+---
+- runFlow: city.yaml
+- extendedWaitUntil:
+    visible:
+      id: "forecast-note"
+    timeout: 20000
+- takeScreenshot: planning/build/onboarding/today-forecast
+- tapOn: "Adjust occasion, style, and weather"
+- tapOn: "Cold"
+- scrollUntilVisible:
+    element: "Find outfits"
+    direction: DOWN
+- tapOn: "Find outfits"
+- assertVisible: "You chose today's weather yourself. It replaces the forecast for today."
+- assertVisible:
+    id: "today-context"
+    text: ".*Cold.*entered by you.*"
+- takeScreenshot: planning/build/onboarding/today-manual
+- launchApp
+- assertVisible: "You chose today's weather yourself. It replaces the forecast for today."

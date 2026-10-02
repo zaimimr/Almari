@@ -1,0 +1,38 @@
+appId: com.zaimimran.almari
+---
+- runFlow: flow.yaml
+- tapOn: "Profile"
+- assertVisible: "Always, Full: arms, legs and neck"
+- scrollUntilVisible:
+    element: "165 cm, Hourglass"
+    direction: DOWN
+- scrollUntilVisible:
+    element: "Warm autumn"
+    direction: DOWN
+- takeScreenshot: planning/build/onboarding/answers
+- scrollUntilVisible:
+    element: "Change: Units and city"
+    direction: UP
+- tapOn: "Change: Units and city"
+- scrollUntilVisible:
+    element: "Feet and °F"
+    direction: DOWN
+- tapOn: "Feet and °F"
+- scrollUntilVisible:
+    element: "Save"
+    direction: DOWN
+- tapOn: "Save"
+- scrollUntilVisible:
+    element: "5 ft 5 in, Hourglass"
+    direction: DOWN
+- scrollUntilVisible:
+    element: "Change: Body"
+    direction: DOWN
+- tapOn: "Change: Body"
+- assertNotVisible: "Skip"
+- scrollUntilVisible:
+    element:
+      id: "height-feet"
+    direction: DOWN
+- tapOn: "Cancel"
+- takeScreenshot: planning/build/onboarding/answers-imperial

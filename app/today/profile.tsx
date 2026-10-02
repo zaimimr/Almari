@@ -1,0 +1,196 @@
+import { useState } from "react";
+import { StyleSheet, View } from "react-native";
+import Constants from "expo-constants";
+import { router } from "expo-router";
+import type { Language } from "../../src/domain/closet";
+import {
+  answersFrom,
+  replayOnboarding,
+  resetCloset,
+  type AnswerStep,
+} from "../../src/domain/onboarding";
+import { formatHeight } from "../../src/domain/units";
+import { seasonLabel } from "../../src/features/colourText";
+import { t } from "../../src/i18n";
+import { useCloset } from "../../src/state/closet";
+import { discardPhoto } from "../../src/storage/local";
+import {
+  AppText,
+  Button,
+  Chip,
+  ChoiceGroup,
+  ErrorMessage,
+  FormScreen,
+} from "../../src/ui";
+import { confirmAction } from "../../src/ui/confirm";
+
+const languages = ["system", "en", "nb"] as const;
+
+export default function Profile() {
+  const { closet, update } = useCloset();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const answers = answersFrom(closet);
+  const { hijab, place, body, taste, colours } = answers;
+  const summary = (...parts: (string | null)[]) =>
+    parts.filter(Boolean).join(", ") || t("profile.notAnswered");
+  const rows: { step: AnswerStep; title: string; text: string }[] = [
+    {
+      step: "hijab",
+      title: t("onboarding.hijab.title"),
+      text: summary(
+        hijab.hijab && t(`onboarding.hijab.${hijab.hijab}`),
+        hijab.coverage && t(`onboarding.coverage.${hijab.coverage}`),
+      ),
+    },
+    {
+      step: "place",
+      title: t("onboarding.place.title"),
+      text: summary(
+        t(`onboarding.units.${place.units}`),
+        place.place?.name ?? null,
+      ),
+    },
+    {
+      step: "body",
+      title: t("onboarding.body.title"),
+      text: summary(
+        body.heightCm === null
+          ? null
+          : formatHeight(body.heightCm, place.units),
+        body.bodyShape && t(`shape.${body.bodyShape}`),
+      ),
+    },
+    {
+      step: "taste",
+      title: t("onboarding.taste.title"),
+      text: summary(
+        taste.fit && t(`onboarding.fit.${taste.fit}`),
+        taste.colourLean && t(`onboarding.colourLean.${taste.colourLean}`),
+        taste.styleLean && t(`onboarding.styleLean.${taste.styleLean}`),
+      ),
+    },
+    {
+      step: "colours",
+      title: t("profile.colours"),
+      text: summary(colours.colour ? seasonLabel(colours.colour.season) : null),
+    },
+  ];
+  async function run(action: () => Promise<void>) {
+    setBusy(true);
+    setError(null);
+    try {
+      await action();
+    } catch {
+      setError(t("settings.failed"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function chooseLanguage(language: Language) {
+    void run(() =>
+      update((current) => ({
+        ...current,
+        styling: { ...current.styling, language },
+      })),
+    );
+  }
+
+  function replay() {
+    void run(async () => {
+      await update(replayOnboarding);
+      router.replace("/onboarding");
+    });
+  }
+
+  async function reset() {
+    const confirmed = await confirmAction(
+      t("settings.reset.title"),
+      t("settings.reset.text"),
+      t("settings.reset.confirm"),
+    );
+    if (!confirmed) return;
+    await run(async () => {
+      let files: string[] = [];
+      await update((current) => {
+        const result = resetCloset(current);
+        files = result.files;
+        return result.closet;
+      });
+      for (const file of files) await discardPhoto(file).catch(() => undefined);
+      router.replace("/onboarding");
+    });
+  }
+
+  return (
+    <FormScreen>
+      <AppText variant="heading">{t("settings.answers")}</AppText>
+      {rows.map((row) => (
+        <View key={row.step} style={styles.row} testID={`answer-${row.step}`}>
+          <View style={styles.text}>
+            <AppText style={styles.label}>{row.title}</AppText>
+            <AppText muted>{row.text}</AppText>
+          </View>
+          <Chip
+            label={t("profile.change")}
+            accessibilityLabel={`${t("profile.change")}: ${row.title}`}
+            onPress={() =>
+              row.step === "colours"
+                ? router.push("/onboarding/colours")
+                : router.push({
+                    pathname: "/onboarding",
+                    params: { step: row.step },
+                  })
+            }
+          />
+        </View>
+      ))}
+      <AppText variant="heading">{t("settings.app")}</AppText>
+      <ChoiceGroup
+        label={t("settings.language")}
+        options={languages.map((id) => ({
+          id,
+          label: t(`settings.language.${id}`),
+        }))}
+        value={closet.styling.language}
+        disabled={busy}
+        onChange={chooseLanguage}
+      />
+      <Button
+        label={t("settings.replay")}
+        secondary
+        disabled={busy}
+        onPress={replay}
+      />
+      <Button
+        label={t("settings.reset")}
+        danger
+        disabled={busy}
+        onPress={() => {
+          void reset();
+        }}
+      />
+      <ErrorMessage message={error} />
+      <AppText variant="caption" muted>
+        {t("settings.privacy")}
+      </AppText>
+      <AppText variant="caption" muted testID="app-version">
+        {t("settings.version", {
+          version: Constants.expoConfig?.version ?? "",
+        })}
+      </AppText>
+    </FormScreen>
+  );
+}
+
+const styles = StyleSheet.create({
+  row: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 12,
+  },
+  text: { flexGrow: 1, flexBasis: 240, gap: 2 },
+  label: { fontWeight: "600" },
+});

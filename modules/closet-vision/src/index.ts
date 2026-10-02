@@ -1,5 +1,7 @@
 export { default } from "./ClosetVisionModule";
 export type {
+  City,
+  ForecastResult,
   GarmentParse,
   GarmentRegion,
   GarmentRegionKind,
@@ -10,5 +12,6 @@ export type {
   PreparedGarment,
   Quality,
   ReadLabelResult,
+  SelfieReading,
   Swatch,
 } from "./ClosetVision.types";

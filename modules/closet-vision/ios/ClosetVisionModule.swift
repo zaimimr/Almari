@@ -181,6 +181,10 @@ final class GarmentPipeline {
     }
   }
 
+  func parseSelfie(_ image: CIImage) -> ClothesParse? {
+    queue.sync { try? loadParser().parse(image) }
+  }
+
   private func loadParser() throws -> ClothesParser {
     if let parser { return parser }
     guard let bundle, let url = bundle.url(forResource: "ClothesParser", withExtension: "mlmodelc") else {
@@ -447,6 +451,18 @@ public class ClosetVisionModule: Module {
 
     AsyncFunction("prepare") { (sourceUri: String, id: String, options: PrepareOptions?) throws -> PreparedGarment in
       try GarmentPipeline.shared.prepare(sourceUri: sourceUri, id: id, options: options)
+    }
+
+    AsyncFunction("analyzeSelfie") { (uri: String) throws -> SelfieResult in
+      try SelfieColours.shared.analyze(uri: uri)
+    }
+
+    AsyncFunction("geocodeCity") { (name: String) async -> CityResult? in
+      await WeatherLookup.city(name)
+    }
+
+    AsyncFunction("forecast") { (latitude: Double, longitude: Double) async -> ForecastRecord? in
+      await WeatherLookup.forecast(latitude: latitude, longitude: longitude)
     }
 
     AsyncFunction("parseGarments") { (sourceUri: String, id: String) throws -> GarmentParse in

@@ -1,9 +1,12 @@
 import type {
+  City,
+  ForecastResult,
   GarmentParse,
   LabelExtraction,
   PrepareOptions,
   PreparedGarment,
   ReadLabelResult,
+  SelfieReading,
 } from "./ClosetVision.types";
 
 export default {
@@ -20,4 +23,11 @@ export default {
   labelModelAvailable: (): Promise<boolean> => Promise.resolve(false),
   extractLabel: (_text: string): Promise<LabelExtraction> =>
     Promise.resolve({ json: null }),
+  analyzeSelfie: (_uri: string): Promise<SelfieReading> =>
+    Promise.reject(new Error("unavailable")),
+  geocodeCity: async (_name: string): Promise<City | null> => null,
+  forecast: async (
+    _latitude: number,
+    _longitude: number,
+  ): Promise<ForecastResult | null> => null,
 };

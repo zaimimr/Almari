@@ -1,10 +1,13 @@
 import { NativeModule, requireOptionalNativeModule } from "expo";
 import type {
+  City,
+  ForecastResult,
   GarmentParse,
   LabelExtraction,
   PrepareOptions,
   PreparedGarment,
   ReadLabelResult,
+  SelfieReading,
 } from "./ClosetVision.types";
 
 declare class ClosetVisionModule extends NativeModule {
@@ -18,6 +21,9 @@ declare class ClosetVisionModule extends NativeModule {
   readLabel(sourceUri: string, id: string): Promise<ReadLabelResult>;
   labelModelAvailable(): Promise<boolean>;
   extractLabel(text: string): Promise<LabelExtraction>;
+  analyzeSelfie(uri: string): Promise<SelfieReading>;
+  geocodeCity(name: string): Promise<City | null>;
+  forecast(latitude: number, longitude: number): Promise<ForecastResult | null>;
 }
 
 const native = requireOptionalNativeModule<ClosetVisionModule>("ClosetVision");
@@ -36,4 +42,11 @@ export default native ?? {
   labelModelAvailable: (): Promise<boolean> => Promise.resolve(false),
   extractLabel: (_text: string): Promise<LabelExtraction> =>
     Promise.resolve({ json: null }),
+  analyzeSelfie: (_uri: string): Promise<SelfieReading> =>
+    Promise.reject(new Error("unavailable")),
+  geocodeCity: async (_name: string): Promise<City | null> => null,
+  forecast: async (
+    _latitude: number,
+    _longitude: number,
+  ): Promise<ForecastResult | null> => null,
 };

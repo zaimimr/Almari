@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   decodeCloset,
   emptyCloset,
+  neutralProfile,
   pieceVariant,
   piecesForLook,
   removePiece,
@@ -13,7 +14,6 @@ import {
   type Prepared,
   withVariant,
   emptyTaste,
-  neutralProfile,
   renameCelebration,
 } from "./closet";
 import type { CareLabel } from "./careLabel";
@@ -419,6 +419,12 @@ test("a version 2 closet opens as version 3 with every piece, look, Today sessio
     profile: neutralProfile,
     taste: emptyTaste,
     engine: "rules",
+    units: "metric",
+    place: null,
+    forecast: null,
+    onboarded: true,
+    layout: "reasons",
+    language: "system",
   });
   assert.deepEqual(migrated.feedback, []);
   assert.equal(migrated.sampleCatalog, 2);

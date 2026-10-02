@@ -1,0 +1,22 @@
+appId: com.zaimimran.almari
+---
+- launchApp:
+    clearState: true
+- tapOn: "Always"
+- tapOn: "Next"
+- tapOn:
+    id: "city"
+- inputText: "Oslo"
+- hideKeyboard
+- tapOn: "Find city"
+- extendedWaitUntil:
+    visible: "Weather for Oslo"
+    timeout: 20000
+- takeScreenshot: planning/build/onboarding/city-found
+- tapOn: "Next"
+- repeat:
+    times: 3
+    commands:
+      - tapOn: "Skip"
+- tapOn: "Start with the sample closet"
+- assertVisible: "A little inspiration for today."

@@ -10,60 +10,75 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <ClosetProvider>
         <StatusBar style="dark" />
-        <Stack screenOptions={stackOptions}>
-          <Stack.Screen name="index" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="piece/new"
-            options={{ title: "Add a piece", presentation: "modal" }}
-          />
-          <Stack.Screen
-            name="piece/[id]"
-            options={{ title: t("piece.title") }}
-          />
-          <Stack.Screen
-            name="piece/edit/[id]"
-            options={{ title: t("piece.edit.title") }}
-          />
-          <Stack.Screen
-            name="look/build"
-            options={{ title: "Build a look", presentation: "modal" }}
-          />
-          <Stack.Screen name="look/[id]" options={{ title: "Your look" }} />
-          <Stack.Screen
-            name="capture/index"
-            options={{ title: "Add pieces", presentation: "modal" }}
-          />
-          <Stack.Screen
-            name="capture/[id]"
-            options={{ title: "Check this piece" }}
-          />
-          <Stack.Screen
-            name="capture/group/[id]"
-            options={{ title: t("capture.group.title") }}
-          />
-          <Stack.Screen
-            name="label/[id]"
-            options={{ title: t("careLabel.title") }}
-          />
-          <Stack.Screen
-            name="today/adjust"
-            options={{ title: "Adjust today", presentation: "modal" }}
-          />
-          <Stack.Screen
-            name="today/everyday"
-            options={{ title: "Everyday style", presentation: "modal" }}
-          />
-          <Stack.Screen
-            name="today/pieces"
-            options={{ title: "Choose pieces", presentation: "modal" }}
-          />
-          <Stack.Screen
-            name="today/replace"
-            options={{ title: "Change a piece", presentation: "modal" }}
-          />
-        </Stack>
+        <Screens />
       </ClosetProvider>
     </SafeAreaProvider>
+  );
+}
+
+function Screens() {
+  return (
+    <Stack screenOptions={stackOptions}>
+      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="piece/new"
+        options={{ title: "Add a piece", presentation: "modal" }}
+      />
+      <Stack.Screen name="piece/[id]" options={{ title: t("piece.title") }} />
+      <Stack.Screen
+        name="piece/edit/[id]"
+        options={{ title: t("piece.edit.title") }}
+      />
+      <Stack.Screen
+        name="look/build"
+        options={{ title: "Build a look", presentation: "modal" }}
+      />
+      <Stack.Screen name="look/[id]" options={{ title: "Your look" }} />
+      <Stack.Screen
+        name="capture/index"
+        options={{ title: "Add pieces", presentation: "modal" }}
+      />
+      <Stack.Screen
+        name="capture/[id]"
+        options={{ title: "Check this piece" }}
+      />
+      <Stack.Screen
+        name="capture/group/[id]"
+        options={{ title: t("capture.group.title") }}
+      />
+      <Stack.Screen
+        name="label/[id]"
+        options={{ title: t("careLabel.title") }}
+      />
+      <Stack.Screen
+        name="today/adjust"
+        options={{ title: "Adjust today", presentation: "modal" }}
+      />
+      <Stack.Screen
+        name="today/everyday"
+        options={{ title: "Everyday style", presentation: "modal" }}
+      />
+      <Stack.Screen
+        name="today/pieces"
+        options={{ title: "Choose pieces", presentation: "modal" }}
+      />
+      <Stack.Screen
+        name="today/replace"
+        options={{ title: "Change a piece", presentation: "modal" }}
+      />
+      <Stack.Screen
+        name="onboarding/index"
+        options={{ title: t("onboarding.hijab.title") }}
+      />
+      <Stack.Screen
+        name="onboarding/colours"
+        options={{ title: t("colours.title") }}
+      />
+      <Stack.Screen
+        name="today/profile"
+        options={{ title: t("profile.title") }}
+      />
+    </Stack>
   );
 }
