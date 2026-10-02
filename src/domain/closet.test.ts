@@ -12,6 +12,7 @@ import {
   type Piece,
   type Prepared,
   withVariant,
+  renameCelebration,
 } from "./closet";
 import type { CareLabel } from "./careLabel";
 import { closetV2, ids } from "./closet-v2.fixture";
@@ -409,9 +410,9 @@ test("a version 2 closet opens as version 3 with every piece, look, Today sessio
   await repository.load();
   const migrated = repository.getSnapshot();
   assert.equal(migrated.version, 3);
-  assert.deepEqual(migrated.pieces, closetV2.pieces);
+  assert.deepEqual(migrated.pieces, renameCelebration(closetV2.pieces));
   assert.deepEqual(migrated.looks, closetV2.looks);
-  assert.deepEqual(migrated.styling, closetV2.styling);
+  assert.deepEqual(migrated.styling, renameCelebration(closetV2.styling));
   assert.equal(migrated.sampleCatalog, 2);
   assert.equal(migrated.photoTipsSeen, true);
   assert.deepEqual(

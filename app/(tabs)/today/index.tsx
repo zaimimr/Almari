@@ -3,12 +3,13 @@ import { Stack, router } from "expo-router";
 import {
   isAvailable,
   kindLabel,
-  occasionLabel,
+  occasionPhrase,
   styleLabel,
   type GarmentKind,
   type OutfitRequest,
   type Piece,
 } from "../../../src/domain/closet";
+import { t } from "../../../src/i18n";
 import {
   evaluateOutfit,
   scoreOutfit,
@@ -213,7 +214,9 @@ function TodayContent() {
     <>
       <AppText variant="heading">
         {today.active === "occasion"
-          ? `Styled for ${occasionLabel(request.occasion).toLowerCase()}.`
+          ? t("today.styledFor", {
+              occasion: occasionPhrase(request.occasion),
+            })
           : "A little inspiration for today."}
       </AppText>
       <View style={styles.context}>

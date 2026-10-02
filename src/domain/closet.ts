@@ -732,12 +732,33 @@ function withPalette(job: ImportJob): ImportJob {
   };
 }
 
+export function renameCelebration(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(renameCelebration);
+  if (!isRecord(value)) return value;
+  return Object.fromEntries(
+    Object.entries(value).map(([key, item]) => [
+      key,
+      key === "occasion" && item === "celebration"
+        ? "party"
+        : key === "occasions" && Array.isArray(item)
+          ? [
+              ...new Set(
+                item.map((entry) =>
+                  entry === "celebration" ? "party" : entry,
+                ),
+              ),
+            ]
+          : renameCelebration(item),
+    ]),
+  );
+}
+
 function decodeStored(
   raw: string | null,
   sampleTraits: Record<string, SampleTraits> = {},
 ): Closet {
   if (raw === null) return emptyCloset;
-  const parsed: unknown = JSON.parse(raw);
+  const parsed = renameCelebration(JSON.parse(raw));
   if (isRecord(parsed) && parsed.version === 1)
     return migrateV1(parsed, sampleTraits);
   const value =

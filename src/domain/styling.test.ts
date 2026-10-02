@@ -111,7 +111,7 @@ test("T02 an occasion does not change everyday defaults and back restores today'
   const everyday = today.styling.today!.everyday;
   const party = startOccasion(today, {
     ...everyday.request,
-    occasion: "celebration",
+    occasion: "party",
     style: "desi",
     weather: {
       source: "manual",

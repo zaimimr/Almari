@@ -65,11 +65,6 @@ export const en = {
   "style.western": "Western",
   "style.desi": "Desi",
 
-  "occasion.work": "Work",
-  "occasion.everyday": "Everyday",
-  "occasion.dinner": "Dinner",
-  "occasion.celebration": "Celebration",
-
   "capture.gone.title": "This photo is no longer waiting",
   "capture.gone.description": "Your other photos are still in Add pieces.",
   "capture.saveFailed": "This piece could not be updated. Please try again.",
@@ -388,6 +383,21 @@ export const en = {
   "sets.partOf": "Part of a set",
   "sets.remove": "Remove from this set",
   "sets.removeFailed": "This piece could not leave its set. Please try again.",
+  "occasion.everyday": "Everyday",
+  "occasion.everyday.phrase": "everyday wear",
+  "occasion.work": "Work",
+  "occasion.work.phrase": "work",
+  "occasion.dinner": "Dinner or dawat",
+  "occasion.dinner.phrase": "a dinner or dawat",
+  "occasion.eid": "Eid",
+  "occasion.eid.phrase": "Eid",
+  "occasion.party": "Party or mehndi",
+  "occasion.party.phrase": "a party or mehndi",
+  "occasion.wedding": "Wedding guest, nikah or walima",
+  "occasion.wedding.phrase": "a wedding, nikah or walima",
+  "occasion.barat": "Barat or formal wedding",
+  "occasion.barat.phrase": "a barat or formal wedding",
+  "today.styledFor": "Styled for {occasion}.",
 };
 
 export type Key = keyof typeof en;
