@@ -48,6 +48,16 @@ export type Variant = "enhanced" | "plain";
 
 export type Variants = { enhanced?: string; plain?: string };
 
+export const adviceReasons = [
+  "merged",
+  "clipped",
+  "blur",
+  "dark",
+  "mixed-light",
+] as const;
+
+export type AdviceReason = (typeof adviceReasons)[number];
+
 export const garmentRegionKinds = [
   "head",
   "upper",
@@ -138,6 +148,8 @@ export type ImportJob = {
   checks?: ("uncertain" | "no-cutout" | "several" | "attribute" | "partial")[];
   keepOriginal?: boolean;
   variant?: Variant;
+  advice?: AdviceReason;
+  adviceShown?: AdviceReason[];
   captureId?: string;
   region?: GarmentRegion;
   crop?: Frame;
@@ -462,6 +474,9 @@ function isGarmentRegion(value: unknown): value is GarmentRegion {
 const isCount = (value: unknown): value is number =>
   Number.isInteger(value) && (value as number) >= 0;
 
+const isAdviceReason = (value: unknown): value is AdviceReason =>
+  adviceReasons.includes(value as AdviceReason);
+
 function isImportJob(value: unknown): value is ImportJob {
   return (
     isRecord(value) &&
@@ -496,6 +511,12 @@ function isImportJob(value: unknown): value is ImportJob {
     ) &&
     optional(value.keepOriginal, isBoolean) &&
     optional(value.variant, isVariant) &&
+    optional(value.advice, isAdviceReason) &&
+    optional(
+      value.adviceShown,
+      (list): list is AdviceReason[] =>
+        Array.isArray(list) && list.every(isAdviceReason),
+    ) &&
     optional(value.captureId, isString) &&
     optional(value.region, isGarmentRegion) &&
     optional(value.crop, isFrame) &&

@@ -19,6 +19,7 @@ import {
   captureJobs,
   correctImport,
   cropCapture,
+  dismissAdvice,
   failImport,
   finishImport,
   fileStem,
@@ -754,4 +755,29 @@ test("import jobs saved before enhancement still open", () => {
   );
   stored.imports[0].prepared.quality = { sharpness: "sharp" };
   assert.throws(() => decodeCloset(JSON.stringify(stored)));
+});
+
+const blurry = () =>
+  prepared({
+    quality: {
+      sharpness: 12,
+      brightness: 0.5,
+      clipped: [],
+      coverage: 0.3,
+      lightSpread: 1,
+    },
+  });
+
+test("P05 photo advice is shown once and never blocks saving", () => {
+  let closet = finishImport(startImport(queued(), "job"), "job", blurry());
+  assert.equal(closet.imports[0]!.advice, "blur");
+  assert.equal(closet.imports[0]!.state, "ready");
+  assert.equal(acceptImports(closet).pieces.length, 1);
+  closet = dismissAdvice(closet, "job");
+  assert.equal(closet.imports[0]!.advice, undefined);
+  assert.deepEqual(closet.imports[0]!.adviceShown, ["blur"]);
+  assert.equal(dismissAdvice(closet, "job"), closet);
+  assert.equal(acceptImports(closet).pieces.length, 1);
+  const decoded = decodeCloset(JSON.stringify(closet));
+  assert.deepEqual(decoded.imports[0]!.adviceShown, ["blur"]);
 });

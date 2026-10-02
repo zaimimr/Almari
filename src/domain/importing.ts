@@ -1,3 +1,4 @@
+import { adviceReason } from "./quality";
 import {
   confirmAttribute,
   mergeProposal,
@@ -71,12 +72,22 @@ export function startImport(closet: Closet, id: string): Closet {
   );
 }
 
+function reviewCapture(closet: Closet, id: string): Closet {
+  return updateJob(closet, id, (job) => {
+    if (!job.prepared) return job;
+    const reason = adviceReason(job.prepared.quality);
+    const advice =
+      reason && !job.adviceShown?.includes(reason) ? reason : undefined;
+    return { ...job, advice };
+  });
+}
+
 export function finishImport(
   closet: Closet,
   id: string,
   prepared: Prepared,
 ): Closet {
-  return updateJob(closet, id, (job) => {
+  const next = updateJob(closet, id, (job) => {
     if (job.state !== "preparing") return job;
     const recognition = recognize(
       prepared.labels,
@@ -116,6 +127,19 @@ export function finishImport(
       error: undefined,
     };
   });
+  return next === closet ? closet : reviewCapture(next, id);
+}
+
+export function dismissAdvice(closet: Closet, id: string): Closet {
+  return updateJob(closet, id, (job) =>
+    job.advice
+      ? {
+          ...job,
+          advice: undefined,
+          adviceShown: [...(job.adviceShown ?? []), job.advice],
+        }
+      : job,
+  );
 }
 
 export function failImport(closet: Closet, id: string, error: string): Closet {
