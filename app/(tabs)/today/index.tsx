@@ -63,6 +63,7 @@ import {
 } from "../../../src/ui";
 import { addPiecesRoute } from "../../../src/state/imports";
 import { ForecastNote } from "../../../src/features/today/ForecastNote";
+import { SavedLooks } from "../../../src/features/today/SavedLooks";
 import { theme } from "../../../src/ui/theme";
 
 const shortcuts: GarmentKind[] = ["blazer", "dress", "kurta", "trousers"];
@@ -580,6 +581,7 @@ function TodayContent() {
         </View>
       )}
 
+      <SavedLooks closet={closet} session={session} busy={busy} run={run} />
       <View style={styles.section}>
         <AppText style={styles.label}>Want to start with something?</AppText>
         <View style={styles.chips}>

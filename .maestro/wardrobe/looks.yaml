@@ -1,0 +1,81 @@
+appId: com.zaimimran.almari
+env:
+  SHOT: ""
+---
+- runFlow: start.yaml
+- tapOn: "Try a sample style"
+- tapOn: "Closet"
+- tapOn: "Build a look"
+- repeat:
+    times: 12
+    while:
+      notVisible: "Mauve chiffon hijab,.*"
+    commands:
+      - swipe:
+          start: "70%, 73%"
+          end: "40%, 73%"
+- tapOn: "Mauve chiffon hijab,.*"
+- repeat:
+    times: 12
+    while:
+      notVisible: "Ivory longline tunic,.*"
+    commands:
+      - swipe:
+          start: "70%, 73%"
+          end: "40%, 73%"
+- tapOn: "Ivory longline tunic,.*"
+- repeat:
+    times: 12
+    while:
+      notVisible: "Charcoal wide-leg trousers,.*"
+    commands:
+      - swipe:
+          start: "70%, 73%"
+          end: "40%, 73%"
+- tapOn: "Charcoal wide-leg trousers,.*"
+- repeat:
+    times: 12
+    while:
+      notVisible: "Chocolate leather loafers,.*"
+    commands:
+      - swipe:
+          start: "70%, 73%"
+          end: "40%, 73%"
+- tapOn: "Chocolate leather loafers,.*"
+- tapOn:
+    id: "look-name"
+- inputText: "Office"
+- hideKeyboard
+- tapOn: "Save look"
+- tapOn: "Today"
+- scrollUntilVisible:
+    element: "Use this look"
+    centerElement: true
+- assertVisible: "From your looks"
+- assertVisible: "Fits this request as saved."
+- takeScreenshot: planning/build/wardrobe/${SHOT}looks-exact
+- tapOn: "Use this look"
+- assertVisible: "Showing now"
+- assertVisible: "Undo last change"
+- tapOn: "Closet"
+- scrollUntilVisible:
+    element: "Mauve chiffon hijab.*"
+- tapOn: "Mauve chiffon hijab.*"
+- scrollUntilVisible:
+    element: "In the wash"
+- tapOn: "In the wash"
+- assertVisible: "Mark as available"
+- tapOn: "Back"
+- tapOn: "Today"
+- scrollUntilVisible:
+    element: "Fill the gap"
+    centerElement: true
+- assertVisible: "Variant of Office"
+- assertVisible: "Mauve chiffon hijab is unavailable for a while."
+- takeScreenshot: planning/build/wardrobe/${SHOT}looks-variant
+- tapOn: "Fill the gap"
+- assertVisible: ".*3 kept.*"
+- takeScreenshot: planning/build/wardrobe/${SHOT}looks-repaired
+- tapOn: "Looks"
+- tapOn: "Open Office"
+- assertVisible: "4 pieces from your closet"

@@ -891,6 +891,21 @@ export const en = {
   "today.checkBeforeWearing": "Check before wearing",
   "today.noLongerFits": "This outfit no longer fits your choices. {problems}",
   "today.findNew": "Find a new outfit",
+  "looks.fromYourLooks": "From your looks",
+  "looks.checkFirst": "Check before wearing. {message}",
+  "looks.fits": "Fits this request as saved.",
+  "looks.showing": "Showing now",
+  "looks.use": "Use this look",
+  "looks.needChange":
+    "These looks need a change. Your saved looks stay as they are.",
+  "looks.variantOf": "Variant of {name}",
+  "looks.fillGap": "Fill the gap",
+  "looks.seeAll": "See all ({count})",
+  "looks.away": "{name} is unavailable for a while.",
+  "looks.archived": "{name} is archived.",
+  "looks.setAside": "{name} is set aside for this request.",
+  "looks.missingOne": "1 piece is no longer in your closet.",
+  "looks.missingMany": "{count} pieces are no longer in your closet.",
 };
 
 export type Key = keyof typeof en;

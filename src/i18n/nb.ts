@@ -907,4 +907,19 @@ export const nb: Record<Key, string> = {
   "today.noLongerFits":
     "Dette antrekket passer ikke lenger til valgene dine. {problems}",
   "today.findNew": "Finn et nytt antrekk",
+  "looks.fromYourLooks": "Fra antrekkene dine",
+  "looks.checkFirst": "Sjekk før du tar det på. {message}",
+  "looks.fits": "Passer til dette ønsket slik det er lagret.",
+  "looks.showing": "Vises nå",
+  "looks.use": "Bruk dette antrekket",
+  "looks.needChange":
+    "Disse antrekkene trenger en endring. De lagrede antrekkene dine blir som de er.",
+  "looks.variantOf": "Variant av {name}",
+  "looks.fillGap": "Fyll hullet",
+  "looks.seeAll": "Se alle ({count})",
+  "looks.away": "{name} er utilgjengelig en stund.",
+  "looks.archived": "{name} er arkivert.",
+  "looks.setAside": "{name} er lagt til side for dette ønsket.",
+  "looks.missingOne": "1 plagg er ikke lenger i garderoben din.",
+  "looks.missingMany": "{count} plagg er ikke lenger i garderoben din.",
 };
