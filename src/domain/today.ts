@@ -389,3 +389,28 @@ export function saveForecast(closet: Closet, forecast: Forecast): Closet {
   if (everyday === today.everyday && occasion === today.occasion) return saved;
   return withToday(saved, { ...today, everyday, occasion });
 }
+
+export function stylePiece(
+  closet: Closet,
+  pieceId: string,
+  clock: Clock,
+): Closet {
+  const piece = closet.pieces.find((item) => item.id === pieceId);
+  if (!piece || piece.status) return closet;
+  const ready = ensureToday(closet, clock);
+  const today = ready.styling.today;
+  if (!today) return closet;
+  const current = activeSession(today).request;
+  const style =
+    piece.styles?.length && !piece.styles.includes(current.style)
+      ? piece.styles[0]!
+      : current.style;
+  return startOccasion(ready, {
+    ...current,
+    style,
+    garmentType: null,
+    keptIds: [pieceId],
+    excludedIds: current.excludedIds.filter((id) => id !== pieceId),
+    wardrobe: piece.source === "sample" ? "sample" : "owned",
+  });
+}

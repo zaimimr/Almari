@@ -1,7 +1,9 @@
 import { FlatList, Pressable, StyleSheet, View } from "react-native";
 import { Stack, router } from "expo-router";
 import { useCloset } from "../../../src/state/closet";
-import { piecesForLook } from "../../../src/domain/closet";
+import { occasionLabel } from "../../../src/domain/closet";
+import { lookEntries } from "../../../src/domain/looks";
+import { locale, t } from "../../../src/i18n";
 import {
   AppText,
   Button,
@@ -14,6 +16,7 @@ import { theme } from "../../../src/ui/theme";
 
 export default function LooksScreen() {
   const { closet } = useCloset();
+  const entries = lookEntries(closet, locale);
   return (
     <View style={styles.screen}>
       <Stack.Screen
@@ -27,7 +30,7 @@ export default function LooksScreen() {
         }}
       />
       <FlatList
-        data={closet.looks}
+        data={entries}
         keyExtractor={(look) => look.id}
         contentInsetAdjustmentBehavior="automatic"
         contentContainerStyle={styles.content}
@@ -63,19 +66,41 @@ export default function LooksScreen() {
           </View>
         }
         renderItem={({ item }) => {
-          const pieces = piecesForLook(closet, item);
+          const pieces = item.pieceIds.flatMap((id) => {
+            const piece = closet.pieces.find((each) => each.id === id);
+            return piece ? [piece] : [];
+          });
           const missing = item.pieceIds.length - pieces.length;
+          const about = [
+            item.occasion ? occasionLabel(item.occasion) : null,
+            item.saved ? null : t("looks.worn"),
+          ]
+            .filter(Boolean)
+            .join(" · ");
           return (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={`Open ${item.name}`}
+              accessibilityLabel={t("looks.open", { name: item.name })}
               style={styles.look}
               onPress={() =>
-                router.push({ pathname: "/look/[id]", params: { id: item.id } })
+                item.saved
+                  ? router.push({
+                      pathname: "/look/[id]",
+                      params: { id: item.id },
+                    })
+                  : router.push({
+                      pathname: "/look/build",
+                      params: {
+                        pieces: item.pieceIds.join(","),
+                        name: item.name,
+                        ...(item.occasion ? { occasion: item.occasion } : {}),
+                      },
+                    })
               }
             >
               <OutfitCollage pieces={pieces} />
               <AppText variant="heading">{item.name}</AppText>
+              {about ? <AppText muted>{about}</AppText> : null}
               <AppText variant="caption" muted>
                 {missing
                   ? `${missing} ${missing === 1 ? "piece is" : "pieces are"} no longer in your closet`

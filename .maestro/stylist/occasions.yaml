@@ -1,0 +1,24 @@
+appId: com.zaimimran.almari
+---
+- runFlow: start.yaml
+- scrollUntilVisible:
+    element: "For an occasion"
+- tapOn: "For an occasion"
+- assertVisible: "Dinner or dawat"
+- assertVisible: "Eid"
+- assertVisible: "Party or mehndi"
+- assertVisible: "Wedding guest, nikah or walima"
+- assertVisible: "Barat or formal wedding"
+- takeScreenshot: planning/build/stylist/occasions
+- tapOn: "Party or mehndi"
+- tapOn: "Desi"
+- scrollUntilVisible:
+    element: "Find outfits"
+- tapOn: "Find outfits"
+- scrollUntilVisible:
+    element: "Styled for a party or mehndi."
+    direction: UP
+- scrollUntilVisible:
+    element: "Sage party kurta"
+- assertVisible: "The ivory modal hijab picks up a colour from the sage embroidered kurta.*"
+- takeScreenshot: planning/build/stylist/party-desi

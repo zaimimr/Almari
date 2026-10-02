@@ -218,3 +218,52 @@ Pending for the owner, with a TestFlight build on her iPhone (delete and reinsta
 6. Adjust, choose Warm: Today says she chose the weather herself and the outfit follows Warm. Close and reopen the app: still her choice.
 7. Profile, Units and city, choose Feet and °F, Save: height shows in feet and inches and Today's range shows in °F.
 8. Turn on flight mode, open Profile, change the city to Bergen and save, return to Today. Expected: "The forecast is not available right now" and manual weather still works. Turn flight mode off.
+
+## Part 6: The stylist (done, 2 October 2026)
+
+What works:
+
+- Seven occasions with formality levels: Everyday 1, Work 2, Dinner or dawat 3, Eid 4, Party or mehndi 4, Wedding guest, nikah or walima 5, Barat or formal wedding 6. Stored `celebration` values open as Party or mehndi; the stored snapshot is not rewritten until the next save under the current key.
+- The sample catalog moved to version 3 with the new occasions, attributes and measured colours. Stored samples are refreshed in place; removed samples stay removed and names she edited stay.
+- Today ranks outfits with the rules scorer: 119 rules from `src/domain/scoring/rulebook.json` (version 1, validated when the app loads), a colour layer from each piece's palette, her best colours next to the face from the colour analysis, and her taste. Hard constraints, the date-seeded tie-break and the two-reason explanation are unchanged. Reasons never quote an attribute that is still a proposal or a colour analysis she has not confirmed. Pieces marked unavailable are never suggested.
+- Each shown outfit can gain a bag, and a Desi outfit a dupatta, when that improves it.
+- Today is the outfit view: the main garment large with the hijab, accessories, bag and shoes in a column, a plain outfit name such as "Sage party kurta" ("Kurta i salviegrønt til fest" in bokmål), the reasons, and Change, Not for me and Wear this. Three card layouts (outfit only, with reasons, with reasons and coverage checks) are switchable in Style settings; with reasons is the default. Coverage checks only name a gap when the values behind it are confirmed.
+- One tip line below the outfit names a piece she does not own when an empty role would clearly help, for example "A hijab in ivory would finish this." It never enters the flat lay.
+- Style this piece on the item page opens Today with that piece kept; her everyday outfit stays.
+- Looks lists saved looks and worn outfits together, each with its name and occasion.
+- Style settings: card layout, belt over long pieces, shortest top, trousers or skirts, print on print, colours to avoid at weddings, dupatta at family events, regional leaning, and a link to her onboarding answers. All style settings start at No preference and only switch or weight rules.
+- Feedback: Too formal, Too plain, Too warm and Not my style (under Not for me) change the outfit for the same request and update her taste. Wear this can be undone. Changing a piece and saving today's outfit as a look also count. Every event records the engine. Taste weights stay within 1.0 of each rule weight; twenty Not my style taps on one outfit leave every piece available.
+- All new text is in English and bokmål.
+- `npm run evaluate` scores a rated outfit file. The starter file is a developer smoke set from the samples: pairwise ordering accuracy 100.0% (15 of 15 pairs), no bad outfit in a top three.
+
+Evidence: `npm run check` (349 domain tests), `npx expo-doctor`, `npx expo export --platform ios --platform web`, Maestro flows in `.maestro/stylist` (style settings, occasions, feedback, layouts, looks and Style this piece, larger text) on a Release build in the simulator, including accessibility-large text. Screenshots are in [planning/build/stylist](../build/stylist).
+
+Known limitations:
+
+- The rule weights are research defaults, not tuned on her ratings. The 60 to 100 outfit rating session with her has not happened yet; see [planning/eval/README.md](../eval/README.md).
+- Her owned pieces only get attribute-based rules once Part 2 has proposed attributes and she has confirmed the ones that matter; until then colour, occasion formality from the subcategory, and her feedback carry most of the ranking.
+- Jewellery metal, tucking, funerals and coverage layering rules are not encoded. Neckline coverage is not checked.
+- Sample hijabs carry only `pattern`, `fabric` and `formality`, and sample shoes and the bag only `formality`, so `statement-hijab-busy-main` (its embellishment branch) and `sparkly-hijab-work` never fire on the sample closet. Rules that name kinds the samples do not have (for example `dupatta`, `shawl`, `belt`, `heels`, `khussa`, `skirt`) are only exercised by her own pieces and the unit tests.
+- Screens that existed before this part keep their English text until Part 8 moves them into the catalog.
+- Changing a style setting keeps today's outfit; the next Change uses the new settings.
+- On a phone screen the flat lay is tall, so the reasons and Change, Not for me and Wear this sit below the fold and need a scroll.
+
+## Part 7: Trained model and comparison (done, 2 October 2026)
+
+What works:
+
+- A small outfit compatibility head (50,944 parameters) trained on Polyvore Outfits over the same SigLIP 2 image embeddings the app stores for each piece. Training, evaluation and export scripts are in `modules/closet-vision/model/compat`. The head runs in TypeScript with no extra native model.
+- Style settings has a Stylist choice: Rules, Model or Compare. Compare takes turns for each new suggestion, starting from an engine fixed by the date, and Change stays with the engine of its list. Nothing on Today shows which engine styled an outfit.
+- Model keeps every hard constraint and shows the rules layer's reasons. When a piece that could be suggested has no photo reading, the suggestion is styled by Rules and recorded as Rules.
+- Every feedback event records the engine and the outfit's position in its list.
+- Compare results, under Style settings, shows per engine and split by Western and Desi: would wear in the first three, Not my style, and Wore this.
+- The Stylist setting sits next to the card layout setting, and both new screens' texts are in English and bokmål.
+
+Evidence: Polyvore test numbers, nondisjoint AUC 0.9279 and fill in the blank 0.6828, disjoint AUC 0.9233 and fill in the blank 0.6961 (README in `modules/closet-vision/model/compat`). Rated outfit set: Rules pairwise 1.000 with 0 bad in the top three, Model pairwise 0.333 with 3 bad in the top three (12 outfits in 3 requests, the developer smoke set). `npm run check` passes with 349 domain tests, including model scorer determinism, the fallback without embeddings, Compare alternation and results aggregation. Screens checked in the simulator with Maestro on a Release build (Stylist setting and Compare results in English at normal and the largest text size, in bokmål, and Today under Compare without an engine label); screenshots are in [planning/build/model](../build/model).
+
+Known limitations:
+
+- Polyvore has no hijabs, kurtas, shalwar, abayas or dupattas, so Model is out of its training data for Desi outfits and treats a hijab as a scarf.
+- Polyvore item image rights are unclear. Use is personal only. The licence is reviewed again before any public App Store release, and the head is removed if it cannot be cleared.
+- Pieces saved before Part 2, or added in the manual editor, have no photo reading, so Model falls back to Rules for requests that could include them until they are photographed again.
+- The results are only as good as her feedback count; a few events per engine are not enough to choose a winner.

@@ -16,7 +16,7 @@ import {
   type FactKey,
 } from "../../src/domain/facts";
 import { setMembers, unlinkPiece } from "../../src/domain/sets";
-import { dropFromToday } from "../../src/domain/today";
+import { clockFor, dropFromToday, stylePiece } from "../../src/domain/today";
 import { MissingPiece } from "../../src/features/MissingPiece";
 import {
   ArchiveSection,
@@ -96,6 +96,14 @@ export default function PieceDetail() {
     );
   };
 
+  const styleThis = () => {
+    void change((current) =>
+      stylePiece(current, pieceId, clockFor(new Date())),
+    ).then((saved) => {
+      if (saved) router.navigate("/today");
+    });
+  };
+
   return (
     <FormScreen>
       <Stack.Screen
@@ -125,6 +133,14 @@ export default function PieceDetail() {
               : t("piece.usedIn.other", { count: uses })}
         </AppText>
       </View>
+      {!piece.status && closet.styling.everyday ? (
+        <Button
+          label={t("piece.styleThis")}
+          secondary
+          disabled={busy}
+          onPress={styleThis}
+        />
+      ) : null}
       <View style={styles.section}>
         <AppText style={styles.label}>{t("piece.facts.title")}</AppText>
         {facts.length ? (

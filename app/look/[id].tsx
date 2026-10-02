@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import { useCloset } from "../../src/state/closet";
-import { piecesForLook } from "../../src/domain/closet";
+import { occasionLabel, piecesForLook } from "../../src/domain/closet";
 import {
   AppText,
   Button,
@@ -65,6 +65,9 @@ export default function LookDetail() {
   return (
     <FormScreen>
       <AppText variant="title">{look.name}</AppText>
+      {look.occasion ? (
+        <AppText muted>{occasionLabel(look.occasion)}</AppText>
+      ) : null}
       <AppText muted>
         {pieces.length} {pieces.length === 1 ? "piece" : "pieces"} from your
         closet

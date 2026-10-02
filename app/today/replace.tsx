@@ -2,14 +2,12 @@ import { useState } from "react";
 import { FlatList, StyleSheet, View, useWindowDimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, router, useLocalSearchParams } from "expo-router";
+import { randomUUID } from "expo-crypto";
 import { replacementsFor } from "../../src/domain/styling";
 import { rulesScorer } from "../../src/domain/scoring/rulesScorer";
 import { scoreContext } from "../../src/domain/scoring/taste";
-import {
-  activeSession,
-  applyRequest,
-  replacePiece,
-} from "../../src/domain/today";
+import { activeSession, applyRequest } from "../../src/domain/today";
+import { swapPiece } from "../../src/domain/feedback";
 import { useCloset } from "../../src/state/closet";
 import {
   AppText,
@@ -186,11 +184,13 @@ export default function ReplacePiece() {
               if (chosen)
                 void commit(
                   (current) =>
-                    replacePiece(
+                    swapPiece(
                       current,
                       target.id,
                       chosen.piece.id,
                       session.revision,
+                      new Date().toISOString(),
+                      randomUUID(),
                     ),
                   "This change could not be saved. Please try again.",
                 );

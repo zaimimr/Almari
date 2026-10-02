@@ -1,0 +1,17 @@
+appId: com.zaimimran.almari
+---
+- runFlow: start.yaml
+- assertVisible:
+    id: "today-outfit"
+- takeScreenshot: planning/build/stylist/large-text-today
+- scrollUntilVisible:
+    element: "Not for me"
+- tapOn: "Not for me"
+- takeScreenshot: planning/build/stylist/large-text-chips
+- scrollUntilVisible:
+    element: "Style settings"
+- tapOn: "Style settings"
+- takeScreenshot: planning/build/stylist/large-text-settings
+- scrollUntilVisible:
+    element: "Save style settings"
+- takeScreenshot: planning/build/stylist/large-text-settings-end
