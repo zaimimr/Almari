@@ -2,7 +2,7 @@ import { useState } from "react";
 import { FlatList, StyleSheet, View, useWindowDimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, router } from "expo-router";
-import type { Category } from "../../src/domain/closet";
+import { isAvailable, type Category } from "../../src/domain/closet";
 import { activeSession, applyRequest } from "../../src/domain/today";
 import { useCloset } from "../../src/state/closet";
 import { useDiscardChanges } from "../../src/navigation/useDiscardChanges";
@@ -45,7 +45,7 @@ export default function ChoosePieces() {
     );
 
   const pool = closet.pieces.filter(
-    (piece) => piece.source === session.request.wardrobe,
+    (piece) => piece.source === session.request.wardrobe && isAvailable(piece),
   );
   const options = pool.filter(
     (piece) => category === "all" || piece.category === category,

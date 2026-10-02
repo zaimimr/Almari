@@ -1,0 +1,25 @@
+appId: com.zaimimran.almari
+env:
+  SHOT: ""
+---
+- runFlow: start.yaml
+- tapOn: "Try a sample style"
+- scrollUntilVisible:
+    element: "Compare hijabs"
+- tapOn: "Compare hijabs"
+- assertVisible:
+    id: "hijab-preview"
+- assertVisible: "In the outfit now"
+- assertVisible:
+    id: "hijab-option-1"
+- takeScreenshot: planning/build/wardrobe/${SHOT}hijab-sheet
+- tapOn:
+    id: "hijab-option-1"
+- assertVisible: ".*Everything else stays the same.*"
+- takeScreenshot: planning/build/wardrobe/${SHOT}hijab-trying
+- tapOn: "Use this hijab"
+- scrollUntilVisible:
+    element: "Undo last change"
+- takeScreenshot: planning/build/wardrobe/${SHOT}hijab-used
+- tapOn: "Undo last change"
+- assertNotVisible: "Undo last change"

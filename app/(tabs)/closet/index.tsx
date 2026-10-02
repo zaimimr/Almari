@@ -5,6 +5,7 @@ import { randomUUID } from "expo-crypto";
 import { useCloset } from "../../../src/state/closet";
 import { occasions } from "../../../src/domain/closet";
 import { linkSet } from "../../../src/domain/sets";
+import { shelf } from "../../../src/domain/wardrobe";
 import {
   closetChips,
   filterPieces,
@@ -40,12 +41,15 @@ export default function ClosetScreen() {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<ClosetFilter>(noFilter);
   const [search, setSearch] = useState("");
-  const sampleCount = closet.pieces.filter(
+  const [showArchived, setShowArchived] = useState(false);
+  const archivedCount = shelf(closet.pieces, true).length;
+  const shelved = shelf(closet.pieces, showArchived);
+  const sampleCount = shelf(closet.pieces, false).filter(
     (piece) => piece.source === "sample",
   ).length;
-  const chips = closetChips(closet.pieces);
+  const chips = closetChips(shelved);
   const query = search.trim().toLowerCase();
-  const filtered = filterPieces(closet.pieces, filter).filter((piece) =>
+  const filtered = filterPieces(shelved, filter).filter((piece) =>
     piece.name.toLowerCase().includes(query),
   );
   const filterOptions: FilterOption[] = [
@@ -131,7 +135,7 @@ export default function ClosetScreen() {
             <AppText muted>
               {closet.pieces.length === 0
                 ? "A little space for the pieces you love."
-                : `${closet.pieces.length} ${closet.pieces.length === 1 ? "piece" : "pieces"}, ready for a new combination.`}
+                : `${shelved.length} ${shelved.length === 1 ? "piece" : "pieces"}, ready for a new combination.`}
             </AppText>
             {selecting ? (
               <View style={styles.starter}>
@@ -194,6 +198,7 @@ export default function ClosetScreen() {
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={styles.chips}
                   accessibilityLabel={t("closet.filters")}
+                  testID="closet-filters"
                 >
                   {filterOptions.map((option) => (
                     <Chip
@@ -208,6 +213,13 @@ export default function ClosetScreen() {
                       }
                     />
                   ))}
+                  {archivedCount || showArchived ? (
+                    <Chip
+                      label={t("archive.filter", { count: archivedCount })}
+                      selected={showArchived}
+                      onPress={() => setShowArchived(!showArchived)}
+                    />
+                  ) : null}
                 </ScrollView>
               </>
             ) : null}
@@ -244,6 +256,7 @@ export default function ClosetScreen() {
                   onPress={() => {
                     setSearch("");
                     setFilter(noFilter);
+                    setShowArchived(false);
                   }}
                 />
               }

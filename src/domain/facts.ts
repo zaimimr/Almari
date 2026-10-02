@@ -18,6 +18,7 @@ import {
   type Warmth,
 } from "./closet";
 import { colorName } from "./color";
+import { confirmedWeather } from "./pieceWeather";
 
 export type FactKey =
   | "colour"
@@ -109,7 +110,7 @@ export const attributeValueKey = (key: AttributeKey, value: AttributeValue) =>
 export function wearSeason(
   piece: Piece,
 ): { season: WearSeason; source: Source } | null {
-  const warmth = piece.traits?.warmth;
+  const warmth = confirmedWeather(piece, "warmth");
   if (warmth) return { season: warmthSeasons[warmth], source: "confirmed" };
   const fabric = piece.attributes?.fabric;
   const season = fabric ? fabricSeasons[fabric] : undefined;

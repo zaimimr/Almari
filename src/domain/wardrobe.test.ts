@@ -127,10 +127,7 @@ test("a kept piece that becomes archived is explained with a release", () => {
   );
   assert.equal(result.status, "missing");
   assert.equal(result.problems[0]!.code, "kept-missing");
-  assert.equal(
-    result.problems[0]!.message,
-    "Taupe everyday bag is marked as unavailable right now.",
-  );
+  assert.equal(result.problems[0]!.message, "Taupe everyday bag is archived.");
   assert.deepEqual(result.problems[0]!.actions, [
     { type: "release", id: "sample-taupe-bag" },
   ]);

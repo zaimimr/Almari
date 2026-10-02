@@ -399,7 +399,12 @@ export function styleOutfits(
       keptAway.map((piece) => ({
         code: "kept-missing",
         severity: "missing",
-        message: t("stylist.keptAway", { name: piece.name }),
+        message: t(
+          piece.status === "archived"
+            ? "stylist.keptArchived"
+            : "stylist.keptAway",
+          { name: piece.name },
+        ),
         ids: [piece.id],
         actions: [{ type: "release", id: piece.id }],
       })),

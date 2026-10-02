@@ -7,8 +7,14 @@ import {
   useSyncExternalStore,
   type PropsWithChildren,
 } from "react";
+import type { Closet } from "../domain/closet";
+import { proposeWeatherTraits } from "../domain/pieceWeather";
 import { ClosetRepository } from "../domain/repository";
-import { addSampleWardrobe, sampleCatalogVersion } from "../domain/samples";
+import {
+  addSampleWardrobe,
+  sampleCatalogVersion,
+  withSampleAttributes,
+} from "../domain/samples";
 import { locale, setLanguage } from "../i18n";
 import { closetStorage } from "../storage/local";
 import { useAttributeRefresh, useImportRunner } from "./imports";
@@ -37,6 +43,10 @@ export function ClosetProvider({ children }: PropsWithChildren) {
         if (repository.getSnapshot().sampleCatalog < sampleCatalogVersion) {
           await repository.update(addSampleWardrobe);
         }
+        const prepare = (closet: Closet) =>
+          proposeWeatherTraits(withSampleAttributes(closet));
+        const snapshot = repository.getSnapshot();
+        if (prepare(snapshot) !== snapshot) await repository.update(prepare);
       })
       .then(() => {
         if (active) setStatus("ready");

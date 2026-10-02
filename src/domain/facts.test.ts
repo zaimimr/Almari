@@ -148,6 +148,26 @@ test("season comes from warmth first, then from a clear fabric", () => {
   assert.equal(seasonOf(bare), undefined);
 });
 
+test("a suggested warmth is never shown as a confirmed season", () => {
+  assert.deepEqual(
+    seasonOf({
+      ...bare,
+      traits: { warmth: "warm" },
+      attributes: { fabric: "wool" },
+      sources: { warmth: "proposed", fabric: "label" },
+    }),
+    { key: "season", label: "Season", value: "Winter", source: "label" },
+  );
+  assert.equal(
+    seasonOf({
+      ...bare,
+      traits: { warmth: "medium" },
+      sources: { warmth: "proposed" },
+    }),
+    undefined,
+  );
+});
+
 test("every attribute, value and colour has a name in the catalog", () => {
   assert.deepEqual(
     attributeKeys.map((key) => en[attributeLabelKey(key)]),

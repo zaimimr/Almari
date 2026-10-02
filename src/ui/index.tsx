@@ -397,6 +397,7 @@ export function PieceTile({
         <AppText variant="caption" muted>
           {summary}
           {piece.source === "sample" ? ` · ${t("closet.sample")}` : ""}
+          {piece.status === "archived" ? ` · ${t("archive.tag")}` : ""}
         </AppText>
       ) : null}
     </Pressable>

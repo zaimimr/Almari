@@ -1,0 +1,37 @@
+appId: com.zaimimran.almari
+env:
+  SHOT: ""
+---
+- runFlow: start.yaml
+- tapOn: "Try a sample style"
+- tapOn: "Closet"
+- tapOn: "Try a name, like mauve hijab"
+- inputText: "chocolate jersey"
+- hideKeyboard
+- tapOn: "Chocolate jersey hijab.*"
+- scrollUntilVisible:
+    element: "Archive this piece"
+- tapOn: "Archive this piece"
+- assertVisible: "Archived. Not used in outfit suggestions."
+- assertNotVisible: "Mark as unavailable"
+- takeScreenshot: planning/build/wardrobe/${SHOT}archive-piece
+- tapOn: "Back"
+- assertNotVisible: "Chocolate jersey hijab.*"
+- repeat:
+    times: 10
+    commands:
+      - swipe:
+          from:
+            id: "closet-filters"
+          direction: LEFT
+- tapOn: "Archived \\(1\\)"
+- assertVisible: "Chocolate jersey hijab.*"
+- takeScreenshot: planning/build/wardrobe/${SHOT}archive-shelf
+- tapOn: "Chocolate jersey hijab.*"
+- scrollUntilVisible:
+    element: "Back in my closet"
+- assertVisible: "Archived. Not used in outfit suggestions."
+- tapOn: "Back in my closet"
+- tapOn: "Back"
+- tapOn: "Archived \\(0\\)"
+- assertVisible: "Chocolate jersey hijab.*"

@@ -18,6 +18,10 @@ import {
 import { setMembers, unlinkPiece } from "../../src/domain/sets";
 import { dropFromToday } from "../../src/domain/today";
 import { MissingPiece } from "../../src/features/MissingPiece";
+import {
+  ArchiveSection,
+  WeatherSection,
+} from "../../src/features/PieceSections";
 import { t } from "../../src/i18n";
 import { labelLines } from "../../src/state/careLabel";
 import { useCloset } from "../../src/state/closet";
@@ -191,6 +195,7 @@ export default function PieceDetail() {
           </View>
         ) : null}
       </View>
+      <WeatherSection piece={piece} />
       {piece.source === "owned" && canPrepareOnDevice ? (
         <View style={styles.section} testID="piece-care-label">
           <AppText style={styles.label}>{t("careLabel.title")}</AppText>
@@ -234,35 +239,38 @@ export default function PieceDetail() {
           />
         </View>
       ) : null}
-      <View style={styles.section} testID="piece-availability">
-        <AppText style={styles.label}>{t("piece.away.title")}</AppText>
-        <AppText variant="caption" muted>
-          {piece.away
-            ? t("piece.away.status", {
-                reason: t(`piece.away.${piece.away}`),
-              })
-            : t("piece.away.hint")}
-        </AppText>
-        <View style={styles.chips}>
-          {awayReasons.map((reason) => (
-            <Chip
-              key={reason}
-              label={t(`piece.away.${reason}`)}
-              selected={piece.away === reason}
-              disabled={busy}
-              onPress={() => markAway(piece.away === reason ? null : reason)}
+      {piece.status !== "archived" ? (
+        <View style={styles.section} testID="piece-availability">
+          <AppText style={styles.label}>{t("piece.away.title")}</AppText>
+          <AppText variant="caption" muted>
+            {piece.away
+              ? t("piece.away.status", {
+                  reason: t(`piece.away.${piece.away}`),
+                })
+              : t("piece.away.hint")}
+          </AppText>
+          <View style={styles.chips}>
+            {awayReasons.map((reason) => (
+              <Chip
+                key={reason}
+                label={t(`piece.away.${reason}`)}
+                selected={piece.away === reason}
+                disabled={busy}
+                onPress={() => markAway(piece.away === reason ? null : reason)}
+              />
+            ))}
+          </View>
+          {piece.away ? (
+            <Button
+              label={t("piece.away.back")}
+              secondary
+              busy={busy}
+              onPress={() => markAway(null)}
             />
-          ))}
+          ) : null}
         </View>
-        {piece.away ? (
-          <Button
-            label={t("piece.away.back")}
-            secondary
-            busy={busy}
-            onPress={() => markAway(null)}
-          />
-        ) : null}
-      </View>
+      ) : null}
+      <ArchiveSection piece={piece} />
       <ErrorMessage message={error} />
     </FormScreen>
   );
