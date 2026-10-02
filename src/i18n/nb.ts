@@ -477,4 +477,39 @@ export const nb: Record<Key, string> = {
   "season.clear-winter": "Klar vinter",
   "colours.title": "Fargeanalyse",
   "profile.title": "Svarene dine",
+  "colours.tips":
+    "Stå vendt mot et vindu i dagslys, og ta av deg brillene. Sminke er valgfritt.",
+  "colours.hijab": "Det går fint å bruke hijab. Da ser vi bort fra håret.",
+  "colours.deleted":
+    "Bildet slettes med en gang. Bare de målte fargene lagres.",
+  "colours.camera": "Ta en selfie",
+  "colours.library": "Velg en nylig selfie",
+  "colours.cameraOff":
+    "Kameratilgang er slått av. Velg en selfie i stedet, eller slå på kameratilgang i Innstillinger.",
+  "colours.cameraFailed": "Kameraet kunne ikke åpnes. Velg en selfie i stedet.",
+  "colours.busy": "Måler fargene dine",
+  "colours.retake.dark":
+    "Bildet er for mørkt til å lese fargene. Gå nærmere et vindu og prøv igjen.",
+  "colours.retake.mixed":
+    "Lyset er blandet eller ujevnt, så fargene blir ikke riktige. Stå vendt mot dagslys med lampene av og prøv igjen.",
+  "colours.retake.no-face":
+    "Vi fant ikke noe ansikt. Hold telefonen i øyehøyde og prøv igjen.",
+  "colours.retake.failed": "Bildet kunne ikke leses. Prøv igjen.",
+  "colours.tryAgain": "Prøv igjen",
+  "colours.measured": "Målte farger",
+  "colours.skin": "Hud",
+  "colours.hair": "Hår",
+  "colours.eyes": "Øyne",
+  "colours.unknown": "Ikke målt",
+  "colours.undertone": "Undertone",
+  "colours.depth": "Dybde",
+  "colours.contrast": "Kontrast",
+  "contrast.low": "Lav",
+  "contrast.medium": "Middels",
+  "contrast.high": "Høy",
+  "colours.result": "Din sesong: {season}",
+  "colours.adjust": "Endre det som ser feil ut.",
+  "colours.best": "Farger som kler deg",
+  "colours.save": "Lagre fargene mine",
+  "colours.saveFailed": "Fargene kunne ikke lagres. Prøv igjen.",
 };

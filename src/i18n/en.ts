@@ -474,6 +474,41 @@ export const en = {
   "season.clear-winter": "Clear winter",
   "colours.title": "Colour analysis",
   "profile.title": "Your answers",
+  "colours.tips":
+    "Face a window in daylight and take off your glasses. Makeup is up to you.",
+  "colours.hijab": "Wearing a hijab is fine. Hair is then left out.",
+  "colours.deleted":
+    "The photo is deleted right after. Only the measured colours are kept.",
+  "colours.camera": "Take a selfie",
+  "colours.library": "Choose a recent selfie",
+  "colours.cameraOff":
+    "Camera access is off. Choose a selfie instead, or turn on camera access in Settings.",
+  "colours.cameraFailed": "The camera could not open. Choose a selfie instead.",
+  "colours.busy": "Measuring your colours",
+  "colours.retake.dark":
+    "The photo is too dark to read your colours. Move closer to a window and try again.",
+  "colours.retake.mixed":
+    "The light is mixed or uneven, so the colours would not be true. Face daylight with lamps off and try again.",
+  "colours.retake.no-face":
+    "We could not find a face. Hold the phone at eye level and try again.",
+  "colours.retake.failed": "The photo could not be read. Please try again.",
+  "colours.tryAgain": "Try again",
+  "colours.measured": "Measured colours",
+  "colours.skin": "Skin",
+  "colours.hair": "Hair",
+  "colours.eyes": "Eyes",
+  "colours.unknown": "Not measured",
+  "colours.undertone": "Undertone",
+  "colours.depth": "Depth",
+  "colours.contrast": "Contrast",
+  "contrast.low": "Low",
+  "contrast.medium": "Medium",
+  "contrast.high": "High",
+  "colours.result": "Your season: {season}",
+  "colours.adjust": "Change anything that looks wrong.",
+  "colours.best": "Colours that suit you",
+  "colours.save": "Save my colours",
+  "colours.saveFailed": "Your colours could not be saved. Please try again.",
 };
 
 export type Key = keyof typeof en;
