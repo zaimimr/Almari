@@ -18,7 +18,6 @@ import {
   type ScanState,
 } from "./scan";
 
-const background = 0;
 const upper = 4;
 const pants = 6;
 const dress = 7;
