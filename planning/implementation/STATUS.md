@@ -149,3 +149,35 @@ Before the TestFlight build is signed off on her iPhone:
 
 - Read three real labels with Apple Intelligence on and three with it off, and note the time per label.
 - Network check: turn on Settings, Privacy and Security, App Privacy Report, read three labels, and confirm Almari shows no network activity from label reading.
+
+## Part 4: Capture and the rest of D2 (done, 2 October 2026)
+
+What works:
+
+- One photo of her wearing an outfit, or a flat lay on the floor or bed, becomes several pieces. A clothes parser (SegFormer B2 trained on clothes parsing, Core ML with 8-bit weights, 27.9 MB) runs on the phone. Only the largest person is used; when other people are in the photo she is told they were ignored. Left and right shoes become one pair, hat and scarf become a hijab proposal, small regions are dropped, and floor, hair, face, arms and legs are ignored.
+- Add pieces shows "N pieces found in one photo". The review screen has Keep and Drop for each piece, Adjust crop, and Add a piece with a box drawn by hand. A piece that is partly hidden is marked Partly visible and gets a quick check before it can be saved.
+- A photo of one garment without a person still uses the Vision cutout. Pieces from one photo share a `captureId`, and dropping one never deletes the photo or files the others still use.
+- After the cutout, the phone makes an enhanced closet image with Core Image: white balance from the neutral background around the piece (never from the piece itself), a small exposure lift when the background is dark, a light shadow lift, light sharpening, centring, and a soft shadow on the white canvas. The plain cutout is kept.
+- Check this piece and the piece screen offer Enhanced and Plain. Enhanced is the default and she can switch at any time. Keep original still works.
+- Each photo is measured for blur, brightness, cut-off edges, merged background and mixed light. One advice message is shown on the piece with Retake or Use anyway. It never blocks saving, and the same advice is not shown again after a retake.
+- Retake replaces the photo of a job in place. The saved piece keeps one id, so retakes and repeated saves never create a second piece.
+- A new photo very close to an owned piece, or to an earlier photo in the same batch, asks Same piece or Different piece.
+- Pieces can be selected in the closet and linked with These belong together. The piece screen shows the rest of its set and can remove it from the set. A set never keeps a single piece.
+- Photo tips have simple drawings in the app colours and can be replayed from Photo tips.
+- Denied camera access, photos that cannot be opened (including iCloud originals while offline), low storage, and preparation failures each keep her work and offer a next step. The system photo picker works without photo library access, so limited access does not hide photos.
+
+Evidence: `npm run check` passes with 175 domain tests, including proposals from a group photo, the single-garment fallback, splitting one photo into jobs, shared file clean-up, fresh file names for a piece cropped again, quality advice, retake idempotence, duplicate thresholds and set linking. `npx expo-doctor` passes 21 of 21 checks and `npx expo export --platform ios --platform web` finishes. The parser check: Core ML against PyTorch mean pixel agreement 0.997 on the sample garments. The region check (`modules/closet-vision/checks/parse`) passes on synthetic label maps. Her own photos have not been run yet: `~/Almari-test-photos` does not exist on this Mac, so the check ran on the 16 photos in the repo and gave 11 of 23 garments with the right kind (6 extra regions, 12 missed). These numbers are provisional; the table and the rerun command are in the [model README](../../modules/closet-vision/model/README.md), and no photos are committed. The native check (`modules/closet-vision/checks`) on the 13 sample cutouts: hue moved at most 0.3 degrees in neutral light and 0.7 degrees after correcting a warm cast; blur, a cut hem, a dark photo, a merged background and mixed light were all detected. Screens checked on the Closet Development simulator with Maestro, including accessibility extra large text, and the attribute flows now have a seed script (`.maestro/attributes/seed.sh`). Screenshots are in [planning/build/04-capture](../build/04-capture).
+
+Known limitations:
+
+- The simulator cannot run Vision background removal, so Enhanced and Plain in Check this piece, the soft shadow on real photos, clipped-edge advice and merged-background advice must be confirmed on her iPhone. The piece screen switch was checked with a seeded fixture.
+- Thresholds are starting values: blur below 60, dark below 0.22, merged above 0.9 coverage, mixed light above 8, duplicates above 0.93 cosine similarity. Sample renders measured sharpness between 125 and 2176. Tune them with her photos.
+- Straightening is not done: rotating only the enhanced image would move it against the plain one and the stored frame.
+- Formal and casual set rules in styling belong to Part 6.
+- The clothes parser is licensed for non-commercial use only (NVIDIA Source Code License for SegFormer). Review it again before any public release.
+- The parser labels a jacket over a top as one Upper-clothes region. Add a piece with a box covers the second piece for now.
+- Person masks and background removal do not run on the simulator. The review screen was checked with seeded fixtures made from the sample garments; parsing worn photos must be confirmed on her iPhone.
+- A piece prepared from a parser cutout gets no white balance from the background and no coverage, light spread or cut-edge advice, because there is no full-photo garment mask for it.
+- Low storage is checked before adding photos (under 300 MB free); a failure while preparing shows the space message only when the native error says storage.
+- Pieces from one photo each keep their own copy of the original photo, so a photo split into several pieces uses more storage.
+- Parser accuracy on worn outfits, and the person gate, are unmeasured until her photos are run.
