@@ -686,6 +686,22 @@ export const en = {
   "archive.tag": "Archived",
   "today.pieceUnavailable": "A piece in this outfit is no longer available.",
   "stylist.keptArchived": "{name} is archived.",
+  "pieceWeather.title": "Weather",
+  "pieceWeather.warmth": "Warmth",
+  "pieceWeather.rain": "Rain",
+  "pieceWeather.snow": "Snow",
+  "pieceWeather.suggested": "{label} (suggested)",
+  "pieceWeather.light": "Light",
+  "pieceWeather.medium": "Medium",
+  "pieceWeather.warm": "Warm",
+  "pieceWeather.rainYes": "Fine in rain",
+  "pieceWeather.rainNo": "Not for rain",
+  "pieceWeather.snowYes": "Fine in snow",
+  "pieceWeather.snowNo": "Not for snow",
+  "pieceWeather.helpSuggested":
+    "Suggested from the fabric and type. Tap a choice to confirm it. Weather checks only rely on what you confirm.",
+  "pieceWeather.help":
+    "Used when the forecast or the weather you choose on Today is cold, rainy or snowy.",
 };
 
 export type Key = keyof typeof en;

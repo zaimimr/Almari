@@ -1,0 +1,26 @@
+appId: com.zaimimran.almari
+env:
+  SHOT: ""
+---
+- launchApp
+- tapOn: "Closet"
+- tapOn: "Black boots.*"
+- scrollUntilVisible:
+    element: "Snow \\(suggested\\)"
+- assertVisible: "Rain \\(suggested\\)"
+- assertVisible: "Suggested from the fabric and type.*"
+- takeScreenshot: planning/build/wardrobe/${SHOT}weather-editor
+- tapOn: "Fine in snow"
+- assertVisible: "Snow"
+- assertNotVisible: "Snow \\(suggested\\)"
+- assertVisible: "Rain \\(suggested\\)"
+- takeScreenshot: planning/build/wardrobe/${SHOT}weather-confirmed
+- tapOn: "Back"
+- tapOn: "Navy wool coat.*"
+- scrollUntilVisible:
+    element: "Warmth \\(suggested\\)"
+- tapOn: "Medium"
+- assertVisible: "Warmth"
+- assertNotVisible: "Warmth \\(suggested\\)"
+- assertVisible: "Used when the forecast.*"
+- takeScreenshot: planning/build/wardrobe/${SHOT}weather-coat

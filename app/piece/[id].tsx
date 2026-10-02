@@ -18,7 +18,10 @@ import {
 import { setMembers, unlinkPiece } from "../../src/domain/sets";
 import { dropFromToday } from "../../src/domain/today";
 import { MissingPiece } from "../../src/features/MissingPiece";
-import { ArchiveSection } from "../../src/features/PieceSections";
+import {
+  ArchiveSection,
+  WeatherSection,
+} from "../../src/features/PieceSections";
 import { t } from "../../src/i18n";
 import { labelLines } from "../../src/state/careLabel";
 import { useCloset } from "../../src/state/closet";
@@ -192,6 +195,7 @@ export default function PieceDetail() {
           </View>
         ) : null}
       </View>
+      <WeatherSection piece={piece} />
       {piece.source === "owned" && canPrepareOnDevice ? (
         <View style={styles.section} testID="piece-care-label">
           <AppText style={styles.label}>{t("careLabel.title")}</AppText>

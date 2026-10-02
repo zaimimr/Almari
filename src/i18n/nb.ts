@@ -699,4 +699,20 @@ export const nb: Record<Key, string> = {
   "today.pieceUnavailable":
     "Et plagg i dette antrekket er ikke lenger tilgjengelig.",
   "stylist.keptArchived": "{name} er arkivert.",
+  "pieceWeather.title": "Vær",
+  "pieceWeather.warmth": "Varme",
+  "pieceWeather.rain": "Regn",
+  "pieceWeather.snow": "Snø",
+  "pieceWeather.suggested": "{label} (foreslått)",
+  "pieceWeather.light": "Lett",
+  "pieceWeather.medium": "Middels",
+  "pieceWeather.warm": "Varm",
+  "pieceWeather.rainYes": "Tåler regn",
+  "pieceWeather.rainNo": "Ikke for regn",
+  "pieceWeather.snowYes": "Tåler snø",
+  "pieceWeather.snowNo": "Ikke for snø",
+  "pieceWeather.helpSuggested":
+    "Foreslått ut fra stoff og type. Trykk på et valg for å bekrefte det. Værsjekkene bruker bare det du har bekreftet.",
+  "pieceWeather.help":
+    "Brukes når værmeldingen eller været du velger på I dag er kaldt, med regn eller snø.",
 };

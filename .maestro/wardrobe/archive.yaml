@@ -5,9 +5,10 @@ env:
 - runFlow: start.yaml
 - tapOn: "Try a sample style"
 - tapOn: "Closet"
-- scrollUntilVisible:
-    element: "Chocolate jersey hijab"
-- tapOn: "Chocolate jersey hijab"
+- tapOn: "Try a name, like mauve hijab"
+- inputText: "chocolate jersey"
+- hideKeyboard
+- tapOn: "Chocolate jersey hijab.*"
 - scrollUntilVisible:
     element: "Archive this piece"
 - tapOn: "Archive this piece"
@@ -15,19 +16,17 @@ env:
 - assertNotVisible: "Mark as unavailable"
 - takeScreenshot: planning/build/wardrobe/${SHOT}archive-piece
 - tapOn: "Back"
-- assertNotVisible: "Chocolate jersey hijab"
+- assertNotVisible: "Chocolate jersey hijab.*"
 - scrollUntilVisible:
     element: "Archived \\(1\\)"
 - tapOn: "Archived \\(1\\)"
-- scrollUntilVisible:
-    element: "Chocolate jersey hijab"
+- assertVisible: "Chocolate jersey hijab.*"
 - takeScreenshot: planning/build/wardrobe/${SHOT}archive-shelf
-- tapOn: "Chocolate jersey hijab"
+- tapOn: "Chocolate jersey hijab.*"
 - scrollUntilVisible:
     element: "Back in my closet"
 - assertVisible: "Archived. Not used in outfit suggestions."
 - tapOn: "Back in my closet"
 - tapOn: "Back"
 - tapOn: "Archived \\(0\\)"
-- scrollUntilVisible:
-    element: "Chocolate jersey hijab"
+- assertVisible: "Chocolate jersey hijab.*"

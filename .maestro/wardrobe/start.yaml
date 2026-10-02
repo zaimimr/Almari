@@ -3,7 +3,9 @@ appId: com.zaimimran.almari
 - launchApp:
     clearState: true
 - repeat:
-    times: 5
+    times: 10
+    while:
+      notVisible: "You are set"
     commands:
       - scrollUntilVisible:
           element: "Skip"
