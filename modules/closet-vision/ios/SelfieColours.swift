@@ -136,6 +136,15 @@ final class SelfieColours {
   func analyze(uri: String) throws -> SelfieResult {
     let (bitmap, cgImage) = try load(uri)
     let request = VNDetectFaceLandmarksRequest()
+    #if targetEnvironment(simulator)
+      if let devices = try? request.supportedComputeStageDevices {
+        for (stage, options) in devices {
+          if let cpu = options.first(where: { $0.description.localizedCaseInsensitiveContains("cpu") }) {
+            request.setComputeDevice(cpu, for: stage)
+          }
+        }
+      }
+    #endif
     try VNImageRequestHandler(cgImage: cgImage).perform([request])
     guard
       let face = request.results?.max(by: {
