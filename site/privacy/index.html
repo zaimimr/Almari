@@ -9,7 +9,7 @@
 <ul>
 <li><strong>Weather.</strong> To show today's forecast, Almari sends the latitude and longitude of the city you chose to Apple Weather (WeatherKit). Nothing else is sent with it.</li>
 <li><strong>City search.</strong> When you type a city, the name you type is sent to Apple's map service to find its position.</li>
-<li><strong>Studio photos.</strong> When you tap Studio on a piece, that photo and the type of piece are sent through Almari's relay to Google Gemini, which makes the studio photo. Google handles the photo under its Gemini API terms. The relay stores nothing except a daily count for a random install ID, used for the daily limit.</li>
+<li><strong>Studio photos.</strong> When you tap Studio on a piece, that photo and the type of piece are sent to Almari's relay on Cloudflare, which makes the studio photo with Cloudflare Workers AI. Cloudflare handles the photo under its Workers AI terms and does not use it to train models. The relay stores nothing except a daily count for a random install ID, used for the daily limit.</li>
 </ul>
 <p>You can skip the city step, set the weather by hand and not use Studio. Then nothing leaves your phone.</p>
 <h2>Photos and the camera</h2>
@@ -28,7 +28,7 @@
 <ul>
 <li><strong>Vær.</strong> For å vise dagens værmelding sender Almari breddegrad og lengdegrad for byen du valgte til Apple Weather (WeatherKit). Ingenting annet sendes med.</li>
 <li><strong>Bysøk.</strong> Når du skriver inn en by, sendes navnet du skriver til Apples karttjeneste for å finne posisjonen.</li>
-<li><strong>Studiobilder.</strong> Når du trykker på Studio på et plagg, sendes bildet og typen plagg via Almaris mellomtjener til Google Gemini, som lager studiobildet. Google behandler bildet etter vilkårene for Gemini API. Mellomtjeneren lagrer ingenting annet enn en daglig telling for en tilfeldig installasjons-ID, som brukes til den daglige grensen.</li>
+<li><strong>Studiobilder.</strong> Når du trykker på Studio på et plagg, sendes bildet og typen plagg til Almaris mellomtjener hos Cloudflare, som lager studiobildet med Cloudflare Workers AI. Cloudflare behandler bildet etter vilkårene for Workers AI og bruker det ikke til å trene modeller. Mellomtjeneren lagrer ingenting annet enn en daglig telling for en tilfeldig installasjons-ID, som brukes til den daglige grensen.</li>
 </ul>
 <p>Du kan hoppe over bysteget, velge været selv og la være å bruke Studio. Da sendes ingenting fra telefonen.</p>
 <h2>Bilder og kamera</h2>
