@@ -60,7 +60,7 @@ Orchestrator: main session (Opus 5.5). Architect: Fable 5.1 subagent. All other 
 
 ### Phase 0: baseline
 
-- Install Maestro, add `maestro/` folder and an npm script to run flows against the iOS simulator dev build.
+- Maestro 2.11 is installed (`~/.maestro/bin`) and 61 flows exist in `.maestro/`. Add an npm script to build the Release simulator app and run them on the "Closet Development" simulator. Record which flows pass today.
 - Add stable `testID`s needed for flows.
 - Screenshot every current screen as the before record.
 
