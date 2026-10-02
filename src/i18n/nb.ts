@@ -470,4 +470,7 @@ export const nb: Record<Key, string> = {
   "feedback.too-plain": "For enkelt",
   "feedback.too-warm": "For varmt",
   "feedback.not-my-style": "Ikke min stil",
+  "stylist.rules": "Regler",
+  "stylist.model": "Modell",
+  "stylist.compare": "Sammenlign",
 };

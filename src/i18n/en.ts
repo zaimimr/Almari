@@ -460,6 +460,9 @@ export const en = {
   "feedback.too-plain": "Too plain",
   "feedback.too-warm": "Too warm",
   "feedback.not-my-style": "Not my style",
+  "stylist.rules": "Rules",
+  "stylist.model": "Model",
+  "stylist.compare": "Compare",
 };
 
 export type Key = keyof typeof en;

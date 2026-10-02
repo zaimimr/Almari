@@ -269,6 +269,7 @@ export type FeedbackEvent = {
   pieceIds: string[];
   request: OutfitRequest;
   engine: Engine;
+  cursor?: number;
   swap?: { from: string; to: string };
   undone?: boolean;
   against?: string[];

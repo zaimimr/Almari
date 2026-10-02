@@ -19,7 +19,12 @@ export function useToday() {
   const result = useMemo(
     () =>
       today
-        ? resultFor(closet, activeSession(today).request, today.localDate)
+        ? resultFor(
+            closet,
+            activeSession(today).request,
+            today.localDate,
+            activeSession(today).engine ?? "rules",
+          )
         : null,
     [closet, today],
   );

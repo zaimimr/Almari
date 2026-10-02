@@ -163,13 +163,19 @@ function eventFor(
     pieceIds,
     request: session.request,
     engine: session.engine ?? "rules",
+    cursor: session.cursor,
     ...(against ? { against } : {}),
   };
 }
 
 function nextShown(closet: Closet, session: Session) {
   const today = closet.styling.today!;
-  const outfits = resultFor(closet, session.request, today.localDate).outfits;
+  const outfits = resultFor(
+    closet,
+    session.request,
+    today.localDate,
+    session.engine ?? "rules",
+  ).outfits;
   return outfits.find((outfit) => changed(session.pieceIds, outfit.ids) > 0)
     ?.ids;
 }
@@ -186,14 +192,24 @@ export function giveFeedback(
   const session = activeSession(today);
   if (session.revision !== expectedRevision || !session.pieceIds.length)
     return closet;
-  const outfits = resultFor(closet, session.request, today.localDate).outfits;
+  const outfits = resultFor(
+    closet,
+    session.request,
+    today.localDate,
+    session.engine ?? "rules",
+  ).outfits;
   const next = alternative(closet, kind, session.pieceIds, outfits);
   const recorded = withFeedback(
     closet,
     eventFor(session, kind, session.pieceIds, at, id, next?.ids),
   );
   if (!next) return recorded;
-  const ranked = resultFor(recorded, session.request, today.localDate).outfits;
+  const ranked = resultFor(
+    recorded,
+    session.request,
+    today.localDate,
+    session.engine ?? "rules",
+  ).outfits;
   const cursor = ranked.findIndex(
     (outfit) => outfit.ids.join() === next.ids.join(),
   );

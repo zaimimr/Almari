@@ -1,12 +1,13 @@
 import type {
   Closet,
+  Engine,
   EverydayStyle,
   OutfitRequest,
   Session,
   TodayState,
   WardrobeMode,
 } from "./closet";
-import { rulesScorer } from "./scoring/rulesScorer";
+import { engineFor, scorerFor } from "./scoring/engine";
 import { scoreContext } from "./scoring/taste";
 import { styleOutfits, type StyleResult } from "./styling";
 
@@ -52,12 +53,13 @@ export function resultFor(
   closet: Closet,
   request: OutfitRequest,
   localDate: string,
+  engine: Engine = "rules",
 ): StyleResult {
   return styleOutfits(
     closet.pieces,
     request,
     seedFor(localDate, request),
-    rulesScorer,
+    scorerFor(engine),
     scoreContext(closet),
   );
 }
@@ -67,15 +69,17 @@ function sessionFor(
   request: OutfitRequest,
   localDate: string,
   revision: number,
+  previous: Engine | null,
 ): Session {
-  const result = resultFor(closet, request, localDate);
+  const engine = engineFor(closet, request, localDate, previous);
+  const result = resultFor(closet, request, localDate, engine);
   return {
     revision,
     request,
     cursor: 0,
     pieceIds: result.outfits[0]?.ids ?? [],
     previousPieceIds: null,
-    engine: rulesScorer.id,
+    engine,
   };
 }
 
@@ -116,6 +120,7 @@ export function ensureToday(closet: Closet, clock: Clock): Closet {
     everydayRequest(preset, closet.styling.wardrobe),
     clock.localDate,
     (current?.everyday.revision ?? 0) + 1,
+    null,
   );
   const keepOccasion = current?.active === "occasion" && current.occasion;
   return withToday(closet, {
@@ -154,6 +159,7 @@ export function saveEverydayStyle(
       everydayRequest(saved.styling.everyday!, saved.styling.wardrobe),
       today.localDate,
       today.everyday.revision + 1,
+      today.everyday.engine ?? null,
     ),
   });
 }
@@ -166,7 +172,13 @@ export function applyRequest(
   return withActive(closet, (session, today) =>
     session.revision !== expectedRevision
       ? session
-      : sessionFor(closet, request, today.localDate, session.revision + 1),
+      : sessionFor(
+          closet,
+          request,
+          today.localDate,
+          session.revision + 1,
+          session.engine ?? null,
+        ),
   );
 }
 
@@ -181,6 +193,7 @@ export function startOccasion(closet: Closet, request: OutfitRequest): Closet {
       request,
       today.localDate,
       (today.occasion?.revision ?? 0) + 1,
+      activeSession(today).engine ?? null,
     ),
   });
 }
@@ -194,7 +207,12 @@ export function backToEveryday(closet: Closet): Closet {
 export function tryAnother(closet: Closet, expectedRevision: number): Closet {
   return withActive(closet, (session, today) => {
     if (session.revision !== expectedRevision) return session;
-    const result = resultFor(closet, session.request, today.localDate);
+    const result = resultFor(
+      closet,
+      session.request,
+      today.localDate,
+      session.engine ?? "rules",
+    );
     const cursor = session.cursor + 1;
     const next = result.outfits[cursor];
     if (!next) return session;
@@ -210,7 +228,13 @@ export function tryAnother(closet: Closet, expectedRevision: number): Closet {
 
 export function startOver(closet: Closet): Closet {
   return withActive(closet, (session, today) =>
-    sessionFor(closet, session.request, today.localDate, session.revision + 1),
+    sessionFor(
+      closet,
+      session.request,
+      today.localDate,
+      session.revision + 1,
+      session.engine ?? null,
+    ),
   );
 }
 
@@ -292,6 +316,7 @@ export function dropFromToday(closet: Closet, id: string): Closet {
           session.request,
           today.localDate,
           session.revision + 1,
+          session.engine ?? null,
         )
       : session;
   const everyday = restyle(today.everyday);
