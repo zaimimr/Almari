@@ -56,6 +56,8 @@ export function useToday() {
     [update],
   );
 
+  const [foregrounded, setForegrounded] = useState(0);
+
   useEffect(() => {
     const refresh = () => {
       void update((current) =>
@@ -64,7 +66,9 @@ export function useToday() {
     };
     refresh();
     const subscription = AppState.addEventListener("change", (state) => {
-      if (state === "active") refresh();
+      if (state !== "active") return;
+      refresh();
+      setForegrounded((count) => count + 1);
     });
     return () => subscription.remove();
   }, [update]);
@@ -99,7 +103,7 @@ export function useToday() {
     return () => {
       active = false;
     };
-  }, [place, stored, localDate, update]);
+  }, [place, stored, localDate, foregrounded, update]);
 
   return {
     closet,

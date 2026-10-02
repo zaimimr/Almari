@@ -56,9 +56,7 @@ export function answersFrom(closet: Closet): Answers {
           ? "always"
           : everyday?.hijab === "not-needed"
             ? "no"
-            : everyday
-              ? "sometimes"
-              : null,
+            : null,
       coverage: profile.coverageLevel,
     },
     place: { units, place },

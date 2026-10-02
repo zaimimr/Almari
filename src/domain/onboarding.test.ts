@@ -231,7 +231,7 @@ test("answers read back from the closet for editing", () => {
   assert.deepEqual(answers.place, { units: "metric", place: null });
   assert.deepEqual(answers.body, { heightCm: 170, bodyShape: null });
   assert.deepEqual(answers.colours, { colour });
-  assert.equal(answersFrom(withPreset(null)).hijab.hijab, "sometimes");
+  assert.equal(answersFrom(withPreset(null)).hijab.hijab, null);
   assert.equal(answersFrom(fresh()).hijab.hijab, null);
 });
 

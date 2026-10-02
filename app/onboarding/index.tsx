@@ -98,7 +98,9 @@ export default function Onboarding() {
     let answer: Answers[AnswerStep] = answers[step];
     if (step === "body") {
       const empty =
-        units === "metric" ? !height.cm.trim() : !height.feet.trim();
+        units === "metric"
+          ? !height.cm.trim()
+          : !height.feet.trim() && !height.inches.trim();
       const heightCm = empty ? null : parseHeight(units, height);
       if (!empty && heightCm === null)
         return setError(t("onboarding.height.invalid"));
