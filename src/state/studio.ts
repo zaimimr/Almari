@@ -1,90 +1,76 @@
-import { useEffect, useState, useSyncExternalStore } from "react";
-import {
-  studioPhoto,
-  type StudioModelState,
-} from "../../modules/studio-photo/src";
+import { useState } from "react";
+import type { Category, GarmentKind } from "../domain/taxonomy";
 import { t } from "../i18n";
+import { installId, keepPhotoBytes, photoUpload } from "../storage/local";
 
-export type StudioModel = StudioModelState & {
-  downloading: boolean;
-  failed: boolean;
+export type StudioPiece = {
+  category: Category;
+  kind?: GarmentKind;
+  name?: string;
 };
 
-let state: StudioModel = {
-  supported: false,
-  ready: false,
-  bytes: 0,
-  size: 0,
-  downloading: false,
-  failed: false,
-};
-const listeners = new Set<() => void>();
+type StudioProblem = "offline" | "limit" | "failed";
 
-function set(change: Partial<StudioModel>) {
-  state = { ...state, ...change };
-  for (const listener of listeners) listener();
-}
+const studioUrl = process.env.EXPO_PUBLIC_STUDIO_URL;
+const studioToken = process.env.EXPO_PUBLIC_STUDIO_TOKEN;
 
-const subscribe = (listener: () => void) => {
-  listeners.add(listener);
-  return () => {
-    listeners.delete(listener);
-  };
-};
+export const studioAvailable = Boolean(studioUrl && studioToken);
 
-export async function refreshStudioModel() {
-  set(await studioPhoto.modelState().catch(() => ({})));
-}
-
-export async function downloadStudioModel() {
-  if (state.downloading) return;
-  set({ downloading: true, failed: false });
-  const subscription = studioPhoto.onDownload(({ bytes, size }) =>
-    set({ bytes, size }),
-  );
+export async function renderStudio(
+  cutout: string,
+  id: string,
+  piece: StudioPiece,
+): Promise<string> {
+  const body = new FormData();
+  body.append("image", (await photoUpload(cutout)) as Blob);
+  body.append("category", piece.category);
+  if (piece.kind) body.append("kind", piece.kind);
+  if (piece.name?.trim()) body.append("name", piece.name.trim());
+  let response: Response;
   try {
-    await studioPhoto.download();
+    response = await fetch(studioUrl!, {
+      method: "post",
+      headers: {
+        "x-app-token": studioToken!,
+        "x-install-id": await installId(),
+      },
+      body,
+    });
   } catch {
-    set({ failed: true });
-  } finally {
-    subscription.remove();
-    set({ downloading: false });
-    await refreshStudioModel();
+    throw new Error("offline");
   }
+  if (response.status === 429) throw new Error("limit");
+  if (!response.ok) throw new Error("failed");
+  const type = response.headers.get("content-type") ?? "";
+  return keepPhotoBytes(
+    new Uint8Array(await response.arrayBuffer()),
+    `${id}-studio${type.includes("png") ? ".png" : ".jpg"}`,
+  );
 }
 
-export async function deleteStudioModel() {
-  await studioPhoto.cancelDownload();
-  await studioPhoto.deleteModel();
-  await refreshStudioModel();
+export function studioFailure(error: unknown): StudioProblem {
+  const message = error instanceof Error ? error.message : "";
+  return message === "offline" || message === "limit" ? message : "failed";
 }
 
-export const cancelStudioDownload = () => studioPhoto.cancelDownload();
-
-export function useStudioModel(): StudioModel {
-  useEffect(() => {
-    void refreshStudioModel();
-  }, []);
-  return useSyncExternalStore(subscribe, () => state);
-}
-
-export const renderStudio = (cutout: string, id: string) =>
-  studioPhoto.render(cutout, id);
-
-export function studioFailure(error: unknown): "warm" | "failed" | null {
-  const message = error instanceof Error ? error.message : String(error);
-  if (message.includes("cancelled")) return null;
-  return message.includes("thermal") ? "warm" : "failed";
-}
+const messages = {
+  offline: "photo.studioOffline",
+  limit: "photo.studioLimit",
+  failed: "photo.studioFailed",
+} as const;
 
 export function useStudioMaker() {
   const [making, setMaking] = useState(false);
-  const [problem, setProblem] = useState<"warm" | "failed" | null>(null);
-  async function make(cutout: string, id: string): Promise<string | null> {
+  const [problem, setProblem] = useState<StudioProblem | null>(null);
+  async function make(
+    cutout: string,
+    id: string,
+    piece: StudioPiece,
+  ): Promise<string | null> {
     setMaking(true);
     setProblem(null);
     try {
-      return await renderStudio(cutout, id);
+      return await renderStudio(cutout, id, piece);
     } catch (error) {
       setProblem(studioFailure(error));
       return null;
@@ -92,11 +78,6 @@ export function useStudioMaker() {
       setMaking(false);
     }
   }
-  const message =
-    problem === "warm"
-      ? t("photo.studioWarm")
-      : problem === "failed"
-        ? t("photo.studioFailed")
-        : null;
+  const message = problem ? t(messages[problem]) : null;
   return { making, message, make };
 }

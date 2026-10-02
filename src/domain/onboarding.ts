@@ -173,7 +173,6 @@ export function resetCloset(closet: Closet): {
       styling: {
         ...emptyCloset.styling,
         language: closet.styling.language,
-        studio: closet.styling.studio,
       },
     }),
     files: closetFiles(closet),

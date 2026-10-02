@@ -37,7 +37,7 @@ import {
 import { labelLines } from "../../src/state/careLabel";
 import { useCloset } from "../../src/state/closet";
 import { changeImports } from "../../src/state/imports";
-import { useStudioMaker, useStudioModel } from "../../src/state/studio";
+import { studioAvailable, useStudioMaker } from "../../src/state/studio";
 import { discardPhoto } from "../../src/storage/local";
 import { PhotoChoice } from "../../src/features/PhotoChoice";
 import {
@@ -120,7 +120,6 @@ export default function CheckPiece() {
   const [answer, setAnswer] = useState<AttributeValue | undefined>(undefined);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const studioModel = useStudioModel();
   const studio = useStudioMaker();
 
   if (!job?.prepared || !job.kind || !kind)
@@ -242,7 +241,11 @@ export default function CheckPiece() {
 
   async function makeStudio() {
     if (!prepared.cutout) return;
-    const file = await studio.make(prepared.cutout, job!.id);
+    const file = await studio.make(prepared.cutout, job!.id, {
+      category,
+      kind,
+      name,
+    });
     if (!file) return;
     let applied = false;
     await update((current) => {
@@ -356,12 +359,15 @@ export default function CheckPiece() {
           setKeepOriginal(choice.keepOriginal);
           setVariant(choice.variant);
         }}
-        studioOffered={closet.styling.studio && studioModel.ready}
+        studioOffered={studioAvailable}
         making={studio.making}
         onStudio={() => {
           void makeStudio();
         }}
       />
+      {studioAvailable && prepared.enhanced && !prepared.studio ? (
+        <AppText muted>{t("photo.studioNote")}</AppText>
+      ) : null}
       <ErrorMessage message={studio.message} />
       {job.duplicateOf ? (
         <Notice

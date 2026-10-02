@@ -32,7 +32,7 @@ import { unlinkPiece } from "../domain/sets";
 import { categoryName, kindName, styleName, stylesName, t } from "../i18n";
 import { useCloset } from "../state/closet";
 import { measurePiece } from "../state/imports";
-import { useStudioMaker, useStudioModel } from "../state/studio";
+import { studioAvailable, useStudioMaker } from "../state/studio";
 import { keepPhoto, discardPhoto } from "../storage/local";
 import { photoSource } from "../ui/photos";
 import {
@@ -89,16 +89,18 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
   const photoPiece =
     piece && !newImage && image ? { ...piece, photo: image } : null;
   const variant = photoPiece ? pieceVariant(photoPiece) : null;
-  const studioModel = useStudioModel();
   const studio = useStudioMaker();
-  const studioOffered =
-    Boolean(photoPiece?.variants?.studio) ||
-    (closet.styling.studio && studioModel.ready);
+  const studioMade = Boolean(photoPiece?.variants?.studio);
+  const studioOffered = studioMade || studioAvailable;
 
   async function makeStudio() {
     const source = photoPiece ? studioSource(photoPiece) : null;
     if (!piece || !source) return;
-    const file = await studio.make(source, piece.id);
+    const file = await studio.make(source, piece.id, {
+      category: category ?? piece.category,
+      kind,
+      name,
+    });
     if (!file) return;
     await update((current) => {
       const latest = current.pieces.find((item) => item.id === piece.id);
@@ -292,13 +294,16 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
               selected={variant === "studio"}
               disabled={busy || studio.making}
               onPress={() => {
-                if (photoPiece.variants?.studio)
+                if (studioMade)
                   setImage(withVariant(photoPiece, "studio").photo);
                 else void makeStudio();
               }}
             />
           ) : null}
         </View>
+      ) : null}
+      {photoPiece && variant && !studioMade && studioAvailable ? (
+        <AppText muted>{t("photo.studioNote")}</AppText>
       ) : null}
       <ErrorMessage message={studio.message} />
       <View style={styles.actions}>

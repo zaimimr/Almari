@@ -35,3 +35,27 @@ export function lowOnSpace() {
 }
 
 export async function discardTemporary(_uri: string) {}
+
+export async function keepPhotoBytes(bytes: Uint8Array, filename: string) {
+  return keepPhoto(
+    URL.createObjectURL(
+      new Blob([bytes as Uint8Array<ArrayBuffer>], {
+        type: filename.endsWith(".png") ? "image/png" : "image/jpeg",
+      }),
+    ),
+  );
+}
+
+export async function photoUpload(photo: string) {
+  return (await fetch(photo)).blob();
+}
+
+export async function installId() {
+  const stored = window.localStorage.getItem("installId");
+  if (stored) return stored;
+  const id = crypto.randomUUID();
+  window.localStorage.setItem("installId", id);
+  return id;
+}
+
+export async function discardStudioModel() {}

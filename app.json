@@ -14,8 +14,7 @@
         "ITSAppUsesNonExemptEncryption": false
       },
       "entitlements": {
-        "com.apple.developer.weatherkit": true,
-        "com.apple.developer.kernel.increased-memory-limit": true
+        "com.apple.developer.weatherkit": true
       }
     },
     "web": {
