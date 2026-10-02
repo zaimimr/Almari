@@ -59,10 +59,11 @@ export async function keepPhotoBytes(bytes: Uint8Array, filename: string) {
 }
 
 export async function photoUpload(photo: string) {
+  const file = new File(photos, photo);
   return {
-    uri: photoUri(photo),
     name: photo,
     type: photo.endsWith(".png") ? "image/png" : "image/jpeg",
+    bytes: async () => new Uint8Array(await file.arrayBuffer()),
   };
 }
 
