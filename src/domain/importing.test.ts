@@ -25,6 +25,7 @@ import {
   fileStem,
   finishRefresh,
   importFailure,
+  isSettled,
   keepDuplicate,
   jobStem,
   orphanedFiles,
@@ -609,7 +610,7 @@ test("a box drawn by hand prepares a piece again or adds one that was missed", (
   let closet = splitOutfit();
   closet = finishImport(startImport(closet, "job"), "job", prepared());
   const box = { x: 0.25, y: 0.25, width: 0.5, height: 0.5 };
-  const cropped = cropCapture(closet, "job", box);
+  const cropped = cropCapture(closet, "job", box, "job-crop-1");
   const job = cropped.imports[0]!;
   assert.equal(job.state, "queued");
   assert.equal(job.attempts, 0);
@@ -618,7 +619,7 @@ test("a box drawn by hand prepares a piece again or adds one that was missed", (
   assert.equal(job.kind, undefined);
   assert.equal(job.region?.kind, "upper");
   assert.equal(job.captureId, "job");
-  assert.equal(cropCapture(cropped, "job", box), cropped);
+  assert.equal(cropCapture(cropped, "job", box, "job-crop-2"), cropped);
   const added = addToCapture(
     cropped,
     "job",
@@ -641,6 +642,45 @@ test("a box drawn by hand prepares a piece again or adds one that was missed", (
   assert.equal(addToCapture(added, "job", "extra", box, "x"), added);
 });
 
+test("a piece cropped again is prepared under fresh file names", () => {
+  let closet = splitOutfit();
+  closet = finishImport(startImport(closet, "job"), "job", prepared());
+  const box = { x: 0.25, y: 0.25, width: 0.5, height: 0.5 };
+  closet = cropCapture(closet, "job", box, "job-crop-1");
+  assert.equal(jobStem(closet.imports[0]!), "job-crop-1");
+  closet = finishImport(
+    startImport(closet, "job"),
+    "job",
+    prepared({ original: "job-crop-1-original.jpg", cutout: "job-crop-1.png" }),
+  );
+  const again = cropCapture(closet, "job", box, "job-crop-2");
+  assert.equal(jobStem(again.imports[0]!), "job-crop-2");
+  assert.ok(
+    !orphanedFiles(closet, again).some((file) => file.startsWith("job-crop-2")),
+  );
+  assert.deepEqual(decodeCloset(JSON.stringify(again)).imports, again.imports);
+  const retaken = retakeImport(again, "job", "second-original.jpg");
+  assert.equal(retaken, again);
+  const ready = finishImport(startImport(again, "job"), "job", prepared());
+  const fresh = retakeImport(ready, "job", "second-original.jpg");
+  assert.equal(jobStem(fresh.imports[0]!), "second");
+});
+
+test("only a piece that finished preparing can be changed", () => {
+  let closet = queued();
+  assert.equal(isSettled(closet.imports[0]!), false);
+  closet = startImport(closet, "job");
+  assert.equal(isSettled(closet.imports[0]!), false);
+  assert.equal(
+    isSettled(finishImport(closet, "job", prepared()).imports[0]!),
+    true,
+  );
+  assert.equal(
+    isSettled(failImport(closet, "job", "processing").imports[0]!),
+    true,
+  );
+});
+
 test("a hand drawn box clears the partly visible check and keeps the care label", () => {
   const label: CareLabel = {
     photo: "job-label.jpg",
@@ -654,7 +694,7 @@ test("a hand drawn box clears the partly visible check and keeps the care label"
   closet = finishImport(startImport(closet, "job"), "job", prepared());
   closet = setImportLabel(closet, "job", label);
   const box = { x: 0.1, y: 0.1, width: 0.8, height: 0.8 };
-  const job = cropCapture(closet, "job", box).imports[0]!;
+  const job = cropCapture(closet, "job", box, "job-crop-1").imports[0]!;
   assert.equal(job.region?.partial, false);
   assert.equal(job.region?.kind, "upper");
   assert.deepEqual(job.label, label);

@@ -48,6 +48,10 @@ export function queueImport(
   };
 }
 
+export function isSettled(job: ImportJob): boolean {
+  return ["ready", "review", "failed"].includes(job.state);
+}
+
 function updateJob(
   closet: Closet,
   id: string,
@@ -191,7 +195,7 @@ export function retakeImport(
 ): Closet {
   return updateJob(closet, id, (job) => {
     if (job.source === source) return job;
-    if (!["ready", "review", "failed"].includes(job.state)) return job;
+    if (!isSettled(job)) return job;
     return {
       ...job,
       source,
@@ -210,6 +214,7 @@ export function retakeImport(
       captureId: undefined,
       region: undefined,
       crop: undefined,
+      stem: undefined,
       people: undefined,
       adviceShown: [
         ...(job.adviceShown ?? []),
@@ -320,7 +325,7 @@ export function fileStem(source: string): string {
 }
 
 export function jobStem(job: ImportJob): string {
-  return job.region || job.crop ? job.id : fileStem(job.source);
+  return job.stem ?? (job.region || job.crop ? job.id : fileStem(job.source));
 }
 
 export function splitCapture(
@@ -355,9 +360,14 @@ export function captureJobs(closet: Closet, captureId: string): ImportJob[] {
   );
 }
 
-export function cropCapture(closet: Closet, id: string, crop: Frame): Closet {
+export function cropCapture(
+  closet: Closet,
+  id: string,
+  crop: Frame,
+  stem: string,
+): Closet {
   return updateJob(closet, id, (job) =>
-    job.captureId && ["ready", "review", "failed"].includes(job.state)
+    job.captureId && isSettled(job)
       ? {
           id: job.id,
           source: job.source,
@@ -369,6 +379,7 @@ export function cropCapture(closet: Closet, id: string, crop: Frame): Closet {
           ...(job.people ? { people: job.people } : {}),
           ...(job.label ? { label: job.label } : {}),
           crop,
+          stem,
         }
       : job,
   );

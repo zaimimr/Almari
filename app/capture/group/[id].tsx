@@ -10,6 +10,7 @@ import {
   addToCapture,
   captureJobs,
   cropCapture,
+  isSettled,
   removeImport,
 } from "../../../src/domain/importing";
 import { t } from "../../../src/i18n";
@@ -114,7 +115,7 @@ export default function CapturePieces() {
     try {
       await changeImports(update, (current) =>
         job
-          ? cropCapture(current, job, box)
+          ? cropCapture(current, job, box, `${job}-${randomUUID()}`)
           : addToCapture(
               current,
               id,
@@ -328,8 +329,7 @@ export default function CapturePieces() {
                     onPress={() => toggle(job.id, true)}
                   />
                 </View>
-                {["ready", "review", "failed"].includes(job.state) &&
-                !isDropped ? (
+                {isSettled(job) && !isDropped ? (
                   <Button
                     label={t("capture.adjust")}
                     secondary

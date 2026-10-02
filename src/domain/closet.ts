@@ -154,6 +154,7 @@ export type ImportJob = {
   captureId?: string;
   region?: GarmentRegion;
   crop?: Frame;
+  stem?: string;
   people?: number;
   error?: string;
   label?: CareLabel;
@@ -522,6 +523,7 @@ function isImportJob(value: unknown): value is ImportJob {
     optional(value.captureId, isString) &&
     optional(value.region, isGarmentRegion) &&
     optional(value.crop, isFrame) &&
+    optional(value.stem, isString) &&
     optional(value.people, isCount) &&
     optional(value.error, isString) &&
     optional(value.label, isCareLabel) &&
