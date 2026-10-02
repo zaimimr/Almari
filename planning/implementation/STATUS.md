@@ -149,3 +149,40 @@ Before the TestFlight build is signed off on her iPhone:
 
 - Read three real labels with Apple Intelligence on and three with it off, and note the time per label.
 - Network check: turn on Settings, Privacy and Security, App Privacy Report, read three labels, and confirm Almari shows no network activity from label reading.
+
+## Labels, capture and styling: Part 5, onboarding, colour analysis and weather (done, 2 October 2026)
+
+What works:
+
+- A six-step onboarding shows once on first start: hijab and coverage, units and city, body (height and shape), taste (fit, colours, Desi, Western or both), colour analysis or a skin swatch, and a done screen with photo tips. Every step has Skip and a progress line. Existing closets with her own clothes skip it.
+- Answers fill the style profile; skipped answers stay empty and neutral. The hijab answer sets the everyday hijab preference (always, not needed, or unset for sometimes). Choosing Desi or Western sets the everyday style.
+- Profile and settings (Profile on Today, always visible) lists every answer and opens the same step to change it. It also has Language (Follow phone, English, Norsk bokmål), Replay onboarding, Reset all data with a confirm step, the app version and a privacy line. There is no login; everything stays on the phone.
+- Colour analysis: a selfie with the front camera (or a recent selfie) is measured on the phone. Vision face landmarks find cheeks and eyes, the clothes parser finds hair and face, and white balance comes from the eye whites and a neutral background. Dark or mixed light asks for a retake. She sees skin, hair and eye colours, undertone, depth, contrast, one of 12 seasons and six best colours, and can change any of them. The photo is deleted right after.
+- Weather: the city is looked up once without asking for location. Today fetches the WeatherKit forecast once a day and uses 08 to 20 local time: warm from 18°C, cold below 8°C (feels-like with wind chill), rain or snow when the chance is 40% or more. A manual choice wins for the day. Without network or with a WeatherKit failure, Today says the forecast is unavailable and manual weather works. The Apple Weather mark and legal link are shown with every forecast.
+- Metric and Celsius by default; imperial changes height and temperature display.
+- The camera and photo library permission prompts are in bokmål on a phone set to Norwegian.
+
+Evidence: `npm run check` with 224 domain tests, including the closet migration (older keys untouched), every onboarding answer, colour thresholds at each boundary, all 12 seasons, hair covered by a hijab, retakes, the daytime window, wind, rain and snow thresholds, manual winning over the forecast, the no-network fallback, the language choice, replay and reset. `npx expo-doctor` (21 of 21) and `npx expo export --platform ios --platform web` pass. Simulator flows on a Release build (onboarding, skip all, city lookup, colours intro and a faceless photo retake, Today forecast note, answers, settings in English and bokmål, replay, reset, larger text) are in [planning/build/onboarding](../build/onboarding). A faceless library photo gives the retake message and leaves no picker copy behind.
+
+Known limitations:
+
+- The skin undertone, depth and season thresholds are practitioner heuristics chosen in this part, not published constants. They need tuning on her real selfies.
+- The colour layer that uses her best colours is built in Part 6.
+- The debug build on the simulator cannot fetch WeatherKit, so the forecast itself is only checked on her iPhone. WeatherKit must be ticked for `com.zaimimran.almari` under Capabilities and App Services in the Apple developer portal before the TestFlight build.
+- The simulator camera opens but cannot take a picture, so a measured selfie is only checked on her iPhone.
+- Onboarding flows clear the simulator; re-run the Part 2 to 4 seed scripts before their flows.
+- Screens not yet in the string catalog (Today, Adjust, Everyday style, some header titles and the loading screen) stay English until Part 8, so Norwegian testers see mixed languages there.
+- The confirm dialog's Cancel button is still English.
+- Switching language returns to Today.
+- The permission prompts follow the phone's language, not the in-app language choice.
+
+Pending for the owner, with a TestFlight build on her iPhone (delete and reinstall first, so onboarding shows):
+
+1. Onboarding shows on first start. Answer hijab and coverage, type Oslo and tap Find city, skip body, answer taste.
+2. Colours: take a selfie facing a window in daylight. Expected: skin, hair (or Not measured with a hijab on) and eyes swatches that look like her, a season, and six best colours. Adjust undertone and see the season change. Save.
+3. Retake checks: a selfie in a dim room gives the too-dark message; a selfie with a warm lamp on one side and daylight on the other gives the mixed light message. Neither shows a season.
+4. In the Photos app, no new selfie was saved.
+5. Today shows "Forecast for Oslo" with a temperature range in °C, the Apple Weather mark and Data sources. Data sources opens Apple's legal page. The context line ends with "(forecast)" and matches the day's weather.
+6. Adjust, choose Warm: Today says she chose the weather herself and the outfit follows Warm. Close and reopen the app: still her choice.
+7. Profile, Units and city, choose Feet and °F, Save: height shows in feet and inches and Today's range shows in °F.
+8. Turn on flight mode, open Profile, change the city to Bergen and save, return to Today. Expected: "The forecast is not available right now" and manual weather still works. Turn flight mode off.
