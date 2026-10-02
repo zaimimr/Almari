@@ -1,13 +1,10 @@
 name: release
 
 # Builds Almari with Xcode (no Expo account, no EAS credits) and ships it to
-# TestFlight. App Store review stays manual. See docs/RELEASE_CI.md.
-#
-# Pushes do nothing until vars.ENABLE_IOS_RELEASE is "true".
+# TestFlight. Runs only when started by hand. App Store review stays manual.
+# See docs/RELEASE_CI.md.
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
     inputs:
       submission:
@@ -24,9 +21,6 @@ jobs:
   # One build number per release, written into the repo and tagged.
   prepare:
     name: open the release
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'push' && vars.ENABLE_IOS_RELEASE == 'true')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -213,7 +207,7 @@ jobs:
   ios-submission:
     name: ios -> staged for review
     needs: [prepare, ios]
-    if: github.event_name == 'workflow_dispatch' && inputs.submission == 'staged'
+    if: inputs.submission == 'staged'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:

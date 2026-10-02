@@ -28,7 +28,6 @@ identifiers, not credentials.
 | `IOS_PROVISIONING_PROFILE_BASE64` | secret   | base64 of the App Store `.mobileprovision` for `com.zaimimran.almari` |
 | `ASC_KEY_P8`                      | secret   | base64 of `AuthKey_734B75F2PY.p8`                                     |
 | `IOS_PROVISIONING_PROFILE_NAME`   | variable | the profile's `Name`                                                  |
-| `ENABLE_IOS_RELEASE`              | variable | `true` to release on every push to `main`                             |
 
 The profile must include the **WeatherKit** capability, since the app has that entitlement.
 
@@ -42,12 +41,11 @@ gh variable set IOS_PROVISIONING_PROFILE_NAME --body "$(security cms -D -i crede
 
 `credentials/` is gitignored. Keep it that way.
 
-## Turning it on
+## Running a release
 
 ```bash
 gh workflow run release.yml                        # one manual run first
 gh workflow run release.yml -f submission=staged   # also stage an App Store review
-gh variable set ENABLE_IOS_RELEASE --body true     # then every push to main
 ```
 
 ## Release notes
