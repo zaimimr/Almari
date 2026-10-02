@@ -13,5 +13,7 @@ export type SelfieCameraProps = ViewProps & {
   ) => void;
 };
 
-export const SelfieCameraView =
-  requireNativeView<SelfieCameraProps>("ClosetVision");
+export const SelfieCameraView = requireNativeView<SelfieCameraProps>(
+  "ClosetVision",
+  "SelfieCameraView",
+);
