@@ -465,6 +465,66 @@ export const en = {
   "stylist.compare": "Compare",
   "stylist.rate": "{part} of {whole} ({percent}%)",
   "stylist.noFeedback": "No feedback yet",
+
+  "styling.keptGone": "A piece you chose to keep is no longer in this closet.",
+  "styling.keptUnavailable":
+    "A piece you chose to keep is marked unavailable or archived.",
+
+  "coverage.anyLength": "Any length",
+  "coverage.toElbow": "To the elbow",
+  "coverage.toWrist": "To the wrist",
+  "coverage.toCalf": "To mid-calf",
+  "coverage.toAnkle": "To the ankle",
+  "coverage.neither": "Neither",
+  "coverage.seeThrough": "See-through",
+  "coverage.notSeeThrough": "Not see-through",
+  "coverage.opensFront": "Opens at the front",
+  "coverage.closedFront": "Closed at the front",
+  "coverage.both": "Both",
+  "coverage.sheerSleeves":
+    "{name} may be see-through, so its sleeves are not confirmed.",
+  "coverage.sheerLength":
+    "{name} may be see-through, so its length is not confirmed.",
+  "coverage.openLength":
+    "{name} may open at the front, so its length is not confirmed.",
+  "coverage.sleeveUnknown": "The sleeve length of {name} is not confirmed yet.",
+  "coverage.lengthUnknown": "The length of {name} is not confirmed yet.",
+  "coverage.noSleevesElbow":
+    "Nothing in this outfit has opaque sleeves to the elbow.",
+  "coverage.noSleevesWrist":
+    "Nothing in this outfit has opaque sleeves to the wrist.",
+  "coverage.noHemCalf": "Nothing in this outfit reaches mid-calf.",
+  "coverage.noHemAnkle": "Nothing in this outfit reaches the ankle.",
+  "coverage.none":
+    "No combination in this closet meets your sleeve and hem choices.",
+  "coverage.askBoth": "Is {name} see-through, or does it open at the front?",
+  "coverage.askOpen": "Does {name} open at the front?",
+  "coverage.askSheer": "Can you see through {name}?",
+  "coverage.askSleeve": "How long are the sleeves on {name}?",
+  "coverage.askLength": "Where does {name} reach on you?",
+  "check.action": "Answer one question",
+  "styling.tooMany":
+    "There are too many combinations to check at once. Keep a piece or choose a garment type to narrow the search.",
+  "styling.incomplete": "These choices do not make a complete outfit.",
+
+  "pieceWeather.warmUnconfirmed":
+    "{name} looks warm enough, but you have not confirmed it.",
+  "pieceWeather.rainUnconfirmed":
+    "{name} may suit rain, but you have not confirmed it.",
+  "pieceWeather.snowUnconfirmed":
+    "{name} may suit snow, but you have not confirmed it.",
+  "styling.noWarmLayer":
+    "This outfit has no layer marked warm enough for time outside in the cold.",
+  "styling.noWarmLayerCloset":
+    "Your closet does not have a layer marked warm enough for time outside in the cold.",
+  "styling.theseShoes": "These shoes",
+  "styling.shoesNotRain": "{name} are not marked suitable for rain.",
+  "styling.shoesNotSnow": "{name} are not marked suitable for snow.",
+  "styling.noRainShoes":
+    "Your closet does not have footwear marked suitable for rain.",
+  "styling.noSnowShoes":
+    "Your closet does not have footwear marked suitable for snow.",
+  "today.openPiece": "Open {name}",
 };
 
 export type Key = keyof typeof en;

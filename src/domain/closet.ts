@@ -18,6 +18,8 @@ import {
 } from "./attributes";
 import { isCareLabel, withCareLabel, type CareLabel } from "./careLabel";
 import { isSwatches, type Swatch } from "./color";
+import { t } from "../i18n";
+import { withWeatherProposals } from "./pieceWeather";
 
 export * from "./taxonomy";
 
@@ -83,7 +85,8 @@ export type GarmentRegion = {
 
 export type Source = "proposed" | "label" | "confirmed";
 
-export type SourceKey = keyof Attributes | "kind" | "styles";
+export type SourceKey =
+  keyof Attributes | "kind" | "styles" | "warmth" | "rain" | "snow" | "open";
 
 export type Sources = Partial<Record<SourceKey, Source>>;
 
@@ -179,6 +182,13 @@ export type Weather =
       warmth: "warm" | "mild" | "cold";
       precipitation: "dry" | "rain" | "snow";
       exposure: "mostly-indoors" | "time-outside" | null;
+    }
+  | {
+      source: "forecast";
+      warmth: "warm" | "mild" | "cold";
+      precipitation: "dry" | "rain" | "snow";
+      exposure: null;
+      at: string;
     };
 
 export type Coverage = "full" | "moderate" | "own";
@@ -276,12 +286,69 @@ export type FeedbackEvent = {
   against?: string[];
 };
 
+export const sleeveNeeds = [
+  {
+    id: "any",
+    get label() {
+      return t("coverage.anyLength");
+    },
+  },
+  {
+    id: "elbow",
+    get label() {
+      return t("coverage.toElbow");
+    },
+  },
+  {
+    id: "long",
+    get label() {
+      return t("coverage.toWrist");
+    },
+  },
+] as const;
+export type SleeveNeed = (typeof sleeveNeeds)[number]["id"];
+
+export const hemNeeds = [
+  {
+    id: "any",
+    get label() {
+      return t("coverage.anyLength");
+    },
+  },
+  {
+    id: "calf",
+    get label() {
+      return t("coverage.toCalf");
+    },
+  },
+  {
+    id: "ankle",
+    get label() {
+      return t("coverage.toAnkle");
+    },
+  },
+] as const;
+export type HemNeed = (typeof hemNeeds)[number]["id"];
+
+export type CoverageNeed = { sleeve: SleeveNeed | null; hem: HemNeed | null };
+
+export function coverageNeedFor(
+  level: Coverage | null,
+  own: CoverageNeed | undefined,
+): CoverageNeed | undefined {
+  if (level === "full") return { sleeve: "long", hem: "ankle" };
+  if (level === "moderate") return { sleeve: "elbow", hem: "calf" };
+  if (level === "own") return own;
+  return undefined;
+}
+
 export type EverydayStyle = {
   version: number;
   occasion: Occasion;
   style: Style;
   hijab: HijabPreference;
   sample: boolean;
+  coverage?: CoverageNeed;
 };
 
 export type OutfitRequest = {
@@ -293,6 +360,7 @@ export type OutfitRequest = {
   weather: Weather;
   hijab: HijabPreference;
   wardrobe: WardrobeMode;
+  coverage?: CoverageNeed;
 };
 
 export type Engine = "rules" | "model";
@@ -439,6 +507,10 @@ const sourceKeys: readonly SourceKey[] = [
   "styles",
   "sheer",
   ...attributeKeys,
+  "warmth",
+  "rain",
+  "snow",
+  "open",
 ];
 
 const sourceValues = ["proposed", "label", "confirmed"];
@@ -693,6 +765,14 @@ function isWeather(value: unknown): value is Weather {
   );
 }
 
+function isCoverageNeed(value: unknown): value is CoverageNeed {
+  return (
+    isRecord(value) &&
+    (value.sleeve === null || isOneOf(sleeveNeeds, value.sleeve)) &&
+    (value.hem === null || isOneOf(hemNeeds, value.hem))
+  );
+}
+
 function isEverydayStyle(value: unknown): value is EverydayStyle {
   return (
     isRecord(value) &&
@@ -700,7 +780,8 @@ function isEverydayStyle(value: unknown): value is EverydayStyle {
     isOccasion(value.occasion) &&
     isStyle(value.style) &&
     isHijabPreference(value.hijab) &&
-    isBoolean(value.sample)
+    isBoolean(value.sample) &&
+    optional(value.coverage, isCoverageNeed)
   );
 }
 
@@ -714,7 +795,8 @@ function isRequest(value: unknown): value is OutfitRequest {
     isUniqueStrings(value.excludedIds) &&
     isWeather(value.weather) &&
     isHijabPreference(value.hijab) &&
-    isWardrobe(value.wardrobe)
+    isWardrobe(value.wardrobe) &&
+    optional(value.coverage, isCoverageNeed)
   );
 }
 
@@ -1034,7 +1116,7 @@ export function decodeCloset(...args: Parameters<typeof decodeStored>): Closet {
 }
 
 export function savePiece(closet: Closet, piece: Piece): Closet {
-  const clean = { ...piece, name: piece.name.trim() };
+  const clean = withWeatherProposals({ ...piece, name: piece.name.trim() });
   if (!isPiece(clean))
     throw new Error("Add a photo, a name, and a category for this piece.");
   const exists = closet.pieces.some((item) => item.id === piece.id);
@@ -1104,7 +1186,8 @@ export function setAway(
   id: string,
   reason: AwayReason | null,
 ): Closet {
-  if (!closet.pieces.some((piece) => piece.id === id)) return closet;
+  const target = closet.pieces.find((piece) => piece.id === id);
+  if (!target || target.status === "archived") return closet;
   return {
     ...closet,
     pieces: closet.pieces.map((piece): Piece => {

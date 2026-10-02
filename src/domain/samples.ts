@@ -285,3 +285,25 @@ export function addSampleWardrobe(closet: Closet): Closet {
     pieces: [...closet.pieces.map(refreshed), ...additions],
   };
 }
+
+export function withSampleAttributes(closet: Closet): Closet {
+  let changed = false;
+  const pieces = closet.pieces.map((piece) => {
+    const fixture = samplePieces.find((item) => item.id === piece.id);
+    if (
+      piece.source !== "sample" ||
+      !fixture?.attributes ||
+      fixture.category !== piece.category ||
+      Object.keys(fixture.attributes).every(
+        (key) => piece.attributes && key in piece.attributes,
+      )
+    )
+      return piece;
+    changed = true;
+    return {
+      ...piece,
+      attributes: { ...fixture.attributes, ...piece.attributes },
+    };
+  });
+  return changed ? { ...closet, pieces } : closet;
+}

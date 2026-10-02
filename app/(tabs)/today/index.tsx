@@ -166,6 +166,16 @@ function TodayContent() {
         return run((current) =>
           setWardrobe(current, "sample", clockFor(new Date())),
         );
+      case "check-piece":
+        return router.push({
+          pathname: "/today/check",
+          params: { id: action.id, ask: action.ask },
+        });
+      case "edit-piece":
+        return router.push({
+          pathname: "/piece/[id]",
+          params: { id: action.id },
+        });
     }
   }
 
@@ -187,6 +197,10 @@ function TodayContent() {
         return "Add a piece";
       case "use-samples":
         return "Use the sample closet";
+      case "check-piece":
+        return t("check.action");
+      case "edit-piece":
+        return t("today.openPiece", { name: nameOf(action.id) });
     }
   }
 

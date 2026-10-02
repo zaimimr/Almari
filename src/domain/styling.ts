@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import {
   isAvailable,
   kindLabel,
@@ -6,8 +7,9 @@ import {
   type Piece,
   type Style,
 } from "./closet";
-import { t } from "../i18n";
 import type { ScoreContext, Scorer } from "./scoring/types";
+import { coverageProblems } from "./coverage";
+import { confirmedWeather, unconfirmedWeather } from "./pieceWeather";
 
 export type Role =
   | "main"
@@ -49,7 +51,9 @@ export type ProblemAction =
   | { type: "clear-excluded" }
   | { type: "choose-pieces" }
   | { type: "add-pieces" }
-  | { type: "use-samples" };
+  | { type: "use-samples" }
+  | { type: "check-piece"; id: string; ask: "sleeve" | "length" }
+  | { type: "edit-piece"; id: string };
 
 export type Problem = {
   code:
@@ -61,7 +65,9 @@ export type Problem = {
     | "missing-role"
     | "incomplete"
     | "weather-gap"
-    | "style-unknown";
+    | "style-unknown"
+    | "coverage"
+    | "coverage-unknown";
   severity: "conflict" | "missing" | "review";
   message: string;
   ids: string[];
@@ -121,7 +127,7 @@ function fitsStyle(piece: Piece, style: Style) {
 
 function outside(request: OutfitRequest) {
   return (
-    request.weather.source === "manual" &&
+    request.weather.source !== "unknown" &&
     request.weather.exposure !== "mostly-indoors"
   );
 }
@@ -170,52 +176,77 @@ function weatherProblems(
   pool: Piece[],
 ): Problem[] {
   const weather = request.weather;
-  if (weather.source !== "manual") return [];
+  if (weather.source === "unknown") return [];
+  const clear: ProblemAction[] =
+    weather.source === "manual" ? [{ type: "clear-weather" }] : [];
   const problems: Problem[] = [];
   const shoes = outfit.find((piece) => roleOf(piece) === "shoes");
   const shoeIds = shoes ? [shoes.id] : [];
   const poolShoes = pool.filter((piece) => roleOf(piece) === "shoes");
+  const unconfirmed = (piece: Piece, message: string): Problem => ({
+    code: "weather-gap",
+    severity: "review",
+    message,
+    ids: [piece.id],
+    actions: [{ type: "edit-piece", id: piece.id }, ...clear],
+  });
   if (weather.warmth === "cold" && outside(request)) {
-    const warm = outfit.some(
-      (piece) =>
-        (roleOf(piece) === "layer" || roleOf(piece) === "outer") &&
-        piece.traits?.warmth === "warm",
+    const layers = outfit.filter(
+      (piece) => roleOf(piece) === "layer" || roleOf(piece) === "outer",
     );
-    if (!warm)
-      problems.push({
-        code: "weather-gap",
-        severity: "review",
-        message: pool.some((piece) => piece.traits?.warmth === "warm")
-          ? "This outfit has no layer marked warm enough for time outside in the cold."
-          : "Your closet does not have a layer marked warm enough for time outside in the cold.",
-        ids: [],
-        actions: [{ type: "clear-weather" }],
-      });
+    const maybe = layers.find(
+      (piece) => unconfirmedWeather(piece, "warmth") === "warm",
+    );
+    if (!layers.some((piece) => confirmedWeather(piece, "warmth") === "warm"))
+      problems.push(
+        maybe
+          ? unconfirmed(
+              maybe,
+              t("pieceWeather.warmUnconfirmed", { name: maybe.name }),
+            )
+          : {
+              code: "weather-gap",
+              severity: "review",
+              message: pool.some(
+                (piece) => confirmedWeather(piece, "warmth") === "warm",
+              )
+                ? t("styling.noWarmLayer")
+                : t("styling.noWarmLayerCloset"),
+              ids: [],
+              actions: clear,
+            },
+      );
   }
-  if (weather.precipitation === "snow" && shoes?.traits?.snow !== true)
+  const footwear = (key: "rain" | "snow") => {
+    if (shoes && confirmedWeather(shoes, key) === true) return;
+    if (shoes && unconfirmedWeather(shoes, key) === true) {
+      problems.push(
+        unconfirmed(
+          shoes,
+          t(
+            key === "rain"
+              ? "pieceWeather.rainUnconfirmed"
+              : "pieceWeather.snowUnconfirmed",
+            { name: shoes.name },
+          ),
+        ),
+      );
+      return;
+    }
     problems.push({
       code: "weather-gap",
       severity: "review",
-      message: poolShoes.some((piece) => piece.traits?.snow === true)
-        ? `${shoes?.name ?? "These shoes"} are not marked suitable for snow.`
-        : "Your closet does not have footwear marked suitable for snow.",
+      message: poolShoes.some((piece) => confirmedWeather(piece, key) === true)
+        ? t(key === "rain" ? "styling.shoesNotRain" : "styling.shoesNotSnow", {
+            name: shoes?.name ?? t("styling.theseShoes"),
+          })
+        : t(key === "rain" ? "styling.noRainShoes" : "styling.noSnowShoes"),
       ids: shoeIds,
-      actions: [{ type: "clear-weather" }],
+      actions: clear,
     });
-  if (
-    weather.precipitation === "rain" &&
-    outside(request) &&
-    shoes?.traits?.rain !== true
-  )
-    problems.push({
-      code: "weather-gap",
-      severity: "review",
-      message: poolShoes.some((piece) => piece.traits?.rain === true)
-        ? `${shoes?.name ?? "These shoes"} are not marked suitable for rain.`
-        : "Your closet does not have footwear marked suitable for rain.",
-      ids: shoeIds,
-      actions: [{ type: "clear-weather" }],
-    });
+  };
+  if (weather.precipitation === "snow") footwear("snow");
+  if (weather.precipitation === "rain" && outside(request)) footwear("rain");
   return problems;
 }
 
@@ -256,6 +287,18 @@ export function evaluateOutfit(
     problems.push(
       missing(`Add a ${kindLabel(request.garmentType).toLowerCase()}.`),
     );
+  const worn = (role: Role) => outfit.find((piece) => roleOf(piece) === role);
+  problems.push(
+    ...coverageProblems(
+      {
+        main: worn("main"),
+        bottom: worn("bottom"),
+        layer: worn("layer"),
+        outer: worn("outer"),
+      },
+      request.coverage,
+    ),
+  );
   problems.push(...weatherProblems(outfit, request, pool));
   const unmarked = outfit.filter(
     (piece) =>
@@ -371,7 +414,11 @@ export function styleOutfits(
       missingKept.map((id) => ({
         code: "kept-missing",
         severity: "missing",
-        message: "A piece you chose to keep is no longer in this closet.",
+        message: closetPieces.some(
+          (piece) => piece.id === id && piece.source === request.wardrobe,
+        )
+          ? t("styling.keptUnavailable")
+          : t("styling.keptGone"),
         ids: [id],
         actions: [{ type: "release", id }],
       })),
@@ -500,9 +547,19 @@ export function styleOutfits(
   const reviews: Candidate[] = [];
   let count = 0;
   let limited = false;
+  let coverageBlocked = false;
   const consider = (ids: Piece[]) => {
     const problems = evaluateOutfit(ids, request, pool);
-    if (problems.some((problem) => problem.severity !== "review")) return;
+    if (problems.some((problem) => problem.severity !== "review")) {
+      if (
+        problems.every(
+          (problem) =>
+            problem.severity === "review" || problem.code === "coverage",
+        )
+      )
+        coverageBlocked = true;
+      return;
+    }
     const { score, reasons } = scorer.score(ids, request, context);
     const candidate = {
       ids: ids.map((piece) => piece.id),
@@ -581,18 +638,24 @@ export function styleOutfits(
     status: "missing",
     outfits: [],
     problems: [
-      {
-        code: "incomplete",
-        severity: "missing",
-        message: limited
-          ? "There are too many combinations to check at once. Keep a piece or choose a garment type to narrow the search."
-          : "These choices do not make a complete outfit.",
-        ids: [],
-        actions: [
-          ...(type ? [{ type: "clear-type" as const }] : []),
-          { type: "choose-pieces" },
-        ],
-      },
+      coverageBlocked && !limited
+        ? {
+            code: "coverage",
+            severity: "missing",
+            message: t("coverage.none"),
+            ids: [],
+            actions: [{ type: "add-pieces" }],
+          }
+        : {
+            code: "incomplete",
+            severity: "missing",
+            message: limited ? t("styling.tooMany") : t("styling.incomplete"),
+            ids: [],
+            actions: [
+              ...(type ? [{ type: "clear-type" as const }] : []),
+              { type: "choose-pieces" },
+            ],
+          },
     ],
     limited,
   };
