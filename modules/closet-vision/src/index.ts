@@ -8,6 +8,7 @@ export type {
   LabelScore,
   PrepareOptions,
   PreparedGarment,
+  Quality,
   ReadLabelResult,
   Swatch,
 } from "./ClosetVision.types";

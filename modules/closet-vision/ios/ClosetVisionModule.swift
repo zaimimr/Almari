@@ -34,9 +34,19 @@ struct PrepareOptions: Record {
   @Field var crop: [String: Double]? = nil
 }
 
+struct QualityRecord: Record {
+  @Field var sharpness: Double = 0
+  @Field var brightness: Double = 0
+  @Field var clipped: [String] = []
+  @Field var coverage: Double? = nil
+  @Field var lightSpread: Double? = nil
+}
+
 struct PreparedGarment: Record {
   @Field var original: String = ""
   @Field var cutout: String? = nil
+  @Field var enhanced: String? = nil
+  @Field var quality: QualityRecord? = nil
   @Field var thumbnail: String? = nil
   @Field var frame: [String: Double]? = nil
   @Field var instances: Int = 0
@@ -48,7 +58,7 @@ struct PreparedGarment: Record {
   @Field var milliseconds: [String: Int] = [:]
 }
 
-enum PrepareError: Error, CustomStringConvertible {
+enum PrepareError: Error, CustomStringConvertible, LocalizedError {
   case unreadable
   case resources
   case storage
@@ -60,6 +70,8 @@ enum PrepareError: Error, CustomStringConvertible {
     case .storage: return "storage"
     }
   }
+
+  var errorDescription: String? { description }
 }
 
 func paletteClusters(_ points: [SIMD3<Double>]) -> [(rgb: SIMD3<Double>, share: Double)] {
@@ -251,6 +263,8 @@ final class GarmentPipeline {
     let maskStart = Date()
     var garment = image
     var found = false
+    var mask: CIImage? = nil
+    let enhancer = GarmentEnhancer(context: context)
     if let cutout = options?.cutout {
       guard let loaded = CIImage(contentsOf: photos.appendingPathComponent(cutout)) else {
         throw PrepareError.unreadable
@@ -279,31 +293,55 @@ final class GarmentPipeline {
           ofInstances: observation.allInstances, from: handler, croppedToInstancesExtent: true)
       {
         result.instances = observation.allInstances.count
+        if let scaledMask = try? observation.generateScaledMaskForImage(
+          forInstances: observation.allInstances, from: handler)
+        {
+          mask = CIImage(cvPixelBuffer: scaledMask)
+        }
         garment = scaled(CIImage(cvPixelBuffer: buffer), longEdge: 1536)
         found = true
       }
     }
     if found {
-      let side = max(garment.extent.width, garment.extent.height)
+      let side = (max(garment.extent.width, garment.extent.height) * 1.06).rounded(.up)
       let square = CGRect(x: 0, y: 0, width: side, height: side)
-      let offsetX = (side - garment.extent.width) / 2
-      let offsetY = (side - garment.extent.height) / 2
-      let centered = garment.transformed(by: CGAffineTransform(translationX: offsetX, y: offsetY))
-        .composited(over: CIImage(color: .clear).cropped(to: square))
+      let offsetX = ((side - garment.extent.width) / 2).rounded()
+      let offsetY = ((side - garment.extent.height) / 2).rounded()
+      let place = CGAffineTransform(translationX: offsetX, y: offsetY)
+      let canvas = CIImage(color: .clear).cropped(to: square)
       let cutout = "\(id).png"
-      try write(centered, to: cutout, extent: square)
+      try write(garment.transformed(by: place).composited(over: canvas), to: cutout, extent: square)
       result.cutout = cutout
+      let correction = mask.map { enhancer.correction(photo: image, mask: $0) } ?? LightCorrection()
+      let improved = enhancer.withShadow(
+        enhancer.enhance(garment, correction: correction).transformed(by: place).composited(over: canvas))
+      let enhanced = "\(id)-enhanced.png"
+      try write(improved, to: enhanced, extent: square)
+      result.enhanced = enhanced
       let thumbnail = "\(id)-thumb.png"
-      try write(scaled(centered, longEdge: 512), to: thumbnail, extent: nil)
+      try write(scaled(improved, longEdge: 512), to: thumbnail, extent: nil)
       result.thumbnail = thumbnail
+      let margin = side * 0.03
+      let left = max(0, offsetX - margin)
+      let top = max(0, offsetY - margin)
       result.frame = [
-        "x": Double(offsetX / side),
-        "y": Double(offsetY / side),
-        "width": Double(garment.extent.width / side),
-        "height": Double(garment.extent.height / side),
+        "x": Double(left / side),
+        "y": Double(top / side),
+        "width": Double(min(side - left, garment.extent.width + margin * 2) / side),
+        "height": Double(min(side - top, garment.extent.height + margin * 2) / side),
       ]
     }
     timings["cutout"] = elapsed(maskStart)
+    let qualityStart = Date()
+    let measure = PhotoQuality(enhancer: enhancer).measure(photo: image, mask: mask)
+    var quality = QualityRecord()
+    quality.sharpness = measure.sharpness
+    quality.brightness = measure.brightness
+    quality.clipped = measure.clipped
+    quality.coverage = measure.coverage
+    quality.lightSpread = measure.lightSpread
+    result.quality = quality
+    timings["quality"] = elapsed(qualityStart)
 
     let classifyStart = Date()
     try loadResources()

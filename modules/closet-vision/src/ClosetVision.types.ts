@@ -13,9 +13,19 @@ export type LabelScore = { group: LabelGroup; value: string; score: number };
 
 export type Swatch = { rgb: [number, number, number]; share: number };
 
+export type Quality = {
+  sharpness: number;
+  brightness: number;
+  clipped: ("top" | "bottom" | "left" | "right")[];
+  coverage?: number | null;
+  lightSpread?: number | null;
+};
+
 export type PreparedGarment = {
   original: string;
   cutout: string | null;
+  enhanced: string | null;
+  quality: Quality | null;
   thumbnail: string | null;
   frame: { x: number; y: number; width: number; height: number } | null;
   instances: number;

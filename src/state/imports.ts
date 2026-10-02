@@ -11,6 +11,7 @@ import {
   fileStem,
   finishImport,
   finishRefresh,
+  importFailure,
   jobStem,
   orphanedFiles,
   piecesToRefresh,
@@ -61,6 +62,14 @@ export function preparedFrom(result: PreparedGarment): Prepared {
   return {
     original: result.original,
     cutout: result.cutout,
+    enhanced: result.enhanced,
+    quality: result.quality
+      ? {
+          ...result.quality,
+          coverage: result.quality.coverage ?? null,
+          lightSpread: result.quality.lightSpread ?? null,
+        }
+      : null,
     thumbnail: result.thumbnail,
     frame: result.frame,
     instances: result.instances,
@@ -112,9 +121,9 @@ export function useImportRunner(repository: ClosetRepository, ready: boolean) {
             for (const file of orphanedFiles(stale, closet))
               void discardPhoto(file).catch(() => undefined);
           }
-        } catch {
+        } catch (error) {
           await repository.update((closet) =>
-            failImport(closet, job.id, "processing"),
+            failImport(closet, job.id, importFailure(error)),
           );
         }
       } catch {
@@ -151,7 +160,12 @@ export async function measurePiece(
       photoUri(piece.original ?? piece.photo),
       `${piece.id}-refresh`,
     );
-    for (const file of [result.original, result.cutout, result.thumbnail])
+    for (const file of [
+      result.original,
+      result.cutout,
+      result.enhanced,
+      result.thumbnail,
+    ])
       if (file && file !== piece.photo && file !== piece.original)
         void discardPhoto(file).catch(() => undefined);
     await repository.update((closet) =>
@@ -189,7 +203,12 @@ export function useAttributeRefresh(
             photoUri(piece.original ?? piece.photo),
             `${piece.id}-refresh`,
           );
-          for (const file of [result.original, result.cutout, result.thumbnail])
+          for (const file of [
+            result.original,
+            result.cutout,
+            result.enhanced,
+            result.thumbnail,
+          ])
             if (file && file !== piece.photo && file !== piece.original)
               void discardPhoto(file).catch(() => undefined);
           if (stopped) return;

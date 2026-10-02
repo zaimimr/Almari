@@ -26,3 +26,7 @@ export function photoUri(photo: string) {
 }
 
 export async function discardPhoto(_photo: string) {}
+
+export function lowOnSpace() {
+  return false;
+}

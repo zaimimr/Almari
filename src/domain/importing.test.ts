@@ -24,6 +24,7 @@ import {
   finishImport,
   fileStem,
   finishRefresh,
+  importFailure,
   keepDuplicate,
   jobStem,
   orphanedFiles,
@@ -911,4 +912,17 @@ test("a retaken piece from a photo of several pieces is parsed again on its own"
     closet.imports.find((item) => item.id === "job")!.captureId,
     "job",
   );
+});
+
+test("a failed preparation keeps storage and unreadable reasons and calls the rest processing", () => {
+  assert.equal(
+    importFailure(
+      new Error("Calling the 'prepare' function has failed: storage"),
+    ),
+    "storage",
+  );
+  assert.equal(importFailure(new Error("unreadable")), "unreadable");
+  assert.equal(importFailure(new Error("resources")), "processing");
+  assert.equal(importFailure("storage"), "processing");
+  assert.equal(importFailure(undefined), "processing");
 });

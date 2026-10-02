@@ -168,6 +168,14 @@ export function failImport(closet: Closet, id: string, error: string): Closet {
   );
 }
 
+export function importFailure(error: unknown) {
+  const message = error instanceof Error ? error.message : "";
+  return (
+    ["storage", "unreadable"].find((item) => message.includes(item)) ??
+    "processing"
+  );
+}
+
 export function retryImport(closet: Closet, id: string): Closet {
   return updateJob(closet, id, (job) =>
     job.state === "failed"
