@@ -466,4 +466,8 @@ export const nb: Record<Key, string> = {
   "reason.tonal-steps": "Fargene på {a} og {b} er nyanser av samme farge.",
   "stylist.often": "Du bruker ofte {a} sammen med {b}.",
   "stylist.keptAway": "{name} er merket som utilgjengelig akkurat nå.",
+  "feedback.too-formal": "For pent",
+  "feedback.too-plain": "For enkelt",
+  "feedback.too-warm": "For varmt",
+  "feedback.not-my-style": "Ikke min stil",
 };

@@ -456,6 +456,10 @@ export const en = {
   "reason.tonal-steps": "The {a} and {b} are tones of one colour.",
   "stylist.often": "You often wear the {a} with the {b}.",
   "stylist.keptAway": "{name} is marked as unavailable right now.",
+  "feedback.too-formal": "Too formal",
+  "feedback.too-plain": "Too plain",
+  "feedback.too-warm": "Too warm",
+  "feedback.not-my-style": "Not my style",
 };
 
 export type Key = keyof typeof en;
