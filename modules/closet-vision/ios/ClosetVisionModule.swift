@@ -53,21 +53,41 @@ struct PreparedGarment: Record {
   @Field var labels: [LabelScore] = []
   @Field var palette: [Swatch] = []
   @Field var embedding: String? = nil
+  @Field var area: [String: Double]? = nil
   @Field var width: Int = 0
   @Field var height: Int = 0
   @Field var milliseconds: [String: Int] = [:]
+}
+
+struct CutoutEditRecord: Record {
+  @Field var cutout: String = ""
+  @Field var enhanced: String = ""
+  @Field var thumbnail: String = ""
+  @Field var frame: [String: Double] = [:]
+  @Field var area: [String: Double] = [:]
+}
+
+struct PlacedGarment {
+  let cutout: String
+  let enhanced: String
+  let thumbnail: String
+  let frame: [String: Double]
+  let side: CGFloat
+  let offset: CGPoint
 }
 
 enum PrepareError: Error, CustomStringConvertible, LocalizedError {
   case unreadable
   case resources
   case storage
+  case empty
 
   var description: String {
     switch self {
     case .unreadable: return "unreadable"
     case .resources: return "resources"
     case .storage: return "storage"
+    case .empty: return "empty"
     }
   }
 
@@ -217,6 +237,97 @@ final class GarmentPipeline {
     return name
   }
 
+  func workingPhoto(sourceUri: String) throws -> (image: CIImage, picture: CGImage) {
+    let source = sourceUri.hasPrefix("file://") ? URL(string: sourceUri)! : URL(fileURLWithPath: sourceUri)
+    guard let loaded = CIImage(contentsOf: source, options: [.applyOrientationProperty: true]) else {
+      throw PrepareError.unreadable
+    }
+    let image = scaled(
+      loaded.transformed(by: CGAffineTransform(translationX: -loaded.extent.minX, y: -loaded.extent.minY)),
+      longEdge: 2048)
+    guard let picture = render(image) else { throw PrepareError.unreadable }
+    return (image, picture)
+  }
+
+  func saveEdit(photo: CIImage, mask: CGImage, bounds: CGRect, id: String) throws -> CutoutEditRecord {
+    try queue.sync {
+      let height = photo.extent.height
+      let rect = CGRect(x: bounds.minX, y: height - bounds.maxY, width: bounds.width, height: bounds.height)
+      let cover = CIImage(cgImage: mask)
+      let cut = photo.applyingFilter(
+        "CIBlendWithMask",
+        parameters: [
+          kCIInputBackgroundImageKey: CIImage(color: .clear).cropped(to: photo.extent),
+          kCIInputMaskImageKey: cover,
+        ]
+      )
+      .cropped(to: rect)
+      .transformed(by: CGAffineTransform(translationX: -rect.minX, y: -rect.minY))
+      let garment = scaled(cut, longEdge: 1536)
+      let enhancer = GarmentEnhancer(context: context)
+      try FileManager.default.createDirectory(at: photos, withIntermediateDirectories: true)
+      let placed = try place(
+        garment, correction: enhancer.correction(photo: photo, mask: cover), id: id, enhancer: enhancer)
+      var record = CutoutEditRecord()
+      record.cutout = placed.cutout
+      record.enhanced = placed.enhanced
+      record.thumbnail = placed.thumbnail
+      record.frame = placed.frame
+      record.area = CutoutMapping.record(
+        CutoutMapping.area(
+          garmentOrigin: bounds.origin, scale: garment.extent.width / rect.width, side: placed.side,
+          offset: placed.offset, garment: garment.extent.size, photo: photo.extent.size))
+      return record
+    }
+  }
+
+  func render(_ image: CIImage) -> CGImage? {
+    context.createCGImage(
+      image, from: image.extent, format: .RGBA8, colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
+  }
+
+  private func area(
+    template: CIImage, photo: CIImage, garment: CIImage, placed: PlacedGarment
+  ) -> [String: Double]? {
+    guard let templatePicture = render(template), let photoPicture = render(photo),
+      let match = CutoutMapping.locate(template: templatePicture, photo: photoPicture, scales: 1...1)
+    else { return nil }
+    return CutoutMapping.record(
+      CutoutMapping.area(
+        garmentOrigin: match.origin, scale: garment.extent.width / template.extent.width, side: placed.side,
+        offset: placed.offset, garment: garment.extent.size, photo: photo.extent.size))
+  }
+
+  private func place(
+    _ garment: CIImage, correction: LightCorrection, id: String, enhancer: GarmentEnhancer
+  ) throws -> PlacedGarment {
+    let side = (max(garment.extent.width, garment.extent.height) * 1.06).rounded(.up)
+    let square = CGRect(x: 0, y: 0, width: side, height: side)
+    let offsetX = ((side - garment.extent.width) / 2).rounded()
+    let offsetY = ((side - garment.extent.height) / 2).rounded()
+    let place = CGAffineTransform(translationX: offsetX, y: offsetY)
+    let canvas = CIImage(color: .clear).cropped(to: square)
+    let cutout = "\(id).png"
+    try write(garment.transformed(by: place).composited(over: canvas), to: cutout, extent: square)
+    let improved = enhancer.withShadow(
+      enhancer.enhance(garment, correction: correction).transformed(by: place).composited(over: canvas))
+    let enhanced = "\(id)-enhanced.png"
+    try write(improved, to: enhanced, extent: square)
+    let thumbnail = "\(id)-thumb.png"
+    try write(scaled(improved, longEdge: 512), to: thumbnail, extent: nil)
+    let margin = side * 0.03
+    let left = max(0, offsetX - margin)
+    let top = max(0, offsetY - margin)
+    return PlacedGarment(
+      cutout: cutout, enhanced: enhanced, thumbnail: thumbnail,
+      frame: [
+        "x": Double(left / side),
+        "y": Double(top / side),
+        "width": Double(min(side - left, garment.extent.width + margin * 2) / side),
+        "height": Double(min(side - top, garment.extent.height + margin * 2) / side),
+      ], side: side, offset: CGPoint(x: offsetX, y: offsetY))
+  }
+
   func parseSelfie(_ image: CIImage) -> ClothesParse? {
     queue.sync { try? loadParser().parse(image) }
   }
@@ -299,6 +410,7 @@ final class GarmentPipeline {
     result.original = original
     image = image.transformed(by: CGAffineTransform(translationX: -image.extent.minX, y: -image.extent.minY))
     image = scaled(image, longEdge: 2048)
+    let full = image
     if let crop = options?.crop { image = cropped(image, to: crop) }
     result.width = Int(image.extent.width)
     result.height = Int(image.extent.height)
@@ -308,14 +420,16 @@ final class GarmentPipeline {
     var garment = image
     var found = false
     var mask: CIImage? = nil
+    var template: CIImage? = nil
     let enhancer = GarmentEnhancer(context: context)
     if let cutout = options?.cutout {
       guard let loaded = CIImage(contentsOf: photos.appendingPathComponent(cutout)) else {
         throw PrepareError.unreadable
       }
-      garment = scaled(
-        loaded.transformed(by: CGAffineTransform(translationX: -loaded.extent.minX, y: -loaded.extent.minY)),
-        longEdge: 1536)
+      let region = loaded.transformed(
+        by: CGAffineTransform(translationX: -loaded.extent.minX, y: -loaded.extent.minY))
+      template = region
+      garment = scaled(region, longEdge: 1536)
       result.instances = 1
       found = true
     } else {
@@ -342,38 +456,20 @@ final class GarmentPipeline {
         {
           mask = CIImage(cvPixelBuffer: scaledMask)
         }
-        garment = scaled(CIImage(cvPixelBuffer: buffer), longEdge: 1536)
+        let masked = CIImage(cvPixelBuffer: buffer)
+        template = masked
+        garment = scaled(masked, longEdge: 1536)
         found = true
       }
     }
     if found {
-      let side = (max(garment.extent.width, garment.extent.height) * 1.06).rounded(.up)
-      let square = CGRect(x: 0, y: 0, width: side, height: side)
-      let offsetX = ((side - garment.extent.width) / 2).rounded()
-      let offsetY = ((side - garment.extent.height) / 2).rounded()
-      let place = CGAffineTransform(translationX: offsetX, y: offsetY)
-      let canvas = CIImage(color: .clear).cropped(to: square)
-      let cutout = "\(id).png"
-      try write(garment.transformed(by: place).composited(over: canvas), to: cutout, extent: square)
-      result.cutout = cutout
       let correction = mask.map { enhancer.correction(photo: image, mask: $0) } ?? LightCorrection()
-      let improved = enhancer.withShadow(
-        enhancer.enhance(garment, correction: correction).transformed(by: place).composited(over: canvas))
-      let enhanced = "\(id)-enhanced.png"
-      try write(improved, to: enhanced, extent: square)
-      result.enhanced = enhanced
-      let thumbnail = "\(id)-thumb.png"
-      try write(scaled(improved, longEdge: 512), to: thumbnail, extent: nil)
-      result.thumbnail = thumbnail
-      let margin = side * 0.03
-      let left = max(0, offsetX - margin)
-      let top = max(0, offsetY - margin)
-      result.frame = [
-        "x": Double(left / side),
-        "y": Double(top / side),
-        "width": Double(min(side - left, garment.extent.width + margin * 2) / side),
-        "height": Double(min(side - top, garment.extent.height + margin * 2) / side),
-      ]
+      let placed = try place(garment, correction: correction, id: id, enhancer: enhancer)
+      result.cutout = placed.cutout
+      result.enhanced = placed.enhanced
+      result.thumbnail = placed.thumbnail
+      result.frame = placed.frame
+      if let template { result.area = area(template: template, photo: full, garment: garment, placed: placed) }
     }
     timings["cutout"] = elapsed(maskStart)
     let qualityStart = Date()
@@ -401,7 +497,7 @@ final class GarmentPipeline {
     return result
   }
 
-  private func scaled(_ image: CIImage, longEdge: CGFloat) -> CIImage {
+  func scaled(_ image: CIImage, longEdge: CGFloat) -> CIImage {
     let edge = max(image.extent.width, image.extent.height)
     guard edge > longEdge else { return image }
     let scale = longEdge / edge
@@ -551,6 +647,46 @@ public class ClosetVisionModule: Module {
 
       AsyncFunction("capture") { (view: LiveScanView, id: String, box: [String: Double], kind: String, promise: Promise) in
         view.capture(id: id, box: box, kind: kind, promise: promise)
+      }.runOnQueue(.main)
+    }
+
+    View(CutoutEditorView.self) {
+      Events("onReady", "onEdit")
+
+      Prop("original") { (view: CutoutEditorView, original: String?) in
+        view.original = original
+      }
+
+      Prop("cutout") { (view: CutoutEditorView, cutout: String?) in
+        view.cutout = cutout
+      }
+
+      Prop("area") { (view: CutoutEditorView, area: [String: Double]?) in
+        view.area = area
+      }
+
+      Prop("mode") { (view: CutoutEditorView, mode: String?) in
+        view.mode = mode ?? "erase"
+      }
+
+      Prop("brushSize") { (view: CutoutEditorView, size: Double?) in
+        view.brush = CGFloat(size ?? 24)
+      }
+
+      OnViewDidUpdateProps { (view: CutoutEditorView) in
+        view.load()
+      }
+
+      AsyncFunction("undo") { (view: CutoutEditorView) in
+        view.undo()
+      }.runOnQueue(.main)
+
+      AsyncFunction("reset") { (view: CutoutEditorView) in
+        view.reset()
+      }.runOnQueue(.main)
+
+      AsyncFunction("save") { (view: CutoutEditorView, id: String, promise: Promise) in
+        view.save(id: id, promise: promise)
       }.runOnQueue(.main)
     }
 

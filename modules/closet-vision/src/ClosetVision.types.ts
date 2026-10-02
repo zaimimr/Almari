@@ -32,6 +32,7 @@ export type PreparedGarment = {
   labels: LabelScore[];
   palette: Swatch[];
   embedding: string | null;
+  area?: { x: number; y: number; width: number; height: number } | null;
   width: number;
   height: number;
   milliseconds: Record<string, number>;
@@ -135,4 +136,18 @@ export type LiveScanHandle = {
     box: { x: number; y: number; width: number; height: number },
     kind: string,
   ): Promise<ScanCapture>;
+};
+
+export type CutoutEdit = {
+  cutout: string;
+  enhanced: string;
+  thumbnail: string;
+  frame: { x: number; y: number; width: number; height: number };
+  area: { x: number; y: number; width: number; height: number };
+};
+
+export type CutoutEditorHandle = {
+  undo(): Promise<void>;
+  reset(): Promise<void>;
+  save(id: string): Promise<CutoutEdit>;
 };

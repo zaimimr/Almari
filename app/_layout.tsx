@@ -48,6 +48,10 @@ function Screens() {
         name="capture/[id]"
         options={{ title: t("title.checkPiece") }}
       />
+      <Stack.Screen
+        name="cutout/[id]"
+        options={{ title: t("cutout.adjust"), gestureEnabled: false }}
+      />
       <Stack.Screen name="capture/scan" options={{ title: t("scan.title") }} />
       <Stack.Screen
         name="capture/group/[id]"

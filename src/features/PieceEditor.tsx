@@ -27,12 +27,13 @@ import {
   withDetails,
 } from "../domain/attributes";
 import { mainColourName } from "../domain/color";
+import { editedPhoto, pieceCutout } from "../domain/cutout";
 import { filesInUse } from "../domain/importing";
 import { confirmEdits } from "../domain/recognition";
 import { unlinkPiece } from "../domain/sets";
 import { categoryName, kindName, styleName, stylesName, t } from "../i18n";
 import { useCloset } from "../state/closet";
-import { measurePiece } from "../state/imports";
+import { canPrepareOnDevice, measurePiece } from "../state/imports";
 import { studioAvailable, useStudioMaker } from "../state/studio";
 import { keepPhoto, discardPhoto } from "../storage/local";
 import { photoSource } from "../ui/photos";
@@ -61,6 +62,12 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
   const [worn, setWorn] = useState<Style[] | undefined>(piece?.styles);
   const [image, setImage] = useState<string | null>(piece?.photo ?? null);
   const [newImage, setNewImage] = useState(false);
+  const [shownVariants, setShownVariants] = useState(piece?.variants);
+  if (piece?.variants !== shownVariants) {
+    setShownVariants(piece?.variants);
+    if (!newImage && image)
+      setImage(editedPhoto(image, shownVariants, piece?.variants));
+  }
   const [details, setDetails] = useState<Pick<Piece, "attributes" | "sources">>(
     { attributes: piece?.attributes, sources: piece?.sources },
   );
@@ -176,6 +183,9 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
         ...(piece?.away ? { away: piece.away } : {}),
         ...(piece?.label ? { label: piece.label } : {}),
         ...(piece?.variants && !newImage ? { variants: piece.variants } : {}),
+        ...(piece?.cutoutArea && !newImage
+          ? { cutoutArea: piece.cutoutArea }
+          : {}),
         ...(piece?.setId ? { setId: piece.setId } : {}),
       };
       const confirmed = confirmEdits(piece, base);
@@ -303,6 +313,20 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
             />
           ) : null}
         </View>
+      ) : null}
+      {photoPiece && variant && canPrepareOnDevice && pieceCutout(piece!) ? (
+        <Button
+          label={t("cutout.adjust")}
+          secondary
+          compact
+          disabled={busy || studio.making}
+          onPress={() =>
+            router.push({
+              pathname: "/cutout/[id]",
+              params: { id: piece!.id, target: "piece" },
+            })
+          }
+        />
       ) : null}
       {photoPiece && variant && !studioMade && studioAvailable ? (
         <AppText muted>{t("photo.studioNote")}</AppText>

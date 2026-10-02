@@ -537,6 +537,7 @@ export function pieceFromImport(job: ImportJob): Piece | null {
       : {}),
     original: job.prepared.original,
     ...(useCutout && job.prepared.frame ? { frame: job.prepared.frame } : {}),
+    ...(enhanced && job.prepared.area ? { cutoutArea: job.prepared.area } : {}),
     createdAt: job.createdAt,
     source: "owned",
     ...(job.captureId ? { captureId: job.captureId } : {}),

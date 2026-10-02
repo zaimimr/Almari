@@ -24,6 +24,7 @@ import {
   removeImport,
   setImportStudio,
 } from "../../src/domain/importing";
+import { importCutout } from "../../src/domain/cutout";
 import { mainColourName } from "../../src/domain/color";
 import { attributeLabelKey, attributeValueKey } from "../../src/domain/facts";
 import { adviceFor } from "../../src/domain/quality";
@@ -38,7 +39,7 @@ import {
 } from "../../src/i18n";
 import { labelLines } from "../../src/state/careLabel";
 import { useCloset } from "../../src/state/closet";
-import { changeImports } from "../../src/state/imports";
+import { canPrepareOnDevice, changeImports } from "../../src/state/imports";
 import { studioAvailable, useStudioMaker } from "../../src/state/studio";
 import { discardPhoto } from "../../src/storage/local";
 import { PhotoChoice } from "../../src/features/PhotoChoice";
@@ -369,6 +370,20 @@ export default function CheckPiece() {
           void makeStudio();
         }}
       />
+      {canPrepareOnDevice && !keepOriginal && importCutout(job) ? (
+        <Button
+          label={t("cutout.adjust")}
+          secondary
+          compact
+          disabled={busy || studio.making}
+          onPress={() =>
+            router.push({
+              pathname: "/cutout/[id]",
+              params: { id: job.id, target: "import" },
+            })
+          }
+        />
+      ) : null}
       {studioAvailable && prepared.enhanced && !prepared.studio ? (
         <AppText muted>{t("photo.studioNote")}</AppText>
       ) : null}
