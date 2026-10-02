@@ -202,7 +202,7 @@ describe("worker", () => {
     const env = {
       AI: ai,
       APP_TOKEN: "secret",
-      STUDIO_MODEL: "@cf/black-forest-labs/flux-2-klein-9b",
+      STUDIO_MODEL: "@cf/black-forest-labs/flux-2-klein-4b",
       GLOBAL_DAILY_LIMIT: "100",
       LIMITS: {
         get: async (key: string) => store.get(key) ?? null,
@@ -283,7 +283,7 @@ describe("worker", () => {
       string,
       { multipart: { body: ReadableStream; contentType: string } },
     ];
-    expect(model).toBe("@cf/black-forest-labs/flux-2-klein-9b");
+    expect(model).toBe("@cf/black-forest-labs/flux-2-klein-4b");
     const sent = await new Response(input.multipart.body, {
       headers: { "content-type": input.multipart.contentType },
     }).formData();
@@ -306,6 +306,22 @@ describe("worker", () => {
     ]) {
       const context = setup({}, run);
       expect((await call(context)).status).toBe(502);
+      expect(context.store.size).toBe(0);
+    }
+  });
+
+  it("reports the model's daily allocation as the limit", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    for (const message of [
+      "AiError: 4006: you have used up your daily free allocation of 10,000 neurons",
+      "Rate limit exceeded",
+    ]) {
+      const context = setup({}, async () => {
+        throw new Error(message);
+      });
+      const response = await call(context);
+      expect(response.status).toBe(429);
+      expect(await response.json()).toEqual({ error: "limit" });
       expect(context.store.size).toBe(0);
     }
   });

@@ -10,13 +10,16 @@ import {
 export type Env = {
   AI: Ai;
   APP_TOKEN: string;
-  STUDIO_MODEL: "@cf/black-forest-labs/flux-2-klein-9b";
+  STUDIO_MODEL: "@cf/black-forest-labs/flux-2-klein-4b";
   GLOBAL_DAILY_LIMIT: string;
   LIMITS: KVNamespace;
 };
 
 const fail = (error: string, status: number) =>
   Response.json({ error }, { status });
+
+const isLimitError = (error: unknown) =>
+  /4006|daily free allocation|rate limit/i.test(String(error));
 
 const fromBase64 = (data: string) =>
   Uint8Array.from(atob(data), (char) => char.charCodeAt(0));
@@ -41,6 +44,7 @@ async function generate(env: Env, image: Blob, prompt: string) {
     console.error("studio", "no image", JSON.stringify(result).slice(0, 500));
   } catch (error) {
     console.error("studio", String(error));
+    if (isLimitError(error)) return "limit";
   }
   return null;
 }
@@ -68,6 +72,7 @@ export default {
     if (count >= Number(env.GLOBAL_DAILY_LIMIT)) return fail("limit", 429);
 
     const shot = await generate(env, piece.image, studioPrompt(piece));
+    if (shot === "limit") return fail("limit", 429);
     if (!shot) return fail("generate", 502);
     ctx.waitUntil(
       env.LIMITS.put(key, String(count + 1), {
