@@ -86,3 +86,20 @@ test("an earlier photo in the same batch counts and a later one does not", () =>
   assert.equal(findDuplicate(closet, "job", vector(100, 1)), "first");
   assert.equal(findDuplicate(closet, "first", vector(100, 1)), null);
 });
+
+test("pieces from the same photo are not duplicates of each other", () => {
+  const closet: Closet = {
+    ...emptyCloset,
+    pieces: [{ ...piece("kurta", vector(100, 0)), captureId: "photo" }],
+    imports: [
+      { ...job("trousers", vector(100, 0)), captureId: "photo" },
+      { ...job("job"), captureId: "photo" },
+    ],
+  };
+  assert.equal(findDuplicate(closet, "job", vector(100, 1)), null);
+  const other: Closet = {
+    ...closet,
+    imports: closet.imports.map((item) => ({ ...item, captureId: "other" })),
+  };
+  assert.equal(findDuplicate(other, "job", vector(100, 1)), "kurta");
+});

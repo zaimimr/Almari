@@ -1027,3 +1027,26 @@ test("a photo the parser could not read is checked for several subjects and can 
   );
   assert.ok(closet.imports[0]!.checks?.includes("several"));
 });
+
+test("advice she already dismissed stays dismissed after Adjust crop", () => {
+  let closet = splitOutfit();
+  closet = finishImport(
+    startImport(closet, "job"),
+    "job",
+    prepared({
+      quality: {
+        sharpness: 200,
+        brightness: 0.05,
+        clipped: [],
+        coverage: 0.3,
+        lightSpread: 1,
+      },
+    }),
+  );
+  closet = dismissAdvice(closet, "job");
+  const shown = closet.imports[0]!.adviceShown;
+  assert.ok(shown?.length);
+  const box = { x: 0.25, y: 0.25, width: 0.5, height: 0.5 };
+  closet = cropCapture(closet, "job", box, "job-crop-1");
+  assert.deepEqual(closet.imports[0]!.adviceShown, shown);
+});

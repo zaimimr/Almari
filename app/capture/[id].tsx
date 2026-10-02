@@ -236,6 +236,7 @@ export default function CheckPiece() {
   }
 
   async function remove() {
+    if (busy) return;
     setBusy(true);
     try {
       await changeImports(update, (current) => removeImport(current, job!.id));
@@ -288,6 +289,31 @@ export default function CheckPiece() {
     : null;
   const advice = job.advice ? adviceFor(job.advice) : null;
 
+  const problemNotice = problem ? (
+    <Notice
+      message={t(problemMessages[problem])}
+      actions={
+        problem === "camera-off"
+          ? [
+              {
+                label: t("problem.chooseInstead"),
+                onPress: () => void retakeFrom("library"),
+              },
+              {
+                label: t("problem.openSettings"),
+                onPress: () => void Linking.openSettings(),
+              },
+            ]
+          : [
+              {
+                label: t("problem.tryAgain"),
+                onPress: () => void retakeFrom("library"),
+              },
+            ]
+      }
+    />
+  ) : null;
+
   return (
     <FormScreen>
       <Stack.Screen
@@ -339,6 +365,7 @@ export default function CheckPiece() {
           ]}
         />
       ) : null}
+      {advice ? problemNotice : null}
       {checks.includes("no-cutout") ? (
         <AppText>{t("capture.noCutout")}</AppText>
       ) : null}
@@ -443,30 +470,7 @@ export default function CheckPiece() {
           void save();
         }}
       />
-      {problem ? (
-        <Notice
-          message={t(problemMessages[problem])}
-          actions={
-            problem === "camera-off"
-              ? [
-                  {
-                    label: t("problem.chooseInstead"),
-                    onPress: () => void retakeFrom("library"),
-                  },
-                  {
-                    label: t("problem.openSettings"),
-                    onPress: () => void Linking.openSettings(),
-                  },
-                ]
-              : [
-                  {
-                    label: t("problem.tryAgain"),
-                    onPress: () => void retakeFrom("library"),
-                  },
-                ]
-          }
-        />
-      ) : null}
+      {advice ? null : problemNotice}
       <Button
         label={t("capture.retake")}
         secondary

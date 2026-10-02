@@ -398,6 +398,7 @@ export function cropCapture(
           ...(job.region ? { region: { ...job.region, partial: false } } : {}),
           ...(job.people ? { people: job.people } : {}),
           ...(job.label ? { label: job.label } : {}),
+          ...(job.adviceShown ? { adviceShown: job.adviceShown } : {}),
           crop,
           stem,
         }

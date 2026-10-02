@@ -30,10 +30,14 @@ export function findDuplicate(
 ): string | null {
   if (!embedding) return null;
   const position = closet.imports.findIndex((job) => job.id === jobId);
-  const earlier = position < 0 ? [] : closet.imports.slice(0, position);
+  const captureId = closet.imports[position]?.captureId;
+  const elsewhere = (item: { captureId?: string }) =>
+    !captureId || item.captureId !== captureId;
+  const earlier =
+    position < 0 ? [] : closet.imports.slice(0, position).filter(elsewhere);
   const candidates = [
     ...closet.pieces
-      .filter((piece) => piece.source === "owned")
+      .filter((piece) => piece.source === "owned" && elsewhere(piece))
       .map((piece) => ({ id: piece.id, embedding: piece.embedding })),
     ...earlier.map((job) => ({
       id: job.id,
