@@ -11,23 +11,34 @@ appId: com.zaimimran.almari
     selected: true
 - takeScreenshot: planning/build/stylist/style-settings
 - tapOn: "With reasons and coverage checks"
-- tapOn: "Avoid white at weddings"
+- scrollUntilVisible:
+    element: "I like it"
 - tapOn: "I like it"
+- scrollUntilVisible:
+    element: "Avoid white at weddings"
+- tapOn: "Avoid white at weddings"
 - scrollUntilVisible:
     element: "Save style settings"
 - tapOn: "Save style settings"
-- assertVisible: "A little inspiration for today."
-- assertVisible: "Neckline is not checked."
+- scrollUntilVisible:
+    element: "A little inspiration for today."
+    direction: UP
+- scrollUntilVisible:
+    element: "Neckline is not checked."
 - scrollUntilVisible:
     element: "Style settings"
 - tapOn: "Style settings"
 - assertVisible:
-    text: "Avoid white at weddings"
+    text: "With reasons and coverage checks"
     selected: true
+- scrollUntilVisible:
+    element: "I like it"
 - assertVisible:
     text: "I like it"
     selected: true
+- scrollUntilVisible:
+    element: "Avoid white at weddings"
 - assertVisible:
-    text: "With reasons and coverage checks"
+    text: "Avoid white at weddings"
     selected: true
 - tapOn: "Cancel"

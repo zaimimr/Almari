@@ -788,6 +788,17 @@ export const en = {
   "style.region.western-europe": "Western European",
   "style.save": "Save style settings",
   "style.error": "Your style settings could not be saved. Please try again.",
+  "outfit.change": "Change",
+  "outfit.notForMe": "Not for me",
+  "outfit.wear": "Wear this",
+  "outfit.worn": "Marked as worn today.",
+  "outfit.undo": "Undo",
+  "outfit.why": "What is not right?",
+  "outfit.chipHint": "{chip}, show another outfit",
+  "outfit.thanks":
+    "Thanks. This outfit takes that into account, and later ones will too.",
+  "outfit.kept": "Kept",
+  "outfit.keptLabel": "{name}, kept",
 };
 
 export type Key = keyof typeof en;

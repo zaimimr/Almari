@@ -1,7 +1,8 @@
+import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { Stack, router } from "expo-router";
+import { randomUUID } from "expo-crypto";
 import {
-  isAvailable,
   kindLabel,
   occasionPhrase,
   styleLabel,
@@ -9,7 +10,20 @@ import {
   type OutfitRequest,
   type Piece,
 } from "../../../src/domain/closet";
-import { t } from "../../../src/i18n";
+import {
+  chips,
+  giveFeedback,
+  undoFeedback,
+  woreThis,
+  wornNow,
+} from "../../../src/domain/feedback";
+import { outfitName } from "../../../src/domain/outfitName";
+import {
+  coverageChecks,
+  outfitTip,
+  tipText,
+} from "../../../src/domain/outfitView";
+import { locale, t } from "../../../src/i18n";
 import {
   evaluateOutfit,
   type ProblemAction,
@@ -41,6 +55,7 @@ import {
   HeaderAction,
   Message,
   OutfitCollage,
+  OutfitView,
   PiecePhoto,
 } from "../../../src/ui";
 import { addPiecesRoute } from "../../../src/state/imports";
@@ -96,6 +111,8 @@ function TodayContent() {
     error,
     forecastFailed,
   } = useToday();
+  const [asking, setAsking] = useState(false);
+  const [noted, setNoted] = useState<number | null>(null);
   const preset = closet.styling.everyday;
   const hasOwned = closet.pieces.some((piece) => piece.source === "owned");
 
@@ -222,7 +239,7 @@ function TodayContent() {
     return piece ? [piece] : [];
   });
   const pool = closet.pieces.filter(
-    (piece) => piece.source === request.wardrobe && isAvailable(piece),
+    (piece) => piece.source === request.wardrobe && !piece.status,
   );
   const reviewProblems = showOutfit
     ? evaluateOutfit(pieces, request, pool)
@@ -230,6 +247,11 @@ function TodayContent() {
   const reasons = showOutfit
     ? rulesScorer.score(pieces, request, scoreContext(closet)).reasons
     : [];
+  const worn = wornNow(closet);
+  const tip = showOutfit
+    ? outfitTip(pieces, pool, request, closet.styling.profile)
+    : null;
+  const name = outfitName(pieces, request.occasion, locale);
   const last =
     result.outfits.length > 0 && session.cursor >= result.outfits.length - 1;
   const source =
@@ -295,18 +317,115 @@ function TodayContent() {
 
       {showOutfit ? (
         <View style={styles.outfit}>
-          <View style={styles.collage}>
-            <OutfitCollage
-              pieces={pieces}
-              keptIds={request.keptIds}
-              testID="today-outfit"
-            />
-          </View>
+          <OutfitView
+            pieces={pieces}
+            name={name}
+            reasons={reasons}
+            checks={coverageChecks(pieces, request, closet.styling.profile)}
+            tip={tip ? tipText(tip, locale) : null}
+            layout={closet.styling.layout}
+            keptIds={request.keptIds}
+            testID="today-outfit"
+          >
+            <View style={styles.row}>
+              <View style={styles.grow}>
+                <Button
+                  label={t("outfit.change")}
+                  secondary
+                  disabled={busy || result.outfits.length < 2}
+                  onPress={() => {
+                    void run((closetNow) =>
+                      last
+                        ? startOver(closetNow)
+                        : tryAnother(closetNow, revision),
+                    );
+                  }}
+                />
+              </View>
+              <View style={styles.grow}>
+                <Button
+                  label={t("outfit.notForMe")}
+                  secondary
+                  disabled={busy || result.outfits.length < 2}
+                  onPress={() => setAsking((open) => !open)}
+                />
+              </View>
+              {worn ? null : (
+                <View style={styles.grow}>
+                  <Button
+                    label={t("outfit.wear")}
+                    disabled={busy}
+                    onPress={() => {
+                      void run((current) =>
+                        woreThis(
+                          current,
+                          revision,
+                          new Date().toISOString(),
+                          randomUUID(),
+                        ),
+                      );
+                    }}
+                  />
+                </View>
+              )}
+            </View>
+            {worn ? (
+              <View style={styles.row}>
+                <AppText style={styles.grow} accessibilityLiveRegion="polite">
+                  {t("outfit.worn")}
+                </AppText>
+                <Button
+                  label={t("outfit.undo")}
+                  secondary
+                  compact
+                  disabled={busy}
+                  onPress={() => {
+                    void run((current) => undoFeedback(current, worn.id));
+                  }}
+                />
+              </View>
+            ) : null}
+            {asking ? (
+              <View style={styles.section}>
+                <AppText style={styles.label}>{t("outfit.why")}</AppText>
+                <View style={styles.chips}>
+                  {chips.map((chip) => (
+                    <Chip
+                      key={chip.id}
+                      label={t(`feedback.${chip.id}`)}
+                      disabled={busy}
+                      accessibilityLabel={t("outfit.chipHint", {
+                        chip: t(`feedback.${chip.id}`),
+                      })}
+                      onPress={() => {
+                        void run((current) =>
+                          giveFeedback(
+                            current,
+                            chip.id,
+                            revision,
+                            new Date().toISOString(),
+                            randomUUID(),
+                          ),
+                        ).then((saved) => {
+                          setAsking(false);
+                          setNoted(saved ? revision + 1 : null);
+                        });
+                      }}
+                    />
+                  ))}
+                </View>
+              </View>
+            ) : null}
+            {noted === revision ? (
+              <AppText variant="caption" muted accessibilityLiveRegion="polite">
+                {t("outfit.thanks")}
+              </AppText>
+            ) : null}
+          </OutfitView>
           <AppText variant="caption" muted accessibilityLiveRegion="polite">
             {pieceCount(pieces)} from {source}
             {kept.length ? `, ${kept.length} kept` : ""}
           </AppText>
-          {reasons.length ? <AppText>{reasons.join(" ")}</AppText> : null}
           {reviewProblems.length ? (
             <View style={styles.review}>
               <AppText style={styles.label}>Check before wearing</AppText>
@@ -317,49 +436,32 @@ function TodayContent() {
           ) : null}
           <Button
             label="Save look"
+            secondary
             disabled={busy}
             onPress={() =>
               router.push({
                 pathname: "/look/build",
-                params: { pieces: session.pieceIds.join(",") },
+                params: {
+                  pieces: session.pieceIds.join(","),
+                  name,
+                  occasion: request.occasion,
+                },
               })
             }
           />
-          <View style={styles.row}>
-            <View style={styles.grow}>
-              <Button
-                label={
-                  last && result.outfits.length > 1
-                    ? "Start over"
-                    : "Try another"
-                }
-                secondary
-                disabled={busy || result.outfits.length < 2}
-                onPress={() => {
-                  void run((closetNow) =>
-                    last
-                      ? startOver(closetNow)
-                      : tryAnother(closetNow, revision),
-                  );
-                }}
-              />
-            </View>
-            {today.active === "everyday" ? (
-              <View style={styles.grow}>
-                <Button
-                  label="For an occasion"
-                  secondary
-                  disabled={busy}
-                  onPress={() =>
-                    router.push({
-                      pathname: "/today/adjust",
-                      params: { target: "occasion" },
-                    })
-                  }
-                />
-              </View>
-            ) : null}
-          </View>
+          {today.active === "everyday" ? (
+            <Button
+              label="For an occasion"
+              secondary
+              disabled={busy}
+              onPress={() =>
+                router.push({
+                  pathname: "/today/adjust",
+                  params: { target: "occasion" },
+                })
+              }
+            />
+          ) : null}
           {result.outfits.length === 1 ? (
             <AppText variant="caption" muted>
               This is the only combination I can make with these choices.
@@ -481,10 +583,12 @@ function TodayContent() {
             available.
           </AppText>
         ) : null}
-        <AppText variant="caption" muted>
-          Sleeve, neckline, and hem coverage are not checked yet. The layout
-          shows how pieces go together, not how they fit.
-        </AppText>
+        {closet.styling.layout !== "full" ? (
+          <AppText variant="caption" muted>
+            Sleeve, neckline, and hem coverage are not checked yet. The layout
+            shows how pieces go together, not how they fit.
+          </AppText>
+        ) : null}
       </View>
       <ErrorMessage message={error} />
     </>
@@ -596,7 +700,6 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.accentSoft,
   },
   outfit: { gap: 12 },
-  collage: { width: "100%", maxWidth: 560, alignSelf: "center" },
   review: {
     gap: 6,
     padding: 12,

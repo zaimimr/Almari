@@ -800,4 +800,15 @@ export const nb: Record<Key, string> = {
   "style.region.western-europe": "Vesteuropeisk",
   "style.save": "Lagre stilinnstillinger",
   "style.error": "Stilinnstillingene kunne ikke lagres. Prøv igjen.",
+  "outfit.change": "Bytt",
+  "outfit.notForMe": "Ikke for meg",
+  "outfit.wear": "Bruk dette",
+  "outfit.worn": "Merket som brukt i dag.",
+  "outfit.undo": "Angre",
+  "outfit.why": "Hva passer ikke?",
+  "outfit.chipHint": "{chip}, vis et annet antrekk",
+  "outfit.thanks":
+    "Takk. Dette antrekket tar hensyn til det, og det gjør senere antrekk også.",
+  "outfit.kept": "Beholdt",
+  "outfit.keptLabel": "{name}, beholdt",
 };

@@ -13,5 +13,10 @@ appId: com.zaimimran.almari
     element: "Start with the sample closet"
     direction: DOWN
 - tapOn: "Start with the sample closet"
+- scrollUntilVisible:
+    element: "Try a sample style"
+    direction: DOWN
 - tapOn: "Try a sample style"
-- assertVisible: "A little inspiration for today."
+- scrollUntilVisible:
+    element: "A little inspiration for today."
+    direction: UP
