@@ -89,6 +89,34 @@ test("hijab always creates an everyday preset and stores coverage", () => {
   assert.equal(closet.styling.today?.localDate, clock.localDate);
 });
 
+test("changing only the coverage level restyles today with the new coverage", () => {
+  const moderate = applyAnswer(
+    fresh(),
+    "hijab",
+    { hijab: "always", coverage: "moderate" },
+    clock,
+  );
+  assert.deepEqual(moderate.styling.today?.everyday.request.coverage, {
+    sleeve: "elbow",
+    hem: "calf",
+  });
+  const full = applyAnswer(
+    moderate,
+    "hijab",
+    { hijab: "always", coverage: "full" },
+    clock,
+  );
+  assert.equal(full.styling.profile.coverageLevel, "full");
+  assert.deepEqual(full.styling.today?.everyday.request.coverage, {
+    sleeve: "long",
+    hem: "ankle",
+  });
+  assert.equal(
+    full.styling.today?.everyday.revision,
+    (moderate.styling.today?.everyday.revision ?? 0) + 1,
+  );
+});
+
 test("hijab no maps to not needed and keeps her occasion and style", () => {
   const closet = applyAnswer(
     withPreset("always"),

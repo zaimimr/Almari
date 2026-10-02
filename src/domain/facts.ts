@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import type { Key } from "../i18n/en";
 import {
   confirmAttribute,
@@ -208,7 +209,7 @@ function confirmedPiece(piece: Piece, key: FactKey, option: string): Piece {
       piece.kind === option
         ? piece.kind
         : kindsIn(piece.category).find((item) => item.id === option)?.id;
-    if (!kind) throw new Error("Choose one of the listed options.");
+    if (!kind) throw new Error(t("error.listedOption"));
     const styles = fixedStyles(kind);
     const dropStyles =
       !styles &&
@@ -235,7 +236,7 @@ function confirmedPiece(piece: Piece, key: FactKey, option: string): Piece {
     ? optionsFor(attribute).find((item) => String(item.id) === option)?.id
     : undefined;
   if (!attribute || value === undefined)
-    throw new Error("Choose one of the listed options.");
+    throw new Error(t("error.listedOption"));
   return confirmAttribute(piece, attribute, value);
 }
 

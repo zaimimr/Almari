@@ -11,7 +11,7 @@ screens=$(grep -rnE --include='*.ts' --include='*.tsx' \
   -e '=== 1 \?\s*["`][a-z]+( [a-z]+)*["`]' \
   -e '\?\s*["`][a-z]+ [a-z ]+["`]\s*:' \
   -e '\$\{[^}]*\},? [a-z]{2,}' \
-  app src/ui src/features src/navigation | grep -v 'fontFamily')
+  app src/ui src/features src/navigation src/state | grep -vE 'fontFamily|ClosetProvider is missing')
 domain=$(grep -nE \
   -e '(message|reason):\s*["`][A-Z]' \
   -e 'Error\(\s*["`][A-Z]' \
@@ -19,8 +19,12 @@ domain=$(grep -nE \
   -e '^\s*([?:]\s*|return\s+)?["`][A-Z][a-z]* [a-z]' \
   -e 'not marked' \
   src/domain/styling.ts src/domain/closet.ts src/domain/today.ts src/domain/coverage.ts src/domain/pieceWeather.ts src/domain/wardrobe.ts)
-if [ -n "$screens$domain" ]; then
-  printf '%s\n%s\n' "$screens" "$domain" | sed '/^$/d'
+errors=$(grep -rnE --include='*.ts' \
+  -e 'Error\(\s*["`][A-Z]' \
+  -e '(message|reason):\s*["`][A-Z]' \
+  src/domain src/state | grep -vE '\.(test|fixture)\.ts|evaluation\.ts|rulebook\.ts')
+if [ -n "$screens$domain$errors" ]; then
+  printf '%s\n%s\n%s\n' "$screens" "$domain" "$errors" | sed '/^$/d'
   exit 1
 fi
 echo "No hard-coded user-facing text."

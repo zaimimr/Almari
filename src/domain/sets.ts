@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import type { Closet, Piece } from "./closet";
 
 function withoutSet(piece: Piece): Piece {
@@ -23,7 +24,7 @@ export function linkSet(
   const ids = new Set(pieceIds);
   const members = closet.pieces.filter((piece) => ids.has(piece.id));
   if (members.length < 2 || members.length !== ids.size)
-    throw new Error("Choose at least two pieces for a set.");
+    throw new Error(t("error.setTooSmall"));
   return {
     ...closet,
     pieces: withoutLoneSets(

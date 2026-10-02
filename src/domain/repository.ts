@@ -1,4 +1,5 @@
 import { type Closet, decodeCloset, emptyCloset } from "./closet";
+import { t } from "../i18n";
 import { sampleTraits } from "./samples";
 
 export interface ClosetStorage {
@@ -65,8 +66,7 @@ export class ClosetRepository {
     clear: boolean,
   ): Promise<void> {
     const operation = this.queue.then(async () => {
-      if (!this.initialized)
-        throw new Error("Your closet is still opening. Try again in a moment.");
+      if (!this.initialized) throw new Error(t("error.closetOpening"));
       const next = transform(this.snapshot);
       if (clear) await this.storage.clear?.();
       await this.storage.write(JSON.stringify(next));

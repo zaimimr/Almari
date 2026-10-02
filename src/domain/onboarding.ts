@@ -113,9 +113,18 @@ export function applyAnswer<S extends AnswerStep>(
   if (step === "hijab") {
     const { hijab, coverage } = answer as Answers["hijab"];
     const saved = withProfile(closet, { coverageLevel: coverage });
-    return hijab === null
-      ? saved
-      : withPreset(saved, { hijab: hijabPreference[hijab] }, clock);
+    const styled =
+      hijab === null
+        ? saved
+        : withPreset(saved, { hijab: hijabPreference[hijab] }, clock);
+    const everyday = styled.styling.everyday;
+    if (
+      !everyday ||
+      coverage === closet.styling.profile.coverageLevel ||
+      everyday.version !== closet.styling.everyday?.version
+    )
+      return styled;
+    return saveEverydayStyle(styled, everyday, clock, true);
   }
   if (step === "place") {
     const { units, place } = answer as Answers["place"];

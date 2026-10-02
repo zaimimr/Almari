@@ -133,7 +133,7 @@ export default function ClosetScreen() {
         ListHeaderComponent={
           <View style={styles.intro}>
             <AppText muted>
-              {closet.pieces.length === 0
+              {shelved.length === 0
                 ? t("closet.introEmpty")
                 : shelved.length === 1
                   ? t("closet.introOne")

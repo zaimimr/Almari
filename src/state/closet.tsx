@@ -15,7 +15,7 @@ import {
   sampleCatalogVersion,
   withSampleAttributes,
 } from "../domain/samples";
-import { locale, setLanguage } from "../i18n";
+import { locale, setLanguage, t } from "../i18n";
 import { closetStorage } from "../storage/local";
 import { useAttributeRefresh, useImportRunner } from "./imports";
 import { Button, Message, Screen } from "../ui";
@@ -64,19 +64,17 @@ export function ClosetProvider({ children }: PropsWithChildren) {
       <Screen centered>
         <Message
           title={
-            status === "loading"
-              ? "Opening your closet"
-              : "Your closet could not open"
+            status === "loading" ? t("closet.opening") : t("closet.openFailed")
           }
           description={
             status === "loading"
-              ? "Your pieces will be here in a moment."
-              : "Your saved data has been kept. Try opening it again."
+              ? t("closet.openingBody")
+              : t("closet.openFailedBody")
           }
         />
         {status === "error" ? (
           <Button
-            label="Try again"
+            label={t("closet.tryAgain")}
             onPress={() => {
               setStatus("loading");
               setAttempt((value) => value + 1);

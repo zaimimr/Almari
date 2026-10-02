@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import type { Sources } from "./closet";
 import type { Category, GarmentKind } from "./taxonomy";
 
@@ -252,8 +253,7 @@ export function confirmAttribute<T extends Described>(
   key: AttributeKey,
   value: AttributeValue,
 ): T {
-  if (!isAttributeValue(key, value))
-    throw new Error("Choose one of the listed options.");
+  if (!isAttributeValue(key, value)) throw new Error(t("error.listedOption"));
   return fitAttributes({
     ...item,
     attributes: { ...item.attributes, [key]: value },
