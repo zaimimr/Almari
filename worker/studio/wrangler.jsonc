@@ -1,0 +1,13 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "almari-studio",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  "observability": { "enabled": true },
+  "vars": {
+    "GEMINI_MODEL": "gemini-3.1-flash-image",
+    "DAILY_LIMIT": "30",
+    "GLOBAL_DAILY_LIMIT": "1000",
+  },
+  "kv_namespaces": [{ "binding": "LIMITS" }],
+}
