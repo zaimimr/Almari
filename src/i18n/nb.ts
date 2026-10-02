@@ -715,4 +715,16 @@ export const nb: Record<Key, string> = {
     "Foreslått ut fra stoff og type. Trykk på et valg for å bekrefte det. Værsjekkene bruker bare det du har bekreftet.",
   "pieceWeather.help":
     "Brukes når værmeldingen eller været du velger på I dag er kaldt, med regn eller snø.",
+  "hijabs.title": "Sammenlign hijaber",
+  "hijabs.noneTitle": "Det er ingen hijab i dette antrekket",
+  "hijabs.current": "Hijaben du har på nå, er {name}.",
+  "hijabs.currentLabel": "Nå",
+  "hijabs.inOutfit": "I antrekket nå",
+  "hijabs.noOther": "Ingen annen hijab passer til dette antrekket akkurat nå.",
+  "hijabs.use": "Bruk denne hijaben",
+  "hijabs.undoHint": "Du kan angre dette på I dag.",
+  "common.backToToday": "Gå tilbake for å se dagens antrekk.",
+  "common.trying": "Prøver {name}. Alt annet blir som før.",
+  "common.tryingLabel": "Prøver",
+  "common.cancel": "Avbryt",
 };

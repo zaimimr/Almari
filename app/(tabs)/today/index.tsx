@@ -12,6 +12,7 @@ import {
 import { t } from "../../../src/i18n";
 import {
   evaluateOutfit,
+  roleOf,
   type ProblemAction,
 } from "../../../src/domain/styling";
 import { rulesScorer } from "../../../src/domain/scoring/rulesScorer";
@@ -302,6 +303,15 @@ function TodayContent() {
               testID="today-outfit"
             />
           </View>
+          {pieces.some((piece) => roleOf(piece) === "hijab") ? (
+            <Button
+              label={t("hijabs.title")}
+              secondary
+              compact
+              disabled={busy}
+              onPress={() => router.push("/today/hijab")}
+            />
+          ) : null}
           <AppText variant="caption" muted accessibilityLiveRegion="polite">
             {pieceCount(pieces)} from {source}
             {kept.length ? `, ${kept.length} kept` : ""}

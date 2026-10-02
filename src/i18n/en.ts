@@ -702,6 +702,18 @@ export const en = {
     "Suggested from the fabric and type. Tap a choice to confirm it. Weather checks only rely on what you confirm.",
   "pieceWeather.help":
     "Used when the forecast or the weather you choose on Today is cold, rainy or snowy.",
+  "hijabs.title": "Compare hijabs",
+  "hijabs.noneTitle": "There is no hijab in this outfit",
+  "hijabs.current": "Your current hijab is {name}.",
+  "hijabs.currentLabel": "Current",
+  "hijabs.inOutfit": "In the outfit now",
+  "hijabs.noOther": "No other hijab works with this outfit right now.",
+  "hijabs.use": "Use this hijab",
+  "hijabs.undoHint": "You can undo this on Today.",
+  "common.backToToday": "Go back to see today's outfit.",
+  "common.trying": "Trying {name}. Everything else stays the same.",
+  "common.tryingLabel": "Trying",
+  "common.cancel": "Cancel",
 };
 
 export type Key = keyof typeof en;

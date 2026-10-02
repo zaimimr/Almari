@@ -68,6 +68,10 @@ function Screens() {
         options={{ title: "Change a piece", presentation: "modal" }}
       />
       <Stack.Screen
+        name="today/hijab"
+        options={{ title: t("hijabs.title"), presentation: "modal" }}
+      />
+      <Stack.Screen
         name="onboarding/index"
         options={{ title: t("onboarding.hijab.title") }}
       />
