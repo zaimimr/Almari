@@ -14,6 +14,7 @@ import { formatHeight } from "../../../src/domain/units";
 import { seasonLabel } from "../../../src/features/colourText";
 import { t } from "../../../src/i18n";
 import { useCloset } from "../../../src/state/closet";
+import { canPrepareOnDevice } from "../../../src/state/imports";
 import { discardAllPhotos } from "../../../src/storage/local";
 import {
   AppText,
@@ -179,6 +180,14 @@ export default function Profile() {
         disabled={busy}
         onChange={chooseLanguage}
       />
+      {canPrepareOnDevice ? (
+        <Button
+          label={t("studio.title")}
+          secondary
+          disabled={busy}
+          onPress={() => router.push("/studio")}
+        />
+      ) : null}
       <Button
         label={t("settings.replay")}
         secondary

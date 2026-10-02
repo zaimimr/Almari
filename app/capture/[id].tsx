@@ -21,6 +21,7 @@ import {
   keepDuplicate,
   nameFor,
   removeImport,
+  setImportStudio,
 } from "../../src/domain/importing";
 import { attributeLabelKey, attributeValueKey } from "../../src/domain/facts";
 import { adviceFor } from "../../src/domain/quality";
@@ -36,6 +37,8 @@ import {
 import { labelLines } from "../../src/state/careLabel";
 import { useCloset } from "../../src/state/closet";
 import { changeImports } from "../../src/state/imports";
+import { useStudioMaker, useStudioModel } from "../../src/state/studio";
+import { discardPhoto } from "../../src/storage/local";
 import { PhotoChoice } from "../../src/features/PhotoChoice";
 import {
   problemMessages,
@@ -117,6 +120,8 @@ export default function CheckPiece() {
   const [answer, setAnswer] = useState<AttributeValue | undefined>(undefined);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const studioModel = useStudioModel();
+  const studio = useStudioMaker();
 
   if (!job?.prepared || !job.kind || !kind)
     return (
@@ -235,6 +240,23 @@ export default function CheckPiece() {
     }
   }
 
+  async function makeStudio() {
+    if (!prepared.cutout) return;
+    const file = await studio.make(prepared.cutout, job!.id);
+    if (!file) return;
+    let applied = false;
+    await update((current) => {
+      const next = setImportStudio(current, job!.id, file);
+      applied = next !== current;
+      return next;
+    });
+    if (!applied) void discardPhoto(file).catch(() => undefined);
+    else {
+      setKeepOriginal(false);
+      setVariant("studio");
+    }
+  }
+
   async function remove() {
     if (busy) return;
     setBusy(true);
@@ -334,7 +356,13 @@ export default function CheckPiece() {
           setKeepOriginal(choice.keepOriginal);
           setVariant(choice.variant);
         }}
+        studioOffered={closet.styling.studio && studioModel.ready}
+        making={studio.making}
+        onStudio={() => {
+          void makeStudio();
+        }}
       />
+      <ErrorMessage message={studio.message} />
       {job.duplicateOf ? (
         <Notice
           title={t("duplicate.title")}

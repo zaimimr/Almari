@@ -5,7 +5,11 @@ import {
   emptyCloset,
   garmentKinds,
   removePiece,
+  pieceVariant,
   savePiece,
+  studioSource,
+  withStudio,
+  withVariant,
   type Closet,
   type GarmentRegion,
   type LabelScore,
@@ -39,6 +43,7 @@ import {
   retakeImport,
   retryImport,
   setImportLabel,
+  setImportStudio,
   splitCapture,
   startImport,
 } from "./importing";
@@ -1053,4 +1058,71 @@ test("advice she already dismissed stays dismissed after Adjust crop", () => {
   const box = { x: 0.25, y: 0.25, width: 0.5, height: 0.5 };
   closet = cropCapture(closet, "job", box, "job-crop-1");
   assert.deepEqual(closet.imports[0]!.adviceShown, shown);
+});
+
+test("a studio shot is a third variant and the real photo is always kept", () => {
+  const ready = finished({ enhanced: "job-enhanced.png" });
+  const closet = setImportStudio(ready, "job", "job-studio.png");
+  assert.equal(closet.imports[0]!.variant, "studio");
+  const piece = acceptImports(closet).pieces[0]!;
+  assert.equal(piece.photo, "job-studio.png");
+  assert.equal(piece.original, "job-original.jpg");
+  assert.deepEqual(piece.variants, {
+    enhanced: "job-enhanced.png",
+    plain: "job.png",
+    studio: "job-studio.png",
+  });
+  assert.equal(pieceVariant(piece), "studio");
+  assert.equal(pieceVariant(withVariant(piece, "plain")), "plain");
+  assert.equal(withVariant(piece, "enhanced").photo, "job-enhanced.png");
+  const kept = acceptImports(
+    correctImport(closet, "job", { variant: "enhanced" }),
+  ).pieces[0]!;
+  assert.equal(kept.photo, "job-enhanced.png");
+  assert.equal(kept.variants?.studio, "job-studio.png");
+  assert.deepEqual(orphanedFiles(closet, removeImport(closet, "job")).sort(), [
+    "job-enhanced.png",
+    "job-original.jpg",
+    "job-studio.png",
+    "job-thumb.png",
+    "job.png",
+  ]);
+  const original = acceptImports(
+    correctImport(closet, "job", { keepOriginal: true }),
+  ).pieces[0]!;
+  assert.equal(original.photo, "job-original.jpg");
+  assert.equal(original.variants, undefined);
+});
+
+test("a studio shot needs a cutout and is made from the plain cutout", () => {
+  const plainOnly = finished();
+  assert.equal(setImportStudio(plainOnly, "job", "s.png"), plainOnly);
+  const piece = acceptImports(finished({ enhanced: "job-enhanced.png" }))
+    .pieces[0]!;
+  assert.equal(studioSource(piece), "job.png");
+  const studio = withStudio(piece, "job-studio.png");
+  assert.equal(studio.photo, "job-studio.png");
+  assert.equal(studio.variants?.studio, "job-studio.png");
+  assert.ok(filesInUse(savePiece(emptyCloset, studio)).has("job-studio.png"));
+  const manual: Piece = { ...piece, variants: undefined, photo: "own.jpg" };
+  assert.equal(studioSource(manual), null);
+  assert.equal(withStudio(manual, "x.png"), manual);
+});
+
+test("studio photos are off by default and older closets still open", () => {
+  assert.equal(decodeCloset(null).styling.studio, false);
+  const ready = finished({ enhanced: "job-enhanced.png" });
+  const stored = JSON.parse(JSON.stringify(acceptImports(ready)));
+  delete stored.styling.studio;
+  const reopened = decodeCloset(JSON.stringify(stored));
+  assert.equal(reopened.styling.studio, false);
+  assert.equal(pieceVariant(reopened.pieces[0]!), "enhanced");
+  stored.styling.studio = true;
+  stored.pieces[0].variants.studio = "job-studio.png";
+  stored.pieces[0].photo = "job-studio.png";
+  const turnedOn = decodeCloset(JSON.stringify(stored));
+  assert.equal(turnedOn.styling.studio, true);
+  assert.equal(pieceVariant(turnedOn.pieces[0]!), "studio");
+  stored.styling.studio = "yes";
+  assert.throws(() => decodeCloset(JSON.stringify(stored)));
 });

@@ -11,14 +11,26 @@ export function PhotoChoice({
   keepOriginal,
   variant,
   onChange,
+  studioOffered,
+  making,
+  onStudio,
 }: {
   prepared: Prepared;
   keepOriginal: boolean;
   variant: Variant;
   onChange: (choice: { keepOriginal: boolean; variant: Variant }) => void;
+  studioOffered: boolean;
+  making: boolean;
+  onStudio: () => void;
 }) {
   const enhanced = prepared.enhanced ?? null;
-  const shown = enhanced && variant === "enhanced" ? enhanced : prepared.cutout;
+  const studio = enhanced ? (prepared.studio ?? null) : null;
+  const shown =
+    studio && variant === "studio"
+      ? studio
+      : enhanced && variant !== "plain"
+        ? enhanced
+        : prepared.cutout;
   return (
     <View style={styles.compare}>
       {shown ? (
@@ -29,9 +41,11 @@ export function PhotoChoice({
               style={styles.image}
               contentFit="contain"
               accessibilityLabel={
-                shown === enhanced
-                  ? t("photo.enhancedImage")
-                  : t("photo.plainImage")
+                shown === studio
+                  ? t("photo.studioImage")
+                  : shown === enhanced
+                    ? t("photo.enhancedImage")
+                    : t("photo.plainImage")
               }
             />
           </View>
@@ -51,6 +65,18 @@ export function PhotoChoice({
                   onChange({ keepOriginal: false, variant: "plain" })
                 }
               />
+              {studio || studioOffered ? (
+                <Chip
+                  label={making ? t("photo.studioMaking") : t("photo.studio")}
+                  selected={!keepOriginal && variant === "studio" && !!studio}
+                  disabled={making}
+                  onPress={() =>
+                    studio
+                      ? onChange({ keepOriginal: false, variant: "studio" })
+                      : onStudio()
+                  }
+                />
+              ) : null}
             </View>
           ) : (
             <Chip
