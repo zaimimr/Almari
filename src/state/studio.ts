@@ -1,3 +1,4 @@
+import { getNetworkStateAsync } from "expo-network";
 import { useState } from "react";
 import type { Category, GarmentKind } from "../domain/taxonomy";
 import { t } from "../i18n";
@@ -33,6 +34,15 @@ async function studioInput(source: string, id: string) {
   }
 }
 
+async function isOffline() {
+  try {
+    const state = await getNetworkStateAsync();
+    return state.isConnected === false || state.isInternetReachable === false;
+  } catch {
+    return false;
+  }
+}
+
 export async function renderStudio(
   source: string,
   id: string,
@@ -56,7 +66,7 @@ export async function renderStudio(
       body,
     });
   } catch {
-    throw new Error("offline");
+    throw new Error((await isOffline()) ? "offline" : "failed");
   } finally {
     if (input) void discardPhoto(input).catch(() => undefined);
   }
