@@ -12,6 +12,8 @@ import {
   type Piece,
   type Prepared,
   withVariant,
+  emptyTaste,
+  neutralProfile,
   renameCelebration,
 } from "./closet";
 import type { CareLabel } from "./careLabel";
@@ -412,7 +414,13 @@ test("a version 2 closet opens as version 3 with every piece, look, Today sessio
   assert.equal(migrated.version, 3);
   assert.deepEqual(migrated.pieces, renameCelebration(closetV2.pieces));
   assert.deepEqual(migrated.looks, closetV2.looks);
-  assert.deepEqual(migrated.styling, renameCelebration(closetV2.styling));
+  assert.deepEqual(migrated.styling, {
+    ...(renameCelebration(closetV2.styling) as object),
+    profile: neutralProfile,
+    taste: emptyTaste,
+    engine: "rules",
+  });
+  assert.deepEqual(migrated.feedback, []);
   assert.equal(migrated.sampleCatalog, 2);
   assert.equal(migrated.photoTipsSeen, true);
   assert.deepEqual(
