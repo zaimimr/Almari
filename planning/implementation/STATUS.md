@@ -291,3 +291,35 @@ Known limitations:
 - The hijab sheet has no zoom yet.
 - Variants are repaired by restyling around the remaining pieces; when nothing fits, Today explains why instead of showing a repair preview.
 - Sample piece names are stored data and stay in English on a Norwegian phone.
+
+## Part 10: Profile tab, onboarding polish and outfit builder (code done, 2 October 2026; simulator checks pending)
+
+What was built:
+
+- Profile is a fourth tab (Profile, bokmål Profil, `person.crop.circle`). It holds her answers with Change, a link to Style settings, Closet stats (pieces in the active wardrobe without archived ones, never worn, the three most worn) and the app settings (language, replay onboarding, reset, privacy and version). The Profile button on Today and the Edit your answers link in Style settings are gone. `/today/profile` no longer exists.
+- Onboarding and the colour analysis are full screen without the stack header, with their own top bar: Back on every step except the first (answers are kept), Cancel when one answer is changed from Profile, and the step progress. Skip stays.
+- Body shape is chosen from six neutral line figures (`assets/shapes`, SVG sources rendered to PNG at 1x, 2x and 3x), tinted when selected, with Prefer not to say below.
+- Selfie: a native front camera view in `closet-vision` (`SelfieCameraView.swift`, AVFoundation, no new dependency) with a dashed oval head guide and one live instruction at a time: look into the camera, face a window for more light, move closer, move back, fit your face in the oval, look straight at the camera, hold still, ready (`src/domain/selfieGuide.ts`). Choose a recent selfie stays as the fallback, and is the only option on the simulator, the web and when camera access is off.
+- After a selfie is measured, the photo is shown with three draggable points (skin, hair, eyes) at the positions the analysis used. Dragging re-samples that point on the phone (`sampleSelfie`, same white balance as the analysis) and updates the swatches, undertone, depth, contrast and season live (`resampleColours`). The photo stays in the temporary folder only until Save, Try again or leaving the screen, then it is deleted.
+- Outfit builder: Fill the rest keeps her pieces and completes the outfit with the active stylist and every hard rule (`src/domain/builder.ts`, through `styleOutfits`). The piece strip is ranked by the stylist score with the picked pieces, picked pieces first and pieces that break a rule (a second main piece, the other style, the other wardrobe, unavailable) last. Tapping a piece in the preview shows up to three alternatives for that slot. The name is prefilled with the plain outfit name and follows the pieces until she types her own.
+
+Evidence: `npm run check` with 385 domain tests (new: `profileStats.test.ts`, `builder.test.ts`, `selfieGuide.test.ts`, `previousStep` and `resampleColours`), `npm run strings`, `npx expo-doctor` (21 of 21) and `npx expo export --platform ios --platform web` pass. Maestro flows are written in `.maestro/profile-onboarding-builder` (onboarding Back and body shapes, Profile tab and stats, builder fill, swap and naming); screenshots go to [planning/build/profile-onboarding-builder](../build/profile-onboarding-builder).
+
+Not yet verified:
+
+- The Release build for the simulator failed because the Mac ran out of disk space, so the Swift code (`SelfieCameraView.swift`, the points and `sampleSelfie` in `SelfieColours.swift`) has not been compiled yet and the Maestro flows have not been run. Free several GB, run `pod install` in `ios`, build, then run the three flows.
+
+Known limitations:
+
+- Face direction comes from AVFoundation face metadata, which reports yaw in coarse steps, so Look straight at the camera only shows for a clearly turned head.
+- Moving a point re-derives undertone, depth, contrast and season from the measured colours, which replaces any chip she changed before dragging.
+- When the hair is covered, the hair point starts above the forehead with no colour; dragging it onto a hijab would read the hijab as hair.
+- Closet stats count wears from Wear this only.
+
+Owner checks on her iPhone (TestFlight build):
+
+1. Profile tab: answers, Open style settings, Closet stats after one Wear this, language, replay and reset all work.
+2. Onboarding: Back on steps 2 to 6 returns with the answers kept; body shape drawings look tasteful at normal and large text.
+3. Colours, Take a selfie: the live front camera shows with the oval. Covering the camera, standing far away, very close, off centre, turning the head and moving each give the matching instruction; facing a window and holding still gives Ready.
+4. Take the photo: the frozen selfie shows skin, hair and eye points in the right places. Dragging each point changes its swatch, and the season changes when the skin point is moved to a much lighter or darker area. Save, then check the Photos app has no new selfie.
+5. Builder: pick one piece, Fill the rest, tap the hijab in the preview and choose another, check the name follows until you type your own, save.
