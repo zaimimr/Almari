@@ -59,8 +59,10 @@ function form(fields: Record<string, string | File>) {
 describe("studioPrompt", () => {
   it("names the garment type and keeps it", () => {
     const prompt = studioPrompt({ category: "bottom", kind: "wide-leg" });
-    expect(prompt).toContain("Item category: wide leg (bottoms)");
-    expect(prompt).toContain("It must stay wide leg.");
+    expect(prompt).toContain(
+      "Item category: trousers (bottoms). Fit: wide-leg.",
+    );
+    expect(prompt).toContain("It must stay trousers.");
     expect(prompt).toContain("Never turn it into another kind of clothing.");
     expect(prompt).toContain("length, width, cut");
     expect(prompt).toContain("flat lay");
@@ -71,7 +73,19 @@ describe("studioPrompt", () => {
     expect(studioPrompt({ category: "shoes" })).toContain(
       "It must stay shoes.",
     );
-    expect(studioPrompt({ category: "hijab" })).toContain("loose loop");
+    expect(studioPrompt({ category: "hijab" })).toContain("loose, open loop");
+  });
+
+  it("picks the pose from the subcategory when it has its own", () => {
+    expect(studioPrompt({ category: "shoes", kind: "boots" })).toContain(
+      "full shafts",
+    );
+    expect(studioPrompt({ category: "bottom", kind: "sharara" })).toContain(
+      "panel construction",
+    );
+    expect(studioPrompt({ category: "shoes", kind: "heels" })).toContain(
+      "toes toward the top",
+    );
   });
 
   it("asks for a clean studio shot with nothing added", () => {
