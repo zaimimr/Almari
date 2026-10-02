@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   FlatList,
   Keyboard,
@@ -13,6 +13,7 @@ import { useCloset } from "../../src/state/closet";
 import {
   type Category,
   type Occasion,
+  type Piece,
   saveLook,
 } from "../../src/domain/closet";
 import {
@@ -66,6 +67,7 @@ export default function BuildLook() {
     ),
   );
   const [selected, setSelected] = useState(initialSelection);
+  const list = useRef<FlatList<Piece>>(null);
   const [swapping, setSwapping] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const occasion = source?.occasion ?? startingOccasion;
@@ -112,6 +114,7 @@ export default function BuildLook() {
     : [];
 
   function choose(next: string[]) {
+    list.current?.scrollToOffset({ offset: 0, animated: false });
     setNotice(null);
     setSwapping(null);
     setSelected(next);
@@ -248,7 +251,7 @@ export default function BuildLook() {
               {alternatives.length ? (
                 <View style={styles.swapRow}>
                   {alternatives.map((piece) => (
-                    <View key={piece.id} style={styles.stripCell}>
+                    <View key={piece.id} style={styles.swapCell}>
                       <PieceTile
                         piece={piece}
                         compact
@@ -273,6 +276,7 @@ export default function BuildLook() {
                 <Filters value={category} onChange={setCategory} />
               </View>
               <FlatList
+                ref={list}
                 key={wide ? "grid" : "strip"}
                 testID="outfit-piece-picker"
                 data={options}
@@ -391,6 +395,7 @@ const styles = StyleSheet.create({
   hidden: { display: "none" },
   strip: { paddingHorizontal: 24, gap: 12 },
   stripCell: { width: 116 },
+  swapCell: { width: 116, height: 176 },
   grid: { paddingHorizontal: 24, paddingBottom: 24 },
   row: { gap: 12 },
   cell: { width: "48%" },

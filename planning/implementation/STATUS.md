@@ -324,7 +324,7 @@ Owner checks on her iPhone (development build, so the speed readout shows):
 7. Done: the Scanned pieces screen lists every capture with Keep and Drop, and each cutout shows the held piece without her face or hands. Note any that include her.
 8. Lock check: leave the scan running for two minutes; the screen does not lock. Note if the phone gets hot.
 
-## Part 10: Profile tab, onboarding polish and outfit builder (code done, 2 October 2026; simulator checks pending)
+## Part 10: Profile tab, onboarding polish and outfit builder (done, 2 October 2026)
 
 What was built:
 
@@ -335,11 +335,9 @@ What was built:
 - After a selfie is measured, the photo is shown with three draggable points (skin, hair, eyes) at the positions the analysis used. Dragging re-samples that point on the phone (`sampleSelfie`, same white balance as the analysis) and updates the swatches, undertone, depth, contrast and season live (`resampleColours`). The photo stays in the temporary folder only until Save, Try again or leaving the screen, then it is deleted.
 - Outfit builder: Fill the rest keeps her pieces and completes the outfit with the active stylist and every hard rule (`src/domain/builder.ts`, through `styleOutfits`). The piece strip is ranked by the stylist score with the picked pieces, picked pieces first and pieces that break a rule (a second main piece, the other style, the other wardrobe, unavailable) last. Tapping a piece in the preview shows up to three alternatives for that slot. The name is prefilled with the plain outfit name and follows the pieces until she types her own.
 
-Evidence: `npm run check` with 385 domain tests (new: `profileStats.test.ts`, `builder.test.ts`, `selfieGuide.test.ts`, `previousStep` and `resampleColours`), `npm run strings`, `npx expo-doctor` (21 of 21) and `npx expo export --platform ios --platform web` pass. Maestro flows are written in `.maestro/profile-onboarding-builder` (onboarding Back and body shapes, Profile tab and stats, builder fill, swap and naming); screenshots go to [planning/build/profile-onboarding-builder](../build/profile-onboarding-builder).
+Evidence: `npm run check` with 385 domain tests (new: `profileStats.test.ts`, `builder.test.ts`, `selfieGuide.test.ts`, `previousStep` and `resampleColours`), `npm run strings`, `npx expo-doctor` (21 of 21) and `npx expo export --platform ios --platform web` pass. The Release build for the simulator compiles the new Swift. Maestro flows in `.maestro/profile-onboarding-builder` (onboarding Back and body shapes, the colours screen without a camera, Profile tab and stats, builder fill, swap, naming and saving) pass on it, and the earlier onboarding (flow, settings, answers, colours) and stylist (style settings, looks) flows pass again. `.maestro/onboarding/colours.yaml` now checks that the simulator shows only Choose a recent selfie. Screenshots are in [planning/build/profile-onboarding-builder](../build/profile-onboarding-builder).
 
-Not yet verified:
-
-- The Release build for the simulator failed because the Mac ran out of disk space, so the Swift code (`SelfieCameraView.swift`, the points and `sampleSelfie` in `SelfieColours.swift`) has not been compiled yet and the Maestro flows have not been run. Free several GB, run `pod install` in `ios`, build, then run the three flows.
+The simulator has no camera, so the live guide, the capture and dragging the points on a measured selfie are only checked on her iPhone.
 
 Known limitations:
 

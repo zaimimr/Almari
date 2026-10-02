@@ -22,26 +22,10 @@ appId: com.zaimimran.almari
 - scrollUntilVisible:
     element: "Choose a recent selfie"
     direction: DOWN
-- tapOn:
-    text: "Take a selfie"
-    index: 0
 - runFlow:
     when:
       visible: "Allow"
     commands:
       - tapOn: "Allow"
-- extendedWaitUntil:
-    visible: "Take Picture|The camera could not open. Choose a selfie instead."
-    timeout: 10000
-- runFlow:
-    when:
-      visible: "Take Picture"
-    commands:
-      - takeScreenshot: planning/build/onboarding/colours-camera
-      - tapOn: "Close"
-- runFlow:
-    when:
-      visible: "The camera could not open. Choose a selfie instead."
-    commands:
-      - takeScreenshot: planning/build/onboarding/colours-no-camera
+- assertNotVisible: "Take photo"
 - assertVisible: "Choose a recent selfie"

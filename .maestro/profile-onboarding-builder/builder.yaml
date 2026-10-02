@@ -4,6 +4,14 @@ appId: com.zaimimran.almari
 - tapOn: "Looks"
 - tapOn: "Build a look"
 - assertVisible: "Fill the rest"
+- repeat:
+    while:
+      notVisible: "Ivory longline tunic.*"
+    times: 6
+    commands:
+      - swipe:
+          start: 85%, 70%
+          end: 25%, 70%
 - tapOn: "Ivory longline tunic.*"
 - assertVisible: "1 piece in your look"
 - takeScreenshot: planning/build/profile-onboarding-builder/06-builder-ranked${SUFFIX}
@@ -24,5 +32,5 @@ appId: com.zaimimran.almari
 - inputText: "My Eid look"
 - hideKeyboard
 - tapOn: "Save look"
-- assertVisible: "My Eid look"
+- assertVisible: "Open My Eid look"
 - takeScreenshot: planning/build/profile-onboarding-builder/09-builder-saved${SUFFIX}
