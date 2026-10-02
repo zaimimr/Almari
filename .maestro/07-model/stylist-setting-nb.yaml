@@ -1,6 +1,11 @@
 appId: com.zaimimran.almari
 ---
 - launchApp
+- runFlow:
+    when:
+      visible: "Prøv en eksempelstil"
+    commands:
+      - tapOn: "Prøv en eksempelstil"
 - scrollUntilVisible:
     element: "Stilinnstillinger"
     speed: 90

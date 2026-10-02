@@ -1,6 +1,11 @@
 appId: com.zaimimran.almari
 ---
 - launchApp
+- runFlow:
+    when:
+      visible: "Try a sample style"
+    commands:
+      - tapOn: "Try a sample style"
 - scrollUntilVisible:
     element: "Not for me"
 - assertNotVisible: "Rules"
