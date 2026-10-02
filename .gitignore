@@ -21,3 +21,5 @@ modules/closet-vision/model/extra/
 modules/closet-vision/model/compat/.venv/
 modules/closet-vision/model/compat/data/
 modules/closet-vision/model/compat/out/
+.claude/
+__pycache__/
