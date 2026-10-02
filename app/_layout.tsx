@@ -1,11 +1,16 @@
+import { useEffect } from "react";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { t } from "../src/i18n";
 import { ClosetProvider } from "../src/state/closet";
 import { stackOptions } from "../src/navigation/options";
+import { discardStudioModel } from "../src/storage/local";
 
 export default function RootLayout() {
+  useEffect(() => {
+    discardStudioModel().catch(() => undefined);
+  }, []);
   return (
     <SafeAreaProvider>
       <ClosetProvider>
@@ -48,7 +53,6 @@ function Screens() {
         name="capture/group/[id]"
         options={{ title: t("capture.group.title") }}
       />
-      <Stack.Screen name="studio" options={{ title: t("studio.title") }} />
       <Stack.Screen
         name="label/[id]"
         options={{ title: t("careLabel.title") }}

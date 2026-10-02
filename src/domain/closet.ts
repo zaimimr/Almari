@@ -427,7 +427,6 @@ export type Styling = {
   onboarded: boolean;
   layout: CardLayout;
   language: Language;
-  studio: boolean;
   scan: ScanMode;
 };
 
@@ -475,7 +474,6 @@ export const emptyStyling: Styling = {
   onboarded: false,
   layout: "reasons",
   language: "system",
-  studio: false,
   scan: "auto",
 };
 
@@ -1237,7 +1235,10 @@ function isForecast(value: unknown): value is Forecast {
 }
 
 function withOnboardingState(closet: Closet): Closet {
-  const stored: Record<string, unknown> = { ...closet.styling };
+  const { studio: _studio, ...stored } = closet.styling as Record<
+    string,
+    unknown
+  >;
   const profile =
     stored.profile === undefined
       ? neutralProfile
@@ -1245,7 +1246,7 @@ function withOnboardingState(closet: Closet): Closet {
         ? { ...neutralProfile, ...stored.profile }
         : null;
   const styling = {
-    ...closet.styling,
+    ...stored,
     profile,
     units: stored.units ?? "metric",
     place: stored.place ?? null,
@@ -1255,7 +1256,6 @@ function withOnboardingState(closet: Closet): Closet {
       closet.pieces.some((piece) => piece.source === "owned"),
     layout: stored.layout ?? "reasons",
     language: stored.language ?? "system",
-    studio: stored.studio ?? false,
     scan: stored.scan ?? "auto",
   };
   if (
@@ -1266,7 +1266,6 @@ function withOnboardingState(closet: Closet): Closet {
     !isBoolean(styling.onboarded) ||
     !["minimal", "reasons", "full"].includes(styling.layout as string) ||
     !["system", "en", "nb"].includes(styling.language as string) ||
-    !isBoolean(styling.studio) ||
     !["auto", "manual"].includes(styling.scan as string)
   )
     throw unreadable();

@@ -1109,20 +1109,20 @@ test("a studio shot needs a cutout and is made from the plain cutout", () => {
   assert.equal(withStudio(manual, "x.png"), manual);
 });
 
-test("studio photos are off by default and older closets still open", () => {
-  assert.equal(decodeCloset(null).styling.studio, false);
+test("closets saved with the old studio switch still open without it", () => {
+  assert.equal("studio" in decodeCloset(null).styling, false);
   const ready = finished({ enhanced: "job-enhanced.png" });
   const stored = JSON.parse(JSON.stringify(acceptImports(ready)));
-  delete stored.styling.studio;
-  const reopened = decodeCloset(JSON.stringify(stored));
-  assert.equal(reopened.styling.studio, false);
-  assert.equal(pieceVariant(reopened.pieces[0]!), "enhanced");
-  stored.styling.studio = true;
-  stored.pieces[0].variants.studio = "job-studio.png";
-  stored.pieces[0].photo = "job-studio.png";
-  const turnedOn = decodeCloset(JSON.stringify(stored));
-  assert.equal(turnedOn.styling.studio, true);
-  assert.equal(pieceVariant(turnedOn.pieces[0]!), "studio");
-  stored.styling.studio = "yes";
-  assert.throws(() => decodeCloset(JSON.stringify(stored)));
+  assert.equal(
+    pieceVariant(decodeCloset(JSON.stringify(stored)).pieces[0]!),
+    "enhanced",
+  );
+  for (const studio of [true, false, "yes"]) {
+    stored.styling.studio = studio;
+    stored.pieces[0].variants.studio = "job-studio.png";
+    stored.pieces[0].photo = "job-studio.png";
+    const reopened = decodeCloset(JSON.stringify(stored));
+    assert.equal("studio" in reopened.styling, false);
+    assert.equal(pieceVariant(reopened.pieces[0]!), "studio");
+  }
 });

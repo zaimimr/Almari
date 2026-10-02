@@ -428,7 +428,6 @@ test("a version 2 closet opens as version 3 with every piece, look, Today sessio
     onboarded: true,
     layout: "reasons",
     language: "system",
-    studio: false,
     scan: "auto",
   });
   assert.deepEqual(migrated.feedback, []);

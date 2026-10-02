@@ -51,3 +51,35 @@ export async function discardTemporary(uri: string) {
   const file = new File(uri);
   if (file.exists) file.delete();
 }
+
+export async function keepPhotoBytes(bytes: Uint8Array, filename: string) {
+  photos.create({ intermediates: true, idempotent: true });
+  new File(photos, filename).write(bytes);
+  return filename;
+}
+
+export async function photoUpload(photo: string) {
+  return {
+    uri: photoUri(photo),
+    name: photo,
+    type: photo.endsWith(".png") ? "image/png" : "image/jpeg",
+  };
+}
+
+export async function installId() {
+  const stored = await Storage.getItem("installId");
+  if (stored) return stored;
+  const id = randomUUID();
+  await Storage.setItem("installId", id);
+  return id;
+}
+
+export async function discardStudioModel() {
+  const model = new Directory(
+    Paths.document.parentDirectory,
+    "Library",
+    "Application Support",
+    "studio-model",
+  );
+  if (model.exists) model.delete();
+}
