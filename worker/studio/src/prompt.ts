@@ -58,6 +58,8 @@ const kindPoses: Record<string, string> = {
     "as a front-side-up overhead flat lay, waistband at the top and legs gently separated. Preserve the original flare, panel construction and fullness",
   gharara:
     "as a front-side-up overhead flat lay, waistband at the top and legs gently separated. Preserve the original knee seams, gathers and flared lower sections",
+  shorts:
+    "as a front-side-up overhead flat lay, waistband at the top and both short legs naturally separated. Keep the original short length ending above the knee and never lengthen the legs into trousers",
   lehenga: skirt,
   skirt,
   boots:

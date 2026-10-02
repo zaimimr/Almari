@@ -83,6 +83,9 @@ describe("studioPrompt", () => {
     expect(studioPrompt({ category: "bottom", kind: "sharara" })).toContain(
       "panel construction",
     );
+    expect(studioPrompt({ category: "bottom", kind: "shorts" })).toContain(
+      "never lengthen the legs",
+    );
     expect(studioPrompt({ category: "shoes", kind: "heels" })).toContain(
       "toes toward the top",
     );
