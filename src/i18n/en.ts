@@ -676,6 +676,16 @@ export const en = {
   "settings.privacy":
     "Everything stays on this phone. There is no account and no login. Only the position of your city is sent to get the weather.",
   "settings.version": "Version {version}",
+  "archive.title": "Archive",
+  "archive.help":
+    "Archive keeps the piece and its saved looks, but it is no longer suggested or shown in your closet. You can bring it back any time.",
+  "archive.archived": "Archived. Not used in outfit suggestions.",
+  "archive.action": "Archive this piece",
+  "archive.restore": "Back in my closet",
+  "archive.filter": "Archived ({count})",
+  "archive.tag": "Archived",
+  "today.pieceUnavailable": "A piece in this outfit is no longer available.",
+  "stylist.keptArchived": "{name} is archived.",
 };
 
 export type Key = keyof typeof en;

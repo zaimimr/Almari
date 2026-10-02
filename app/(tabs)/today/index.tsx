@@ -388,7 +388,7 @@ function TodayContent() {
           result.status !== "conflict" &&
           result.status !== "missing" ? (
             <ProblemCard
-              message="A piece in this outfit is no longer in your closet."
+              message={t("today.pieceUnavailable")}
               actions={[
                 {
                   label: "Find a new outfit",

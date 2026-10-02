@@ -1,0 +1,16 @@
+appId: com.zaimimran.almari
+---
+- launchApp:
+    clearState: true
+- repeat:
+    times: 5
+    commands:
+      - scrollUntilVisible:
+          element: "Skip"
+          direction: DOWN
+      - tapOn: "Skip"
+- scrollUntilVisible:
+    element: "Start with the sample closet"
+    direction: DOWN
+- tapOn: "Start with the sample closet"
+- assertVisible: "Try a sample style"

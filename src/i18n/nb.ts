@@ -688,4 +688,15 @@ export const nb: Record<Key, string> = {
   "settings.privacy":
     "Alt blir på denne telefonen. Det finnes ingen konto og ingen innlogging. Bare posisjonen til byen din sendes for å hente været.",
   "settings.version": "Versjon {version}",
+  "archive.title": "Arkiv",
+  "archive.help":
+    "Arkivering tar vare på plagget og de lagrede antrekkene, men plagget blir ikke lenger foreslått eller vist i garderoben. Du kan hente det tilbake når som helst.",
+  "archive.archived": "Arkivert. Brukes ikke i antrekksforslag.",
+  "archive.action": "Arkiver plagget",
+  "archive.restore": "Tilbake i garderoben",
+  "archive.filter": "Arkivert ({count})",
+  "archive.tag": "Arkivert",
+  "today.pieceUnavailable":
+    "Et plagg i dette antrekket er ikke lenger tilgjengelig.",
+  "stylist.keptArchived": "{name} er arkivert.",
 };

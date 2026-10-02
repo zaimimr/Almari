@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppState } from "react-native";
 import ClosetVision from "../../../modules/closet-vision/src";
 import type { Closet, Piece, Weather } from "../../domain/closet";
-import { occasionLabel, styleLabel } from "../../domain/closet";
+import { isAvailable, occasionLabel, styleLabel } from "../../domain/closet";
 import {
   activeSession,
   clockFor,
@@ -34,7 +34,7 @@ export function useToday() {
   const pieces = session
     ? session.pieceIds.flatMap((id) => {
         const piece = closet.pieces.find((item) => item.id === id);
-        return piece ? [piece] : [];
+        return piece && isAvailable(piece) ? [piece] : [];
       })
     : [];
   const lostPieces = session ? session.pieceIds.length - pieces.length : 0;
