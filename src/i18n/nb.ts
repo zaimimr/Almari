@@ -668,7 +668,6 @@ export const nb: Record<Key, string> = {
   "forecast.manual":
     "Du har valgt været for i dag selv. Det erstatter værvarselet for i dag.",
   "adjust.useForecast": "Værvarsel",
-  "profile.open": "Profil",
   "profile.change": "Endre",
   "profile.notAnswered": "Ikke besvart",
   "profile.colours": "Farger",
@@ -802,9 +801,6 @@ export const nb: Record<Key, string> = {
   "style.cancel": "Avbryt",
   "style.intro":
     "Folk og familier ser ulikt på dette, så ingenting er valgt for deg. Valgene endrer hvilke antrekk som kommer først. De endrer aldri valgene dine for hijab og dekning.",
-  "style.answers":
-    "Hijab, dekning, kropp, smak og farger er svarene dine fra første oppstart.",
-  "style.editAnswers": "Endre svarene dine",
   "style.layout": "Antrekkskort",
   "style.layout.minimal": "Bare antrekket",
   "style.layout.reasons": "Med begrunnelse",
@@ -1223,4 +1219,13 @@ export const nb: Record<Key, string> = {
   "role.main": "hovedplagg",
   "role.outer": "yttertøy",
   "role.shoes": "par sko",
+  "nav.profile": "Profil",
+  "profile.style": "Åpne stilinnstillinger",
+  "stats.title": "Garderoben i tall",
+  "stats.pieces": "Plagg",
+  "stats.neverWorn": "Aldri brukt",
+  "stats.mostWorn": "Mest brukt",
+  "stats.wornOnce": "{name}, én gang",
+  "stats.wornMany": "{name}, {count} ganger",
+  "stats.nothingWorn": "Ingenting brukt ennå",
 };

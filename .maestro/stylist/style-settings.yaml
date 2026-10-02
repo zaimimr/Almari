@@ -5,7 +5,7 @@ appId: com.zaimimran.almari
     element: "Style settings"
 - tapOn: "Style settings"
 - assertVisible: "People and families see these differently.*"
-- assertVisible: "Edit your answers"
+- assertNotVisible: "Edit your answers"
 - assertVisible:
     text: "With reasons"
     selected: true

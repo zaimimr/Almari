@@ -656,7 +656,6 @@ export const en = {
   "forecast.manual":
     "You chose today's weather yourself. It replaces the forecast for today.",
   "adjust.useForecast": "Forecast",
-  "profile.open": "Profile",
   "profile.change": "Change",
   "profile.notAnswered": "Not answered",
   "profile.colours": "Colours",
@@ -789,9 +788,6 @@ export const en = {
   "style.cancel": "Cancel",
   "style.intro":
     "People and families see these differently, so nothing is set for you. They change which outfits come first. They never change your hijab or coverage choices.",
-  "style.answers":
-    "Hijab, coverage, body, taste and colours are your answers from the first start.",
-  "style.editAnswers": "Edit your answers",
   "style.layout": "Outfit card",
   "style.layout.minimal": "Outfit only",
   "style.layout.reasons": "With reasons",
@@ -1202,6 +1198,15 @@ export const en = {
   "role.main": "main pieces",
   "role.outer": "outer layers",
   "role.shoes": "pairs of shoes",
+  "nav.profile": "Profile",
+  "profile.style": "Open style settings",
+  "stats.title": "Closet stats",
+  "stats.pieces": "Pieces",
+  "stats.neverWorn": "Never worn",
+  "stats.mostWorn": "Most worn",
+  "stats.wornOnce": "{name}, once",
+  "stats.wornMany": "{name}, {count} times",
+  "stats.nothingWorn": "Nothing worn yet",
 };
 
 export type Key = keyof typeof en;

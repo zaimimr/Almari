@@ -91,10 +91,6 @@ function Screens() {
         name="onboarding/colours"
         options={{ title: t("colours.title") }}
       />
-      <Stack.Screen
-        name="today/profile"
-        options={{ title: t("profile.title") }}
-      />
     </Stack>
   );
 }

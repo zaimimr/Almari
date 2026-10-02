@@ -90,12 +90,6 @@ export default function TodayScreen() {
       >
         <Stack.Screen
           options={{
-            headerLeft: () => (
-              <HeaderAction
-                label={t("profile.open")}
-                onPress={() => router.push("/today/profile")}
-              />
-            ),
             headerRight: () => (
               <HeaderAction
                 label={t("title.everyday")}

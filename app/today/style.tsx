@@ -213,18 +213,6 @@ export default function StyleSettings() {
         }}
       />
       <AppText muted>{t("style.intro")}</AppText>
-      <View style={styles.group}>
-        <AppText variant="caption" muted>
-          {t("style.answers")}
-        </AppText>
-        <Button
-          label={t("style.editAnswers")}
-          secondary
-          compact
-          disabled={busy}
-          onPress={() => router.push("/today/profile")}
-        />
-      </View>
       <ChoiceGroup
         label={t("style.layout")}
         options={layouts}

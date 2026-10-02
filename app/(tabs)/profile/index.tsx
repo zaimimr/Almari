@@ -2,18 +2,19 @@ import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 import Constants from "expo-constants";
 import { router } from "expo-router";
-import type { Language } from "../../src/domain/closet";
+import type { Language } from "../../../src/domain/closet";
 import {
   answersFrom,
   replayOnboarding,
   resetCloset,
   type AnswerStep,
-} from "../../src/domain/onboarding";
-import { formatHeight } from "../../src/domain/units";
-import { seasonLabel } from "../../src/features/colourText";
-import { t } from "../../src/i18n";
-import { useCloset } from "../../src/state/closet";
-import { discardAllPhotos } from "../../src/storage/local";
+} from "../../../src/domain/onboarding";
+import { closetStats } from "../../../src/domain/profileStats";
+import { formatHeight } from "../../../src/domain/units";
+import { seasonLabel } from "../../../src/features/colourText";
+import { t } from "../../../src/i18n";
+import { useCloset } from "../../../src/state/closet";
+import { discardAllPhotos } from "../../../src/storage/local";
 import {
   AppText,
   Button,
@@ -21,8 +22,9 @@ import {
   ChoiceGroup,
   ErrorMessage,
   FormScreen,
-} from "../../src/ui";
-import { confirmAction } from "../../src/ui/confirm";
+} from "../../../src/ui";
+import { confirmAction } from "../../../src/ui/confirm";
+import { theme } from "../../../src/ui/theme";
 
 const languages = ["system", "en", "nb"] as const;
 
@@ -31,6 +33,7 @@ export default function Profile() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const answers = answersFrom(closet);
+  const stats = closetStats(closet);
   const { hijab, place, body, taste, colours } = answers;
   const summary = (...parts: (string | null)[]) =>
     parts.filter(Boolean).join(", ") || t("profile.notAnswered");
@@ -139,6 +142,32 @@ export default function Profile() {
           />
         </View>
       ))}
+      <AppText variant="heading">{t("style.title")}</AppText>
+      <Button
+        label={t("profile.style")}
+        secondary
+        onPress={() => router.push("/today/style")}
+      />
+      <AppText variant="heading">{t("stats.title")}</AppText>
+      <View style={styles.stats} testID="closet-stats">
+        <Stat label={t("stats.pieces")} value={String(stats.pieces)} />
+        <Stat label={t("stats.neverWorn")} value={String(stats.neverWorn)} />
+      </View>
+      <View style={styles.text}>
+        <AppText style={styles.label}>{t("stats.mostWorn")}</AppText>
+        {stats.mostWorn.length ? (
+          stats.mostWorn.map(({ piece, count }) => (
+            <AppText key={piece.id} muted>
+              {t(count === 1 ? "stats.wornOnce" : "stats.wornMany", {
+                name: piece.name,
+                count,
+              })}
+            </AppText>
+          ))
+        ) : (
+          <AppText muted>{t("stats.nothingWorn")}</AppText>
+        )}
+      </View>
       <AppText variant="heading">{t("settings.app")}</AppText>
       <ChoiceGroup
         label={t("settings.language")}
@@ -177,7 +206,26 @@ export default function Profile() {
   );
 }
 
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.stat}>
+      <AppText variant="heading">{value}</AppText>
+      <AppText muted>{label}</AppText>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  stats: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
+  stat: {
+    flexGrow: 1,
+    flexBasis: 140,
+    padding: 16,
+    gap: 2,
+    borderRadius: theme.radius,
+    borderCurve: "continuous",
+    backgroundColor: theme.colors.surface,
+  },
   row: {
     flexDirection: "row",
     flexWrap: "wrap",

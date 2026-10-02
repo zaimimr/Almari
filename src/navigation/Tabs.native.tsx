@@ -24,6 +24,10 @@ export default function ClosetTabs() {
           sf={{ default: "square.grid.2x2", selected: "square.grid.2x2.fill" }}
         />
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="profile">
+        <NativeTabs.Trigger.Label>{t("nav.profile")}</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf="person.crop.circle" />
+      </NativeTabs.Trigger>
     </NativeTabs>
   );
 }
