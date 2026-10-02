@@ -65,6 +65,29 @@ export function toLab([r, g, b]: Rgb): Lab {
   return [116 * f(y) - 16, 500 * (f(x) - f(y)), 200 * (f(y) - f(z))];
 }
 
+export function toRgb([l, a, b]: Lab): Rgb {
+  const fy = (l + 16) / 116;
+  const fx = fy + a / 500;
+  const fz = fy - b / 200;
+  const inverse = (t: number) =>
+    t ** 3 > 0.008856 ? t ** 3 : (t - 16 / 116) / 7.787;
+  const x = inverse(fx) * 0.95047;
+  const y = inverse(fy);
+  const z = inverse(fz) * 1.08883;
+  const gamma = (linear: number) => {
+    const value =
+      linear <= 0.0031308
+        ? 12.92 * linear
+        : 1.055 * linear ** (1 / 2.4) - 0.055;
+    return Math.round(Math.min(1, Math.max(0, value)) * 255);
+  };
+  return [
+    gamma(3.2406 * x - 1.5372 * y - 0.4986 * z),
+    gamma(-0.9689 * x + 1.8758 * y + 0.0415 * z),
+    gamma(0.0557 * x - 0.204 * y + 1.057 * z),
+  ];
+}
+
 const degrees = (radians: number) => {
   const value = (radians * 180) / Math.PI;
   return value < 0 ? value + 360 : value;
