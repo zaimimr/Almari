@@ -14,10 +14,10 @@ Polyvore categories map to the seven types as: tops and all-body to main, bottom
 
 Test split numbers from `evaluate.py`. Fill in the blank counts a question as right only when the right candidate scores strictly highest.
 
-| Split | Compatibility AUC | Fill in the blank | Questions |
-| --- | --- | --- | --- |
-| Nondisjoint | 0.9279 | 0.6828 | 20000 and 10000 |
-| Disjoint | 0.9233 | 0.6961 | 30290 and 15145 |
+| Split       | Compatibility AUC | Fill in the blank | Questions       |
+| ----------- | ----------------- | ----------------- | --------------- |
+| Nondisjoint | 0.9279            | 0.6828            | 20000 and 10000 |
+| Disjoint    | 0.9233            | 0.6961            | 30290 and 15145 |
 
 For reference: type-aware embeddings reported 0.86 and 55.3% (0.88 and 57.6% with the released code), and an OutfitTransformer reimplementation on CLIP features reported 0.95 and 69.2%, all on the nondisjoint split. The app ships the nondisjoint head. Embedding all items took 47 minutes and training took about 1 minute per split on an Apple M2 Pro Mac with 32 GB.
 
@@ -48,3 +48,18 @@ VIRTUAL_ENV=.venv uv pip install "torch==2.7.0" "transformers>=4.49" pillow nump
 - The item images come from retailers through Polyvore, and their rights are unclear. They stay on the Mac in `data/`, are never committed and never ship. Only the head (50,944 numbers) and the sample closet embeddings ship in the app.
 - Use is personal only. Before a public App Store release, the licence position is reviewed again, and `compat-head.json` and the Model engine are removed if it cannot be cleared.
 - The type-aware method comes from `mvasil/fashion-compatibility` (BSD-3-Clause); no code was copied. SigLIP 2 is Apache 2.0.
+
+## Rated outfit set, 2026-10-02
+
+`npx tsx src/domain/scoring/evaluate-engines.ts` scores `planning/eval/outfits.json` with both engines through Part 6's `evaluateScorer`. Pairwise accuracy is the share of better and worse outfit pairs for the same request that are ordered correctly. The top three column counts requests where an outfit rated no is among the highest scored. Model fallbacks are outfits the model could not score because a piece had no photo reading; they use the rules score.
+
+| Style   | Engine | Outfits | Pairwise accuracy | Requests with a bad outfit in the top three | Model fallbacks |
+| ------- | ------ | ------- | ----------------- | ------------------------------------------- | --------------- |
+| all     | Rules  | 12      | 1.000             | 0                                           | 0               |
+| all     | Model  | 12      | 0.333             | 3                                           | 0               |
+| western | Rules  | 9       | 1.000             | 0                                           | 0               |
+| western | Model  | 9       | 0.333             | 2                                           | 0               |
+| desi    | Rules  | 3       | 1.000             | 0                                           | 0               |
+| desi    | Model  | 3       | 0.333             | 1                                           | 0               |
+
+On the current starter set (12 outfits in 3 requests, 15 ordered pairs, rated by the developer smoke set rather than by her), Rules orders every pair correctly and puts no bad outfit in its top three. Model orders a third of the pairs correctly, in Western and in Desi alike, and puts an outfit rated no in the top three of all three requests. The set is too small to judge the Model engine; the numbers should be read again once her 60 to 100 rated outfits replace it.
