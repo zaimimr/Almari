@@ -258,18 +258,26 @@ export default function CheckPiece() {
   }
 
   async function keepAsIs() {
+    if (busy) return;
+    setBusy(true);
     try {
       await update((current) => dismissAdvice(current, job!.id));
     } catch {
       setError(t("capture.saveFailed"));
+    } finally {
+      setBusy(false);
     }
   }
 
   async function differentPiece() {
+    if (busy) return;
+    setBusy(true);
     try {
       await update((current) => keepDuplicate(current, job!.id));
     } catch {
       setError(t("capture.saveFailed"));
+    } finally {
+      setBusy(false);
     }
   }
 

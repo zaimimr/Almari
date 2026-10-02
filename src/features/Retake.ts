@@ -52,9 +52,13 @@ export function useRetake() {
     try {
       source = await keepPhotoAs(uri, randomUUID());
       const stored = source;
-      await changeImports(update, (current) =>
-        retakeImport(current, job.id, stored),
-      );
+      let applied = false;
+      await changeImports(update, (current) => {
+        const next = retakeImport(current, job.id, stored);
+        applied = next !== current;
+        return next;
+      });
+      if (!applied) void discardPhoto(stored).catch(() => undefined);
       return "done";
     } catch {
       if (source) void discardPhoto(source).catch(() => undefined);
