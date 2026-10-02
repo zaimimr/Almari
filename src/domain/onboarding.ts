@@ -47,6 +47,10 @@ export function skipStep(step: OnboardingStep): OnboardingStep {
   return onboardingSteps[onboardingSteps.indexOf(step) + 1] ?? "done";
 }
 
+export function previousStep(step: OnboardingStep): OnboardingStep | null {
+  return onboardingSteps[onboardingSteps.indexOf(step) - 1] ?? null;
+}
+
 export function answersFrom(closet: Closet): Answers {
   const { everyday, profile, units, place } = closet.styling;
   return {

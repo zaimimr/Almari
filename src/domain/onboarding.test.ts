@@ -11,6 +11,7 @@ import {
   applyAnswer,
   finishOnboarding,
   onboardingSteps,
+  previousStep,
   skipStep,
   type OnboardingStep,
 } from "./onboarding";
@@ -301,4 +302,11 @@ test("height entries outside 120 to 220 cm or with 12 inches or more are rejecte
   assert.equal(parseHeight("metric", { cm: "120" }), 120);
   assert.equal(parseHeight("metric", { cm: "220" }), 220);
   assert.equal(emptyCloset.styling.profile.heightCm, null);
+});
+
+test("Back goes to the step before, and the first step has no Back", () => {
+  assert.equal(previousStep("hijab"), null);
+  assert.equal(previousStep("place"), "hijab");
+  assert.equal(previousStep("colours"), "taste");
+  assert.equal(previousStep("done"), "colours");
 });

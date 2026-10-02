@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type PropsWithChildren } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { router } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
@@ -14,6 +14,7 @@ import {
 import { applyAnswer } from "../../src/domain/onboarding";
 import { clockFor } from "../../src/domain/today";
 import { seasonLabel } from "../../src/features/colourText";
+import { OnboardingBar } from "../../src/features/OnboardingBar";
 import { t } from "../../src/i18n";
 import { useCloset } from "../../src/state/closet";
 import { discardTemporary } from "../../src/storage/local";
@@ -120,12 +121,12 @@ export default function Colours() {
 
   if (phase.kind === "measuring")
     return (
-      <FormScreen>
+      <Shell>
         <ActivityIndicator color={theme.colors.accent} />
         <AppText muted accessibilityLiveRegion="polite">
           {t("colours.busy")}
         </AppText>
-      </FormScreen>
+      </Shell>
     );
 
   if (phase.kind === "result") {
@@ -133,7 +134,7 @@ export default function Colours() {
     const set = (change: Parameters<typeof adjustColours>[1]) =>
       setPhase({ kind: "result", profile: adjustColours(profile, change) });
     return (
-      <FormScreen>
+      <Shell>
         <AppText style={styles.label}>{t("colours.measured")}</AppText>
         <View style={styles.measured}>
           {(["skin", "hair", "eyes"] as const).map((part) => {
@@ -213,12 +214,12 @@ export default function Colours() {
           disabled={busy}
           onPress={() => setPhase({ kind: "intro" })}
         />
-      </FormScreen>
+      </Shell>
     );
   }
 
   return (
-    <FormScreen>
+    <Shell>
       {phase.kind === "retake" ? (
         <View style={styles.notice} accessibilityLiveRegion="polite">
           <AppText>{t(`colours.retake.${phase.reason}`)}</AppText>
@@ -231,11 +232,32 @@ export default function Colours() {
       </AppText>
       <ErrorMessage message={error} />
       {pickers}
-    </FormScreen>
+    </Shell>
+  );
+}
+
+function Shell({ children }: PropsWithChildren) {
+  return (
+    <View style={styles.screen}>
+      <OnboardingBar
+        action={{
+          label: t("common.back"),
+          back: true,
+          onPress: () => router.back(),
+        }}
+      />
+      <FormScreen>
+        <AppText variant="title" accessibilityRole="header">
+          {t("colours.title")}
+        </AppText>
+        {children}
+      </FormScreen>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: theme.colors.background },
   label: { fontWeight: "600" },
   measured: { flexDirection: "row", flexWrap: "wrap", gap: 16 },
   part: { alignItems: "center", gap: 4, minWidth: 88 },

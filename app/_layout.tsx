@@ -83,13 +83,10 @@ function Screens() {
         name="today/stylist-results"
         options={{ title: t("stylist.results"), presentation: "modal" }}
       />
-      <Stack.Screen
-        name="onboarding/index"
-        options={{ title: t("onboarding.hijab.title") }}
-      />
+      <Stack.Screen name="onboarding/index" options={{ headerShown: false }} />
       <Stack.Screen
         name="onboarding/colours"
-        options={{ title: t("colours.title") }}
+        options={{ headerShown: false }}
       />
     </Stack>
   );
