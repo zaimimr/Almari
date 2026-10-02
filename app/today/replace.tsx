@@ -3,6 +3,8 @@ import { FlatList, StyleSheet, View, useWindowDimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, router, useLocalSearchParams } from "expo-router";
 import { replacementsFor } from "../../src/domain/styling";
+import { rulesScorer } from "../../src/domain/scoring/rulesScorer";
+import { scoreContext } from "../../src/domain/scoring/taste";
 import {
   activeSession,
   applyRequest,
@@ -49,6 +51,8 @@ export default function ReplacePiece() {
     session.request,
     session.pieceIds,
     target.id,
+    rulesScorer,
+    scoreContext(closet),
   );
   const chosen = options.find((option) => option.piece.id === choice);
   const previewIds = session.pieceIds.map((pieceId) =>

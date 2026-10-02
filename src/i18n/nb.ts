@@ -465,4 +465,5 @@ export const nb: Record<Key, string> = {
   "reason.accent-echo": "Fargen på {a} går igjen i {b}.",
   "reason.tonal-steps": "Fargene på {a} og {b} er nyanser av samme farge.",
   "stylist.often": "Du bruker ofte {a} sammen med {b}.",
+  "stylist.keptAway": "{name} er merket som utilgjengelig akkurat nå.",
 };

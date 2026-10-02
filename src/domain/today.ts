@@ -6,6 +6,8 @@ import type {
   TodayState,
   WardrobeMode,
 } from "./closet";
+import { rulesScorer } from "./scoring/rulesScorer";
+import { scoreContext } from "./scoring/taste";
 import { styleOutfits, type StyleResult } from "./styling";
 
 export type Clock = { localDate: string; timeZone: string };
@@ -51,7 +53,13 @@ export function resultFor(
   request: OutfitRequest,
   localDate: string,
 ): StyleResult {
-  return styleOutfits(closet.pieces, request, seedFor(localDate, request));
+  return styleOutfits(
+    closet.pieces,
+    request,
+    seedFor(localDate, request),
+    rulesScorer,
+    scoreContext(closet),
+  );
 }
 
 function sessionFor(
@@ -67,6 +75,7 @@ function sessionFor(
     cursor: 0,
     pieceIds: result.outfits[0]?.ids ?? [],
     previousPieceIds: null,
+    engine: rulesScorer.id,
   };
 }
 

@@ -10,6 +10,8 @@ import {
 } from "./closet";
 import { ClosetRepository, type ClosetStorage } from "./repository";
 import { addSampleWardrobe } from "./samples";
+import { rulesScorer } from "./scoring/rulesScorer";
+import { scoreContext } from "./scoring/taste";
 import { replacementsFor, roleOf, styleOutfits } from "./styling";
 import {
   activeSession,
@@ -27,6 +29,7 @@ import {
 
 const clock = { localDate: "2026-10-01", timeZone: "Europe/Oslo" };
 const samples = addSampleWardrobe(emptyCloset);
+const context = scoreContext(emptyCloset);
 const byId = (closet: Closet, id: string) =>
   closet.pieces.find((piece) => piece.id === id)!;
 
@@ -52,7 +55,13 @@ function styled(closet: Closet) {
 }
 
 function everyOutfit(changes: Partial<OutfitRequest>, closet = samples) {
-  const result = styleOutfits(closet.pieces, request(changes), "seed");
+  const result = styleOutfits(
+    closet.pieces,
+    request(changes),
+    "seed",
+    rulesScorer,
+    context,
+  );
   return { result, outfits: result.outfits.map((outfit) => outfit.ids) };
 }
 
@@ -312,6 +321,8 @@ test("T09 changing one piece changes only that piece and undo restores it", () =
     session.request,
     session.pieceIds,
     hijab,
+    rulesScorer,
+    context,
   );
   assert.ok(options.length >= 1);
   const replaced = replacePiece(
@@ -332,7 +343,14 @@ test("T09 changing one piece changes only that piece and undo restores it", () =
     (id) => byId(samples, id).category === "shoes",
   )!;
   assert.deepEqual(
-    replacementsFor(today.pieces, session.request, session.pieceIds, shoes),
+    replacementsFor(
+      today.pieces,
+      session.request,
+      session.pieceIds,
+      shoes,
+      rulesScorer,
+      context,
+    ),
     [],
   );
 });
@@ -351,6 +369,8 @@ test("a replaced or toggled kept piece stays kept and a stale revision is ignore
     keptSession.request,
     keptSession.pieceIds,
     hijab,
+    rulesScorer,
+    context,
   )[0]!.piece.id;
   const replaced = replacePiece(kept, hijab, other, keptSession.revision);
   assert.deepEqual(activeSession(replaced.styling.today!).request.keptIds, [
@@ -389,6 +409,8 @@ test("T11 empty closets, deleted kept pieces, and exhausted alternatives explain
     closet.pieces,
     activeSession(closet.styling.today!).request,
     "any",
+    rulesScorer,
+    context,
   ).outfits.length;
   for (let index = 0; index < count + 3; index++)
     closet = tryAnother(closet, activeSession(closet.styling.today!).revision);

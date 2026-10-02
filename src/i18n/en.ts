@@ -455,6 +455,7 @@ export const en = {
   "reason.accent-echo": "The {a} picks up a colour from the {b}.",
   "reason.tonal-steps": "The {a} and {b} are tones of one colour.",
   "stylist.often": "You often wear the {a} with the {b}.",
+  "stylist.keptAway": "{name} is marked as unavailable right now.",
 };
 
 export type Key = keyof typeof en;
