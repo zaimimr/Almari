@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   FlatList,
   Keyboard,
@@ -15,7 +15,16 @@ import {
   type Occasion,
   saveLook,
 } from "../../src/domain/closet";
+import {
+  builderRequest,
+  fillOutfit,
+  followName,
+  rankPieces,
+  swapOptions,
+} from "../../src/domain/builder";
 import { recordSaved } from "../../src/domain/feedback";
+import { outfitName } from "../../src/domain/outfitName";
+import { clockFor } from "../../src/domain/today";
 import { useDiscardChanges } from "../../src/navigation/useDiscardChanges";
 import {
   AppText,
@@ -28,7 +37,7 @@ import {
   PieceTile,
 } from "../../src/ui";
 import { theme } from "../../src/ui/theme";
-import { t } from "../../src/i18n";
+import { locale, t } from "../../src/i18n";
 
 export default function BuildLook() {
   const { width, fontScale } = useWindowDimensions();
@@ -51,28 +60,68 @@ export default function BuildLook() {
     closet.looks.find((look) => look.id === sourceId),
   );
   const [id] = useState(() => source?.id ?? randomUUID());
-  const [name, setName] = useState(source?.name ?? startingName ?? "");
   const [initialSelection] = useState(() =>
     (source?.pieceIds ?? startingPieces?.split(",") ?? []).filter((pieceId) =>
       closet.pieces.some((piece) => piece.id === pieceId),
     ),
   );
   const [selected, setSelected] = useState(initialSelection);
-  const [category, setCategory] = useState<Category | "all">("all");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const dirty =
-    name !== (source?.name ?? startingName ?? "") ||
-    JSON.stringify(selected) !==
-      JSON.stringify(source?.pieceIds ?? initialSelection);
-  const allowClose = useDiscardChanges(dirty, busy);
+  const [swapping, setSwapping] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const occasion = source?.occasion ?? startingOccasion;
+  const localDate = clockFor(new Date()).localDate;
+  const request = useMemo(
+    () => builderRequest(closet, selected, occasion),
+    [closet, selected, occasion],
+  );
   const pieces = selected.flatMap((pieceId) => {
     const piece = closet.pieces.find((item) => item.id === pieceId);
     return piece ? [piece] : [];
   });
-  const options = closet.pieces.filter(
-    (piece) => category === "all" || piece.category === category,
+  const suggested = outfitName(pieces, request.occasion, locale);
+  const [named, setNamed] = useState(suggested);
+  const [name, setName] = useState(source?.name ?? startingName ?? suggested);
+  if (named !== suggested) {
+    setNamed(suggested);
+    setName(followName(name, named, suggested));
+  }
+  const [category, setCategory] = useState<Category | "all">("all");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const dirty =
+    name !== (source?.name ?? startingName ?? suggested) ||
+    JSON.stringify(selected) !==
+      JSON.stringify(source?.pieceIds ?? initialSelection);
+  const allowClose = useDiscardChanges(dirty, busy);
+  const options = useMemo(
+    () =>
+      rankPieces(
+        closet,
+        request,
+        selected,
+        closet.pieces.filter(
+          (piece) => category === "all" || piece.category === category,
+        ),
+        localDate,
+      ),
+    [closet, request, selected, category, localDate],
   );
+  const swapTarget = pieces.find((piece) => piece.id === swapping) ?? null;
+  const alternatives = swapTarget
+    ? swapOptions(closet, request, selected, swapTarget.id, localDate)
+    : [];
+
+  function choose(next: string[]) {
+    setNotice(null);
+    setSwapping(null);
+    setSelected(next);
+  }
+
+  function fill() {
+    const filled = fillOutfit(closet, request, localDate);
+    if ("ids" in filled) choose(filled.ids);
+    else setNotice(filled.problems[0]?.message ?? t("styling.incomplete"));
+  }
 
   useEffect(() => {
     const show = Keyboard.addListener("keyboardWillShow", (event) =>
@@ -135,7 +184,14 @@ export default function BuildLook() {
       />
       <View style={[styles.workspace, wide && styles.workspaceWide]}>
         <View style={styles.preview}>
-          <OutfitCollage pieces={pieces} fill testID="live-outfit-preview" />
+          <OutfitCollage
+            pieces={pieces}
+            fill
+            testID="live-outfit-preview"
+            onPiecePress={(piece) =>
+              setSwapping((current) => (current === piece.id ? null : piece.id))
+            }
+          />
           {pieces.length ? (
             <AppText
               variant="caption"
@@ -148,6 +204,26 @@ export default function BuildLook() {
                 : t("build.countMany", { count: pieces.length })}
             </AppText>
           ) : null}
+          {notice ? (
+            <AppText
+              muted
+              style={styles.summary}
+              accessibilityLiveRegion="polite"
+            >
+              {notice}
+            </AppText>
+          ) : null}
+          {closet.pieces.length ? (
+            <View style={styles.fill}>
+              <Button
+                label={t("build.fill")}
+                secondary
+                compact
+                disabled={busy}
+                onPress={fill}
+              />
+            </View>
+          ) : null}
         </View>
         <View
           style={[
@@ -158,63 +234,102 @@ export default function BuildLook() {
             keyboardVisible && styles.hidden,
           ]}
         >
-          <View style={styles.filters}>
-            <Filters value={category} onChange={setCategory} />
-          </View>
-          <FlatList
-            key={wide ? "grid" : "strip"}
-            testID="outfit-piece-picker"
-            data={options}
-            horizontal={!wide}
-            numColumns={wide ? 2 : 1}
-            keyExtractor={(piece) => piece.id}
-            contentInsetAdjustmentBehavior="never"
-            keyboardShouldPersistTaps="handled"
-            keyboardDismissMode="on-drag"
-            style={styles.picker}
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={wide ? styles.grid : styles.strip}
-            columnWrapperStyle={wide ? styles.row : undefined}
-            ListEmptyComponent={
-              <View style={[styles.empty, !wide && { width: width - 48 }]}>
-                <AppText muted>
-                  {closet.pieces.length
-                    ? t("common.noPiecesInCategory")
-                    : t("build.empty")}
+          {swapTarget ? (
+            <View style={styles.swap} testID="swap-options">
+              <View style={styles.swapHeader}>
+                <AppText style={styles.swapTitle} numberOfLines={2}>
+                  {t("build.swapTitle", { name: swapTarget.name })}
                 </AppText>
-                <Button
-                  label={
-                    closet.pieces.length
-                      ? t("common.showAllPieces")
-                      : t("piece.missing.action")
-                  }
-                  secondary
-                  onPress={() =>
-                    closet.pieces.length
-                      ? setCategory("all")
-                      : router.replace("/closet")
-                  }
+                <HeaderAction
+                  label={t("build.swapDone")}
+                  onPress={() => setSwapping(null)}
                 />
               </View>
-            }
-            renderItem={({ item }) => (
-              <View style={wide ? styles.cell : styles.stripCell}>
-                <PieceTile
-                  piece={item}
-                  compact={!wide}
-                  selected={selected.includes(item.id)}
-                  onPress={() => {
-                    if (!busy)
-                      setSelected((current) =>
-                        current.includes(item.id)
-                          ? current.filter((pieceId) => pieceId !== item.id)
-                          : [...current, item.id],
-                      );
-                  }}
-                />
+              {alternatives.length ? (
+                <View style={styles.swapRow}>
+                  {alternatives.map((piece) => (
+                    <View key={piece.id} style={styles.stripCell}>
+                      <PieceTile
+                        piece={piece}
+                        compact
+                        onPress={() =>
+                          choose(
+                            selected.map((pieceId) =>
+                              pieceId === swapTarget.id ? piece.id : pieceId,
+                            ),
+                          )
+                        }
+                      />
+                    </View>
+                  ))}
+                </View>
+              ) : (
+                <AppText muted>{t("build.swapNone")}</AppText>
+              )}
+            </View>
+          ) : (
+            <>
+              <View style={styles.filters}>
+                <Filters value={category} onChange={setCategory} />
               </View>
-            )}
-          />
+              <FlatList
+                key={wide ? "grid" : "strip"}
+                testID="outfit-piece-picker"
+                data={options}
+                horizontal={!wide}
+                numColumns={wide ? 2 : 1}
+                keyExtractor={(piece) => piece.id}
+                contentInsetAdjustmentBehavior="never"
+                keyboardShouldPersistTaps="handled"
+                keyboardDismissMode="on-drag"
+                style={styles.picker}
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={wide ? styles.grid : styles.strip}
+                columnWrapperStyle={wide ? styles.row : undefined}
+                ListEmptyComponent={
+                  <View style={[styles.empty, !wide && { width: width - 48 }]}>
+                    <AppText muted>
+                      {closet.pieces.length
+                        ? t("common.noPiecesInCategory")
+                        : t("build.empty")}
+                    </AppText>
+                    <Button
+                      label={
+                        closet.pieces.length
+                          ? t("common.showAllPieces")
+                          : t("piece.missing.action")
+                      }
+                      secondary
+                      onPress={() =>
+                        closet.pieces.length
+                          ? setCategory("all")
+                          : router.replace("/closet")
+                      }
+                    />
+                  </View>
+                }
+                renderItem={({ item }) => (
+                  <View style={wide ? styles.cell : styles.stripCell}>
+                    <PieceTile
+                      piece={item}
+                      compact={!wide}
+                      selected={selected.includes(item.id)}
+                      onPress={() => {
+                        if (!busy)
+                          choose(
+                            selected.includes(item.id)
+                              ? selected.filter(
+                                  (pieceId) => pieceId !== item.id,
+                                )
+                              : [...selected, item.id],
+                          );
+                      }}
+                    />
+                  </View>
+                )}
+              />
+            </>
+          )}
         </View>
       </View>
       <SafeAreaView
@@ -280,6 +395,11 @@ const styles = StyleSheet.create({
   row: { gap: 12 },
   cell: { width: "48%" },
   empty: { gap: 12 },
+  fill: { alignItems: "center", paddingBottom: 12 },
+  swap: { paddingHorizontal: 24, gap: 12 },
+  swapHeader: { flexDirection: "row", alignItems: "center", gap: 12 },
+  swapTitle: { flex: 1, fontWeight: "600" },
+  swapRow: { flexDirection: "row", gap: 12 },
   saveRow: { flexDirection: "row", gap: 12, alignItems: "flex-end" },
   nameField: { flex: 1 },
   footer: {

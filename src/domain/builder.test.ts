@@ -1,0 +1,157 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { emptyCloset, setAway, type Closet } from "./closet";
+import {
+  builderRequest,
+  fillOutfit,
+  followName,
+  rankPieces,
+  swapOptions,
+} from "./builder";
+import { addSampleWardrobe } from "./samples";
+import { roleOf } from "./styling";
+import { saveEverydayStyle } from "./today";
+
+const clock = { localDate: "2026-10-01", timeZone: "Europe/Oslo" };
+const samples = addSampleWardrobe(emptyCloset);
+const styled: Closet = saveEverydayStyle(
+  samples,
+  { occasion: "work", style: "western", hijab: "always", sample: true },
+  clock,
+  true,
+);
+const piece = (id: string) => samples.pieces.find((item) => item.id === id)!;
+
+test("the builder request follows today and keeps the picked pieces", () => {
+  const request = builderRequest(styled, ["sample-ivory-tunic"]);
+  assert.equal(request.occasion, "work");
+  assert.equal(request.style, "western");
+  assert.equal(request.hijab, "always");
+  assert.equal(request.wardrobe, "sample");
+  assert.deepEqual(request.keptIds, ["sample-ivory-tunic"]);
+  assert.equal(builderRequest(styled, [], "eid").occasion, "eid");
+});
+
+test("the builder request switches style when every picked piece is Desi", () => {
+  assert.equal(builderRequest(styled, ["sample-sage-kurta"]).style, "desi");
+  assert.equal(
+    builderRequest(styled, ["sample-ivory-trousers"]).style,
+    "western",
+  );
+});
+
+test("without a today or everyday style the request is a plain everyday one", () => {
+  const request = builderRequest(samples, []);
+  assert.equal(request.occasion, "everyday");
+  assert.equal(request.hijab, null);
+  assert.equal(request.wardrobe, "sample");
+});
+
+test("fill the rest keeps every picked piece and completes the outfit", () => {
+  const picked = ["sample-sage-kurta"];
+  const filled = fillOutfit(
+    styled,
+    builderRequest(styled, picked),
+    clock.localDate,
+  );
+  assert.ok("ids" in filled);
+  assert.ok(filled.ids.includes("sample-sage-kurta"));
+  const roles = filled.ids.map((id) => roleOf(piece(id)));
+  assert.ok(roles.includes("bottom"));
+  assert.ok(roles.includes("shoes"));
+  assert.ok(roles.includes("hijab"));
+});
+
+test("fill the rest explains a picked conflict instead of dropping a piece", () => {
+  const picked = ["sample-ivory-tunic", "sample-olive-maxi-dress"];
+  const filled = fillOutfit(
+    styled,
+    builderRequest(styled, picked),
+    clock.localDate,
+  );
+  assert.ok("problems" in filled);
+  assert.equal(filled.problems[0]!.code, "kept-conflict");
+});
+
+test("with nothing picked the strip keeps its order", () => {
+  const request = builderRequest(styled, []);
+  assert.deepEqual(
+    rankPieces(styled, request, [], samples.pieces, clock.localDate),
+    samples.pieces,
+  );
+});
+
+test("the strip puts picked pieces first and pieces that break a rule last", () => {
+  const away = setAway(styled, "sample-ivory-trousers", "wash");
+  const picked = ["sample-ivory-tunic"];
+  const ranked = rankPieces(
+    away,
+    builderRequest(away, picked),
+    picked,
+    away.pieces,
+    clock.localDate,
+  ).map((item) => item.id);
+  assert.equal(ranked[0], "sample-ivory-tunic");
+  assert.equal(ranked.length, away.pieces.length);
+  const tail = ranked.slice(-4);
+  for (const id of [
+    "sample-sage-kurta",
+    "sample-ivory-salwar",
+    "sample-olive-maxi-dress",
+    "sample-ivory-trousers",
+  ])
+    assert.ok(tail.includes(id), id);
+});
+
+test("the strip is ordered by the stylist score with the picked pieces", () => {
+  const picked = ["sample-ivory-tunic", "sample-charcoal-trousers"];
+  const request = builderRequest(styled, picked);
+  const ranked = rankPieces(
+    styled,
+    request,
+    picked,
+    styled.pieces,
+    clock.localDate,
+  );
+  const hijabs = ranked.filter((item) => roleOf(item) === "hijab");
+  assert.equal(hijabs.length, 3);
+  const first = ranked.findIndex((item) => roleOf(item) === "hijab");
+  assert.ok(first > 1);
+});
+
+test("swap shows up to three other pieces for the same slot, never a picked or away one", () => {
+  const away = setAway(styled, "sample-chocolate-hijab", "wash");
+  const picked = [
+    "sample-ivory-tunic",
+    "sample-charcoal-trousers",
+    "sample-mauve-hijab",
+  ];
+  const options = swapOptions(
+    away,
+    builderRequest(away, picked),
+    picked,
+    "sample-mauve-hijab",
+    clock.localDate,
+  ).map((item) => item.id);
+  assert.deepEqual(options, ["sample-ivory-hijab"]);
+  const bottoms = swapOptions(
+    styled,
+    builderRequest(styled, picked),
+    picked,
+    "sample-charcoal-trousers",
+    clock.localDate,
+  ).map((item) => item.id);
+  assert.deepEqual(bottoms, ["sample-ivory-trousers"]);
+});
+
+test("the name follows the pieces until she types her own", () => {
+  assert.equal(followName("", "", "Sage kurta"), "Sage kurta");
+  assert.equal(
+    followName("Sage kurta", "Sage kurta", "Ivory tunic"),
+    "Ivory tunic",
+  );
+  assert.equal(
+    followName("My Eid look", "Sage kurta", "Ivory tunic"),
+    "My Eid look",
+  );
+});

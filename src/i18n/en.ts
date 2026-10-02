@@ -1207,6 +1207,10 @@ export const en = {
   "stats.wornOnce": "{name}, once",
   "stats.wornMany": "{name}, {count} times",
   "stats.nothingWorn": "Nothing worn yet",
+  "build.fill": "Fill the rest",
+  "build.swapTitle": "Swap {name}",
+  "build.swapDone": "Done",
+  "build.swapNone": "No other piece fits here.",
 };
 
 export type Key = keyof typeof en;

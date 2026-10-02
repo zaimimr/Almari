@@ -1228,4 +1228,8 @@ export const nb: Record<Key, string> = {
   "stats.wornOnce": "{name}, én gang",
   "stats.wornMany": "{name}, {count} ganger",
   "stats.nothingWorn": "Ingenting brukt ennå",
+  "build.fill": "Fyll ut resten",
+  "build.swapTitle": "Bytt ut {name}",
+  "build.swapDone": "Ferdig",
+  "build.swapNone": "Ingen andre plagg passer her.",
 };

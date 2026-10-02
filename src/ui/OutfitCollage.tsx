@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Image } from "expo-image";
 import type { Category, Piece } from "../domain/closet";
 import { photoSource } from "./photos";
@@ -97,11 +97,13 @@ export function OutfitCollage({
   fill = false,
   testID,
   keptIds = [],
+  onPiecePress,
 }: {
   pieces: Piece[];
   fill?: boolean;
   testID?: string;
   keptIds?: string[];
+  onPiecePress?: (piece: Piece) => void;
 }) {
   const [size, setSize] = useState(0);
   return (
@@ -132,9 +134,14 @@ export function OutfitCollage({
               const imageWidth = frame ? frame.width * scale : slotWidth;
               const imageHeight = frame ? frame.height * scale : slotHeight;
               return (
-                <View
+                <Pressable
                   key={piece.id}
                   testID={`outfit-piece-${piece.id}`}
+                  disabled={!onPiecePress}
+                  accessible={Boolean(onPiecePress)}
+                  accessibilityRole={onPiecePress ? "button" : undefined}
+                  accessibilityLabel={onPiecePress ? piece.name : undefined}
+                  onPress={() => onPiecePress?.(piece)}
                   style={[
                     styles.piece,
                     {
@@ -178,7 +185,7 @@ export function OutfitCollage({
                       </Text>
                     </View>
                   ) : null}
-                </View>
+                </Pressable>
               );
             },
           )}
