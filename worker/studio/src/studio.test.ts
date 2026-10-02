@@ -203,7 +203,6 @@ describe("worker", () => {
       AI: ai,
       APP_TOKEN: "secret",
       STUDIO_MODEL: "@cf/black-forest-labs/flux-2-klein-9b",
-      DAILY_LIMIT: "2",
       GLOBAL_DAILY_LIMIT: "100",
       LIMITS: {
         get: async (key: string) => store.get(key) ?? null,
@@ -267,7 +266,7 @@ describe("worker", () => {
   });
 
   it("stops at the daily limit", async () => {
-    const context = setup({ [`install:${install}:${day}`]: "2" });
+    const context = setup({ [`all:${day}`]: "100" });
     expect((await call(context)).status).toBe(429);
     expect(context.ai.run).not.toHaveBeenCalled();
   });
@@ -293,7 +292,7 @@ describe("worker", () => {
     expect(sent.get("width")).toBe("1024");
     expect(sent.get("height")).toBe("1024");
     await Promise.all(context.waits);
-    expect(context.store.get(`install:${install}:${day}`)).toBe("1");
+    expect(context.store.has(`install:${install}:${day}`)).toBe(false);
     expect(context.store.get(`all:${day}`)).toBe("1");
   });
 

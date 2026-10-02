@@ -12,7 +12,7 @@ openssl rand -hex 32 | tee /dev/stderr | npx wrangler secret put APP_TOKEN
 npx wrangler deploy
 ```
 
-`wrangler deploy` creates the `LIMITS` KV namespace on the first deploy. Limits per day are in `wrangler.jsonc` (`DAILY_LIMIT` per install, `GLOBAL_DAILY_LIMIT` in total).
+`wrangler deploy` creates the `LIMITS` KV namespace on the first deploy. The daily limit for all phones together is `GLOBAL_DAILY_LIMIT` in `wrangler.jsonc`.
 
 Then set these for the app build (`.env` at the repo root, and as EAS environment variables):
 

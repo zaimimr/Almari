@@ -11,7 +11,6 @@ export type Env = {
   AI: Ai;
   APP_TOKEN: string;
   STUDIO_MODEL: "@cf/black-forest-labs/flux-2-klein-9b";
-  DAILY_LIMIT: string;
   GLOBAL_DAILY_LIMIT: string;
   LIMITS: KVNamespace;
 };
@@ -64,28 +63,16 @@ export default {
     if (!fitsModel(new Uint8Array(await piece.image.arrayBuffer())))
       return fail("dimensions", 400);
 
-    const day = new Date().toISOString().slice(0, 10);
-    const keys = [`install:${install}:${day}`, `all:${day}`];
-    const counts = await Promise.all(
-      keys.map(async (key) => Number((await env.LIMITS.get(key)) ?? 0)),
-    );
-    const [mine = 0, all = 0] = counts;
-    if (
-      mine >= Number(env.DAILY_LIMIT) ||
-      all >= Number(env.GLOBAL_DAILY_LIMIT)
-    )
-      return fail("limit", 429);
+    const key = `all:${new Date().toISOString().slice(0, 10)}`;
+    const count = Number((await env.LIMITS.get(key)) ?? 0);
+    if (count >= Number(env.GLOBAL_DAILY_LIMIT)) return fail("limit", 429);
 
     const shot = await generate(env, piece.image, studioPrompt(piece));
     if (!shot) return fail("generate", 502);
     ctx.waitUntil(
-      Promise.all(
-        keys.map((key, index) =>
-          env.LIMITS.put(key, String((counts[index] ?? 0) + 1), {
-            expirationTtl: 2 * 24 * 60 * 60,
-          }),
-        ),
-      ),
+      env.LIMITS.put(key, String(count + 1), {
+        expirationTtl: 2 * 24 * 60 * 60,
+      }),
     );
     return new Response(shot.bytes, {
       headers: { "content-type": shot.type },

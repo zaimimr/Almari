@@ -7,7 +7,6 @@
   "ai": { "binding": "AI" },
   "vars": {
     "STUDIO_MODEL": "@cf/black-forest-labs/flux-2-klein-4b",
-    "DAILY_LIMIT": "30",
     "GLOBAL_DAILY_LIMIT": "1000",
   },
   "kv_namespaces": [{ "binding": "LIMITS" }],
