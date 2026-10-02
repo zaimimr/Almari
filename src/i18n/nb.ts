@@ -811,4 +811,8 @@ export const nb: Record<Key, string> = {
     "Takk. Dette antrekket tar hensyn til det, og det gjør senere antrekk også.",
   "outfit.kept": "Beholdt",
   "outfit.keptLabel": "{name}, beholdt",
+  "looks.worn": "Brukt, ikke lagret ennå",
+  "looks.open": "Åpne {name}",
+  "piece.styleThis": "Style dette plagget",
+  "piece.styleError": "Dette plagget kunne ikke styles. Prøv igjen.",
 };

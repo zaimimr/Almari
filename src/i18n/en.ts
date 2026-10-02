@@ -799,6 +799,10 @@ export const en = {
     "Thanks. This outfit takes that into account, and later ones will too.",
   "outfit.kept": "Kept",
   "outfit.keptLabel": "{name}, kept",
+  "looks.worn": "Worn, not saved yet",
+  "looks.open": "Open {name}",
+  "piece.styleThis": "Style this piece",
+  "piece.styleError": "This piece could not be styled. Please try again.",
 };
 
 export type Key = keyof typeof en;

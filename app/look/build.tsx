@@ -10,7 +10,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, router, useLocalSearchParams } from "expo-router";
 import { randomUUID } from "expo-crypto";
 import { useCloset } from "../../src/state/closet";
-import { type Category, saveLook } from "../../src/domain/closet";
+import {
+  type Category,
+  type Occasion,
+  saveLook,
+} from "../../src/domain/closet";
+import { recordSaved } from "../../src/domain/feedback";
 import { useDiscardChanges } from "../../src/navigation/useDiscardChanges";
 import {
   AppText,
@@ -29,16 +34,23 @@ export default function BuildLook() {
   const wide = width >= 900;
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const keyboardVisible = keyboardHeight > 0;
-  const { id: sourceId, pieces: startingPieces } = useLocalSearchParams<{
+  const {
+    id: sourceId,
+    pieces: startingPieces,
+    name: startingName,
+    occasion: startingOccasion,
+  } = useLocalSearchParams<{
     id?: string;
     pieces?: string;
+    name?: string;
+    occasion?: Occasion;
   }>();
   const { closet, update } = useCloset();
   const [source] = useState(() =>
     closet.looks.find((look) => look.id === sourceId),
   );
   const [id] = useState(() => source?.id ?? randomUUID());
-  const [name, setName] = useState(source?.name ?? "");
+  const [name, setName] = useState(source?.name ?? startingName ?? "");
   const [initialSelection] = useState(() =>
     (source?.pieceIds ?? startingPieces?.split(",") ?? []).filter((pieceId) =>
       closet.pieces.some((piece) => piece.id === pieceId),
@@ -49,7 +61,7 @@ export default function BuildLook() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const dirty =
-    name !== (source?.name ?? "") ||
+    name !== (source?.name ?? startingName ?? "") ||
     JSON.stringify(selected) !==
       JSON.stringify(source?.pieceIds ?? initialSelection);
   const allowClose = useDiscardChanges(dirty, busy);
@@ -79,13 +91,20 @@ export default function BuildLook() {
     setBusy(true);
     setError(null);
     try {
+      const occasion = source?.occasion ?? startingOccasion;
       await update((current) =>
-        saveLook(current, {
-          id,
-          name,
-          pieceIds: selected,
-          createdAt: source?.createdAt ?? new Date().toISOString(),
-        }),
+        recordSaved(
+          saveLook(current, {
+            id,
+            name,
+            pieceIds: selected,
+            createdAt: source?.createdAt ?? new Date().toISOString(),
+            ...(occasion ? { occasion } : {}),
+          }),
+          selected,
+          new Date().toISOString(),
+          randomUUID(),
+        ),
       );
       allowClose();
       router.back();
