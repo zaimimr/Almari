@@ -292,6 +292,38 @@ Known limitations:
 - Variants are repaired by restyling around the remaining pieces; when nothing fits, Today explains why instead of showing a repair preview.
 - Sample piece names are stored data and stay in English on a Norwegian phone.
 
+## Part 9: Live closet scan (built, 2 October 2026, waiting for her iPhone)
+
+What works:
+
+- Add pieces has Scan pieces next to Take a photo and Choose photos. The scan screen shows the camera with Switch camera (front and back) and Start again. The phone can be propped up or held by someone; the screen stays awake while scanning.
+- She steps into view and a baseline of what she is wearing is taken after one second. A held piece is a new garment region from the clothes parser that differs from the baseline (by class, or by colour for a top held over a top), covers enough of her outline, and has a hand from Vision hand pose at its edge. Garments (tops, dresses, skirts, trousers, hijabs and scarves) and bags only; shoes, belts and sunglasses are ignored.
+- When the piece has been still for 0.7 seconds, the full-resolution photo is taken by itself, with a tone and a haptic. The status line reads Step into view, Hold up a piece, Hold still or Taken.
+- A piece of the same kind and a very close colour to the previous capture is not taken again. After preparation, an embedding very close to an earlier photo in the same scan gets the Same piece or Different piece question.
+- Each photo is cut out around the held box with the parser and queued as an import job in the scan, so the Part 4 pipeline prepares it while she keeps scanning. Thumbnails appear in a strip. Done opens the existing Keep and Drop screen ("Scanned pieces") for the whole scan; Adjust crop works on each piece's own photo.
+- Frames are never stored. All decision logic is in `src/domain/scan.ts` with its thresholds as constants; the frame rate is `scanFps = 4`.
+- Speed readout: frames per second and median parser time over the last 12 frames. Shown in development builds, and in any build after a long press on the status line.
+
+Evidence: `npm run check` with new tests in `scan.test.ts` (baseline wait, held piece with and without hands, small regions, shoes, a top over a top, the 0.7 second hold, moving resets the hold, duplicates, Start again, speed, scan jobs, frame decoding) and a new duplicate test for photos in one scan. `npm run strings`, `npx expo-doctor` and `npx expo export --platform ios --platform web` pass. The native view compiles in a simulator build. The simulator has no camera, so the scan screen there shows the camera-unavailable state with Go back.
+
+Known limitations:
+
+- Nothing in the live scan has run on a real camera yet. Thresholds (person 8%, held 3% of the frame, 15% of her outline or 4% for a bag, colour change 18, hand margin 8%, still overlap 0.75, duplicate colour 10) are starting values.
+- Moving a lot after the baseline can look like a held piece; Start again takes a new baseline.
+- Two different pieces of the same kind and nearly the same colour shown one after the other: the second is not taken. Use the photo flow for it.
+- When the parser finds nothing at the held box, the box itself is used as a crop and the Vision cutout may include part of her.
+
+Owner checks on her iPhone (development build, so the speed readout shows):
+
+1. Add pieces, Scan pieces, allow the camera. Prop the phone up with the back camera, step back until fully in view. Expected: Step into view changes to Hold up a piece within about a second.
+2. Note the readout: frames per second (expected close to 4) and parser ms. Note it again while two captured pieces are being prepared. If the rate drops below 3, lower `scanFps`; if the parser is under 60 ms, try 5.
+3. Hold a dress against her body by the shoulders. Expected: Hold still, then after about 0.7 seconds a tone, a haptic and Taken, with no tap. A thumbnail appears in the strip.
+4. Keep holding the same dress, lower it and raise it again. Expected: no second capture.
+5. Hold up a top over her own top of another colour, a hijab, trousers and a bag. Each is taken once. Hold up shoes: nothing happens.
+6. Switch camera and repeat 3 with someone holding the phone, and with the front camera.
+7. Done: the Scanned pieces screen lists every capture with Keep and Drop, and each cutout shows the held piece without her face or hands. Note any that include her.
+8. Lock check: leave the scan running for two minutes; the screen does not lock. Note if the phone gets hot.
+
 ## Part 10: Profile tab, onboarding polish and outfit builder (code done, 2 October 2026; simulator checks pending)
 
 What was built:
