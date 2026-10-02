@@ -27,6 +27,7 @@ import { categoryForRegion, type CapturePlan } from "./capture";
 import { withCareLabel, type CareLabel } from "./careLabel";
 import { colorName, type Swatch } from "./color";
 import { attributeCheck, proposeAttributes, recognize } from "./recognition";
+import { isSamplePhoto } from "./samples";
 
 export type CheckReason =
   "uncertain" | "no-cutout" | "several" | "attribute" | "partial";
@@ -421,6 +422,17 @@ function pieceFiles(piece: Piece): (string | null | undefined)[] {
     piece.variants?.enhanced,
     piece.variants?.plain,
   ];
+}
+
+export function closetFiles(closet: Closet): string[] {
+  return [
+    ...new Set([
+      ...closet.imports.flatMap(jobFiles),
+      ...closet.pieces.flatMap(pieceFiles),
+    ]),
+  ].filter(
+    (file): file is string => typeof file === "string" && !isSamplePhoto(file),
+  );
 }
 
 export function orphanedFiles(before: Closet, after: Closet): string[] {

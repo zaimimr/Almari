@@ -260,6 +260,8 @@ export type Forecast = {
 
 export type CardLayout = "minimal" | "reasons" | "full";
 
+export type Language = "system" | "en" | "nb";
+
 export type EverydayStyle = {
   version: number;
   occasion: Occasion;
@@ -306,6 +308,7 @@ export type Styling = {
   forecast: Forecast | null;
   onboarded: boolean;
   layout: CardLayout;
+  language: Language;
 };
 
 export type Closet = {
@@ -339,6 +342,7 @@ export const emptyStyling: Styling = {
   forecast: null,
   onboarded: false,
   layout: "reasons",
+  language: "system",
 };
 
 export const emptyCloset: Closet = {
@@ -966,6 +970,7 @@ function withOnboardingState(closet: Closet): Closet {
       stored.onboarded ??
       closet.pieces.some((piece) => piece.source === "owned"),
     layout: stored.layout ?? "reasons",
+    language: stored.language ?? "system",
   };
   if (
     !isProfile(styling.profile) ||
@@ -973,7 +978,8 @@ function withOnboardingState(closet: Closet): Closet {
     !(styling.place === null || isPlace(styling.place)) ||
     !(styling.forecast === null || isForecast(styling.forecast)) ||
     !isBoolean(styling.onboarded) ||
-    !["minimal", "reasons", "full"].includes(styling.layout as string)
+    !["minimal", "reasons", "full"].includes(styling.layout as string) ||
+    !["system", "en", "nb"].includes(styling.language as string)
   )
     throw unreadable();
   return { ...closet, styling: styling as Styling };

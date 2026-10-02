@@ -473,7 +473,7 @@ export const en = {
   "season.cool-winter": "Cool winter",
   "season.clear-winter": "Clear winter",
   "colours.title": "Colour analysis",
-  "profile.title": "Your answers",
+  "profile.title": "Profile and settings",
   "colours.tips":
     "Face a window in daylight and take off your glasses. Makeup is up to you.",
   "colours.hijab": "Wearing a hijab is fine. Hair is then left out.",
@@ -518,10 +518,26 @@ export const en = {
   "forecast.manual":
     "You chose today's weather yourself. It replaces the forecast for today.",
   "adjust.useForecast": "Forecast",
-  "profile.open": "Your style answers",
+  "profile.open": "Profile",
   "profile.change": "Change",
   "profile.notAnswered": "Not answered",
   "profile.colours": "Colours",
+  "settings.answers": "Your answers",
+  "settings.app": "App",
+  "settings.language": "Language",
+  "settings.language.system": "Follow phone",
+  "settings.language.en": "English",
+  "settings.language.nb": "Norsk bokmål",
+  "settings.replay": "Replay onboarding",
+  "settings.reset": "Reset all data",
+  "settings.reset.title": "Delete all your data?",
+  "settings.reset.text":
+    "Your clothes, photos, looks, answers and today's outfit are deleted from this phone. The sample closet comes back and onboarding starts again. This cannot be undone.",
+  "settings.reset.confirm": "Delete everything",
+  "settings.failed": "This could not be saved. Please try again.",
+  "settings.privacy":
+    "Everything stays on this phone. There is no account and no login. Only the position of your city is sent to get the weather.",
+  "settings.version": "Version {version}",
 };
 
 export type Key = keyof typeof en;

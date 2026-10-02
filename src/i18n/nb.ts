@@ -476,7 +476,7 @@ export const nb: Record<Key, string> = {
   "season.cool-winter": "Kjølig vinter",
   "season.clear-winter": "Klar vinter",
   "colours.title": "Fargeanalyse",
-  "profile.title": "Svarene dine",
+  "profile.title": "Profil og innstillinger",
   "colours.tips":
     "Stå vendt mot et vindu i dagslys, og ta av deg brillene. Sminke er valgfritt.",
   "colours.hijab": "Det går fint å bruke hijab. Da ser vi bort fra håret.",
@@ -521,8 +521,24 @@ export const nb: Record<Key, string> = {
   "forecast.manual":
     "Du har valgt været for i dag selv. Det erstatter værvarselet for i dag.",
   "adjust.useForecast": "Værvarsel",
-  "profile.open": "Stilsvarene dine",
+  "profile.open": "Profil",
   "profile.change": "Endre",
   "profile.notAnswered": "Ikke besvart",
   "profile.colours": "Farger",
+  "settings.answers": "Svarene dine",
+  "settings.app": "Appen",
+  "settings.language": "Språk",
+  "settings.language.system": "Følg telefonen",
+  "settings.language.en": "English",
+  "settings.language.nb": "Norsk bokmål",
+  "settings.replay": "Start introduksjonen på nytt",
+  "settings.reset": "Slett alle data",
+  "settings.reset.title": "Slette alle dataene dine?",
+  "settings.reset.text":
+    "Klærne, bildene, antrekkene, svarene og dagens antrekk slettes fra denne telefonen. Eksempelgarderoben kommer tilbake, og introduksjonen starter på nytt. Dette kan ikke angres.",
+  "settings.reset.confirm": "Slett alt",
+  "settings.failed": "Dette kunne ikke lagres. Prøv igjen.",
+  "settings.privacy":
+    "Alt blir på denne telefonen. Det finnes ingen konto og ingen innlogging. Bare posisjonen til byen din sendes for å hente været.",
+  "settings.version": "Versjon {version}",
 };

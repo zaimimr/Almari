@@ -420,6 +420,7 @@ test("a version 2 closet opens as version 3 with every piece, look, Today sessio
     forecast: null,
     onboarded: true,
     layout: "reasons",
+    language: "system",
   });
   assert.equal(migrated.sampleCatalog, 2);
   assert.equal(migrated.photoTipsSeen, true);

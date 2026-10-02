@@ -54,6 +54,9 @@
       "expo-localization"
     ],
     "icon": "./assets/brand/icon.png",
+    "locales": {
+      "nb": "./locales/nb.json"
+    },
     "extra": {
       "router": {},
       "eas": {

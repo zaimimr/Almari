@@ -1,8 +1,8 @@
 appId: com.zaimimran.almari
 ---
 - launchApp
-- tapOn: "Your style answers"
-- assertVisible: "Hijab and coverage"
+- tapOn: "Profile"
+- assertVisible: "Profile and settings"
 - takeScreenshot: planning/build/onboarding/answers-large-1
 - scrollUntilVisible:
     element: "Change: Colours"

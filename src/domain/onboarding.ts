@@ -1,13 +1,16 @@
-import type {
-  BodyShape,
-  Closet,
-  ColourProfile,
-  Coverage,
-  EverydayStyle,
-  Place,
-  StyleProfile,
-  Units,
+import {
+  emptyCloset,
+  type BodyShape,
+  type Closet,
+  type ColourProfile,
+  type Coverage,
+  type EverydayStyle,
+  type Place,
+  type StyleProfile,
+  type Units,
 } from "./closet";
+import { closetFiles } from "./importing";
+import { addSampleWardrobe } from "./samples";
 import { saveEverydayStyle, type Clock } from "./today";
 
 export const onboardingSteps = [
@@ -143,4 +146,21 @@ export function applyAnswer<S extends AnswerStep>(
 
 export function finishOnboarding(closet: Closet): Closet {
   return { ...closet, styling: { ...closet.styling, onboarded: true } };
+}
+
+export function replayOnboarding(closet: Closet): Closet {
+  return { ...closet, styling: { ...closet.styling, onboarded: false } };
+}
+
+export function resetCloset(closet: Closet): {
+  closet: Closet;
+  files: string[];
+} {
+  return {
+    closet: addSampleWardrobe({
+      ...emptyCloset,
+      styling: { ...emptyCloset.styling, language: closet.styling.language },
+    }),
+    files: closetFiles(closet),
+  };
 }

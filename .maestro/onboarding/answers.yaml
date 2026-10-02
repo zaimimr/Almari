@@ -1,7 +1,7 @@
 appId: com.zaimimran.almari
 ---
 - runFlow: flow.yaml
-- tapOn: "Your style answers"
+- tapOn: "Profile"
 - assertVisible: "Always, Full: arms, legs and neck"
 - scrollUntilVisible:
     element: "165 cm, Hourglass"

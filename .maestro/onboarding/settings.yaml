@@ -1,0 +1,83 @@
+appId: com.zaimimran.almari
+---
+- runFlow: skip.yaml
+- assertVisible: "Start with your everyday style."
+- tapOn: "Profile"
+- assertVisible: "Profile and settings"
+- scrollUntilVisible:
+    element: "Everything stays on this phone. There is no account and no login. Only the position of your city is sent to get the weather."
+    direction: DOWN
+    timeout: 60000
+    visibilityPercentage: 50
+- scrollUntilVisible:
+    element:
+      id: "app-version"
+    direction: DOWN
+    timeout: 60000
+- assertVisible:
+    id: "app-version"
+    text: "Version .*"
+- takeScreenshot: planning/build/onboarding/settings${SUFFIX}
+- scrollUntilVisible:
+    element: "Norsk bokmål"
+    direction: UP
+    timeout: 60000
+- tapOn: "Norsk bokmål"
+- runFlow:
+    when:
+      notVisible: "Profil og innstillinger"
+    commands:
+      - tapOn: "Profil"
+- assertVisible: "Profil og innstillinger"
+- assertVisible: "Svarene dine"
+- takeScreenshot: planning/build/onboarding/settings-nb${SUFFIX}
+- scrollUntilVisible:
+    element: "Følg telefonen"
+    direction: DOWN
+    timeout: 60000
+- tapOn: "Følg telefonen"
+- runFlow:
+    when:
+      notVisible: "Profile and settings"
+    commands:
+      - tapOn: "Profile"
+- assertVisible: "Profile and settings"
+- scrollUntilVisible:
+    element: "Replay onboarding"
+    direction: DOWN
+    timeout: 60000
+- tapOn: "Replay onboarding"
+- assertVisible: "Step 1 of 6"
+- repeat:
+    times: 5
+    commands:
+      - scrollUntilVisible:
+          element: "Skip"
+          direction: DOWN
+      - tapOn: "Skip"
+- scrollUntilVisible:
+    element: "Start with the sample closet"
+    direction: DOWN
+- tapOn: "Start with the sample closet"
+- tapOn: "Profile"
+- scrollUntilVisible:
+    element: "Reset all data"
+    direction: DOWN
+    timeout: 60000
+- tapOn: "Reset all data"
+- assertVisible: "Delete all your data?"
+- takeScreenshot: planning/build/onboarding/settings-reset${SUFFIX}
+- tapOn: "Delete everything"
+- assertVisible: "Step 1 of 6"
+- repeat:
+    times: 5
+    commands:
+      - scrollUntilVisible:
+          element: "Skip"
+          direction: DOWN
+      - tapOn: "Skip"
+- scrollUntilVisible:
+    element: "Start with the sample closet"
+    direction: DOWN
+- tapOn: "Start with the sample closet"
+- assertVisible: "Start with your everyday style."
