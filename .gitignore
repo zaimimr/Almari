@@ -27,3 +27,8 @@ planning/eval/closet.json
 
 credentials/
 credentials.json
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
