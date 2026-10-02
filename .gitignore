@@ -24,3 +24,5 @@ modules/closet-vision/model/compat/out/
 .claude/
 __pycache__/
 planning/eval/closet.json
+
+credentials/
