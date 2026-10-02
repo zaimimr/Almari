@@ -78,6 +78,7 @@ export function preparedFrom(result: PreparedGarment): Prepared {
     labels: result.labels,
     palette: result.palette,
     embedding: result.embedding,
+    ...(result.area ? { area: result.area } : {}),
   };
 }
 

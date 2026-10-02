@@ -1,7 +1,13 @@
 export { default } from "./ClosetVisionModule";
 export { LiveScanView, type LiveScanProps } from "./LiveScanView";
+export {
+  CutoutEditorView,
+  type CutoutEditorProps,
+} from "./CutoutEditorView";
 export type {
   City,
+  CutoutEdit,
+  CutoutEditorHandle,
   ForecastResult,
   GarmentParse,
   GarmentRegion,

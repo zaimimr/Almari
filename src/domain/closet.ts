@@ -117,6 +117,7 @@ export type Piece = {
   label?: CareLabel;
   captureId?: string;
   variants?: Variants;
+  cutoutArea?: Frame;
   setId?: string;
 };
 
@@ -132,6 +133,7 @@ export type Prepared = {
   enhanced?: string | null;
   studio?: string | null;
   quality?: Quality | null;
+  area?: Frame | null;
 };
 
 export type ImportJob = {
@@ -621,6 +623,7 @@ function isPiece(value: unknown): value is Piece {
     optional(value.label, isCareLabel) &&
     optional(value.captureId, isString) &&
     optional(value.variants, isVariants) &&
+    optional(value.cutoutArea, isFrame) &&
     optional(value.setId, isString)
   );
 }
@@ -694,7 +697,11 @@ function isPrepared(value: unknown): value is Prepared {
         (value.embedding === null || isEmbedding(value.embedding))) &&
     optional(value.enhanced, isNullableString) &&
     optional(value.studio, isNullableString) &&
-    optional(value.quality, isNullableQuality)
+    optional(value.quality, isNullableQuality) &&
+    optional(
+      value.area,
+      (area): area is Frame | null => area === null || isFrame(area),
+    )
   );
 }
 
