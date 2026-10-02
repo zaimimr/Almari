@@ -4,6 +4,7 @@ import { en } from "../i18n/en";
 import { nb } from "../i18n/nb";
 import type { Category, GarmentKind, Piece } from "./closet";
 import { outfitName } from "./outfitName";
+import { tipText } from "./outfitView";
 
 const piece = (
   id: string,
@@ -95,4 +96,16 @@ test("every palette colour has an English and a bokmål word", () => {
   for (const catalog of catalogs)
     for (const name of names)
       assert.ok(catalog[`outfitName.colour.${name}`], name);
+});
+
+test("bokmål names and tips use the bokmål garment word", () => {
+  const tunic = piece("tunic", "tunic", "tunic", [236, 231, 218]);
+  assert.equal(
+    outfitName([hijab, tunic, shalwar], "work", "nb"),
+    "Tunika i elfenben til jobb",
+  );
+  assert.equal(
+    tipText({ kind: "handbag", rgb: [78, 52, 42] }, "nb"),
+    "En håndveske i sjokoladebrunt ville fullført antrekket.",
+  );
 });

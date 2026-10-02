@@ -1,4 +1,10 @@
-import type { Closet, Engine, OutfitRequest, Styling } from "../closet";
+import {
+  isAvailable,
+  type Closet,
+  type Engine,
+  type OutfitRequest,
+  type Styling,
+} from "../closet";
 import { t } from "../../i18n";
 import { hash } from "../styling";
 import { embeddingVector, embeddingOf, modelScorer } from "./modelScorer";
@@ -32,6 +38,7 @@ export function modelReady(closet: Closet, request: OutfitRequest) {
     .filter(
       (piece) =>
         piece.source === request.wardrobe &&
+        isAvailable(piece) &&
         (!piece.styles || piece.styles.includes(request.style)),
     )
     .every((piece) => embeddingVector(embeddingOf(piece) ?? "") !== null);

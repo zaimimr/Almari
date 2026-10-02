@@ -1,4 +1,5 @@
 import { StyleSheet, View } from "react-native";
+import { isAvailable } from "../../src/domain/closet";
 import { engineName } from "../../src/domain/scoring/engine";
 import {
   embeddingVector,
@@ -16,6 +17,7 @@ export default function StylistResults() {
   const unread = closet.pieces.filter(
     (piece) =>
       piece.source === "owned" &&
+      isAvailable(piece) &&
       embeddingVector(embeddingOf(piece) ?? "") === null,
   ).length;
 

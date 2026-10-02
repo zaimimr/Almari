@@ -910,7 +910,10 @@ function isFeedbackEvent(value: unknown): value is FeedbackEvent {
         isRecord(swap) && isString(swap.from) && isString(swap.to),
     ) &&
     optional(value.undone, isBoolean) &&
-    optional(value.against, isUniqueStrings)
+    optional(value.against, isUniqueStrings) &&
+    optional(value.cursor, (cursor): cursor is number =>
+      Number.isInteger(cursor),
+    )
   );
 }
 

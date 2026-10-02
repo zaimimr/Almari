@@ -233,3 +233,25 @@ test("feedback about a piece that was later deleted still replays and undoes", (
   assert.deepEqual(undone.styling.taste, { weights: {}, pairs: {} });
   assert.equal(session(undone).engine, "rules");
 });
+
+test("an outfit worn on an earlier day can be worn again today", () => {
+  const closet = styled("work");
+  const current = session(closet);
+  const worn = woreThis(closet, current.revision, at, "w1");
+  const nextDay: Closet = {
+    ...worn,
+    styling: {
+      ...worn.styling,
+      today: { ...worn.styling.today!, localDate: "2026-10-05" },
+    },
+  };
+  assert.equal(wornNow(nextDay), null);
+  const again = woreThis(
+    nextDay,
+    current.revision,
+    "2026-10-05T08:00:00.000Z",
+    "w2",
+  );
+  assert.equal(again.feedback.length, 2);
+  assert.equal(wornNow(again)?.id, "w2");
+});

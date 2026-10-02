@@ -251,7 +251,12 @@ function TodayContent() {
     : [];
   const worn = wornNow(closet);
   const tip = showOutfit
-    ? outfitTip(pieces, pool, request, closet.styling.profile)
+    ? outfitTip(
+        pieces,
+        closet.pieces.filter((piece) => piece.source === request.wardrobe),
+        request,
+        closet.styling.profile,
+      )
     : null;
   const name = outfitName(pieces, request.occasion, locale);
   const last =

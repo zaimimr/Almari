@@ -1,6 +1,6 @@
 import { en } from "../i18n/en";
 import { nb } from "../i18n/nb";
-import { kindLabel, type Occasion, type Piece } from "./closet";
+import type { Occasion, Piece } from "./closet";
 import { colorName, type Rgb } from "./color";
 import { roleOf } from "./styling";
 
@@ -30,7 +30,7 @@ export function garmentWord(
   locale: NameLocale,
 ) {
   return piece.kind
-    ? kindLabel(piece.kind).toLowerCase()
+    ? say(locale, `kind.${piece.kind}`).toLowerCase()
     : say(locale, `outfitName.category.${piece.category}`);
 }
 

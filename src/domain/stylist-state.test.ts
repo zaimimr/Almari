@@ -7,7 +7,9 @@ import {
   neutralProfile,
   settingKeys,
 } from "./closet";
+import { giveFeedback } from "./feedback";
 import { addSampleWardrobe } from "./samples";
+import { activeSession, saveEverydayStyle } from "./today";
 
 test("a closet saved before the stylist opens with neutral settings and no feedback", () => {
   const raw = JSON.parse(JSON.stringify(addSampleWardrobe(emptyCloset)));
@@ -78,4 +80,25 @@ test("broken style settings, taste or feedback keep the closet unreadable instea
     ),
   );
   assert.throws(() => decodeCloset(broken({ feedback: [{ id: "x" }] })));
+});
+
+test("a feedback event whose cursor is not a whole number keeps the closet unreadable", () => {
+  const closet = saveEverydayStyle(
+    addSampleWardrobe(emptyCloset),
+    { occasion: "work", style: "western", hijab: "always", sample: true },
+    { localDate: "2026-10-01", timeZone: "Europe/Oslo" },
+    true,
+  );
+  const revision = activeSession(closet.styling.today!).revision;
+  const rated = giveFeedback(
+    closet,
+    "too-formal",
+    revision,
+    "2026-10-01T08:00:00.000Z",
+    "f1",
+  );
+  const raw = JSON.parse(JSON.stringify(rated));
+  assert.doesNotThrow(() => decodeCloset(JSON.stringify(raw)));
+  raw.feedback[0].cursor = 1.5;
+  assert.throws(() => decodeCloset(JSON.stringify(raw)));
 });

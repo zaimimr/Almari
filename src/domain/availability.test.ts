@@ -14,6 +14,7 @@ import {
 } from "./closet";
 import { addSampleWardrobe } from "./samples";
 import { replacementsFor } from "./styling";
+import { setArchived } from "./wardrobe";
 import { rulesScorer } from "./scoring/rulesScorer";
 import { scoreContext } from "./scoring/taste";
 import {
@@ -189,5 +190,15 @@ test("a kept piece that became unavailable does not break Change a piece for ano
       rulesScorer,
       scoreContext(away),
     ),
+  );
+});
+
+test("archiving a piece on today's outfit restyles Today without it", () => {
+  const today = styled(samples);
+  const hijab = hijabIn(today);
+  const next = dropFromToday(setArchived(today, hijab, true), hijab);
+  assert.equal(sessionOf(next).pieceIds.includes(hijab), false);
+  assert.ok(
+    sessionOf(next).pieceIds.some((id) => byId(next, id).kind === "hijab"),
   );
 });

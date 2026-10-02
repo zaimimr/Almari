@@ -12,17 +12,21 @@ import { ruleBook } from "./scoring/rulebook";
 import { baseWeights, features } from "./scoring/rulesScorer";
 import { countPairs, learnPreference } from "./scoring/taste";
 import type { Candidate } from "./styling";
-import { activeSession, replacePiece, resultFor } from "./today";
+import { activeSession, clockFor, replacePiece, resultFor } from "./today";
 import { t } from "../i18n";
 
 export type Chip = "too-formal" | "too-plain" | "too-warm" | "not-my-style";
 
 const chipIds: Chip[] = ["too-formal", "too-plain", "too-warm", "not-my-style"];
 
-export const chips: { id: Chip; label: string }[] = chipIds.map((id) => ({
-  id,
-  label: t(`feedback.${id}`),
-}));
+export const chips: { id: Chip; readonly label: string }[] = chipIds.map(
+  (id) => ({
+    id,
+    get label() {
+      return t(`feedback.${id}`);
+    },
+  }),
+);
 
 const warmFabrics = ["wool", "knit", "velvet", "khaddar", "karandi"];
 const warmthSteps = { light: 0, medium: 1, warm: 2 };
@@ -229,7 +233,11 @@ export function wornNow(closet: Closet): FeedbackEvent | null {
   const last = [...closet.feedback]
     .reverse()
     .find((event) => event.kind === "wore" && !event.undone);
-  return last && [...last.pieceIds].sort().join() === ids ? last : null;
+  return last &&
+    [...last.pieceIds].sort().join() === ids &&
+    clockFor(new Date(last.at), today.timeZone).localDate === today.localDate
+    ? last
+    : null;
 }
 
 export function woreThis(

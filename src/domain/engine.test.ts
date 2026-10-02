@@ -174,3 +174,45 @@ test("feedback records the engine and position of the suggestion", () => {
   const reopened = decodeCloset(JSON.stringify(rated), sampleTraits);
   assert.equal(reopened.feedback.at(-1)!.cursor, 1);
 });
+
+test("an away or archived piece without a reading does not keep Model from running", () => {
+  const plain: Piece = {
+    id: "owned-top",
+    name: "Plain top",
+    category: "top",
+    photo: "plain.jpg",
+    createdAt: "2026-10-01T08:00:00.000Z",
+    source: "owned",
+    styles: ["desi"],
+    status: "archived",
+  };
+  const closet = {
+    ...setEngine(samples, "model"),
+    pieces: [...samples.pieces, plain],
+  };
+  assert.equal(
+    engineFor(
+      closet,
+      request({ wardrobe: "owned", style: "desi" }),
+      clock.localDate,
+      null,
+    ),
+    "model",
+  );
+  const away = {
+    ...closet,
+    pieces: [
+      ...samples.pieces,
+      { ...plain, status: "away" as const, away: "wash" as const },
+    ],
+  };
+  assert.equal(
+    engineFor(
+      away,
+      request({ wardrobe: "owned", style: "desi" }),
+      clock.localDate,
+      null,
+    ),
+    "model",
+  );
+});

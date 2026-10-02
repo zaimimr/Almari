@@ -207,3 +207,19 @@ test("a coat tip appears on a cold day only when she owns no layer", () => {
     null,
   );
 });
+
+test("a bag that is away still counts as hers, so no bag tip is shown", () => {
+  const outfit = [tunic, trousers, hijab, loafers];
+  const bag = piece(
+    "bag",
+    "bag",
+    "handbag",
+    [142, 120, 106],
+    {},
+    { status: "away", away: "wash" },
+  );
+  assert.equal(
+    outfitTip(outfit, [...outfit, bag], request(), neutralProfile),
+    null,
+  );
+});

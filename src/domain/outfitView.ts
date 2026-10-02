@@ -141,12 +141,12 @@ function ruleScore(
 
 export function outfitTip(
   outfit: Piece[],
-  pool: Piece[],
+  owned: Piece[],
   request: OutfitRequest,
   profile: StyleProfile,
 ): Tip | null {
   const owns = (roles: Role[], kind?: GarmentKind) =>
-    [...pool, ...outfit].some(
+    [...owned, ...outfit].some(
       (piece) =>
         roles.includes(roleOf(piece)) && (!kind || piece.kind === kind),
     );
