@@ -194,7 +194,8 @@ final class GarmentPipeline {
         x: 0, y: 0, width: min(500, image.extent.width.rounded(.down)),
         height: min(500, image.extent.height.rounded(.down)))
       guard extent.width > 0, extent.height > 0 else { throw PrepareError.unreadable }
-      let flat = image.composited(over: CIImage(color: .white)).cropped(to: extent)
+      let flat = CutoutRepair.repaired(image, context: context).composited(over: CIImage(color: .white))
+        .cropped(to: extent)
       try FileManager.default.createDirectory(at: photos, withIntermediateDirectories: true)
       let name = "\(id)-studio-input.jpg"
       do {
