@@ -129,7 +129,8 @@ final class FrameReader {
     let crop = image.cropped(to: rect).transformed(by: CGAffineTransform(translationX: -rect.minX, y: -rect.minY))
     let parse = try parser.parseWhole(crop)
     let wanted = Set(classes.map { UInt8($0.rawValue) })
-    guard let region = largest(parse.grid, kind: kind, wanted: wanted), region.share >= 0.02 else { return nil }
+    guard let region = GarmentRegions.largest(parse.grid, kind: kind, wanted: wanted), region.share >= 0.02
+    else { return nil }
     let name = "\(id)-region-1.png"
     let cut = parse.cutout(crop, region: region)
     try parser.context.writePNGRepresentation(
@@ -180,34 +181,6 @@ final class FrameReader {
     try parser.context.writePNGRepresentation(
       of: image, to: url, format: .RGBA8, colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
     return pad / scale
-  }
-
-  private func largest(_ grid: LabelGrid, kind: String, wanted: Set<UInt8>) -> FoundRegion? {
-    let width = grid.width
-    let total = grid.labels.count
-    var seen = [Bool](repeating: false, count: total)
-    var best: [Int] = []
-    for start in 0..<total where !seen[start] && wanted.contains(grid.labels[start]) {
-      var stack = [start]
-      var pixels: [Int] = []
-      seen[start] = true
-      while let index = stack.popLast() {
-        pixels.append(index)
-        let x = index % width
-        for next in [x > 0 ? index - 1 : -1, x < width - 1 ? index + 1 : -1, index - width, index + width]
-        where next >= 0 && next < total && !seen[next] && wanted.contains(grid.labels[next]) {
-          seen[next] = true
-          stack.append(next)
-        }
-      }
-      if pixels.count > best.count { best = pixels }
-    }
-    guard !best.isEmpty else { return nil }
-    let xs = best.map { $0 % width }
-    let ys = best.map { $0 / width }
-    return FoundRegion(
-      kind: kind, pixels: best, minX: xs.min()!, minY: ys.min()!, maxX: xs.max()!, maxY: ys.max()!,
-      share: Double(best.count) / Double(total), partial: false)
   }
 }
 

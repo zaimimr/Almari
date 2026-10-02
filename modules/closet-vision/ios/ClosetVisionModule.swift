@@ -378,6 +378,39 @@ final class GarmentPipeline {
     model = try MLModel(contentsOf: modelUrl, configuration: configuration)
   }
 
+  private static let wholeFrame = 0.97
+
+  private func coverage(_ mask: CIImage, enhancer: GarmentEnhancer) -> Double {
+    let cover = enhancer.bitmap(mask, longEdge: 128)
+    let total = cover.width * cover.height
+    return Double((0..<total).filter { cover.value($0) > 0.5 }.count) / Double(max(total, 1))
+  }
+
+  private func heldCutout(_ image: CIImage) -> (garment: CIImage, mask: CIImage)? {
+    guard let parse = try? loadParser().parse(image),
+      let region = GarmentRegions.held(parse.grid, chroma: chroma(image, parse: parse))
+    else { return nil }
+    return (parse.cutout(image, region: region), parse.mask(of: region))
+  }
+
+  private func chroma(_ image: CIImage, parse: ClothesParse) -> [SIMD2<Double>] {
+    let width = parse.grid.width
+    let height = parse.grid.height
+    let area = parse.area
+    let small = image.cropped(to: area)
+      .transformed(by: CGAffineTransform(translationX: -area.minX, y: -area.minY))
+      .transformed(by: CGAffineTransform(scaleX: CGFloat(width) / area.width, y: CGFloat(height) / area.height))
+    var pixels = [UInt8](repeating: 0, count: width * height * 4)
+    context.render(
+      small, toBitmap: &pixels, rowBytes: width * 4, bounds: CGRect(x: 0, y: 0, width: width, height: height),
+      format: .RGBA8, colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
+    return (0..<width * height).map { index in
+      let lab = GarmentEnhancer.lab(
+        red: Double(pixels[index * 4]), green: Double(pixels[index * 4 + 1]), blue: Double(pixels[index * 4 + 2]))
+      return SIMD2(lab.a, lab.b)
+    }
+  }
+
   private func elapsed(_ start: Date) -> Int { Int(Date().timeIntervalSince(start) * 1000) }
 
   private func run(sourceUri: String, id: String, options: PrepareOptions?) throws -> PreparedGarment {
@@ -435,14 +468,19 @@ final class GarmentPipeline {
         let buffer = try? observation.generateMaskedImage(
           ofInstances: observation.allInstances, from: handler, croppedToInstancesExtent: true)
       {
-        result.instances = observation.allInstances.count
-        if let scaledMask = try? observation.generateScaledMaskForImage(
-          forInstances: observation.allInstances, from: handler)
-        {
-          mask = CIImage(cvPixelBuffer: scaledMask)
+        let scaledMask = (try? observation.generateScaledMaskForImage(
+          forInstances: observation.allInstances, from: handler)).map { CIImage(cvPixelBuffer: $0) }
+        if scaledMask.map({ coverage($0, enhancer: enhancer) < Self.wholeFrame }) ?? true {
+          result.instances = observation.allInstances.count
+          mask = scaledMask
+          garment = scaled(CIImage(cvPixelBuffer: buffer), longEdge: 1536)
+          found = true
         }
-        let masked = CIImage(cvPixelBuffer: buffer)
-        garment = scaled(masked, longEdge: 1536)
+      }
+      if !found, let held = heldCutout(image) {
+        result.instances = 1
+        mask = held.mask
+        garment = scaled(held.garment, longEdge: 1536)
         found = true
       }
     }
