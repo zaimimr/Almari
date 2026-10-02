@@ -92,8 +92,12 @@ test("pieces from the same photo are not duplicates of each other", () => {
     ...emptyCloset,
     pieces: [{ ...piece("kurta", vector(100, 0)), captureId: "photo" }],
     imports: [
-      { ...job("trousers", vector(100, 0)), captureId: "photo" },
-      { ...job("job"), captureId: "photo" },
+      {
+        ...job("trousers", vector(100, 0)),
+        captureId: "photo",
+        source: "photo-original.jpg",
+      },
+      { ...job("job"), captureId: "photo", source: "photo-original.jpg" },
     ],
   };
   assert.equal(findDuplicate(closet, "job", vector(100, 1)), null);
@@ -102,4 +106,15 @@ test("pieces from the same photo are not duplicates of each other", () => {
     imports: closet.imports.map((item) => ({ ...item, captureId: "other" })),
   };
   assert.equal(findDuplicate(other, "job", vector(100, 1)), "kurta");
+});
+
+test("earlier photos in the same scan are compared", () => {
+  const closet: Closet = {
+    ...emptyCloset,
+    imports: [
+      { ...job("first", vector(100, 0)), captureId: "scan" },
+      { ...job("job"), captureId: "scan" },
+    ],
+  };
+  assert.equal(findDuplicate(closet, "job", vector(100, 1)), "first");
 });
