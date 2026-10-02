@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Linking, Pressable, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
@@ -16,15 +16,27 @@ import {
 import { t } from "../../src/i18n";
 import { useCloset } from "../../src/state/closet";
 import { changeImports } from "../../src/state/imports";
-import { discardPhoto, keepPhotoAs, photoUri } from "../../src/storage/local";
+import {
+  discardPhoto,
+  keepPhotoAs,
+  lowOnSpace,
+  photoUri,
+} from "../../src/storage/local";
 import {
   AppText,
   Button,
   ErrorMessage,
   FormScreen,
   HeaderAction,
+  Notice,
 } from "../../src/ui";
 import { theme } from "../../src/ui/theme";
+import { TipDrawing } from "../../src/ui/TipDrawing";
+import {
+  problemMessages,
+  useRetake,
+  type CaptureProblem,
+} from "../../src/features/Retake";
 
 const tips = [
   {
@@ -49,6 +61,20 @@ const stateLabel: Record<ImportJob["state"], string> = {
   failed: "Could not finish",
 };
 
+const failureText = {
+  storage: "failure.storage",
+  unreadable: "failure.unreadable",
+  processing: "failure.processing",
+} as const;
+
+function failureMessage(error: string | undefined) {
+  return t(
+    error === "storage" || error === "unreadable"
+      ? failureText[error]
+      : failureText.processing,
+  );
+}
+
 export default function AddPieces() {
   const { closet, update } = useCloset();
   const [tip, setTip] = useState<number | null>(
@@ -56,6 +82,11 @@ export default function AddPieces() {
   );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [problem, setProblem] = useState<{
+    kind: CaptureProblem;
+    job: ImportJob | null;
+  } | null>(null);
+  const retake = useRetake();
   const jobs = closet.imports;
   const ready = jobs.filter((job) => job.state === "ready").length;
   const working = jobs.filter(
@@ -95,9 +126,7 @@ export default function AddPieces() {
         );
       } catch {
         if (source) void discardPhoto(source).catch(() => undefined);
-        setError(
-          "A photo could not be added. Check that your device has free space, then try again.",
-        );
+        setProblem({ kind: lowOnSpace() ? "low-space" : "failed", job: null });
         return;
       }
     }
@@ -105,13 +134,16 @@ export default function AddPieces() {
 
   async function pick(source: "camera" | "library") {
     setError(null);
+    setProblem(null);
+    if (lowOnSpace()) {
+      setProblem({ kind: "low-space", job: null });
+      return;
+    }
     try {
       if (source === "camera") {
         const permission = await ImagePicker.requestCameraPermissionsAsync();
         if (!permission.granted) {
-          setError(
-            "Camera access is off. You can choose photos instead, or turn on camera access in Settings.",
-          );
+          setProblem({ kind: "camera-off", job: null });
           return;
         }
       }
@@ -131,8 +163,20 @@ export default function AddPieces() {
             });
       if (!result.canceled) await add(result.assets.map((asset) => asset.uri));
     } catch {
-      setError("The photos could not be opened. Please try again.");
+      setProblem({ kind: "unavailable", job: null });
     }
+  }
+
+  async function retakeJob(job: ImportJob, from: "camera" | "library") {
+    setProblem(null);
+    const result = await retake(job, from);
+    if (result !== "done" && result !== "cancelled")
+      setProblem({ kind: result, job });
+  }
+
+  function chooseInstead() {
+    if (problem?.job) void retakeJob(problem.job, "library");
+    else void pick("library");
   }
 
   async function save() {
@@ -173,6 +217,7 @@ export default function AddPieces() {
         <AppText variant="caption" muted>
           {tip + 1} of {tips.length}
         </AppText>
+        <TipDrawing tip={tip} />
         <AppText variant="title">{card.title}</AppText>
         <AppText>{card.body}</AppText>
         <Button
@@ -227,6 +272,25 @@ export default function AddPieces() {
             />
           </View>
         </View>
+        {problem ? (
+          <Notice
+            message={t(problemMessages[problem.kind])}
+            actions={
+              problem.kind === "camera-off"
+                ? [
+                    {
+                      label: t("problem.choosePhotosInstead"),
+                      onPress: chooseInstead,
+                    },
+                    {
+                      label: t("problem.openSettings"),
+                      onPress: () => void Linking.openSettings(),
+                    },
+                  ]
+                : [{ label: t("problem.tryAgain"), onPress: chooseInstead }]
+            }
+          />
+        ) : null}
         {jobs.length ? (
           <AppText accessibilityLiveRegion="polite">
             {[
@@ -276,6 +340,9 @@ export default function AddPieces() {
               onRetry={() => {
                 void update((current) => retryImport(current, job.id));
               }}
+              onRetake={() => {
+                void retakeJob(job, "camera");
+              }}
               onRemove={() => {
                 void remove(job);
               }}
@@ -314,11 +381,13 @@ function JobTile({
   job,
   onOpen,
   onRetry,
+  onRetake,
   onRemove,
 }: {
   job: ImportJob;
   onOpen: () => void;
   onRetry: () => void;
+  onRetake: () => void;
   onRemove: () => void;
 }) {
   const image = job.prepared?.thumbnail ?? job.source;
@@ -327,7 +396,7 @@ function JobTile({
     <View style={styles.tile}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`${job.name ?? "Photo"}, ${stateLabel[job.state]}`}
+        accessibilityLabel={`${job.name ?? "Photo"}, ${stateLabel[job.state]}${job.advice ? `, ${t("capture.photoTip")}` : ""}`}
         disabled={!openable}
         onPress={onOpen}
         style={[styles.tilePhoto, job.state === "review" && styles.review]}
@@ -358,9 +427,23 @@ function JobTile({
       <AppText style={styles.name} numberOfLines={2}>
         {job.name ?? " "}
       </AppText>
+      {job.advice ? (
+        <AppText variant="caption" muted>
+          {t("capture.photoTip")}
+        </AppText>
+      ) : null}
       {job.state === "failed" ? (
         <View style={styles.tileActions}>
+          <AppText variant="caption" muted>
+            {failureMessage(job.error)}
+          </AppText>
           <Button label="Retry" secondary compact onPress={onRetry} />
+          <Button
+            label={t("capture.retake")}
+            secondary
+            compact
+            onPress={onRetake}
+          />
           <Button label="Remove" danger compact onPress={onRemove} />
         </View>
       ) : null}

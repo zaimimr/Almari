@@ -1,0 +1,22 @@
+appId: com.zaimimran.almari
+env:
+  SUFFIX: ""
+---
+- launchApp
+- tapOn: "Closet"
+- tapOn: "Add pieces"
+- runFlow:
+    when:
+      visible: "Take a photo"
+    commands:
+      - tapOn: "Photo tips"
+- assertVisible: "A piece beside a window in soft daylight"
+- takeScreenshot: planning/build/04-capture/tips-1${SUFFIX}
+- tapOn: "Next tip"
+- assertVisible: "A white piece on a grey sheet"
+- takeScreenshot: planning/build/04-capture/tips-2${SUFFIX}
+- tapOn: "Next tip"
+- assertVisible: "A whole piece inside the phone frame with space around it"
+- takeScreenshot: planning/build/04-capture/tips-3${SUFFIX}
+- tapOn: "Start adding pieces"
+- assertVisible: "Take a photo"
