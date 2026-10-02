@@ -12,8 +12,15 @@ import {
   type Piece,
 } from "./closet";
 import { addSampleWardrobe, sampleTraits } from "./samples";
-import { resultFor } from "./today";
-import { setArchived, shelf } from "./wardrobe";
+import {
+  activeSession,
+  applyLook,
+  replacePiece,
+  resultFor,
+  saveEverydayStyle,
+  undoChange,
+} from "./today";
+import { hijabAlternatives, setArchived, shelf } from "./wardrobe";
 
 const day = "2026-10-01";
 const samples = addSampleWardrobe(emptyCloset);
@@ -146,4 +153,139 @@ test("marking an archived piece unavailable or available leaves it archived", ()
   const archived = setArchived(samples, "sample-mauve-hijab", true);
   assert.equal(setAway(archived, "sample-mauve-hijab", "wash"), archived);
   assert.equal(setAway(archived, "sample-mauve-hijab", null), archived);
+});
+
+const clock = { localDate: day, timeZone: "Europe/Oslo" };
+const outfit = [
+  "sample-ivory-tunic",
+  "sample-charcoal-trousers",
+  "sample-mauve-hijab",
+  "sample-chocolate-loafers",
+];
+const hijab = (id: string, name: string): Piece => ({
+  id,
+  name,
+  category: "hijab",
+  kind: "hijab",
+  styles: ["western", "desi"],
+  photo: `${id}.jpg`,
+  createdAt: day,
+  source: "sample",
+});
+const hijabs = [
+  hijab("sample-rose-hijab", "Rose hijab"),
+  hijab("sample-sky-hijab", "Sky hijab"),
+].reduce(savePiece, samples);
+const preference = [
+  "sample-sky-hijab",
+  "sample-chocolate-hijab",
+  "sample-rose-hijab",
+  "sample-ivory-hijab",
+];
+const byPreference = (pieces: Piece[]) => {
+  const worn = pieces.find((piece) => piece.category === "hijab")!;
+  return {
+    score: 10 - preference.indexOf(worn.id),
+    reasons: [
+      "Every piece is marked for work.",
+      `The ${worn.name.toLowerCase()} brings contrast to the ivory longline tunic.`,
+    ],
+  };
+};
+
+test("R03 the comparison shows three alternatives ranked by the scorer, each keeping every other piece", () => {
+  const comparison = hijabAlternatives(
+    hijabs,
+    request(),
+    outfit,
+    byPreference,
+  )!;
+  assert.equal(comparison.current.piece.id, "sample-mauve-hijab");
+  assert.deepEqual(comparison.current.ids, outfit);
+  assert.deepEqual(
+    comparison.options.map((option) => option.piece.id),
+    ["sample-sky-hijab", "sample-chocolate-hijab", "sample-rose-hijab"],
+  );
+  for (const option of comparison.options) {
+    assert.deepEqual(
+      option.ids,
+      outfit.map((id) => (id === "sample-mauve-hijab" ? option.piece.id : id)),
+    );
+    assert.equal(
+      option.reason,
+      `The ${option.piece.name.toLowerCase()} brings contrast to the ivory longline tunic.`,
+    );
+  }
+});
+
+test("R03 away, archived and set-aside hijabs are not offered", () => {
+  const closet = setArchived(
+    setAway(hijabs, "sample-sky-hijab", "wash"),
+    "sample-ivory-hijab",
+    true,
+  );
+  const comparison = hijabAlternatives(
+    closet,
+    request({ excludedIds: ["sample-rose-hijab"] }),
+    outfit,
+    byPreference,
+  )!;
+  assert.deepEqual(
+    comparison.options.map((option) => option.piece.id),
+    ["sample-chocolate-hijab"],
+  );
+});
+
+test("R03 using a hijab changes only the hijab and undo restores the outfit", () => {
+  const styled = saveEverydayStyle(
+    hijabs,
+    { occasion: "work", style: "western", hijab: "always", sample: true },
+    clock,
+    true,
+  );
+  const shown = applyLook(
+    styled,
+    outfit,
+    activeSession(styled.styling.today!).revision,
+  );
+  const session = activeSession(shown.styling.today!);
+  assert.deepEqual(session.pieceIds, outfit);
+  const choice = hijabAlternatives(
+    shown,
+    session.request,
+    session.pieceIds,
+    byPreference,
+  )!.options[0]!;
+  const used = replacePiece(
+    shown,
+    "sample-mauve-hijab",
+    choice.piece.id,
+    session.revision,
+  );
+  assert.deepEqual(activeSession(used.styling.today!).pieceIds, choice.ids);
+  assert.deepEqual(
+    activeSession(undoChange(used).styling.today!).pieceIds,
+    outfit,
+  );
+  assert.deepEqual(undoChange(used).looks, hijabs.looks);
+});
+
+test("R03 a closet with one hijab shows no alternatives, and no hijab means no comparison", () => {
+  const single = removePiece(
+    removePiece(samples, "sample-ivory-hijab"),
+    "sample-chocolate-hijab",
+  );
+  assert.deepEqual(
+    hijabAlternatives(single, request(), outfit, byPreference)!.options,
+    [],
+  );
+  assert.equal(
+    hijabAlternatives(
+      samples,
+      request({ hijab: "not-needed" }),
+      outfit.filter((id) => id !== "sample-mauve-hijab"),
+      byPreference,
+    ),
+    null,
+  );
 });

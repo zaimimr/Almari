@@ -287,6 +287,23 @@ export function setWardrobe(
   return ensureToday(next, clock);
 }
 
+export function applyLook(
+  closet: Closet,
+  pieceIds: string[],
+  expectedRevision: number,
+): Closet {
+  return withActive(closet, (session) =>
+    session.revision !== expectedRevision
+      ? session
+      : {
+          ...session,
+          revision: session.revision + 1,
+          pieceIds,
+          previousPieceIds: session.pieceIds,
+        },
+  );
+}
+
 export function dropFromToday(closet: Closet, id: string): Closet {
   const today = closet.styling.today;
   if (!today) return closet;
