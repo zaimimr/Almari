@@ -5,7 +5,7 @@ appId: com.zaimimran.almari
 - tapOn: "Profile"
 - assertVisible: "Profile and settings"
 - scrollUntilVisible:
-    element: "Everything stays on this phone. There is no account and no login. Only the position of your city is sent to get the weather."
+    element: "Everything stays on this phone. There is no account and no login. Only the city name you type \\(to find it\\) and its position \\(for the weather\\) are sent to Apple."
     direction: DOWN
     timeout: 60000
     visibilityPercentage: 50

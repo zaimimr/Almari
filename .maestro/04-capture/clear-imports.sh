@@ -1,6 +1,6 @@
 #!/bin/sh
 set -e
-device="Closet Development"
+device="${DEVICE:-Closet Development}"
 xcrun simctl terminate "$device" com.zaimimran.almari || true
 data=$(xcrun simctl get_app_container "$device" com.zaimimran.almari data)
 db="$data/Documents/SQLite/ExpoSQLiteStorage"

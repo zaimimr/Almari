@@ -28,7 +28,7 @@ env:
     notVisible: "Preparing"
     timeout: 90000
 - tapOn:
-    text: "[^,]+, Quick check"
+    text: "[^,]+, Quick check.*"
     index: 1
 - scrollUntilVisible:
     element:

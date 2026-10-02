@@ -6,12 +6,15 @@ appId: com.zaimimran.almari
 - takeScreenshot: planning/build/stylist/large-text-today
 - scrollUntilVisible:
     element: "Not for me"
+    timeout: 60000
 - tapOn: "Not for me"
 - takeScreenshot: planning/build/stylist/large-text-chips
 - scrollUntilVisible:
     element: "Style settings"
+    timeout: 60000
 - tapOn: "Style settings"
 - takeScreenshot: planning/build/stylist/large-text-settings
 - scrollUntilVisible:
     element: "Save style settings"
+    timeout: 60000
 - takeScreenshot: planning/build/stylist/large-text-settings-end

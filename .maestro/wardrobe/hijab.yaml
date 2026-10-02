@@ -6,7 +6,6 @@ env:
 - tapOn: "Try a sample style"
 - scrollUntilVisible:
     element: "Compare hijabs"
-    centerElement: true
     timeout: 60000
 - tapOn: "Compare hijabs"
 - assertVisible:
