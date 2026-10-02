@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import {
   isAvailable,
   kindLabel,
@@ -409,8 +410,8 @@ export function styleOutfits(
         message: closetPieces.some(
           (piece) => piece.id === id && piece.source === request.wardrobe,
         )
-          ? "A piece you chose to keep is marked unavailable."
-          : "A piece you chose to keep is no longer in this closet.",
+          ? t("styling.keptUnavailable")
+          : t("styling.keptGone"),
         ids: [id],
         actions: [{ type: "release", id }],
       })),

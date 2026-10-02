@@ -1,12 +1,12 @@
-import { getLocales } from "expo-localization";
 import type { Category, GarmentKind, Occasion, Style } from "../domain/closet";
 import { en, type Key } from "./en";
+import { deviceLanguage } from "./language";
 import { nb } from "./nb";
 import { localeFor, translate, type Locale, type Vars } from "./translate";
 
 export type { Key, Locale };
 
-export const locale: Locale = localeFor(getLocales()[0]?.languageCode);
+export const locale: Locale = localeFor(deviceLanguage());
 
 export const t = (key: Key, vars?: Vars) =>
   translate({ en, nb }, locale, key, vars);

@@ -388,6 +388,10 @@ export const en = {
   "sets.partOf": "Part of a set",
   "sets.remove": "Remove from this set",
   "sets.removeFailed": "This piece could not leave its set. Please try again.",
+
+  "styling.keptGone": "A piece you chose to keep is no longer in this closet.",
+  "styling.keptUnavailable":
+    "A piece you chose to keep is marked unavailable or archived.",
 };
 
 export type Key = keyof typeof en;

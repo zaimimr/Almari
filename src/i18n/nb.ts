@@ -390,4 +390,9 @@ export const nb: Record<Key, string> = {
   "sets.partOf": "Del av et sett",
   "sets.remove": "Fjern fra settet",
   "sets.removeFailed": "Plagget kunne ikke tas ut av settet. Prøv igjen.",
+
+  "styling.keptGone":
+    "Et plagg du valgte å beholde, finnes ikke lenger i denne garderoben.",
+  "styling.keptUnavailable":
+    "Et plagg du valgte å beholde, er merket som utilgjengelig eller arkivert.",
 };

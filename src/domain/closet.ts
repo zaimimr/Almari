@@ -845,7 +845,8 @@ export function setAway(
   id: string,
   reason: AwayReason | null,
 ): Closet {
-  if (!closet.pieces.some((piece) => piece.id === id)) return closet;
+  const target = closet.pieces.find((piece) => piece.id === id);
+  if (!target || target.status === "archived") return closet;
   return {
     ...closet,
     pieces: closet.pieces.map((piece): Piece => {

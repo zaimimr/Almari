@@ -163,7 +163,7 @@ test("a kept piece that becomes unavailable stays on Today and is explained with
   assert.equal(result.problems[0]!.code, "kept-missing");
   assert.equal(
     result.problems[0]!.message,
-    "A piece you chose to keep is marked unavailable.",
+    "A piece you chose to keep is marked unavailable or archived.",
   );
   assert.deepEqual(result.problems[0]!.actions, [
     { type: "release", id: hijab },
