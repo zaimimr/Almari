@@ -116,7 +116,7 @@ function fitsStyle(piece: Piece, style: Style) {
 
 function outside(request: OutfitRequest) {
   return (
-    request.weather.source === "manual" &&
+    request.weather.source !== "unknown" &&
     request.weather.exposure !== "mostly-indoors"
   );
 }
@@ -165,7 +165,7 @@ function weatherProblems(
   pool: Piece[],
 ): Problem[] {
   const weather = request.weather;
-  if (weather.source !== "manual") return [];
+  if (weather.source === "unknown") return [];
   const problems: Problem[] = [];
   const shoes = outfit.find((piece) => roleOf(piece) === "shoes");
   const shoeIds = shoes ? [shoes.id] : [];
@@ -300,7 +300,7 @@ export function scoreOutfit(outfit: Piece[], request: OutfitRequest) {
       `Every piece is marked for ${request.occasion === "everyday" ? "everyday wear" : request.occasion}.`,
     );
   const weather = request.weather;
-  if (layer && weather.source === "manual" && weather.warmth !== "warm") {
+  if (layer && weather.source !== "unknown" && weather.warmth !== "warm") {
     score += weather.warmth === "cold" ? 2 : 0.5;
     reasons.push(
       `The ${lower(layer)} adds a layer for a ${weather.warmth} day.`,
@@ -309,7 +309,7 @@ export function scoreOutfit(outfit: Piece[], request: OutfitRequest) {
   if (
     byRole("layer") &&
     byRole("outer") &&
-    !(weather.source === "manual" && weather.warmth === "cold")
+    !(weather.source !== "unknown" && weather.warmth === "cold")
   )
     score -= 1.5;
   if (main && bottom && roleOf(main) === "main" && !needsBottom(main))
@@ -508,7 +508,7 @@ export function styleOutfits(
   if (gaps.length) return fail("missing", gaps);
 
   const warm =
-    request.weather.source === "manual" && request.weather.warmth === "warm";
+    request.weather.source !== "unknown" && request.weather.warmth === "warm";
   const layerOptions = (role: "layer" | "outer") => {
     if (keptRole(role).length) return [keptRole(role)];
     const options = eligibleRole(role).filter(
