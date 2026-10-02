@@ -15,12 +15,18 @@ import { addSampleWardrobe, sampleTraits } from "./samples";
 import {
   activeSession,
   applyLook,
+  applyRequest,
   replacePiece,
   resultFor,
   saveEverydayStyle,
   undoChange,
 } from "./today";
-import { hijabAlternatives, setArchived, shelf } from "./wardrobe";
+import {
+  hijabAlternatives,
+  matchingLooks,
+  setArchived,
+  shelf,
+} from "./wardrobe";
 
 const day = "2026-10-01";
 const samples = addSampleWardrobe(emptyCloset);
@@ -288,4 +294,108 @@ test("R03 a closet with one hijab shows no alternatives, and no hijab means no c
     ),
     null,
   );
+});
+
+const office = {
+  id: "office",
+  name: "Office",
+  pieceIds: outfit,
+  createdAt: day,
+};
+const withLook = saveLook(samples, office);
+
+test("R04 an exact saved look appears only when it fits the request", () => {
+  const exact = matchingLooks(withLook, request());
+  assert.deepEqual(
+    exact.exact.map((match) => [match.look.id, match.problems]),
+    [["office", []]],
+  );
+  assert.deepEqual(exact.variants, []);
+  for (const changes of [
+    { style: "desi" as const },
+    { keptIds: ["sample-navy-blazer"] },
+    { garmentType: "blazer" as const },
+    { wardrobe: "owned" as const },
+  ]) {
+    const result = matchingLooks(withLook, request(changes));
+    assert.deepEqual(result.exact, []);
+    assert.deepEqual(result.variants, []);
+  }
+});
+
+test("R04 a look with a missing, away or archived piece is a variant with a repair and stays unchanged", () => {
+  const away = setAway(withLook, "sample-mauve-hijab", "wash");
+  const { exact, variants } = matchingLooks(away, request());
+  assert.deepEqual(exact, []);
+  assert.equal(variants.length, 1);
+  const variant = variants[0]!;
+  assert.deepEqual(
+    variant.unavailable.map((piece) => piece.id),
+    ["sample-mauve-hijab"],
+  );
+  assert.equal(variant.missing, 0);
+  assert.deepEqual(variant.repair.keptIds, [
+    "sample-ivory-tunic",
+    "sample-charcoal-trousers",
+    "sample-chocolate-loafers",
+  ]);
+  const styled = saveEverydayStyle(
+    away,
+    { occasion: "work", style: "western", hijab: "always", sample: true },
+    clock,
+    true,
+  );
+  const repaired = applyRequest(
+    styled,
+    variant.repair,
+    activeSession(styled.styling.today!).revision,
+  );
+  const ids = activeSession(repaired.styling.today!).pieceIds;
+  for (const id of variant.repair.keptIds) assert.ok(ids.includes(id));
+  assert.equal(ids.includes("sample-mauve-hijab"), false);
+  assert.deepEqual(repaired.looks, withLook.looks);
+
+  const archived = matchingLooks(
+    setArchived(withLook, "sample-mauve-hijab", true),
+    request(),
+  );
+  assert.deepEqual(
+    archived.variants[0]!.unavailable.map((piece) => piece.id),
+    ["sample-mauve-hijab"],
+  );
+
+  const deleted = matchingLooks(
+    removePiece(withLook, "sample-charcoal-trousers"),
+    request(),
+  );
+  assert.deepEqual(deleted.exact, []);
+  assert.equal(deleted.variants[0]!.missing, 1);
+});
+
+test("R04 a broken look whose remaining pieces no longer fit the request is not offered", () => {
+  const deleted = removePiece(withLook, "sample-charcoal-trousers");
+  assert.deepEqual(matchingLooks(deleted, request({ style: "desi" })), {
+    exact: [],
+    variants: [],
+  });
+});
+
+test("R04 using a saved look changes only today's outfit and can be undone", () => {
+  const styled = saveEverydayStyle(
+    withLook,
+    { occasion: "work", style: "western", hijab: "always", sample: true },
+    clock,
+    true,
+  );
+  const before = activeSession(styled.styling.today!);
+  const used = applyLook(styled, office.pieceIds, before.revision);
+  const after = activeSession(used.styling.today!);
+  assert.deepEqual(after.pieceIds, office.pieceIds);
+  assert.equal(after.request, before.request);
+  assert.deepEqual(used.looks, withLook.looks);
+  assert.deepEqual(
+    activeSession(undoChange(used).styling.today!).pieceIds,
+    before.pieceIds,
+  );
+  assert.equal(applyLook(used, office.pieceIds, before.revision), used);
 });

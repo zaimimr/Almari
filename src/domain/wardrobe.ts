@@ -3,6 +3,7 @@ import {
   isAvailable,
   savePiece,
   type Closet,
+  type Look,
   type OutfitRequest,
   type Piece,
   type Traits,
@@ -121,4 +122,70 @@ export function hijabAlternatives(
     )
     .slice(0, 3);
   return { current: option(current), options };
+}
+
+export type LookMatch = { look: Look; pieces: Piece[]; problems: Problem[] };
+
+export type LookVariant = {
+  look: Look;
+  pieces: Piece[];
+  missing: number;
+  unavailable: Piece[];
+  repair: OutfitRequest;
+};
+
+export function matchingLooks(
+  closet: Closet,
+  request: OutfitRequest,
+): { exact: LookMatch[]; variants: LookVariant[] } {
+  const usable = (piece: Piece) =>
+    isAvailable(piece) && !request.excludedIds.includes(piece.id);
+  const pool = closet.pieces.filter(
+    (piece) => piece.source === request.wardrobe && usable(piece),
+  );
+  const exact: LookMatch[] = [];
+  const variants: LookVariant[] = [];
+  for (const look of closet.looks) {
+    const found = look.pieceIds.flatMap((id) => {
+      const piece = closet.pieces.find((item) => item.id === id);
+      return piece ? [piece] : [];
+    });
+    if (found.some((piece) => piece.source !== request.wardrobe)) continue;
+    const pieces = found.filter(usable);
+    const unavailable = found.filter((piece) => !usable(piece));
+    const missing = look.pieceIds.length - found.length;
+    if (!pieces.length) continue;
+    if (!missing && !unavailable.length) {
+      const problems = evaluateOutfit(pieces, request, pool);
+      if (
+        request.keptIds.every((id) => look.pieceIds.includes(id)) &&
+        problems.every((problem) => problem.severity === "review")
+      )
+        exact.push({ look, pieces, problems });
+      continue;
+    }
+    const kept = pool.filter(
+      (piece) =>
+        request.keptIds.includes(piece.id) && !look.pieceIds.includes(piece.id),
+    );
+    if (
+      evaluateOutfit([...pieces, ...kept], request, pool).some(
+        (problem) => problem.severity === "conflict",
+      )
+    )
+      continue;
+    variants.push({
+      look,
+      pieces,
+      missing,
+      unavailable,
+      repair: {
+        ...request,
+        keptIds: [
+          ...new Set([...request.keptIds, ...pieces.map((piece) => piece.id)]),
+        ],
+      },
+    });
+  }
+  return { exact, variants };
 }
