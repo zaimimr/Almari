@@ -464,4 +464,5 @@ export const nb: Record<Key, string> = {
   "reason.abaya-centred": "Med {a} i sentrum blir antrekket samlet.",
   "reason.accent-echo": "Fargen på {a} går igjen i {b}.",
   "reason.tonal-steps": "Fargene på {a} og {b} er nyanser av samme farge.",
+  "stylist.often": "Du bruker ofte {a} sammen med {b}.",
 };

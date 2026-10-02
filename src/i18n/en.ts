@@ -454,6 +454,7 @@ export const en = {
   "reason.abaya-centred": "The {a} is the centre of the outfit.",
   "reason.accent-echo": "The {a} picks up a colour from the {b}.",
   "reason.tonal-steps": "The {a} and {b} are tones of one colour.",
+  "stylist.often": "You often wear the {a} with the {b}.",
 };
 
 export type Key = keyof typeof en;
