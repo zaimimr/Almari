@@ -17,8 +17,13 @@ env:
 - takeScreenshot: planning/build/wardrobe/${SHOT}archive-piece
 - tapOn: "Back"
 - assertNotVisible: "Chocolate jersey hijab.*"
-- scrollUntilVisible:
-    element: "Archived \\(1\\)"
+- repeat:
+    times: 10
+    commands:
+      - swipe:
+          from:
+            id: "closet-filters"
+          direction: LEFT
 - tapOn: "Archived \\(1\\)"
 - assertVisible: "Chocolate jersey hijab.*"
 - takeScreenshot: planning/build/wardrobe/${SHOT}archive-shelf

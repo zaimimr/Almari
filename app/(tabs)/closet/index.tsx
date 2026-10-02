@@ -44,7 +44,7 @@ export default function ClosetScreen() {
   const [showArchived, setShowArchived] = useState(false);
   const archivedCount = shelf(closet.pieces, true).length;
   const shelved = shelf(closet.pieces, showArchived);
-  const sampleCount = closet.pieces.filter(
+  const sampleCount = shelf(closet.pieces, false).filter(
     (piece) => piece.source === "sample",
   ).length;
   const chips = closetChips(shelved);
@@ -198,6 +198,7 @@ export default function ClosetScreen() {
                   showsHorizontalScrollIndicator={false}
                   contentContainerStyle={styles.chips}
                   accessibilityLabel={t("closet.filters")}
+                  testID="closet-filters"
                 >
                   {filterOptions.map((option) => (
                     <Chip
