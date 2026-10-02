@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { AppState } from "react-native";
+import ClosetVision from "../../../modules/closet-vision/src";
 import type { Closet, Piece, Weather } from "../../domain/closet";
 import { occasionLabel, styleLabel } from "../../domain/closet";
 import {
@@ -7,7 +8,9 @@ import {
   clockFor,
   ensureToday,
   resultFor,
+  saveForecast,
 } from "../../domain/today";
+import { forecastFor, forecastWeather } from "../../domain/weather";
 import { useCloset } from "../../state/closet";
 
 export function useToday() {
@@ -58,6 +61,38 @@ export function useToday() {
     return () => subscription.remove();
   }, [update]);
 
+  const [forecastFailed, setForecastFailed] = useState(false);
+  const place = closet.styling.place;
+  const stored = closet.styling.forecast;
+  const localDate = today?.localDate;
+
+  useEffect(() => {
+    const clock = clockFor(new Date());
+    if (!place || forecastWeather(stored, clock.localDate, clock.timeZone))
+      return;
+    let active = true;
+    ClosetVision.forecast(place.latitude, place.longitude)
+      .then((result) => {
+        const fresh = result
+          ? forecastFor(
+              result,
+              clock.localDate,
+              new Date().toISOString(),
+              clock.timeZone,
+            )
+          : null;
+        if (!active) return;
+        setForecastFailed(!fresh);
+        if (fresh) return update((current) => saveForecast(current, fresh));
+      })
+      .catch(() => {
+        if (active) setForecastFailed(true);
+      });
+    return () => {
+      active = false;
+    };
+  }, [place, stored, localDate, update]);
+
   return {
     closet,
     today,
@@ -68,6 +103,7 @@ export function useToday() {
     run,
     busy,
     error,
+    forecastFailed,
   };
 }
 

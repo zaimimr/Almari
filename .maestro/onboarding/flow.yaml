@@ -4,43 +4,101 @@ appId: com.zaimimran.almari
     clearState: true
 - assertVisible: "Step 1 of 6"
 - takeScreenshot: planning/build/onboarding/01-hijab
+- scrollUntilVisible:
+    element: "Always"
+    direction: DOWN
 - tapOn: "Always"
+- scrollUntilVisible:
+    element: "Full: arms, legs and neck"
+    direction: DOWN
 - tapOn: "Full: arms, legs and neck"
+- scrollUntilVisible:
+    element: "Next"
+    direction: DOWN
 - tapOn: "Next"
 - assertVisible: "Step 2 of 6"
-- assertVisible:
-    text: "Centimetres and °C"
-    selected: true
+- scrollUntilVisible:
+    element:
+      text: "Centimetres and °C"
+      selected: true
+    direction: DOWN
 - takeScreenshot: planning/build/onboarding/02-place
+- scrollUntilVisible:
+    element: "Skip"
+    direction: DOWN
 - tapOn: "Skip"
 - assertVisible: "Step 3 of 6"
+- scrollUntilVisible:
+    element:
+      id: "height-cm"
+    direction: DOWN
+    centerElement: true
 - tapOn:
     id: "height-cm"
 - inputText: "1.65"
 - hideKeyboard
+- scrollUntilVisible:
+    element: "Next"
+    direction: DOWN
 - tapOn: "Next"
-- assertVisible: "Enter a height between 120 and 220 cm."
+- scrollUntilVisible:
+    element: "Enter a height between 120 and 220 cm."
+    direction: DOWN
+- scrollUntilVisible:
+    element:
+      id: "height-cm"
+    direction: UP
+    centerElement: true
 - tapOn:
     id: "height-cm"
 - eraseText: 10
 - inputText: "165"
 - hideKeyboard
+- scrollUntilVisible:
+    element: "Hourglass"
+    direction: DOWN
 - tapOn: "Hourglass"
 - takeScreenshot: planning/build/onboarding/03-body
+- scrollUntilVisible:
+    element: "Next"
+    direction: DOWN
 - tapOn: "Next"
 - assertVisible: "Step 4 of 6"
+- scrollUntilVisible:
+    element: "Loose"
+    direction: DOWN
 - tapOn: "Loose"
+- scrollUntilVisible:
+    element: "Soft and neutral"
+    direction: DOWN
 - tapOn: "Soft and neutral"
+- scrollUntilVisible:
+    element: "Desi"
+    direction: DOWN
 - tapOn: "Desi"
 - takeScreenshot: planning/build/onboarding/04-taste
+- scrollUntilVisible:
+    element: "Next"
+    direction: DOWN
 - tapOn: "Next"
 - assertVisible: "Step 5 of 6"
+- scrollUntilVisible:
+    element: "Medium, warm"
+    direction: DOWN
 - tapOn: "Medium, warm"
-- assertVisible: "Your colours: Warm autumn"
+- scrollUntilVisible:
+    element: "Your colours: Warm autumn"
+    direction: UP
 - takeScreenshot: planning/build/onboarding/05-colours
+- scrollUntilVisible:
+    element: "Next"
+    direction: DOWN
 - tapOn: "Next"
 - assertVisible: "You are set"
 - takeScreenshot: planning/build/onboarding/06-done
+- scrollUntilVisible:
+    element: "Start with the sample closet"
+    direction: DOWN
 - tapOn: "Start with the sample closet"
 - assertVisible: "A little inspiration for today."
 - assertVisible:

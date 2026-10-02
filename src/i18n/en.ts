@@ -509,6 +509,19 @@ export const en = {
   "colours.best": "Colours that suit you",
   "colours.save": "Save my colours",
   "colours.saveFailed": "Your colours could not be saved. Please try again.",
+  "forecast.label": "Forecast for {city}: {low} to {high}",
+  "forecast.mark": "Apple Weather",
+  "forecast.sources": "Data sources",
+  "forecast.suffix": " (forecast)",
+  "forecast.unavailable":
+    "The forecast is not available right now. You can set the weather yourself.",
+  "forecast.manual":
+    "You chose today's weather yourself. It replaces the forecast for today.",
+  "adjust.useForecast": "Forecast",
+  "profile.open": "Your style answers",
+  "profile.change": "Change",
+  "profile.notAnswered": "Not answered",
+  "profile.colours": "Colours",
 };
 
 export type Key = keyof typeof en;

@@ -42,6 +42,8 @@ import {
   PiecePhoto,
 } from "../../../src/ui";
 import { addPiecesRoute } from "../../../src/state/imports";
+import { ForecastNote } from "../../../src/features/today/ForecastNote";
+import { t } from "../../../src/i18n";
 import { theme } from "../../../src/ui/theme";
 
 const shortcuts: GarmentKind[] = ["blazer", "dress", "kurta", "trousers"];
@@ -60,6 +62,12 @@ export default function TodayScreen() {
       >
         <Stack.Screen
           options={{
+            headerLeft: () => (
+              <HeaderAction
+                label={t("profile.open")}
+                onPress={() => router.push("/today/profile")}
+              />
+            ),
             headerRight: () => (
               <HeaderAction
                 label="Everyday style"
@@ -85,6 +93,7 @@ function TodayContent() {
     run,
     busy,
     error,
+    forecastFailed,
   } = useToday();
   const preset = closet.styling.everyday;
   const hasOwned = closet.pieces.some((piece) => piece.source === "owned");
@@ -220,6 +229,7 @@ function TodayContent() {
         <AppText muted style={styles.contextText} testID="today-context">
           {contextText(request)}
           {request.weather.source === "manual" ? " (entered by you)" : ""}
+          {request.weather.source === "forecast" ? t("forecast.suffix") : ""}
         </AppText>
         <Chip
           label="Adjust"
@@ -227,6 +237,7 @@ function TodayContent() {
           onPress={() => router.push("/today/adjust")}
         />
       </View>
+      <ForecastNote closet={closet} request={request} failed={forecastFailed} />
       {today.active === "occasion" ? (
         <View style={styles.banner}>
           <AppText variant="caption">

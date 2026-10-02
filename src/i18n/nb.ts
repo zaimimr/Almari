@@ -512,4 +512,17 @@ export const nb: Record<Key, string> = {
   "colours.best": "Farger som kler deg",
   "colours.save": "Lagre fargene mine",
   "colours.saveFailed": "Fargene kunne ikke lagres. Prøv igjen.",
+  "forecast.label": "Værvarsel for {city}: {low} til {high}",
+  "forecast.mark": "Apple Weather",
+  "forecast.sources": "Datakilder",
+  "forecast.suffix": " (værvarsel)",
+  "forecast.unavailable":
+    "Værvarselet er ikke tilgjengelig akkurat nå. Du kan velge været selv.",
+  "forecast.manual":
+    "Du har valgt været for i dag selv. Det erstatter værvarselet for i dag.",
+  "adjust.useForecast": "Værvarsel",
+  "profile.open": "Stilsvarene dine",
+  "profile.change": "Endre",
+  "profile.notAnswered": "Ikke besvart",
+  "profile.colours": "Farger",
 };
