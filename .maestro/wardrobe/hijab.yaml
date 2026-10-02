@@ -23,3 +23,9 @@ env:
 - takeScreenshot: planning/build/wardrobe/${SHOT}hijab-used
 - tapOn: "Undo last change"
 - assertNotVisible: "Undo last change"
+- scrollUntilVisible:
+    element: "Change .* hijab"
+    centerElement: true
+- tapOn: "Change .* hijab"
+- assertVisible: "In the outfit now"
+- tapOn: "Cancel"

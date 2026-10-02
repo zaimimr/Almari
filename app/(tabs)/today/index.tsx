@@ -622,10 +622,12 @@ function TodayContent() {
                 void run((closetNow) => toggleKeep(closetNow, piece.id));
               }}
               onChange={() =>
-                router.push({
-                  pathname: "/today/replace",
-                  params: { id: piece.id },
-                })
+                roleOf(piece) === "hijab"
+                  ? router.push("/today/hijab")
+                  : router.push({
+                      pathname: "/today/replace",
+                      params: { id: piece.id },
+                    })
               }
             />
           ))}
