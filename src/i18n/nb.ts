@@ -564,7 +564,7 @@ export const nb: Record<Key, string> = {
   "onboarding.city.notFound":
     "Vi fant ikke den byen. Sjekk stavemåten, eller hopp over foreløpig.",
   "onboarding.city.privacy":
-    "Bare byens posisjon sendes for å hente værvarselet. Ingen bilder eller klær forlater telefonen.",
+    "Bare bynavnet du skriver og posisjonen til byen sendes til Apple for å finne været. Ingen bilder eller klær forlater telefonen.",
   "onboarding.body.title": "Kropp",
   "onboarding.body.why": "Brukes bare til å balansere proporsjoner i antrekk.",
   "onboarding.height.label": "Høyde i centimeter",
@@ -686,6 +686,6 @@ export const nb: Record<Key, string> = {
   "settings.reset.confirm": "Slett alt",
   "settings.failed": "Dette kunne ikke lagres. Prøv igjen.",
   "settings.privacy":
-    "Alt blir på denne telefonen. Det finnes ingen konto og ingen innlogging. Bare posisjonen til byen din sendes for å hente været.",
+    "Alt blir på denne telefonen. Det finnes ingen konto og ingen innlogging. Bare bynavnet du skriver og posisjonen til byen sendes til Apple for å finne været.",
   "settings.version": "Versjon {version}",
 };

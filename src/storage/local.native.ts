@@ -9,6 +9,7 @@ const photos = new Directory(Paths.document, "closet-photos");
 export const closetStorage: ClosetStorage = keyedStorage(
   (key) => Storage.getItem(key),
   (key, value) => Storage.setItem(key, value),
+  (key) => Storage.removeItem(key),
 );
 
 export async function keepPhoto(uri: string): Promise<string> {
@@ -36,6 +37,10 @@ export async function discardPhoto(photo: string) {
   if (isSamplePhoto(photo)) return;
   const file = new File(photos, photo);
   if (file.exists) file.delete();
+}
+
+export async function discardAllPhotos() {
+  if (photos.exists) photos.delete();
 }
 
 export function lowOnSpace() {

@@ -4,6 +4,7 @@ import { sampleTraits } from "./samples";
 export interface ClosetStorage {
   read(): Promise<string | null>;
   write(value: string): Promise<void>;
+  clear?(): Promise<void>;
 }
 
 export const closetKeys = ["closet.v3", "closet.v2", "closet.v1"] as const;
@@ -11,6 +12,7 @@ export const closetKeys = ["closet.v3", "closet.v2", "closet.v1"] as const;
 export function keyedStorage(
   get: (key: string) => Promise<string | null>,
   set: (key: string, value: string) => Promise<void>,
+  remove: (key: string) => Promise<void>,
 ): ClosetStorage {
   return {
     async read() {
@@ -21,6 +23,9 @@ export function keyedStorage(
       return null;
     },
     write: (value) => set(closetKeys[0], value),
+    async clear() {
+      for (const key of closetKeys) await remove(key);
+    },
   };
 }
 
@@ -48,10 +53,22 @@ export class ClosetRepository {
   }
 
   update(transform: (closet: Closet) => Closet): Promise<void> {
+    return this.enqueue(transform, false);
+  }
+
+  reset(transform: (closet: Closet) => Closet): Promise<void> {
+    return this.enqueue(transform, true);
+  }
+
+  private enqueue(
+    transform: (closet: Closet) => Closet,
+    clear: boolean,
+  ): Promise<void> {
     const operation = this.queue.then(async () => {
       if (!this.initialized)
         throw new Error("Your closet is still opening. Try again in a moment.");
       const next = transform(this.snapshot);
+      if (clear) await this.storage.clear?.();
       await this.storage.write(JSON.stringify(next));
       this.snapshot = next;
       this.listeners.forEach((listener) => listener());

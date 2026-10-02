@@ -184,6 +184,9 @@ test("an existing closet with her own clothes skips onboarding and keeps closet.
       async (key, value) => {
         store.set(key, value);
       },
+      async (key) => {
+        store.delete(key);
+      },
     ),
   );
   await repository.load();
@@ -196,4 +199,25 @@ test("an existing closet with her own clothes skips onboarding and keeps closet.
   const written = JSON.parse(store.get("closet.v3")!);
   assert.equal(written.styling.units, "imperial");
   assert.equal(written.styling.onboarded, true);
+});
+
+test("reset removes every older closet key and writes only closet.v3", async () => {
+  const store = new Map<string, string>([
+    ["closet.v2", JSON.stringify(closetV2)],
+    ["closet.v1", "{}"],
+  ]);
+  const repository = new ClosetRepository(
+    keyedStorage(
+      async (key) => store.get(key) ?? null,
+      async (key, value) => {
+        store.set(key, value);
+      },
+      async (key) => {
+        store.delete(key);
+      },
+    ),
+  );
+  await repository.load();
+  await repository.reset((closet) => closet);
+  assert.deepEqual([...store.keys()], ["closet.v3"]);
 });

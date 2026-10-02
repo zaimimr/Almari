@@ -93,5 +93,9 @@ export function useCloset() {
     repository.getSnapshot,
     repository.getSnapshot,
   );
-  return { closet, update: repository.update.bind(repository) };
+  return {
+    closet,
+    update: repository.update.bind(repository),
+    reset: repository.reset.bind(repository),
+  };
 }

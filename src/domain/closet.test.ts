@@ -387,6 +387,9 @@ function keyed(entries: Record<string, string>) {
     async (key, value) => {
       store.set(key, value);
     },
+    async (key) => {
+      store.delete(key);
+    },
   );
   return { store, storage };
 }

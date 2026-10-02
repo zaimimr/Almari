@@ -3,6 +3,7 @@ import { keyedStorage, type ClosetStorage } from "../domain/repository";
 export const closetStorage: ClosetStorage = keyedStorage(
   async (key) => window.localStorage.getItem(key),
   async (key, value) => window.localStorage.setItem(key, value),
+  async (key) => window.localStorage.removeItem(key),
 );
 
 export async function keepPhoto(uri: string): Promise<string> {
@@ -26,6 +27,8 @@ export function photoUri(photo: string) {
 }
 
 export async function discardPhoto(_photo: string) {}
+
+export async function discardAllPhotos() {}
 
 export function lowOnSpace() {
   return false;

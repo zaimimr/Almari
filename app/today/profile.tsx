@@ -13,7 +13,7 @@ import { formatHeight } from "../../src/domain/units";
 import { seasonLabel } from "../../src/features/colourText";
 import { t } from "../../src/i18n";
 import { useCloset } from "../../src/state/closet";
-import { discardPhoto } from "../../src/storage/local";
+import { discardAllPhotos } from "../../src/storage/local";
 import {
   AppText,
   Button,
@@ -27,7 +27,7 @@ import { confirmAction } from "../../src/ui/confirm";
 const languages = ["system", "en", "nb"] as const;
 
 export default function Profile() {
-  const { closet, update } = useCloset();
+  const { closet, update, reset: resetStore } = useCloset();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const answers = answersFrom(closet);
@@ -112,13 +112,8 @@ export default function Profile() {
     );
     if (!confirmed) return;
     await run(async () => {
-      let files: string[] = [];
-      await update((current) => {
-        const result = resetCloset(current);
-        files = result.files;
-        return result.closet;
-      });
-      for (const file of files) await discardPhoto(file).catch(() => undefined);
+      await resetStore((current) => resetCloset(current).closet);
+      await discardAllPhotos().catch(() => undefined);
       router.replace("/onboarding");
     });
   }
@@ -136,12 +131,10 @@ export default function Profile() {
             label={t("profile.change")}
             accessibilityLabel={`${t("profile.change")}: ${row.title}`}
             onPress={() =>
-              row.step === "colours"
-                ? router.push("/onboarding/colours")
-                : router.push({
-                    pathname: "/onboarding",
-                    params: { step: row.step },
-                  })
+              router.push({
+                pathname: "/onboarding",
+                params: { step: row.step },
+              })
             }
           />
         </View>

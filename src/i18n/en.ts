@@ -553,7 +553,7 @@ export const en = {
   "onboarding.city.notFound":
     "We could not find that city. Check the spelling, or skip for now.",
   "onboarding.city.privacy":
-    "Only the city's position is sent for the forecast. No photos or clothes leave your phone.",
+    "Only the city name you type (to find it) and its position (for the forecast) are sent to Apple. No photos or clothes leave your phone.",
   "onboarding.body.title": "Body",
   "onboarding.body.why": "Used only to balance proportions in outfits.",
   "onboarding.height.label": "Height in centimetres",
@@ -674,7 +674,7 @@ export const en = {
   "settings.reset.confirm": "Delete everything",
   "settings.failed": "This could not be saved. Please try again.",
   "settings.privacy":
-    "Everything stays on this phone. There is no account and no login. Only the position of your city is sent to get the weather.",
+    "Everything stays on this phone. There is no account and no login. Only the city name you type (to find it) and its position (for the weather) are sent to Apple.",
   "settings.version": "Version {version}",
 };
 
