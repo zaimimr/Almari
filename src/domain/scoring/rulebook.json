@@ -1,0 +1,1557 @@
+{
+  "version": 1,
+  "thresholds": {
+    "neutralChroma": 8,
+    "vividChroma": 15,
+    "mutedChroma": 35,
+    "loudChroma": 50,
+    "saturatedChroma": 45,
+    "sameDE": 5,
+    "nearMissDE": [5, 12],
+    "nearMissHue": 25,
+    "tonalHue": 20,
+    "tonalMinDL": 15,
+    "analogousHue": [20, 60],
+    "complementHue": [150, 210],
+    "mutedDL": 25,
+    "echoDE": 10,
+    "accentJoinDE": 12,
+    "contrastDL": 25,
+    "lightL": 75,
+    "paletteShare": 0.15
+  },
+  "rules": [
+    {
+      "id": "occasion-tags-match",
+      "source": "legacy:occasion-tags",
+      "layer": "style",
+      "if": {
+        "all": [
+          { "has": { "tagged": "occasion" } },
+          { "has": { "tagged": "other" }, "count": { "max": 0 } }
+        ]
+      },
+      "weight": 1.0,
+      "reason": true
+    },
+    {
+      "id": "occasion-tag-mismatch",
+      "source": "legacy:occasion-tags",
+      "layer": "style",
+      "if": { "has": { "tagged": "other" } },
+      "weight": -1.5
+    },
+    {
+      "id": "layer-for-cold",
+      "source": "legacy:weather",
+      "layer": "style",
+      "when": { "weather": ["cold"] },
+      "if": { "has": { "role": ["layer", "outer"] } },
+      "weight": 2.0,
+      "reason": true
+    },
+    {
+      "id": "layer-for-mild",
+      "source": "legacy:weather",
+      "layer": "style",
+      "when": { "weather": ["mild"] },
+      "if": { "has": { "role": ["layer", "outer"] } },
+      "weight": 0.5,
+      "reason": true
+    },
+    {
+      "id": "layer-at-work",
+      "source": "legacy:work-layer",
+      "layer": "style",
+      "when": { "occasion": ["work"], "weather": ["unknown", "warm"] },
+      "if": { "has": { "role": ["layer", "outer"] } },
+      "weight": 0.5,
+      "reason": true
+    },
+    {
+      "id": "two-layers-not-cold",
+      "source": "legacy:layers",
+      "layer": "style",
+      "when": { "weather": ["unknown", "warm", "mild"] },
+      "if": {
+        "all": [
+          { "has": { "role": ["layer"] } },
+          { "has": { "role": ["outer"] } }
+        ]
+      },
+      "weight": -1.5
+    },
+    {
+      "id": "dress-with-bottom",
+      "source": "legacy:dress-bottom",
+      "layer": "style",
+      "if": {
+        "all": [
+          { "has": { "role": ["main"], "category": ["dress"] } },
+          { "has": { "role": ["bottom"] } },
+          {
+            "not": {
+              "has": { "category": ["dress"], "length": ["thigh", "knee"] }
+            }
+          }
+        ]
+      },
+      "weight": -1.0
+    },
+    {
+      "id": "hijab-solid-with-print",
+      "source": "western-hijab:1",
+      "layer": "style",
+      "if": {
+        "all": [
+          {
+            "has": { "role": ["main"], "pattern": ["print", "stripe", "check"] }
+          },
+          { "has": { "role": ["hijab"], "pattern": ["solid"] } }
+        ]
+      },
+      "weight": 1.0,
+      "reason": true
+    },
+    {
+      "id": "hijab-from-print",
+      "source": "western-hijab:2",
+      "layer": "color",
+      "if": {
+        "pair": [
+          { "role": ["hijab"], "pattern": ["solid"] },
+          {
+            "role": ["main"],
+            "pattern": ["print", "stripe", "check", "embroidered"]
+          }
+        ],
+        "relation": "echo"
+      },
+      "weight": 0.6,
+      "reason": true
+    },
+    {
+      "id": "printed-hijab-plain-outfit",
+      "source": "western-hijab:3",
+      "layer": "style",
+      "if": {
+        "all": [
+          {
+            "has": {
+              "role": ["hijab"],
+              "pattern": ["print", "stripe", "check"]
+            }
+          },
+          { "has": { "role": ["main"], "pattern": ["solid"] } },
+          {
+            "not": {
+              "has": {
+                "role": ["bottom", "layer", "outer"],
+                "pattern": ["print", "stripe", "check"]
+              }
+            }
+          }
+        ]
+      },
+      "weight": 0.6,
+      "reason": true
+    },
+    {
+      "id": "print-hijab-print-outfit",
+      "source": "western-hijab:50",
+      "layer": "style",
+      "when": { "profile": { "printOnPrint": [false, null] } },
+      "if": {
+        "all": [
+          {
+            "has": {
+              "role": ["hijab"],
+              "pattern": ["print", "stripe", "check"]
+            }
+          },
+          {
+            "has": {
+              "role": ["main", "bottom"],
+              "pattern": ["print", "stripe", "check"]
+            }
+          }
+        ]
+      },
+      "weight": -1.0
+    },
+    {
+      "id": "neutral-hijab-colourful-outfit",
+      "source": "western-hijab:6",
+      "layer": "color",
+      "if": {
+        "all": [
+          { "outfit": "accent-count", "op": ">=", "value": 2 },
+          {
+            "has": {
+              "role": ["hijab"],
+              "colorClass": [
+                "black",
+                "white",
+                "grey",
+                "navy",
+                "denim",
+                "warm-neutral"
+              ]
+            }
+          }
+        ]
+      },
+      "weight": 0.8,
+      "reason": true
+    },
+    {
+      "id": "hijab-tonal-main",
+      "source": "western-hijab:7",
+      "layer": "color",
+      "if": {
+        "pair": [{ "role": ["hijab"] }, { "role": ["main"] }],
+        "relation": "tonal"
+      },
+      "weight": 0.6,
+      "reason": true
+    },
+    {
+      "id": "hijab-contrast-main",
+      "source": "legacy:hijab-contrast",
+      "layer": "color",
+      "if": {
+        "pair": [{ "role": ["hijab"] }, { "role": ["main"] }],
+        "relation": "contrast"
+      },
+      "weight": 0.8,
+      "reason": true
+    },
+    {
+      "id": "hijab-repeats-colour",
+      "source": "western-hijab:8",
+      "layer": "color",
+      "if": {
+        "pair": [{ "role": ["hijab"] }, { "role": ["bottom", "shoes", "bag"] }],
+        "relation": "echo"
+      },
+      "weight": 0.6,
+      "reason": true
+    },
+    {
+      "id": "bag-matches",
+      "source": "western-hijab:38",
+      "layer": "color",
+      "if": {
+        "pair": [{ "role": ["bag"] }, { "role": ["hijab", "shoes"] }],
+        "relation": "echo"
+      },
+      "weight": 0.4,
+      "reason": true
+    },
+    {
+      "id": "statement-hijab-busy-main",
+      "source": "western-hijab:52",
+      "layer": "style",
+      "if": {
+        "all": [
+          {
+            "any": [
+              { "has": { "role": ["hijab"], "embellishment": ["heavy"] } },
+              { "has": { "role": ["hijab"], "fabric": ["velvet"] } }
+            ]
+          },
+          { "has": { "role": ["main"], "embellishment": ["heavy"] } }
+        ]
+      },
+      "weight": -0.6
+    },
+    {
+      "id": "hijab-dressy-fabric",
+      "source": "western-hijab:13",
+      "layer": "style",
+      "when": { "minFormality": 3 },
+      "if": {
+        "has": { "role": ["hijab"], "fabric": ["chiffon", "silk", "satin"] }
+      },
+      "weight": 0.6,
+      "reason": true
+    },
+    {
+      "id": "hijab-casual-fabric-formal",
+      "source": "desi:22",
+      "layer": "style",
+      "when": { "minFormality": 4 },
+      "if": { "has": { "role": ["hijab"], "fabric": ["jersey", "cotton"] } },
+      "weight": -0.6
+    },
+    {
+      "id": "hijab-everyday-fabric",
+      "source": "western-hijab:12",
+      "layer": "style",
+      "when": { "maxFormality": 2 },
+      "if": {
+        "has": {
+          "role": ["hijab"],
+          "fabric": ["jersey", "modal", "cotton", "linen"]
+        }
+      },
+      "weight": 0.3,
+      "reason": true
+    },
+    {
+      "id": "sparkly-hijab-work",
+      "source": "western-hijab:51",
+      "layer": "style",
+      "when": { "occasion": ["work"] },
+      "if": {
+        "has": { "role": ["hijab"], "embellishment": ["light", "heavy"] }
+      },
+      "weight": -0.6
+    },
+    {
+      "id": "hijab-warm-fabric-cold",
+      "source": "western-hijab:59",
+      "layer": "style",
+      "when": { "weather": ["cold"] },
+      "if": {
+        "has": { "role": ["hijab"], "fabric": ["wool", "knit", "velvet"] }
+      },
+      "weight": 0.6,
+      "reason": true
+    },
+    {
+      "id": "hijab-cool-fabric-warm",
+      "source": "western-hijab:58",
+      "layer": "style",
+      "when": { "weather": ["warm"] },
+      "if": {
+        "has": { "role": ["hijab"], "fabric": ["cotton", "linen", "modal"] }
+      },
+      "weight": 0.5,
+      "reason": true
+    },
+    {
+      "id": "volume-both-halves",
+      "source": "western-hijab:17",
+      "layer": "style",
+      "if": {
+        "all": [
+          { "has": { "role": ["main"], "volume": ["voluminous"] } },
+          { "has": { "role": ["bottom"], "volume": ["voluminous"] } }
+        ]
+      },
+      "weight": -1.0
+    },
+    {
+      "id": "volume-balanced",
+      "source": "western-hijab:17",
+      "layer": "style",
+      "if": {
+        "any": [
+          {
+            "all": [
+              { "has": { "role": ["main"], "volume": ["voluminous"] } },
+              {
+                "has": { "role": ["bottom"], "volume": ["fitted", "straight"] }
+              }
+            ]
+          },
+          {
+            "all": [
+              { "has": { "role": ["main"], "volume": ["fitted", "straight"] } },
+              { "has": { "role": ["bottom"], "volume": ["voluminous"] } }
+            ]
+          }
+        ]
+      },
+      "weight": 0.5,
+      "reason": true
+    },
+    {
+      "id": "same-length-layers",
+      "source": "western-hijab:53",
+      "layer": "style",
+      "if": {
+        "pair": [{ "role": ["layer", "outer"] }, { "role": ["main"] }],
+        "relation": "same-length"
+      },
+      "weight": -0.5
+    },
+    {
+      "id": "bulky-cardigan-volume",
+      "source": "western-hijab:54",
+      "layer": "style",
+      "if": {
+        "all": [
+          { "has": { "kind": ["cardigan"], "volume": ["voluminous"] } },
+          { "has": { "role": ["bottom"], "volume": ["voluminous"] } }
+        ]
+      },
+      "weight": -0.5
+    },
+    {
+      "id": "top-shorter-than-preference",
+      "source": "western-hijab:18",
+      "layer": "style",
+      "when": {
+        "profile": { "minTopLength": ["hip", "thigh", "knee", "calf", "ankle"] }
+      },
+      "if": { "has": { "role": ["main"], "belowMinLength": true } },
+      "weight": -1.0
+    },
+    {
+      "id": "prefers-trousers",
+      "source": "western-hijab:18",
+      "layer": "style",
+      "when": { "profile": { "bottoms": ["trousers"] } },
+      "if": { "has": { "kind": ["skirt", "lehenga"] } },
+      "weight": -1.5
+    },
+    {
+      "id": "prefers-skirts",
+      "source": "western-hijab:18",
+      "layer": "style",
+      "when": { "profile": { "bottoms": ["skirts"] }, "style": ["western"] },
+      "if": { "has": { "kind": ["trousers", "jeans", "wide-leg"] } },
+      "weight": -1.0
+    },
+    {
+      "id": "belt-over-long-piece",
+      "source": "western-hijab:22",
+      "layer": "style",
+      "when": { "profile": { "beltOverOuter": [true] } },
+      "if": {
+        "all": [
+          { "has": { "kind": ["belt"] } },
+          {
+            "has": {
+              "kind": ["abaya", "dress", "kaftan", "cardigan"],
+              "length": ["calf", "ankle"]
+            }
+          }
+        ]
+      },
+      "weight": 0.5,
+      "reason": true
+    },
+    {
+      "id": "no-belt-over-long-piece",
+      "source": "western-hijab:22",
+      "layer": "style",
+      "when": { "profile": { "beltOverOuter": [false] } },
+      "if": {
+        "all": [
+          { "has": { "kind": ["belt"] } },
+          { "has": { "kind": ["abaya", "dress", "kaftan", "cardigan"] } }
+        ]
+      },
+      "weight": -1.5
+    },
+    {
+      "id": "too-casual-for-occasion",
+      "source": "western-hijab:30",
+      "layer": "style",
+      "if": { "outfit": "formality-below", "op": ">=", "value": 2 },
+      "weight": -1.0
+    },
+    {
+      "id": "too-formal-for-occasion",
+      "source": "western-hijab:31",
+      "layer": "style",
+      "if": { "outfit": "formality-above", "op": ">=", "value": 2 },
+      "weight": -1.0
+    },
+    {
+      "id": "formality-fits-occasion",
+      "source": "desi:ladder",
+      "layer": "style",
+      "if": { "outfit": "formality-fit", "op": "=", "value": 1 },
+      "weight": 0.5,
+      "reason": true
+    },
+    {
+      "id": "formality-spread",
+      "source": "western-hijab:35",
+      "layer": "style",
+      "if": {
+        "all": [
+          { "outfit": "formality-spread", "op": ">=", "value": 2 },
+          {
+            "not": {
+              "all": [
+                { "has": { "category": ["dress"], "formality": { "max": 2 } } },
+                { "has": { "kind": ["sneakers"] } }
+              ]
+            }
+          }
+        ]
+      },
+      "weight": -0.6
+    },
+    {
+      "id": "not-dressed-up",
+      "source": "desi:32",
+      "layer": "style",
+      "when": { "minFormality": 3 },
+      "if": {
+        "all": [
+          {
+            "has": {
+              "role": ["main"],
+              "fabric": ["lawn", "cotton", "jersey", "denim", "linen", "knit"],
+              "embellishment": ["none"]
+            }
+          },
+          {
+            "not": {
+              "has": {
+                "fabric": [
+                  "chiffon",
+                  "silk",
+                  "satin",
+                  "velvet",
+                  "organza",
+                  "net"
+                ]
+              }
+            }
+          },
+          {
+            "not": {
+              "has": {
+                "role": ["main", "bottom", "layer", "outer"],
+                "embellishment": ["light", "heavy"]
+              }
+            }
+          },
+          {
+            "not": {
+              "has": { "kind": ["sharara", "gharara", "lehenga", "anarkali"] }
+            }
+          }
+        ]
+      },
+      "weight": -0.8
+    },
+    {
+      "id": "dressed-up-element",
+      "source": "desi:32",
+      "layer": "style",
+      "when": { "minFormality": 3 },
+      "if": {
+        "any": [
+          {
+            "has": {
+              "role": ["main", "bottom"],
+              "kind": ["sharara", "gharara", "lehenga", "anarkali"]
+            }
+          },
+          {
+            "has": {
+              "role": ["main", "bottom"],
+              "embellishment": ["light", "heavy"]
+            }
+          },
+          {
+            "has": {
+              "role": ["main", "bottom", "layer", "outer"],
+              "fabric": ["chiffon", "silk", "satin", "velvet", "organza", "net"]
+            }
+          }
+        ]
+      },
+      "weight": 0.5,
+      "reason": true
+    },
+    {
+      "id": "work-no-bling",
+      "source": "desi:25",
+      "layer": "style",
+      "when": { "occasion": ["work"] },
+      "if": {
+        "has": {
+          "role": ["main", "bottom", "layer", "outer"],
+          "embellishment": ["heavy"]
+        }
+      },
+      "weight": -1.0
+    },
+    {
+      "id": "work-palette",
+      "source": "desi:52",
+      "layer": "color",
+      "when": { "occasion": ["work"] },
+      "if": {
+        "any": [
+          {
+            "has": {
+              "role": ["main"],
+              "colorClass": ["navy", "white", "grey", "warm-neutral"]
+            }
+          },
+          { "has": { "role": ["main"], "shade": ["pastel"] } }
+        ]
+      },
+      "weight": 0.3
+    },
+    {
+      "id": "formal-shoes",
+      "source": "western-hijab:36",
+      "layer": "style",
+      "when": { "minFormality": 4 },
+      "if": { "has": { "kind": ["heels", "khussa"] } },
+      "weight": 0.8,
+      "reason": true
+    },
+    {
+      "id": "formal-bag",
+      "source": "western-hijab:36",
+      "layer": "style",
+      "when": { "minFormality": 4 },
+      "if": { "has": { "kind": ["clutch"] } },
+      "weight": 0.6,
+      "reason": true
+    },
+    {
+      "id": "sneakers-formal",
+      "source": "western-hijab:33",
+      "layer": "style",
+      "when": { "minFormality": 4 },
+      "if": { "has": { "kind": ["sneakers"] } },
+      "weight": -1.0
+    },
+    {
+      "id": "casual-bag-formal",
+      "source": "western-hijab:33",
+      "layer": "style",
+      "when": { "minFormality": 4 },
+      "if": { "has": { "kind": ["tote", "backpack", "crossbody"] } },
+      "weight": -0.8
+    },
+    {
+      "id": "sneakers-desi-dinner",
+      "source": "desi:36",
+      "layer": "style",
+      "when": { "style": ["desi"], "minFormality": 3, "maxFormality": 3 },
+      "if": { "has": { "kind": ["sneakers"] } },
+      "weight": -0.8
+    },
+    {
+      "id": "work-shoes",
+      "source": "western-hijab:30",
+      "layer": "style",
+      "when": { "occasion": ["work"] },
+      "if": { "has": { "kind": ["loafers", "flats", "boots"] } },
+      "weight": 0.4,
+      "reason": true
+    },
+    {
+      "id": "work-bag",
+      "source": "western-hijab:30",
+      "layer": "style",
+      "when": { "occasion": ["work"] },
+      "if": { "has": { "kind": ["handbag", "tote"] } },
+      "weight": 0.3
+    },
+    {
+      "id": "everyday-easy-shoes",
+      "source": "western-hijab:31",
+      "layer": "style",
+      "when": { "maxFormality": 1 },
+      "if": {
+        "has": { "kind": ["sneakers", "flats", "sandals", "khussa", "boots"] }
+      },
+      "weight": 0.3
+    },
+    {
+      "id": "everyday-easy-bag",
+      "source": "western-hijab:31",
+      "layer": "style",
+      "when": { "maxFormality": 1 },
+      "if": { "has": { "kind": ["crossbody", "tote", "backpack"] } },
+      "weight": 0.3
+    },
+    {
+      "id": "dinner-shoes-bag",
+      "source": "western-hijab:32",
+      "layer": "style",
+      "when": { "occasion": ["dinner"] },
+      "if": { "has": { "kind": ["heels", "clutch"] } },
+      "weight": 0.4,
+      "reason": true
+    },
+    {
+      "id": "khussa-for-mehndi",
+      "source": "desi:34",
+      "layer": "style",
+      "when": { "occasion": ["party"], "style": ["desi"] },
+      "if": { "has": { "kind": ["khussa", "flats"] } },
+      "weight": 0.4,
+      "reason": true
+    },
+    {
+      "id": "gharara-short-top",
+      "source": "desi:1",
+      "layer": "style",
+      "if": {
+        "all": [
+          { "has": { "kind": ["gharara"] } },
+          { "has": { "role": ["main"], "length": ["hip", "thigh"] } }
+        ]
+      },
+      "weight": 1.0,
+      "reason": true
+    },
+    {
+      "id": "gharara-long-top",
+      "source": "desi:1",
+      "layer": "style",
+      "if": {
+        "all": [
+          { "has": { "kind": ["gharara"] } },
+          { "has": { "role": ["main"], "length": ["knee", "calf", "ankle"] } }
+        ]
+      },
+      "weight": -1.0
+    },
+    {
+      "id": "sharara-short-top",
+      "source": "desi:2",
+      "layer": "style",
+      "if": {
+        "all": [
+          { "has": { "kind": ["sharara"] } },
+          { "has": { "role": ["main"], "length": ["hip", "thigh"] } }
+        ]
+      },
+      "weight": 0.6,
+      "reason": true
+    },
+    {
+      "id": "sharara-long-top",
+      "source": "desi:2",
+      "layer": "style",
+      "if": {
+        "all": [
+          { "has": { "kind": ["sharara"] } },
+          { "has": { "role": ["main"], "length": ["calf", "ankle"] } }
+        ]
+      },
+      "weight": -0.6
+    },
+    {
+      "id": "anarkali-slim-bottom",
+      "source": "desi:3",
+      "layer": "style",
+      "if": {
+        "all": [
+          { "has": { "kind": ["anarkali"] } },
+          {
+            "any": [
+              { "has": { "kind": ["churidar"] } },
+              { "has": { "role": ["bottom"], "volume": ["fitted"] } }
+            ]
+          }
+        ]
+      },
+      "weight": 1.0,
+      "reason": true
+    },
+    {
+      "id": "anarkali-full-bottom",
+      "source": "desi:3",
+      "layer": "style",
+      "if": {
+        "all": [
+          { "has": { "kind": ["anarkali"] } },
+          {
+            "any": [
+              { "has": { "kind": ["sharara", "gharara", "lehenga"] } },
+              { "has": { "role": ["bottom"], "volume": ["voluminous"] } }
+            ]
+          }
+        ]
+      },
+      "weight": -1.0
+    },
+    {
+      "id": "long-kameez-straight-bottom",
+      "source": "desi:4",
+      "layer": "style",
+      "if": {
+        "all": [
+          {
+            "has": {
+              "kind": ["kurta", "kurti", "kameez", "tunic"],
+              "length": ["knee", "calf"]
+            }
+          },
+          {
+            "any": [
+              { "has": { "kind": ["shalwar", "churidar"] } },
+              {
+                "has": { "role": ["bottom"], "volume": ["straight", "fitted"] }
+              }
+            ]
+          }
+        ]
+      },
+      "weight": 0.6,
+      "reason": true
+    },
+    {
+      "id": "long-kameez-gharara",
+      "source": "desi:4",
+      "layer": "style",
+      "if": {
+        "all": [
+          {
+            "has": {
+              "kind": ["kurta", "kurti", "kameez", "tunic"],
+              "length": ["knee", "calf"]
+            }
+          },
+          { "has": { "kind": ["gharara"] } }
+        ]
+      },
+      "weight": -1.0
+    },
+    {
+      "id": "short-kurti-shalwar",
+      "source": "desi:5",
+      "layer": "style",
+      "if": {
+        "all": [
+          {
+            "has": {
+              "kind": ["kurta", "kurti", "kameez", "tunic"],
+              "length": ["hip", "thigh"]
+            }
+          },
+          { "has": { "kind": ["shalwar"] } }
+        ]
+      },
+      "weight": 0.4
+    },
+    {
+      "id": "jeans-long-top",
+      "source": "desi:6",
+      "layer": "style",
+      "if": {
+        "all": [
+          { "has": { "kind": ["jeans"] } },
+          {
+            "any": [
+              { "has": { "role": ["main"], "length": ["calf", "ankle"] } },
+              { "has": { "kind": ["anarkali"] } },
+              { "has": { "role": ["main"], "embellishment": ["heavy"] } }
+            ]
+          }
+        ]
+      },
+      "weight": -0.6
+    },
+    {
+      "id": "short-kurti-jeans",
+      "source": "desi:39",
+      "layer": "style",
+      "when": { "style": ["desi"], "maxFormality": 2 },
+      "if": {
+        "all": [
+          {
+            "has": {
+              "kind": ["kurta", "kurti", "kameez", "tunic"],
+              "length": ["hip", "thigh"]
+            }
+          },
+          { "has": { "kind": ["jeans"] } }
+        ]
+      },
+      "weight": 0.6,
+      "reason": true
+    },
+    {
+      "id": "bright-top-plain-bottom",
+      "source": "desi:8",
+      "layer": "color",
+      "if": {
+        "all": [
+          {
+            "any": [
+              { "has": { "role": ["main"], "colorClass": ["accent"] } },
+              {
+                "has": {
+                  "role": ["main"],
+                  "pattern": ["print", "stripe", "check"]
+                }
+              }
+            ]
+          },
+          {
+            "has": {
+              "role": ["bottom"],
+              "colorClass": [
+                "black",
+                "white",
+                "grey",
+                "navy",
+                "denim",
+                "warm-neutral"
+              ]
+            }
+          }
+        ]
+      },
+      "weight": 0.5,
+      "reason": true
+    },
+    {
+      "id": "formal-top-casual-bottom",
+      "source": "desi:10",
+      "layer": "style",
+      "if": {
+        "all": [
+          { "has": { "role": ["main"], "embellishment": ["heavy"] } },
+          {
+            "any": [
+              { "has": { "kind": ["jeans"] } },
+              {
+                "has": {
+                  "role": ["bottom"],
+                  "fabric": ["denim", "cotton", "jersey"]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "weight": -1.0
+    },
+    {
+      "id": "printed-kameez-plain-bottom",
+      "source": "desi:13",
+      "layer": "style",
+      "when": { "style": ["desi"] },
+      "if": {
+        "all": [
+          {
+            "has": {
+              "role": ["main"],
+              "pattern": ["print", "stripe", "check", "embroidered"]
+            }
+          },
+          { "has": { "role": ["bottom"], "pattern": ["solid"] } }
+        ]
+      },
+      "weight": 0.6,
+      "reason": true
+    },
+    {
+      "id": "plain-kameez-statement-dupatta",
+      "source": "desi:14",
+      "layer": "style",
+      "if": {
+        "all": [
+          {
+            "has": {
+              "role": ["main"],
+              "pattern": ["solid"],
+              "embellishment": ["none"]
+            }
+          },
+          {
+            "any": [
+              {
+                "has": {
+                  "kind": ["dupatta"],
+                  "pattern": ["print", "stripe", "check", "embroidered"]
+                }
+              },
+              {
+                "has": {
+                  "kind": ["dupatta"],
+                  "embellishment": ["light", "heavy"]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "weight": 0.8,
+      "reason": true,
+      "scale": [{ "setting": "region", "value": "south-asian", "factor": 1.25 }]
+    },
+    {
+      "id": "printed-kameez-plain-dupatta",
+      "source": "desi:13",
+      "layer": "style",
+      "if": {
+        "all": [
+          {
+            "has": {
+              "role": ["main"],
+              "pattern": ["print", "stripe", "check", "embroidered"]
+            }
+          },
+          { "has": { "kind": ["dupatta"], "pattern": ["solid"] } }
+        ]
+      },
+      "weight": 0.6,
+      "reason": true
+    },
+    {
+      "id": "set-together",
+      "source": "desi:11",
+      "layer": "style",
+      "if": { "outfit": "set-together", "op": ">=", "value": 2 },
+      "weight": 0.4,
+      "reason": true
+    },
+    {
+      "id": "formal-set-together",
+      "source": "desi:11",
+      "layer": "style",
+      "when": { "minFormality": 4 },
+      "if": { "outfit": "set-together", "op": ">=", "value": 2 },
+      "weight": 0.6
+    },
+    {
+      "id": "formal-set-split",
+      "source": "desi:11",
+      "layer": "style",
+      "if": { "outfit": "formal-set-split", "op": ">=", "value": 1 },
+      "weight": -1.0
+    },
+    {
+      "id": "dupatta-echo",
+      "source": "colour:echo",
+      "layer": "color",
+      "when": { "style": ["desi"] },
+      "if": {
+        "pair": [{ "kind": ["dupatta"] }, { "role": ["main"] }],
+        "relation": "echo"
+      },
+      "weight": 1.0,
+      "reason": true,
+      "scale": [{ "setting": "region", "value": "south-asian", "factor": 1.25 }]
+    },
+    {
+      "id": "hijab-dupatta-three-colours",
+      "source": "desi:21",
+      "layer": "color",
+      "if": {
+        "all": [
+          { "has": { "kind": ["dupatta"], "colorClass": ["accent"] } },
+          { "has": { "role": ["hijab"], "colorClass": ["accent"] } },
+          {
+            "not": {
+              "pair": [{ "role": ["hijab"] }, { "role": ["main"] }],
+              "relation": "echo"
+            }
+          },
+          {
+            "not": {
+              "pair": [{ "role": ["hijab"] }, { "kind": ["dupatta"] }],
+              "relation": "echo"
+            }
+          }
+        ]
+      },
+      "weight": -0.6
+    },
+    {
+      "id": "dupatta-for-occasion",
+      "source": "desi:18",
+      "layer": "style",
+      "when": {
+        "style": ["desi"],
+        "minFormality": 4,
+        "profile": { "dupattaExpected": [true, null] }
+      },
+      "if": { "has": { "kind": ["dupatta"] } },
+      "weight": 0.3,
+      "reason": true,
+      "scale": [{ "setting": "region", "value": "south-asian", "factor": 1.5 }]
+    },
+    {
+      "id": "dupatta-expected",
+      "source": "desi:19",
+      "layer": "style",
+      "when": {
+        "style": ["desi"],
+        "minFormality": 3,
+        "profile": { "dupattaExpected": [true] }
+      },
+      "if": { "has": { "kind": ["dupatta"] }, "count": { "max": 0 } },
+      "weight": -1.0
+    },
+    {
+      "id": "mehndi-colours",
+      "source": "desi:46",
+      "layer": "color",
+      "when": { "occasion": ["party"], "style": ["desi"] },
+      "if": {
+        "has": {
+          "role": ["main", "accessory"],
+          "family": ["yellow", "green", "orange", "pink"]
+        }
+      },
+      "weight": 0.8,
+      "reason": true
+    },
+    {
+      "id": "barat-jewel-tones",
+      "source": "desi:47",
+      "layer": "color",
+      "when": { "occasion": ["barat"] },
+      "if": { "has": { "role": ["main"], "shade": ["jewel"] } },
+      "weight": 0.8,
+      "reason": true
+    },
+    {
+      "id": "walima-soft-tones",
+      "source": "desi:29",
+      "layer": "color",
+      "when": { "occasion": ["wedding"] },
+      "if": {
+        "any": [
+          { "has": { "role": ["main"], "shade": ["pastel"] } },
+          { "has": { "role": ["main"], "colorClass": ["white"] } }
+        ]
+      },
+      "weight": 0.6,
+      "reason": true
+    },
+    {
+      "id": "bridal-red-guest",
+      "source": "desi:48",
+      "layer": "color",
+      "when": { "occasion": ["wedding", "barat"] },
+      "if": {
+        "has": { "role": ["main", "bottom", "accessory"], "family": ["red"] },
+        "count": { "min": 2 }
+      },
+      "weight": -1.0
+    },
+    {
+      "id": "avoid-white-at-weddings",
+      "source": "desi:49",
+      "layer": "color",
+      "when": {
+        "occasion": ["wedding", "barat"],
+        "profile": { "avoidAtWeddings": ["white"] }
+      },
+      "if": {
+        "has": { "role": ["main", "bottom", "outer"], "colorClass": ["white"] }
+      },
+      "weight": -1.5
+    },
+    {
+      "id": "avoid-black-at-weddings",
+      "source": "desi:50",
+      "layer": "color",
+      "when": {
+        "occasion": ["wedding", "barat"],
+        "profile": { "avoidAtWeddings": ["black"] }
+      },
+      "if": {
+        "has": { "role": ["main", "bottom", "outer"], "colorClass": ["black"] }
+      },
+      "weight": -1.5
+    },
+    {
+      "id": "stark-all-white-wedding",
+      "source": "desi:49",
+      "layer": "color",
+      "when": { "occasion": ["wedding", "barat"] },
+      "if": {
+        "has": { "role": ["main", "bottom"], "colorClass": ["white"] },
+        "count": { "min": 2 }
+      },
+      "weight": -0.6
+    },
+    {
+      "id": "neon-at-desi-events",
+      "source": "desi:45",
+      "layer": "color",
+      "when": { "style": ["desi"], "minFormality": 3 },
+      "if": {
+        "has": {
+          "role": ["main", "bottom", "hijab", "accessory"],
+          "shade": ["neon"]
+        }
+      },
+      "weight": -0.6
+    },
+    {
+      "id": "eid-embroidery",
+      "source": "desi:31",
+      "layer": "style",
+      "when": { "occasion": ["eid"] },
+      "if": {
+        "any": [
+          { "has": { "role": ["main"], "pattern": ["embroidered"] } },
+          { "has": { "role": ["main"], "embellishment": ["light", "heavy"] } }
+        ]
+      },
+      "weight": 0.6,
+      "reason": true
+    },
+    {
+      "id": "denim-jacket-kurti",
+      "source": "desi:40",
+      "layer": "style",
+      "when": { "style": ["desi"], "maxFormality": 2 },
+      "if": {
+        "all": [
+          { "has": { "kind": ["jacket"], "fabric": ["denim"] } },
+          { "has": { "kind": ["kurta", "kurti", "kameez", "tunic"] } }
+        ]
+      },
+      "weight": 0.4,
+      "reason": true
+    },
+    {
+      "id": "blazer-over-kameez",
+      "source": "desi:41",
+      "layer": "style",
+      "when": { "style": ["desi"], "maxFormality": 3 },
+      "if": {
+        "all": [
+          { "has": { "kind": ["blazer"] } },
+          { "has": { "kind": ["kameez", "kurta", "kurti"] } }
+        ]
+      },
+      "weight": 0.4,
+      "reason": true
+    },
+    {
+      "id": "blazer-over-heavy",
+      "source": "desi:41",
+      "layer": "style",
+      "if": {
+        "all": [
+          { "has": { "kind": ["blazer"] } },
+          { "has": { "role": ["main"], "embellishment": ["heavy"] } }
+        ]
+      },
+      "weight": -0.8
+    },
+    {
+      "id": "cardigan-over-kameez",
+      "source": "desi:42",
+      "layer": "style",
+      "when": { "weather": ["cold", "mild"] },
+      "if": {
+        "all": [
+          {
+            "has": { "kind": ["cardigan"], "length": ["knee", "calf", "ankle"] }
+          },
+          { "has": { "kind": ["kameez", "kurta"] } }
+        ]
+      },
+      "weight": 0.8,
+      "reason": true
+    },
+    {
+      "id": "coat-reaches-hem",
+      "source": "desi:43",
+      "layer": "style",
+      "when": { "weather": ["cold"] },
+      "if": {
+        "pair": [{ "kind": ["coat"] }, { "role": ["main"] }],
+        "relation": "longer"
+      },
+      "weight": 0.5,
+      "reason": true
+    },
+    {
+      "id": "coat-shorter-than-hem",
+      "source": "desi:43",
+      "layer": "style",
+      "when": { "weather": ["cold"] },
+      "if": {
+        "pair": [
+          { "kind": ["coat", "jacket"] },
+          {
+            "role": ["main"],
+            "kind": ["kurta", "kurti", "kameez", "tunic", "dress", "anarkali"]
+          }
+        ],
+        "relation": "shorter"
+      },
+      "weight": -0.4
+    },
+    {
+      "id": "warm-fabric-cold",
+      "source": "desi:53",
+      "layer": "style",
+      "when": { "weather": ["cold"] },
+      "if": {
+        "has": {
+          "role": ["main", "bottom"],
+          "fabric": ["wool", "knit", "velvet", "khaddar", "karandi"]
+        }
+      },
+      "weight": 0.8,
+      "reason": true
+    },
+    {
+      "id": "summer-fabric-cold",
+      "source": "desi:53",
+      "layer": "style",
+      "when": { "weather": ["cold"] },
+      "if": {
+        "has": { "role": ["main"], "fabric": ["lawn", "chiffon", "linen"] }
+      },
+      "weight": -0.6
+    },
+    {
+      "id": "shawl-with-winter-suit",
+      "source": "desi:54",
+      "layer": "style",
+      "when": { "weather": ["cold"] },
+      "if": {
+        "all": [
+          { "has": { "kind": ["shawl"] } },
+          { "has": { "role": ["main"], "fabric": ["khaddar", "karandi"] } }
+        ]
+      },
+      "weight": 0.6,
+      "reason": true
+    },
+    {
+      "id": "velvet-winter-wedding",
+      "source": "desi:57",
+      "layer": "style",
+      "when": { "weather": ["cold"], "occasion": ["wedding", "barat"] },
+      "if": { "has": { "role": ["main"], "fabric": ["velvet"] } },
+      "weight": 0.8,
+      "reason": true
+    },
+    {
+      "id": "boots-cold-everyday",
+      "source": "desi:58",
+      "layer": "style",
+      "when": { "weather": ["cold"], "maxFormality": 2 },
+      "if": { "has": { "kind": ["boots"] } },
+      "weight": 0.5
+    },
+    {
+      "id": "light-fabric-warm",
+      "source": "western-hijab:58",
+      "layer": "style",
+      "when": { "weather": ["warm"] },
+      "if": {
+        "has": {
+          "role": ["main"],
+          "fabric": ["cotton", "linen", "lawn", "modal"]
+        }
+      },
+      "weight": 0.5,
+      "reason": true
+    },
+    {
+      "id": "heavy-fabric-warm",
+      "source": "western-hijab:58",
+      "layer": "style",
+      "when": { "weather": ["warm"] },
+      "if": {
+        "has": {
+          "role": ["main", "bottom", "layer", "outer"],
+          "fabric": ["wool", "knit", "velvet", "khaddar", "karandi"]
+        }
+      },
+      "weight": -0.8
+    },
+    {
+      "id": "abaya-centred",
+      "source": "western-hijab:regional",
+      "layer": "style",
+      "when": { "profile": { "region": ["gulf"] } },
+      "if": {
+        "has": { "role": ["main", "outer"], "kind": ["abaya", "kaftan"] }
+      },
+      "weight": 0.5,
+      "reason": true
+    },
+    {
+      "id": "long-coat-turkish",
+      "source": "western-hijab:regional",
+      "layer": "style",
+      "when": { "profile": { "region": ["turkish"] } },
+      "if": { "has": { "kind": ["coat"], "length": ["calf", "ankle"] } },
+      "weight": 0.4
+    },
+    {
+      "id": "tailored-layer-europe",
+      "source": "western-hijab:regional",
+      "layer": "style",
+      "when": { "profile": { "region": ["western-europe"] } },
+      "if": { "has": { "kind": ["blazer", "coat", "cardigan"] } },
+      "weight": 0.3
+    },
+    {
+      "id": "accent-single",
+      "source": "colour:accent-count",
+      "layer": "color",
+      "if": { "outfit": "accent-count", "op": "<=", "value": 1 },
+      "weight": 0.3
+    },
+    {
+      "id": "accent-three",
+      "source": "colour:accent-count",
+      "layer": "color",
+      "if": {
+        "all": [
+          { "outfit": "accent-count", "op": ">=", "value": 3 },
+          { "outfit": "accent-count", "op": "<", "value": 4 },
+          {
+            "not": {
+              "pair": [
+                {
+                  "role": ["hijab", "shoes", "bag", "accessory"],
+                  "colorClass": ["accent"]
+                },
+                { "role": ["main"] }
+              ],
+              "relation": "echo"
+            }
+          }
+        ]
+      },
+      "weight": -0.3
+    },
+    {
+      "id": "accent-four",
+      "source": "colour:accent-count",
+      "layer": "color",
+      "if": { "outfit": "accent-count", "op": ">=", "value": 4 },
+      "weight": -1.0
+    },
+    {
+      "id": "accent-echo",
+      "source": "colour:echo",
+      "layer": "color",
+      "if": {
+        "pair": [
+          {
+            "role": ["hijab", "shoes", "bag", "accessory"],
+            "colorClass": ["accent"]
+          },
+          { "role": ["main"] }
+        ],
+        "relation": "echo"
+      },
+      "weight": 0.8,
+      "reason": true
+    },
+    {
+      "id": "top-bottom-near-miss",
+      "source": "colour:near-miss",
+      "layer": "color",
+      "if": {
+        "pair": [{ "role": ["main"] }, { "role": ["bottom"] }],
+        "relation": "near-miss"
+      },
+      "weight": -1.0
+    },
+    {
+      "id": "hijab-main-near-miss",
+      "source": "colour:near-miss",
+      "layer": "color",
+      "if": {
+        "pair": [{ "role": ["hijab"] }, { "role": ["main"] }],
+        "relation": "near-miss"
+      },
+      "weight": -0.5
+    },
+    {
+      "id": "tonal-steps",
+      "source": "colour:tonal",
+      "layer": "color",
+      "if": {
+        "pair": [{ "role": ["main"] }, { "role": ["bottom"] }],
+        "relation": "tonal"
+      },
+      "weight": 0.5,
+      "reason": true
+    },
+    {
+      "id": "tonal-too-close",
+      "source": "colour:tonal",
+      "layer": "color",
+      "if": {
+        "pair": [{ "role": ["main"] }, { "role": ["bottom"] }],
+        "relation": "flat"
+      },
+      "weight": -0.4
+    },
+    {
+      "id": "analogous-main-bottom",
+      "source": "colour:analogous",
+      "layer": "color",
+      "if": {
+        "pair": [{ "role": ["main"] }, { "role": ["bottom"] }],
+        "relation": "analogous"
+      },
+      "weight": 0.3
+    },
+    {
+      "id": "complementary-muted",
+      "source": "colour:complementary",
+      "layer": "color",
+      "if": {
+        "pair": [{ "role": ["hijab"] }, { "role": ["main"] }],
+        "relation": "complementary"
+      },
+      "weight": 0.2
+    },
+    {
+      "id": "complementary-loud",
+      "source": "colour:complementary",
+      "layer": "color",
+      "if": {
+        "pair": [{ "role": ["main"] }, { "role": ["bottom"] }],
+        "relation": "complementary-loud"
+      },
+      "weight": -0.4
+    },
+    {
+      "id": "saturated-large-pieces",
+      "source": "colour:60-30-10",
+      "layer": "color",
+      "if": { "outfit": "saturated-large", "op": ">=", "value": 1 },
+      "weight": -0.6
+    },
+    {
+      "id": "warm-cool-large-pieces",
+      "source": "colour:warm-cool",
+      "layer": "color",
+      "if": { "outfit": "warm-cool-large", "op": ">=", "value": 1 },
+      "weight": -0.2
+    },
+    {
+      "id": "one-bold-print",
+      "source": "colour:prints",
+      "layer": "color",
+      "when": { "profile": { "printOnPrint": [false, null] } },
+      "if": { "outfit": "print-count", "op": ">", "value": 1 },
+      "weight": -0.8
+    },
+    {
+      "id": "three-prints",
+      "source": "desi:15",
+      "layer": "color",
+      "if": { "outfit": "print-count", "op": ">=", "value": 3 },
+      "weight": -0.5
+    },
+    {
+      "id": "all-light",
+      "source": "legacy:all-light",
+      "layer": "color",
+      "if": { "outfit": "light-count", "op": ">=", "value": 3 },
+      "weight": -1.0
+    }
+  ]
+}
