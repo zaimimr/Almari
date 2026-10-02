@@ -463,6 +463,8 @@ export const en = {
   "stylist.rules": "Rules",
   "stylist.model": "Model",
   "stylist.compare": "Compare",
+  "stylist.rate": "{part} of {whole} ({percent}%)",
+  "stylist.noFeedback": "No feedback yet",
 };
 
 export type Key = keyof typeof en;

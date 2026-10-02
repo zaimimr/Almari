@@ -473,4 +473,6 @@ export const nb: Record<Key, string> = {
   "stylist.rules": "Regler",
   "stylist.model": "Modell",
   "stylist.compare": "Sammenlign",
+  "stylist.rate": "{part} av {whole} ({percent} %)",
+  "stylist.noFeedback": "Ingen tilbakemeldinger ennå",
 };
