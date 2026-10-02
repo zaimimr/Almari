@@ -11,6 +11,7 @@ module.exports = defineConfig([
       "planning/**",
       "modules/closet-vision/model/**",
       ".playwright-cli/**",
+      ".claude/**",
     ],
   },
 ]);

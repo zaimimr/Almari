@@ -26,4 +26,5 @@ appId: com.zaimimran.almari
     element:
       id: "piece-availability"
     direction: DOWN
+    visibilityPercentage: 30
 - takeScreenshot: planning/build/attributes/item-page-large-text-end

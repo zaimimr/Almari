@@ -19,10 +19,7 @@ appId: com.zaimimran.almari
     text: "Suggested from the photo"
     id: "attribute-sleeve-source"
 - takeScreenshot: planning/build/attributes/piece-details
-- tapOn:
-    text: "Looks right"
-    below:
-      id: "attribute-sleeve-source"
+- tapOn: "Sleeves: Looks right"
 - assertVisible:
     text: "Confirmed"
     id: "attribute-sleeve-source"

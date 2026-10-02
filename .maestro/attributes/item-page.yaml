@@ -12,10 +12,10 @@ appId: com.zaimimran.almari
     id: "fact-question"
 - scrollUntilVisible:
     element:
-      text: "Looks right"
+      text: "Fabric: Looks right"
     direction: DOWN
 - takeScreenshot: planning/build/attributes/item-page-question
-- tapOn: "Looks right"
+- tapOn: "Fabric: Looks right"
 - assertNotVisible:
     id: "fact-question"
 - tapOn:
