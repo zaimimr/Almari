@@ -18,6 +18,7 @@ import {
   removePiece,
   usedIn,
   pieceVariant,
+  studioSource,
   withVariant,
 } from "../domain/closet";
 import {
@@ -31,6 +32,7 @@ import { unlinkPiece } from "../domain/sets";
 import { categoryName, kindName, styleName, stylesName, t } from "../i18n";
 import { useCloset } from "../state/closet";
 import { measurePiece } from "../state/imports";
+import { useStudioMaker, useStudioModel } from "../state/studio";
 import { keepPhoto, discardPhoto } from "../storage/local";
 import { photoSource } from "../ui/photos";
 import {
@@ -87,6 +89,28 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
   const photoPiece =
     piece && !newImage && image ? { ...piece, photo: image } : null;
   const variant = photoPiece ? pieceVariant(photoPiece) : null;
+  const studioModel = useStudioModel();
+  const studio = useStudioMaker();
+  const studioOffered =
+    Boolean(photoPiece?.variants?.studio) ||
+    (closet.styling.studio && studioModel.ready);
+
+  async function makeStudio() {
+    const source = photoPiece ? studioSource(photoPiece) : null;
+    if (!piece || !source) return;
+    const file = await studio.make(source, piece.id);
+    if (!file) return;
+    await update((current) => {
+      const latest = current.pieces.find((item) => item.id === piece.id);
+      return latest
+        ? savePiece(current, {
+            ...latest,
+            variants: { ...latest.variants, studio: file },
+          })
+        : current;
+    });
+    setImage(file);
+  }
 
   async function pick(source: "camera" | "library") {
     setError(null);
@@ -260,8 +284,23 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
             disabled={busy}
             onPress={() => setImage(withVariant(photoPiece, "plain").photo)}
           />
+          {studioOffered ? (
+            <Chip
+              label={
+                studio.making ? t("photo.studioMaking") : t("photo.studio")
+              }
+              selected={variant === "studio"}
+              disabled={busy || studio.making}
+              onPress={() => {
+                if (photoPiece.variants?.studio)
+                  setImage(withVariant(photoPiece, "studio").photo);
+                else void makeStudio();
+              }}
+            />
+          ) : null}
         </View>
       ) : null}
+      <ErrorMessage message={studio.message} />
       <View style={styles.actions}>
         <View style={styles.action}>
           <Button

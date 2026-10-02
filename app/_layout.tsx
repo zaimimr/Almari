@@ -48,6 +48,7 @@ function Screens() {
         name="capture/group/[id]"
         options={{ title: t("capture.group.title") }}
       />
+      <Stack.Screen name="studio" options={{ title: t("studio.title") }} />
       <Stack.Screen
         name="label/[id]"
         options={{ title: t("careLabel.title") }}
