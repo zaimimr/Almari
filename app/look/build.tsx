@@ -28,6 +28,7 @@ import {
   PieceTile,
 } from "../../src/ui";
 import { theme } from "../../src/ui/theme";
+import { t } from "../../src/i18n";
 
 export default function BuildLook() {
   const { width, fontScale } = useWindowDimensions();
@@ -109,11 +110,7 @@ export default function BuildLook() {
       allowClose();
       router.back();
     } catch (cause) {
-      setError(
-        cause instanceof Error
-          ? cause.message
-          : "Your look could not be saved. Please try again.",
-      );
+      setError(cause instanceof Error ? cause.message : t("error.lookSave"));
     } finally {
       setBusy(false);
     }
@@ -124,12 +121,15 @@ export default function BuildLook() {
       <Stack.Screen
         options={{
           title: source
-            ? "Edit your look"
+            ? t("build.edit")
             : initialSelection.length
-              ? "Save this look"
-              : "Build a look",
+              ? t("build.save")
+              : t("title.buildLook"),
           headerLeft: () => (
-            <HeaderAction label="Cancel" onPress={() => router.back()} />
+            <HeaderAction
+              label={t("common.cancel")}
+              onPress={() => router.back()}
+            />
           ),
         }}
       />
@@ -143,8 +143,9 @@ export default function BuildLook() {
               style={styles.summary}
               accessibilityLiveRegion="polite"
             >
-              {pieces.length} {pieces.length === 1 ? "piece" : "pieces"} in your
-              look
+              {pieces.length === 1
+                ? t("build.countOne")
+                : t("build.countMany", { count: pieces.length })}
             </AppText>
           ) : null}
         </View>
@@ -178,12 +179,14 @@ export default function BuildLook() {
               <View style={[styles.empty, !wide && { width: width - 48 }]}>
                 <AppText muted>
                   {closet.pieces.length
-                    ? "No pieces in this category yet."
-                    : "Add a few pieces to start building your look."}
+                    ? t("common.noPiecesInCategory")
+                    : t("build.empty")}
                 </AppText>
                 <Button
                   label={
-                    closet.pieces.length ? "Show all pieces" : "Go to closet"
+                    closet.pieces.length
+                      ? t("common.showAllPieces")
+                      : t("piece.missing.action")
                   }
                   secondary
                   onPress={() =>
@@ -223,9 +226,9 @@ export default function BuildLook() {
           <View style={styles.saveRow}>
             <View style={styles.nameField}>
               <Field
-                label="Look name"
+                label={t("build.name")}
                 testID="look-name"
-                placeholder="e.g. Soft layers"
+                placeholder={t("build.nameHint")}
                 value={name}
                 onChangeText={setName}
                 maxLength={80}
@@ -234,7 +237,7 @@ export default function BuildLook() {
               />
             </View>
             <Button
-              label={source ? "Save changes" : "Save look"}
+              label={source ? t("common.saveChanges") : t("common.saveLook")}
               onPress={() => {
                 void save();
               }}

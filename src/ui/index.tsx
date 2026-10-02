@@ -226,7 +226,7 @@ export function Filters({
   all?: boolean;
 }) {
   const options = all
-    ? [{ id: "all" as const, label: "All pieces" }, ...categories]
+    ? [{ id: "all" as const, label: t("filters.all") }, ...categories]
     : categories;
   return (
     <ScrollView
@@ -350,7 +350,7 @@ export function PieceTile({
   onPress,
   selected,
   compact = false,
-  selectedLabel = "Selected",
+  selectedLabel = t("tile.selected"),
 }: {
   piece: Piece;
   onPress: () => void;

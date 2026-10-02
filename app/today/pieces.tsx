@@ -18,6 +18,7 @@ import {
   Screen,
 } from "../../src/ui";
 import { theme } from "../../src/ui/theme";
+import { t } from "../../src/i18n";
 
 export default function ChoosePieces() {
   const { width, fontScale } = useWindowDimensions();
@@ -37,9 +38,11 @@ export default function ChoosePieces() {
     return (
       <Screen centered>
         <Message
-          title="Set your everyday style first"
-          description="Today's outfit starts from your everyday style."
-          action={<Button label="Go back" onPress={() => router.back()} />}
+          title={t("common.setEverydayFirst")}
+          description={t("common.everydayFirstBody")}
+          action={
+            <Button label={t("common.goBack")} onPress={() => router.back()} />
+          }
         />
       </Screen>
     );
@@ -78,7 +81,7 @@ export default function ChoosePieces() {
       allowClose();
       router.back();
     } catch {
-      setError("These pieces could not be saved. Please try again.");
+      setError(t("error.piecesSave"));
     } finally {
       setBusy(false);
     }
@@ -89,11 +92,17 @@ export default function ChoosePieces() {
       <Stack.Screen
         options={{
           headerLeft: () => (
-            <HeaderAction label="Cancel" onPress={() => router.back()} />
+            <HeaderAction
+              label={t("common.cancel")}
+              onPress={() => router.back()}
+            />
           ),
           headerRight: () =>
             selected.length ? (
-              <HeaderAction label="Clear" onPress={() => setSelected([])} />
+              <HeaderAction
+                label={t("common.clear")}
+                onPress={() => setSelected([])}
+              />
             ) : null,
         }}
       />
@@ -107,8 +116,10 @@ export default function ChoosePieces() {
             accessibilityLiveRegion="polite"
           >
             {selected.length
-              ? `Keeping ${selected.length} ${selected.length === 1 ? "piece" : "pieces"}. The rest of the outfit is chosen around them.`
-              : "Choose any pieces you want to wear. The rest is styled around them."}
+              ? selected.length === 1
+                ? t("pieces.keepingOne")
+                : t("pieces.keepingMany", { count: selected.length })
+              : t("pieces.intro")}
           </AppText>
         </View>
         <View
@@ -137,12 +148,12 @@ export default function ChoosePieces() {
               <View style={[styles.empty, !wide && { width: width - 48 }]}>
                 <AppText muted>
                   {pool.length
-                    ? "No pieces in this category yet."
-                    : "There are no pieces in this closet yet."}
+                    ? t("common.noPiecesInCategory")
+                    : t("pieces.noneInCloset")}
                 </AppText>
                 {pool.length ? (
                   <Button
-                    label="Show all pieces"
+                    label={t("common.showAllPieces")}
                     secondary
                     onPress={() => setCategory("all")}
                   />
@@ -155,7 +166,7 @@ export default function ChoosePieces() {
                   piece={item}
                   compact={!wide}
                   selected={selected.includes(item.id)}
-                  selectedLabel="Kept"
+                  selectedLabel={t("outfit.kept")}
                   onPress={() => {
                     if (!busy)
                       setSelected((current) =>
@@ -176,10 +187,10 @@ export default function ChoosePieces() {
           <Button
             label={
               selected.length
-                ? "Style around these"
+                ? t("pieces.styleAround")
                 : initial.length
-                  ? "Stop keeping pieces"
-                  : "Done"
+                  ? t("pieces.stopKeeping")
+                  : t("common.done")
             }
             busy={busy}
             disabled={!dirty && !selected.length}

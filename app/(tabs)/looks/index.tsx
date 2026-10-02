@@ -1,9 +1,8 @@
 import { FlatList, Pressable, StyleSheet, View } from "react-native";
 import { Stack, router } from "expo-router";
 import { useCloset } from "../../../src/state/closet";
-import { occasionLabel } from "../../../src/domain/closet";
 import { lookEntries } from "../../../src/domain/looks";
-import { locale, t } from "../../../src/i18n";
+import { locale, occasionName, t } from "../../../src/i18n";
 import {
   AppText,
   Button,
@@ -23,7 +22,7 @@ export default function LooksScreen() {
         options={{
           headerRight: () => (
             <HeaderAction
-              label="Build a look"
+              label={t("title.buildLook")}
               onPress={() => router.push("/look/build")}
             />
           ),
@@ -36,24 +35,24 @@ export default function LooksScreen() {
         contentContainerStyle={styles.content}
         ListHeaderComponent={
           <AppText muted style={styles.intro}>
-            Good combinations, kept for another day.
+            {t("looksTab.intro")}
           </AppText>
         }
         ListEmptyComponent={
           <View style={styles.empty}>
             <Message
-              title="Keep a look you love."
+              title={t("looksTab.emptyTitle")}
               description={
                 closet.pieces.length
-                  ? "Bring a few pieces together and save the combination. It will be here when you need it."
-                  : "Add a few pieces to your closet, then bring them together in your first outfit."
+                  ? t("looksTab.emptyWithPieces")
+                  : t("looksTab.emptyNoPieces")
               }
               action={
                 <Button
                   label={
                     closet.pieces.length
-                      ? "Build your first look"
-                      : "Add a piece"
+                      ? t("looksTab.buildFirst")
+                      : t("capture.addPiece")
                   }
                   onPress={() =>
                     router.push(
@@ -72,7 +71,7 @@ export default function LooksScreen() {
           });
           const missing = item.pieceIds.length - pieces.length;
           const about = [
-            item.occasion ? occasionLabel(item.occasion) : null,
+            item.occasion ? occasionName(item.occasion) : null,
             item.saved ? null : t("looks.worn"),
           ]
             .filter(Boolean)
@@ -103,8 +102,12 @@ export default function LooksScreen() {
               {about ? <AppText muted>{about}</AppText> : null}
               <AppText variant="caption" muted>
                 {missing
-                  ? `${missing} ${missing === 1 ? "piece is" : "pieces are"} no longer in your closet`
-                  : `${pieces.length} ${pieces.length === 1 ? "piece" : "pieces"} from your closet`}
+                  ? missing === 1
+                    ? t("looksTab.missingOne")
+                    : t("looksTab.missingMany", { count: missing })
+                  : pieces.length === 1
+                    ? t("looksTab.countOne")
+                    : t("looksTab.countMany", { count: pieces.length })}
               </AppText>
             </Pressable>
           );

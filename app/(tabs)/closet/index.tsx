@@ -114,7 +114,7 @@ export default function ClosetScreen() {
               : undefined,
           headerRight: () => (
             <HeaderAction
-              label="Add pieces"
+              label={t("title.addPieces")}
               onPress={() => router.push(addPiecesRoute)}
             />
           ),
@@ -134,8 +134,10 @@ export default function ClosetScreen() {
           <View style={styles.intro}>
             <AppText muted>
               {closet.pieces.length === 0
-                ? "A little space for the pieces you love."
-                : `${shelved.length} ${shelved.length === 1 ? "piece" : "pieces"}, ready for a new combination.`}
+                ? t("closet.introEmpty")
+                : shelved.length === 1
+                  ? t("closet.introOne")
+                  : t("closet.introMany", { count: shelved.length })}
             </AppText>
             {selecting ? (
               <View style={styles.starter}>
@@ -157,11 +159,10 @@ export default function ClosetScreen() {
             {sampleCount > 0 ? (
               <View style={styles.starter}>
                 <AppText variant="caption" muted>
-                  {sampleCount} sample pieces included. Try a combination you
-                  love.
+                  {t("closet.samplesIncluded", { count: sampleCount })}
                 </AppText>
                 <Button
-                  label="Build a look"
+                  label={t("title.buildLook")}
                   onPress={() => router.push("/look/build")}
                 />
               </View>
@@ -169,8 +170,8 @@ export default function ClosetScreen() {
             {closet.pieces.length > 0 ? (
               <>
                 <Field
-                  label="Find a piece"
-                  placeholder="Try a name, like mauve hijab"
+                  label={t("closet.find")}
+                  placeholder={t("closet.findHint")}
                   value={search}
                   onChangeText={setSearch}
                   autoCorrect={false}
@@ -230,28 +231,27 @@ export default function ClosetScreen() {
             <View style={styles.empty}>
               <View style={styles.firstPiece}>
                 <AppText variant="title" style={styles.emptyNumber}>
-                  Your first piece.
+                  {t("closet.firstTitle")}
                 </AppText>
                 <AppText muted style={styles.emptyCopy}>
-                  Start with a favorite hijab,{"\n"}a go-to layer, or something
-                  {"\n"}you want to wear more.
+                  {t("closet.firstBody")}
                 </AppText>
               </View>
               <Button
-                label="Add your first piece"
+                label={t("closet.addFirst")}
                 onPress={() => router.push(addPiecesRoute)}
               />
               <AppText variant="caption" muted style={styles.note}>
-                Your closet is saved on this device.
+                {t("closet.savedOnDevice")}
               </AppText>
             </View>
           ) : (
             <Message
-              title="No pieces found"
+              title={t("closet.noneFoundTitle")}
               description={t("closet.noMatch")}
               action={
                 <Button
-                  label="Clear filters"
+                  label={t("closet.clearFilters")}
                   secondary
                   onPress={() => {
                     setSearch("");

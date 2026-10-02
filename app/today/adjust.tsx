@@ -16,7 +16,7 @@ import {
   startOccasion,
 } from "../../src/domain/today";
 import { forecastWeather } from "../../src/domain/weather";
-import { t } from "../../src/i18n";
+import { kindName, t } from "../../src/i18n";
 import { useCloset } from "../../src/state/closet";
 import { useDiscardChanges } from "../../src/navigation/useDiscardChanges";
 import {
@@ -31,29 +31,99 @@ import {
 } from "../../src/ui";
 
 const garmentOptions = [
-  { id: "any", label: "No preference" },
-  { id: "blazer", label: "Blazer" },
-  { id: "dress", label: "Dress" },
-  { id: "kurta", label: "Kurta" },
-  { id: "trousers", label: "Trousers" },
+  {
+    id: "any",
+    get label() {
+      return t("adjust.any");
+    },
+  },
+  {
+    id: "blazer",
+    get label() {
+      return kindName("blazer");
+    },
+  },
+  {
+    id: "dress",
+    get label() {
+      return kindName("dress");
+    },
+  },
+  {
+    id: "kurta",
+    get label() {
+      return kindName("kurta");
+    },
+  },
+  {
+    id: "trousers",
+    get label() {
+      return kindName("trousers");
+    },
+  },
 ] as const;
 
 const warmthOptions = [
-  { id: "unset", label: "Not set" },
-  { id: "warm", label: "Warm" },
-  { id: "mild", label: "Mild" },
-  { id: "cold", label: "Cold" },
+  {
+    id: "unset",
+    get label() {
+      return t("adjust.notSet");
+    },
+  },
+  {
+    id: "warm",
+    get label() {
+      return t("weather.warm");
+    },
+  },
+  {
+    id: "mild",
+    get label() {
+      return t("weather.mild");
+    },
+  },
+  {
+    id: "cold",
+    get label() {
+      return t("weather.cold");
+    },
+  },
 ] as const;
 
 const precipitationOptions = [
-  { id: "dry", label: "Dry" },
-  { id: "rain", label: "Rain" },
-  { id: "snow", label: "Snow" },
+  {
+    id: "dry",
+    get label() {
+      return t("adjust.dry");
+    },
+  },
+  {
+    id: "rain",
+    get label() {
+      return t("adjust.rain");
+    },
+  },
+  {
+    id: "snow",
+    get label() {
+      return t("adjust.snow");
+    },
+  },
 ] as const;
 
 const exposureOptions = [
-  { id: "mostly-indoors", label: "Mostly indoors" },
-  { id: "time-outside", label: "Time outside" },
+  {
+    id: "mostly-indoors",
+    get label() {
+      return t("adjust.indoors");
+    },
+  },
+  {
+    id: "time-outside",
+    get label() {
+      return t("adjust.outside");
+    },
+  },
 ] as const;
 
 type Manual = Extract<Weather, { source: "manual" }>;
@@ -78,9 +148,11 @@ export default function AdjustToday() {
     return (
       <Screen centered>
         <Message
-          title="Set your everyday style first"
-          description="Today's outfit starts from your everyday style."
-          action={<Button label="Go back" onPress={() => router.back()} />}
+          title={t("common.setEverydayFirst")}
+          description={t("common.everydayFirstBody")}
+          action={
+            <Button label={t("common.goBack")} onPress={() => router.back()} />
+          }
         />
       </Screen>
     );
@@ -145,7 +217,7 @@ export default function AdjustToday() {
       allowClose();
       router.back();
     } catch {
-      setError("These choices could not be saved. Please try again.");
+      setError(t("error.choicesSave"));
     } finally {
       setBusy(false);
     }
@@ -159,34 +231,37 @@ export default function AdjustToday() {
         options={{
           title:
             newOccasion || today.active === "occasion"
-              ? "For an occasion"
-              : "Adjust today",
+              ? t("today.forOccasion")
+              : t("title.adjustToday"),
           headerLeft: () => (
-            <HeaderAction label="Cancel" onPress={() => router.back()} />
+            <HeaderAction
+              label={t("common.cancel")}
+              onPress={() => router.back()}
+            />
           ),
         }}
       />
       <AppText muted>
         {newOccasion || today.active === "occasion"
-          ? "These choices are just for now. Your everyday style and today's look stay as they are."
-          : "These changes are for today only. Your everyday style stays the same."}
+          ? t("adjust.occasionNote")
+          : t("adjust.todayNote")}
       </AppText>
       <ChoiceGroup
-        label="Occasion"
+        label={t("adjust.occasion")}
         options={occasionOptions()}
         value={request.occasion}
         disabled={busy}
         onChange={(occasion) => set({ occasion })}
       />
       <ChoiceGroup
-        label="Style"
+        label={t("adjust.style")}
         options={styleOptions}
         value={request.style}
         disabled={busy}
         onChange={(style) => set({ style })}
       />
       <ChoiceGroup
-        label="Something you want to wear"
+        label={t("adjust.wear")}
         options={garmentOptions}
         value={request.garmentType ?? "any"}
         disabled={busy}
@@ -196,7 +271,7 @@ export default function AdjustToday() {
       />
       <View style={styles.group}>
         <ChoiceGroup
-          label="Weather"
+          label={t("adjust.weather")}
           options={weatherChoices}
           value={
             manual
@@ -217,14 +292,14 @@ export default function AdjustToday() {
         {manual ? (
           <>
             <ChoiceGroup
-              label="Conditions"
+              label={t("adjust.conditions")}
               options={precipitationOptions}
               value={manual.precipitation}
               disabled={busy}
               onChange={(precipitation) => setManual({ precipitation })}
             />
             <ChoiceGroup
-              label="Your day"
+              label={t("adjust.day")}
               options={exposureOptions}
               value={manual.exposure}
               disabled={busy}
@@ -233,17 +308,18 @@ export default function AdjustToday() {
           </>
         ) : null}
         <AppText variant="caption" muted>
-          Weather you choose here is not a forecast. Sunny but cold still counts
-          as cold.
+          {t("adjust.notForecast")}
         </AppText>
       </View>
       {kept ? (
         <View style={styles.group}>
           <AppText>
-            Keeping {kept} {kept === 1 ? "piece" : "pieces"} in every option.
+            {kept === 1
+              ? t("adjust.keepingOne")
+              : t("adjust.keepingMany", { count: kept })}
           </AppText>
           <Button
-            label="Stop keeping them"
+            label={t("adjust.stopKeeping")}
             secondary
             compact
             disabled={busy}
@@ -253,7 +329,7 @@ export default function AdjustToday() {
       ) : null}
       {request.excludedIds.length ? (
         <Button
-          label="Include set-aside pieces again"
+          label={t("adjust.includeAgain")}
           secondary
           compact
           disabled={busy}
@@ -262,7 +338,7 @@ export default function AdjustToday() {
       ) : null}
       <ErrorMessage message={error} />
       <Button
-        label="Find outfits"
+        label={t("adjust.find")}
         busy={busy}
         onPress={() => {
           void submit(false);
@@ -270,7 +346,7 @@ export default function AdjustToday() {
       />
       {!newOccasion && today.active === "everyday" ? (
         <Button
-          label="Also make this occasion and style my everyday"
+          label={t("adjust.alsoEveryday")}
           secondary
           disabled={busy}
           onPress={() => {

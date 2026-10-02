@@ -2,6 +2,7 @@ import { useRef } from "react";
 import { useNavigation } from "expo-router";
 import { usePreventRemove } from "expo-router/react-navigation";
 import { confirmAction } from "../ui/confirm";
+import { t } from "../i18n";
 
 export function useDiscardChanges(dirty: boolean, busy: boolean) {
   const saved = useRef(false);
@@ -13,9 +14,9 @@ export function useDiscardChanges(dirty: boolean, busy: boolean) {
     }
     if (busy) return;
     void confirmAction(
-      "Discard your changes?",
-      "These changes have not been saved.",
-      "Discard",
+      t("common.discardTitle"),
+      t("common.discardBody"),
+      t("common.discard"),
     ).then((confirmed) => {
       if (confirmed) navigation.dispatch(data.action);
     });

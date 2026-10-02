@@ -26,11 +26,6 @@ import {
   HeaderAction,
 } from "../../src/ui";
 
-const hijabOptions = [
-  { id: "always", label: "Always include a hijab" },
-  { id: "not-needed", label: "Not needed" },
-] as const;
-
 const levelHelp = {
   full: "coverage.helpFull",
   moderate: "coverage.helpModerate",
@@ -51,6 +46,10 @@ export default function EverydayStyle() {
     preset?.coverage?.sleeve ?? null,
   );
   const [hem, setHem] = useState<HemNeed | null>(preset?.coverage?.hem ?? null);
+  const hijabOptions = [
+    { id: "always", label: t("everyday.always") },
+    { id: "not-needed", label: t("everyday.notNeeded") },
+  ] as const;
   const levelOptions = [
     { id: "full", label: t("onboarding.coverage.full") },
     { id: "moderate", label: t("onboarding.coverage.moderate") },
@@ -88,7 +87,7 @@ export default function EverydayStyle() {
       allowClose();
       router.back();
     } catch {
-      setError("Your everyday style could not be saved. Please try again.");
+      setError(t("error.everydaySave"));
     } finally {
       setBusy(false);
     }
@@ -99,35 +98,35 @@ export default function EverydayStyle() {
       <Stack.Screen
         options={{
           headerLeft: () => (
-            <HeaderAction label="Cancel" onPress={() => router.back()} />
+            <HeaderAction
+              label={t("common.cancel")}
+              onPress={() => router.back()}
+            />
           ),
         }}
       />
-      <AppText muted>
-        Each day starts from these choices. You can still change anything for a
-        single day or an occasion.
-      </AppText>
+      <AppText muted>{t("everyday.intro")}</AppText>
       {preset?.sample ? (
         <AppText variant="caption" muted>
-          You are using the sample style. Choose what fits you.
+          {t("everyday.sampleNote")}
         </AppText>
       ) : null}
       <ChoiceGroup
-        label="Usual occasion"
+        label={t("everyday.occasion")}
         options={occasionOptions()}
         value={occasion}
         disabled={busy}
         onChange={setOccasion}
       />
       <ChoiceGroup
-        label="Usual style"
+        label={t("everyday.style")}
         options={styleOptions}
         value={style}
         disabled={busy}
         onChange={setStyle}
       />
       <ChoiceGroup
-        label="Hijab in outfits"
+        label={t("everyday.hijab")}
         options={hijabOptions}
         value={hijab}
         disabled={busy}
@@ -163,7 +162,7 @@ export default function EverydayStyle() {
       </AppText>
       <ErrorMessage message={error} />
       <Button
-        label={preset ? "Save and restyle today" : "Save everyday style"}
+        label={preset ? t("everyday.saveRestyle") : t("everyday.save")}
         busy={busy}
         disabled={!occasion || !style || (Boolean(preset) && !dirty)}
         onPress={() => {
@@ -172,7 +171,7 @@ export default function EverydayStyle() {
       />
       {preset ? (
         <Button
-          label="Save, keep today's outfit"
+          label={t("everyday.saveKeep")}
           secondary
           disabled={busy || !occasion || !style || !dirty}
           onPress={() => {

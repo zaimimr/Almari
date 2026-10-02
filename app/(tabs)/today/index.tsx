@@ -4,9 +4,7 @@ import { Stack, router } from "expo-router";
 import { randomUUID } from "expo-crypto";
 import {
   isAvailable,
-  kindLabel,
   occasionPhrase,
-  styleLabel,
   type GarmentKind,
   type OutfitRequest,
   type Piece,
@@ -24,7 +22,7 @@ import {
   outfitTip,
   tipText,
 } from "../../../src/domain/outfitView";
-import { locale, t } from "../../../src/i18n";
+import { kindName, locale, styleName, t } from "../../../src/i18n";
 import {
   evaluateOutfit,
   roleOf,
@@ -69,8 +67,18 @@ import { theme } from "../../../src/ui/theme";
 const shortcuts: GarmentKind[] = ["blazer", "dress", "kurta", "trousers"];
 
 const wardrobeOptions = [
-  { id: "sample", label: "Sample closet" },
-  { id: "owned", label: "My clothes" },
+  {
+    id: "sample",
+    get label() {
+      return t("today.wardrobeSample");
+    },
+  },
+  {
+    id: "owned",
+    get label() {
+      return t("today.wardrobeOwned");
+    },
+  },
 ] as const;
 
 export default function TodayScreen() {
@@ -90,7 +98,7 @@ export default function TodayScreen() {
             ),
             headerRight: () => (
               <HeaderAction
-                label="Everyday style"
+                label={t("title.everyday")}
                 onPress={() => router.push("/today/everyday")}
               />
             ),
@@ -124,16 +132,16 @@ function TodayContent() {
     return (
       <>
         <Message
-          title="Start with your everyday style."
-          description="Choose your usual occasion and whether you want Desi or Western outfits. Each day starts from these choices, and you can change them any time."
+          title={t("today.startTitle")}
+          description={t("today.startBody")}
           action={
             <View style={styles.actions}>
               <Button
-                label="Set my everyday style"
+                label={t("today.setEveryday")}
                 onPress={() => router.push("/today/everyday")}
               />
               <Button
-                label="Try a sample style"
+                label={t("today.trySample")}
                 secondary
                 busy={busy}
                 onPress={() => {
@@ -153,8 +161,7 @@ function TodayContent() {
                 }}
               />
               <AppText variant="caption" muted>
-                The sample style is Work, Western, with a hijab. It uses the
-                sample closet, not your own clothes.
+                {t("today.sampleNote")}
               </AppText>
               <ErrorMessage message={error} />
             </View>
@@ -164,14 +171,15 @@ function TodayContent() {
     );
 
   if (!today || !session || !result)
-    return <AppText muted>Styling your day...</AppText>;
+    return <AppText muted>{t("today.styling")}</AppText>;
 
   const request = session.request;
   const revision = session.revision;
   const change = (next: Partial<OutfitRequest>) =>
     run((current) => applyRequest(current, { ...request, ...next }, revision));
   const nameOf = (id: string) =>
-    closet.pieces.find((piece) => piece.id === id)?.name ?? "this piece";
+    closet.pieces.find((piece) => piece.id === id)?.name ??
+    t("today.thisPiece");
 
   function act(action: ProblemAction) {
     switch (action.type) {
@@ -211,21 +219,21 @@ function TodayContent() {
   function actionLabel(action: ProblemAction) {
     switch (action.type) {
       case "release":
-        return `Stop keeping ${nameOf(action.id)}`;
+        return t("today.stopKeeping", { name: nameOf(action.id) });
       case "clear-type":
-        return "Any type of garment";
+        return t("today.anyType");
       case "set-style":
-        return `Switch to ${styleLabel(action.style)}`;
+        return t("today.switchTo", { style: styleName(action.style) });
       case "clear-weather":
-        return "Clear the weather";
+        return t("today.clearWeather");
       case "clear-excluded":
-        return "Include set-aside pieces";
+        return t("today.includeSetAside");
       case "choose-pieces":
-        return "Choose pieces";
+        return t("title.choosePieces");
       case "add-pieces":
-        return "Add a piece";
+        return t("capture.addPiece");
       case "use-samples":
-        return "Use the sample closet";
+        return t("today.useSample");
       case "check-piece":
         return t("check.action");
       case "edit-piece":
@@ -270,7 +278,9 @@ function TodayContent() {
   const last =
     result.outfits.length > 0 && session.cursor >= result.outfits.length - 1;
   const source =
-    request.wardrobe === "sample" ? "the sample closet" : "your closet";
+    request.wardrobe === "sample"
+      ? t("today.sourceSample")
+      : t("today.sourceOwned");
 
   return (
     <>
@@ -279,28 +289,26 @@ function TodayContent() {
           ? t("today.styledFor", {
               occasion: occasionPhrase(request.occasion),
             })
-          : "A little inspiration for today."}
+          : t("today.inspiration")}
       </AppText>
       <View style={styles.context}>
         <AppText muted style={styles.contextText} testID="today-context">
           {contextText(request)}
-          {request.weather.source === "manual" ? " (entered by you)" : ""}
+          {request.weather.source === "manual" ? t("today.enteredByYou") : ""}
           {request.weather.source === "forecast" ? t("forecast.suffix") : ""}
         </AppText>
         <Chip
-          label="Adjust"
-          accessibilityLabel="Adjust occasion, style, and weather"
+          label={t("today.adjust")}
+          accessibilityLabel={t("today.adjustHint")}
           onPress={() => router.push("/today/adjust")}
         />
       </View>
       <ForecastNote closet={closet} request={request} failed={forecastFailed} />
       {today.active === "occasion" ? (
         <View style={styles.banner}>
-          <AppText variant="caption">
-            Just for now. Your everyday style is unchanged.
-          </AppText>
+          <AppText variant="caption">{t("today.justForNow")}</AppText>
           <Button
-            label="Back to today's look"
+            label={t("today.backToLook")}
             secondary
             compact
             disabled={busy}
@@ -312,7 +320,7 @@ function TodayContent() {
       ) : null}
       {hasOwned || request.wardrobe === "owned" ? (
         <ChoiceGroup
-          label="Style from"
+          label={t("today.styleFrom")}
           options={wardrobeOptions}
           value={request.wardrobe}
           disabled={busy}
@@ -325,8 +333,7 @@ function TodayContent() {
         />
       ) : (
         <AppText variant="caption" muted>
-          Styled from the sample closet. Add your own pieces to style from your
-          clothes.
+          {t("today.sampleOnly")}
         </AppText>
       )}
 
@@ -447,8 +454,8 @@ function TodayContent() {
             />
           ) : null}
           <AppText variant="caption" muted accessibilityLiveRegion="polite">
-            {pieceCount(pieces)} from {source}
-            {kept.length ? `, ${kept.length} kept` : ""}
+            {t("today.countFrom", { pieces: pieceCount(pieces), source })}
+            {kept.length ? t("today.keptSuffix", { count: kept.length }) : ""}
           </AppText>
           {broken.length ? (
             <ProblemCard
@@ -497,7 +504,7 @@ function TodayContent() {
             </View>
           ) : null}
           <Button
-            label="Save look"
+            label={t("common.saveLook")}
             secondary
             disabled={busy}
             onPress={() =>
@@ -513,7 +520,7 @@ function TodayContent() {
           />
           {today.active === "everyday" ? (
             <Button
-              label="For an occasion"
+              label={t("today.forOccasion")}
               secondary
               disabled={busy}
               onPress={() =>
@@ -526,16 +533,16 @@ function TodayContent() {
           ) : null}
           {result.outfits.length === 1 ? (
             <AppText variant="caption" muted>
-              This is the only combination I can make with these choices.
+              {t("today.onlyCombination")}
             </AppText>
           ) : last ? (
             <AppText variant="caption" muted>
-              That was the last new combination for this request.
+              {t("today.lastCombination")}
             </AppText>
           ) : null}
           {session.previousPieceIds ? (
             <Button
-              label="Undo last change"
+              label={t("today.undo")}
               secondary
               compact
               disabled={busy}
@@ -555,7 +562,7 @@ function TodayContent() {
               message={t("today.pieceUnavailable")}
               actions={[
                 {
-                  label: "Find a new outfit",
+                  label: t("today.findNew"),
                   onPress: () => {
                     void run(startOver);
                   },
@@ -583,15 +590,17 @@ function TodayContent() {
 
       <SavedLooks closet={closet} session={session} busy={busy} run={run} />
       <View style={styles.section}>
-        <AppText style={styles.label}>Want to start with something?</AppText>
+        <AppText style={styles.label}>{t("today.startWith")}</AppText>
         <View style={styles.chips}>
           {shortcuts.map((kind) => (
             <Chip
               key={kind}
-              label={kindLabel(kind)}
+              label={kindName(kind)}
               selected={request.garmentType === kind}
               disabled={busy}
-              accessibilityLabel={`Wear a ${kindLabel(kind).toLowerCase()}`}
+              accessibilityLabel={t("today.wearKind", {
+                kind: kindName(kind).toLowerCase(),
+              })}
               onPress={() => {
                 void change({
                   garmentType: request.garmentType === kind ? null : kind,
@@ -601,7 +610,9 @@ function TodayContent() {
           ))}
           <Chip
             label={
-              kept.length ? `Choose pieces (${kept.length})` : "Choose pieces"
+              kept.length
+                ? t("today.choosePiecesCount", { count: kept.length })
+                : t("title.choosePieces")
             }
             disabled={busy}
             onPress={() => router.push("/today/pieces")}
@@ -611,7 +622,7 @@ function TodayContent() {
 
       {showOutfit ? (
         <View style={styles.section}>
-          <AppText style={styles.label}>In this outfit</AppText>
+          <AppText style={styles.label}>{t("today.inThisOutfit")}</AppText>
           {pieces.map((piece) => (
             <PieceRow
               key={piece.id}
@@ -644,8 +655,7 @@ function TodayContent() {
       <View style={styles.notes}>
         {request.hijab === null ? (
           <AppText variant="caption" muted>
-            Your hijab preference is not set, so a hijab is included when one is
-            available.
+            {t("today.hijabUnset")}
           </AppText>
         ) : null}
         {closet.styling.layout !== "full" ? (
@@ -702,7 +712,7 @@ function PieceRow({
     <View style={styles.pieceRow}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`Change ${piece.name}`}
+        accessibilityLabel={t("today.changePiece", { name: piece.name })}
         onPress={onChange}
         disabled={disabled}
         style={styles.pieceThumb}
@@ -713,24 +723,26 @@ function PieceRow({
         <AppText>{piece.name}</AppText>
         {kept ? (
           <AppText variant="caption" style={styles.keptText}>
-            Kept in every option
+            {t("today.keptEverywhere")}
           </AppText>
         ) : null}
       </View>
       <View style={styles.pieceActions}>
         <Chip
-          label={kept ? "Kept" : "Keep"}
+          label={kept ? t("outfit.kept") : t("today.keep")}
           selected={kept}
           disabled={disabled}
           accessibilityLabel={
-            kept ? `Stop keeping ${piece.name}` : `Keep ${piece.name}`
+            kept
+              ? t("today.stopKeeping", { name: piece.name })
+              : t("today.keepPiece", { name: piece.name })
           }
           onPress={onKeep}
         />
         <Chip
-          label="Change"
+          label={t("outfit.change")}
           disabled={disabled}
-          accessibilityLabel={`Change ${piece.name}`}
+          accessibilityLabel={t("today.changePiece", { name: piece.name })}
           onPress={onChange}
         />
       </View>

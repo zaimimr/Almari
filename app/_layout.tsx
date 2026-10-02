@@ -23,7 +23,7 @@ function Screens() {
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen
         name="piece/new"
-        options={{ title: "Add a piece", presentation: "modal" }}
+        options={{ title: t("capture.addPiece"), presentation: "modal" }}
       />
       <Stack.Screen name="piece/[id]" options={{ title: t("piece.title") }} />
       <Stack.Screen
@@ -32,16 +32,16 @@ function Screens() {
       />
       <Stack.Screen
         name="look/build"
-        options={{ title: "Build a look", presentation: "modal" }}
+        options={{ title: t("title.buildLook"), presentation: "modal" }}
       />
-      <Stack.Screen name="look/[id]" options={{ title: "Your look" }} />
+      <Stack.Screen name="look/[id]" options={{ title: t("title.yourLook") }} />
       <Stack.Screen
         name="capture/index"
-        options={{ title: "Add pieces", presentation: "modal" }}
+        options={{ title: t("title.addPieces"), presentation: "modal" }}
       />
       <Stack.Screen
         name="capture/[id]"
-        options={{ title: "Check this piece" }}
+        options={{ title: t("title.checkPiece") }}
       />
       <Stack.Screen
         name="capture/group/[id]"
@@ -53,19 +53,19 @@ function Screens() {
       />
       <Stack.Screen
         name="today/adjust"
-        options={{ title: "Adjust today", presentation: "modal" }}
+        options={{ title: t("title.adjustToday"), presentation: "modal" }}
       />
       <Stack.Screen
         name="today/everyday"
-        options={{ title: "Everyday style", presentation: "modal" }}
+        options={{ title: t("title.everyday"), presentation: "modal" }}
       />
       <Stack.Screen
         name="today/pieces"
-        options={{ title: "Choose pieces", presentation: "modal" }}
+        options={{ title: t("title.choosePieces"), presentation: "modal" }}
       />
       <Stack.Screen
         name="today/replace"
-        options={{ title: "Change a piece", presentation: "modal" }}
+        options={{ title: t("title.changePiece"), presentation: "modal" }}
       />
       <Stack.Screen
         name="today/check"

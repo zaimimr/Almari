@@ -1,22 +1,77 @@
 import { t } from "../i18n";
 
 export const categories = [
-  { id: "hijab", label: "Hijabs & scarves" },
-  { id: "top", label: "Tops" },
-  { id: "tunic", label: "Kurtas & tunics" },
-  { id: "bottom", label: "Trousers & skirts" },
-  { id: "dress", label: "Dresses & abayas" },
-  { id: "layer", label: "Layers" },
-  { id: "shoes", label: "Shoes" },
-  { id: "bag", label: "Bags" },
-  { id: "accessory", label: "Accessories" },
+  {
+    id: "hijab",
+    get label() {
+      return t("category.hijab");
+    },
+  },
+  {
+    id: "top",
+    get label() {
+      return t("category.top");
+    },
+  },
+  {
+    id: "tunic",
+    get label() {
+      return t("category.tunic");
+    },
+  },
+  {
+    id: "bottom",
+    get label() {
+      return t("category.bottom");
+    },
+  },
+  {
+    id: "dress",
+    get label() {
+      return t("category.dress");
+    },
+  },
+  {
+    id: "layer",
+    get label() {
+      return t("category.layer");
+    },
+  },
+  {
+    id: "shoes",
+    get label() {
+      return t("category.shoes");
+    },
+  },
+  {
+    id: "bag",
+    get label() {
+      return t("category.bag");
+    },
+  },
+  {
+    id: "accessory",
+    get label() {
+      return t("category.accessory");
+    },
+  },
 ] as const;
 
 export type Category = (typeof categories)[number]["id"];
 
 export const styleOptions = [
-  { id: "western", label: "Western" },
-  { id: "desi", label: "Desi" },
+  {
+    id: "western",
+    get label() {
+      return t("style.western");
+    },
+  },
+  {
+    id: "desi",
+    get label() {
+      return t("style.desi");
+    },
+  },
 ] as const;
 
 export type Style = (typeof styleOptions)[number]["id"];
@@ -126,8 +181,7 @@ export function fixedStyles(id: GarmentKind): Style[] | undefined {
   return styles ? [...styles] : undefined;
 }
 
-export const kindLabel = (id: GarmentKind) =>
-  garmentKinds.find((kind) => kind.id === id)?.label ?? id;
+export const kindLabel = (id: GarmentKind) => t(`kind.${id}`);
 
 export const occasionLabel = (id: Occasion) => t(`occasion.${id}`);
 
@@ -139,5 +193,4 @@ export const occasionOptions = () =>
     label: occasionLabel(occasion.id),
   }));
 
-export const styleLabel = (id: Style) =>
-  styleOptions.find((item) => item.id === id)?.label ?? id;
+export const styleLabel = (id: Style) => t(`style.${id}`);

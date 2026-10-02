@@ -992,8 +992,7 @@ function hasUniqueIds(items: { id: string }[]) {
   return new Set(items.map((item) => item.id)).size === items.length;
 }
 
-const unreadable = () =>
-  new Error("This closet could not be opened. Your saved data has been kept.");
+const unreadable = () => new Error(t("closet.openError"));
 
 export type SampleTraits = Pick<Piece, "kind" | "styles" | "traits"> & {
   category: Category;
@@ -1276,8 +1275,7 @@ export function decodeCloset(
 
 export function savePiece(closet: Closet, piece: Piece): Closet {
   const clean = withWeatherProposals({ ...piece, name: piece.name.trim() });
-  if (!isPiece(clean))
-    throw new Error("Add a photo, a name, and a category for this piece.");
+  if (!isPiece(clean)) throw new Error(t("closet.pieceInvalid"));
   const exists = closet.pieces.some((item) => item.id === piece.id);
   return {
     ...closet,
@@ -1306,14 +1304,11 @@ export function saveLook(closet: Closet, look: Look): Closet {
     name: look.name.trim(),
     pieceIds: [...new Set(look.pieceIds)],
   };
-  if (!isLook(clean))
-    throw new Error("Name your look and choose at least one piece.");
+  if (!isLook(clean)) throw new Error(t("closet.lookInvalid"));
   if (
     clean.pieceIds.some((id) => !closet.pieces.some((piece) => piece.id === id))
   ) {
-    throw new Error(
-      "A selected piece is no longer in your closet. Choose another piece.",
-    );
+    throw new Error(t("closet.lookPieceGone"));
   }
   const exists = closet.looks.some((item) => item.id === look.id);
   return {

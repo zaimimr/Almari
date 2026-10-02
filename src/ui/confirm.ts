@@ -1,4 +1,5 @@
 import { Alert, Platform } from "react-native";
+import { t } from "../i18n";
 
 export function confirmAction(
   title: string,
@@ -12,7 +13,11 @@ export function confirmAction(
       title,
       description,
       [
-        { text: "Cancel", style: "cancel", onPress: () => resolve(false) },
+        {
+          text: t("common.cancel"),
+          style: "cancel",
+          onPress: () => resolve(false),
+        },
         { text: action, style: "destructive", onPress: () => resolve(true) },
       ],
       { cancelable: true, onDismiss: () => resolve(false) },

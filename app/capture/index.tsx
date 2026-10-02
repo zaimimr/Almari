@@ -45,27 +45,20 @@ import {
 } from "../../src/features/Retake";
 
 const tips = [
-  {
-    title: "Let the real color show.",
-    body: "Place your piece near a window in even daylight. Avoid strong sunlight, harsh shadows, and colored lamps.",
-  },
-  {
-    title: "One piece, a little space.",
-    body: "Use a plain background that contrasts with your clothes, like a grey sheet for white pieces. Spread sleeves and hems so the whole shape is visible. Photograph one piece at a time. A pair of shoes counts as one piece.",
-  },
-  {
-    title: "Keep every edge in view.",
-    body: "Hold your phone parallel to the clothes. Leave a small border around the piece, tap to focus, and take the photo. We will prepare the closet image for you.",
-  },
-];
+  { title: "capture.tip1Title", body: "capture.tip1Body" },
+  { title: "capture.tip2Title", body: "capture.tip2Body" },
+  { title: "capture.tip3Title", body: "capture.tip3Body" },
+] as const;
 
-const stateLabel: Record<ImportJob["state"], string> = {
-  queued: "Waiting",
-  preparing: "Preparing",
-  ready: "Ready",
-  review: "Quick check",
-  failed: "Could not finish",
-};
+const stateKeys = {
+  queued: "capture.stateQueued",
+  preparing: "capture.statePreparing",
+  ready: "capture.stateReady",
+  review: "capture.stateReview",
+  failed: "capture.stateFailed",
+} as const;
+
+const stateLabel = (state: ImportJob["state"]) => t(stateKeys[state]);
 
 const failureText = {
   storage: "failure.storage",
@@ -193,7 +186,7 @@ export default function AddPieces() {
       await changeImports(update, acceptImports);
       if (!closet.imports.some((job) => job.state !== "ready")) router.back();
     } catch {
-      setError("These pieces could not be saved. Please try again.");
+      setError(t("error.piecesSave"));
     } finally {
       setBusy(false);
     }
@@ -203,7 +196,7 @@ export default function AddPieces() {
     try {
       await changeImports(update, (current) => removeImport(current, job.id));
     } catch {
-      setError("This photo could not be removed. Please try again.");
+      setError(t("capture.removeFailed"));
     }
   }
 
@@ -214,28 +207,35 @@ export default function AddPieces() {
       <FormScreen key={tip}>
         <Stack.Screen
           options={{
-            title: "Photo tips",
+            title: t("capture.tips"),
             headerLeft: () => (
-              <HeaderAction label="Skip" onPress={() => void finishTips()} />
+              <HeaderAction
+                label={t("common.skip")}
+                onPress={() => void finishTips()}
+              />
             ),
             headerRight: () => null,
           }}
         />
         <AppText variant="caption" muted>
-          {tip + 1} of {tips.length}
+          {t("capture.tipStep", { step: tip + 1, total: tips.length })}
         </AppText>
         <TipDrawing tip={tip} />
-        <AppText variant="title">{card.title}</AppText>
-        <AppText>{card.body}</AppText>
+        <AppText variant="title">{t(card.title)}</AppText>
+        <AppText>{t(card.body)}</AppText>
         <Button
-          label={last ? "Start adding pieces" : "Next tip"}
+          label={last ? t("capture.startAdding") : t("capture.nextTip")}
           onPress={() => {
             if (last) void finishTips();
             else setTip(tip + 1);
           }}
         />
         {tip > 0 ? (
-          <Button label="Back" secondary onPress={() => setTip(tip - 1)} />
+          <Button
+            label={t("common.back")}
+            secondary
+            onPress={() => setTip(tip - 1)}
+          />
         ) : null}
       </FormScreen>
     );
@@ -245,25 +245,24 @@ export default function AddPieces() {
     <View style={styles.screen}>
       <Stack.Screen
         options={{
-          title: "Add pieces",
+          title: t("title.addPieces"),
           headerLeft: () => (
-            <HeaderAction label="Close" onPress={() => router.back()} />
+            <HeaderAction
+              label={t("common.close")}
+              onPress={() => router.back()}
+            />
           ),
           headerRight: () => (
-            <HeaderAction label="Photo tips" onPress={() => setTip(0)} />
+            <HeaderAction label={t("capture.tips")} onPress={() => setTip(0)} />
           ),
         }}
       />
       <FormScreen>
-        <AppText muted>
-          Photograph one piece at a time, or choose several photos. Each one is
-          prepared on this iPhone: the background is removed and it gets a name
-          and a category. Your photos are not uploaded.
-        </AppText>
+        <AppText muted>{t("capture.intro")}</AppText>
         <View style={styles.actions}>
           <View style={styles.action}>
             <Button
-              label="Take a photo"
+              label={t("common.takePhoto")}
               onPress={() => {
                 void pick("camera");
               }}
@@ -271,7 +270,7 @@ export default function AddPieces() {
           </View>
           <View style={styles.action}>
             <Button
-              label="Choose photos"
+              label={t("capture.choosePhotos")}
               secondary
               onPress={() => {
                 void pick("library");
@@ -301,10 +300,10 @@ export default function AddPieces() {
         {jobs.length ? (
           <AppText accessibilityLiveRegion="polite">
             {[
-              ready ? `${ready} ready` : null,
-              working ? `${working} being prepared` : null,
-              checks ? `${checks} need a quick check` : null,
-              failed ? `${failed} could not finish` : null,
+              ready ? t("capture.readyCount", { count: ready }) : null,
+              working ? t("capture.workingCount", { count: working }) : null,
+              checks ? t("capture.checksCount", { count: checks }) : null,
+              failed ? t("capture.failedCount", { count: failed }) : null,
             ]
               .filter(Boolean)
               .join(" · ")}
@@ -357,7 +356,7 @@ export default function AddPieces() {
           ))}
         </View>
         <Button
-          label="Add without photo preparation"
+          label={t("capture.addWithout")}
           secondary
           compact
           onPress={() => router.push("/piece/new")}
@@ -369,8 +368,10 @@ export default function AddPieces() {
           <Button
             label={
               ready
-                ? `Add ${ready} ready ${ready === 1 ? "piece" : "pieces"}`
-                : "Add ready pieces"
+                ? ready === 1
+                  ? t("capture.addReadyOne")
+                  : t("capture.addReadyMany", { count: ready })
+                : t("capture.addReady")
             }
             busy={busy}
             disabled={!ready}
@@ -409,7 +410,7 @@ function JobTile({
     >
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`${job.name ?? "Photo"}, ${stateLabel[job.state]}${job.advice ? `, ${t("capture.photoTip")}` : ""}`}
+        accessibilityLabel={`${t("capture.jobLabel", { name: job.name ?? t("capture.jobPhoto"), state: stateLabel(job.state) })}${job.advice ? `, ${t("capture.photoTip")}` : ""}`}
         disabled={!openable}
         onPress={onOpen}
         style={[
@@ -437,7 +438,7 @@ function JobTile({
               job.state === "ready" ? styles.badgeTextReady : styles.badgeText
             }
           >
-            {stateLabel[job.state]}
+            {stateLabel(job.state)}
           </AppText>
         </View>
       </Pressable>
@@ -454,14 +455,24 @@ function JobTile({
           <AppText variant="caption" muted>
             {failureMessage(job.error)}
           </AppText>
-          <Button label="Retry" secondary compact onPress={onRetry} />
+          <Button
+            label={t("common.retry")}
+            secondary
+            compact
+            onPress={onRetry}
+          />
           <Button
             label={t("capture.retake")}
             secondary
             compact
             onPress={onRetake}
           />
-          <Button label="Remove" danger compact onPress={onRemove} />
+          <Button
+            label={t("common.remove")}
+            danger
+            compact
+            onPress={onRemove}
+          />
         </View>
       ) : null}
     </View>

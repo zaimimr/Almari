@@ -32,16 +32,7 @@ const roleLimits: Record<Role, number> = {
   accessory: 2,
 };
 
-const roleNames: Record<Role, string> = {
-  main: "main pieces",
-  bottom: "trousers or skirts",
-  layer: "layers",
-  outer: "outer layers",
-  hijab: "hijabs",
-  shoes: "pairs of shoes",
-  bag: "bags",
-  accessory: "accessories",
-};
+const roleName = (role: Role) => t(`role.${role}`);
 
 export type ProblemAction =
   | { type: "release"; id: string }
@@ -133,7 +124,7 @@ function outside(request: OutfitRequest) {
 }
 
 function names(pieces: Piece[]) {
-  return pieces.map((piece) => piece.name).join(" and ");
+  return pieces.map((piece) => piece.name).join(` ${t("word.and")} `);
 }
 
 function structureProblems(pieces: Piece[], kept: boolean): Problem[] {
@@ -144,7 +135,17 @@ function structureProblems(pieces: Piece[], kept: boolean): Problem[] {
       problems.push({
         code: "kept-conflict",
         severity: "conflict",
-        message: `${names(group)} cannot be worn together. An outfit uses ${roleLimits[role] === 1 ? "one" : roleLimits[role]} of these ${roleNames[role]}.`,
+        message:
+          roleLimits[role] === 1
+            ? t("styling.tooManyOfOne", {
+                names: names(group),
+                role: roleName(role),
+              })
+            : t("styling.tooManyOfMany", {
+                names: names(group),
+                count: roleLimits[role],
+                role: roleName(role),
+              }),
         ids: group.map((piece) => piece.id),
         actions: kept
           ? group.map((piece) => ({ type: "release" as const, id: piece.id }))
@@ -161,7 +162,11 @@ function styleProblems(pieces: Piece[], request: OutfitRequest): Problem[] {
     .map((piece) => ({
       code: "style-conflict" as const,
       severity: "conflict" as const,
-      message: `${piece.name} is marked ${styleLabel(otherStyle(request.style))}, and this outfit is ${styleLabel(request.style)}.`,
+      message: t("styling.styleConflict", {
+        name: piece.name,
+        other: styleLabel(otherStyle(request.style)),
+        style: styleLabel(request.style),
+      }),
       ids: [piece.id],
       actions: [
         { type: "set-style" as const, style: otherStyle(request.style) },
@@ -267,25 +272,29 @@ export function evaluateOutfit(
     ids: [],
     actions: [],
   });
-  if (!mains.length) problems.push(missing("Add a top, tunic, or dress."));
+  if (!mains.length) problems.push(missing(t("styling.addMain")));
   if (
     mains.some(needsBottom) &&
     !outfit.some((piece) => roleOf(piece) === "bottom")
   )
-    problems.push(missing("Add trousers or a skirt."));
+    problems.push(missing(t("styling.addBottom")));
   if (!outfit.some((piece) => roleOf(piece) === "shoes"))
-    problems.push(missing("Add shoes."));
+    problems.push(missing(t("styling.addShoes")));
   if (
     request.hijab === "always" &&
     !outfit.some((piece) => roleOf(piece) === "hijab")
   )
-    problems.push(missing("Add a hijab."));
+    problems.push(missing(t("styling.addHijab")));
   if (
     request.garmentType &&
     !outfit.some((piece) => piece.kind === request.garmentType)
   )
     problems.push(
-      missing(`Add a ${kindLabel(request.garmentType).toLowerCase()}.`),
+      missing(
+        t("styling.addKind", {
+          kind: kindLabel(request.garmentType).toLowerCase(),
+        }),
+      ),
     );
   const worn = (role: Role) => outfit.find((piece) => roleOf(piece) === role);
   problems.push(
@@ -309,7 +318,10 @@ export function evaluateOutfit(
     problems.push({
       code: "style-unknown",
       severity: "review",
-      message: `${names(unmarked)} ${unmarked.length === 1 ? "is" : "are"} not marked Desi or Western yet.`,
+      message:
+        unmarked.length === 1
+          ? t("styling.unmarkedOne", { names: names(unmarked) })
+          : t("styling.unmarkedMany", { names: names(unmarked) }),
       ids: unmarked.map((piece) => piece.id),
       actions: [],
     });
@@ -353,7 +365,7 @@ function diversify(candidates: Candidate[], seed: string) {
 }
 
 function mainPieceWords(style: Style) {
-  return `None of your tops, tunics, or dresses are marked ${styleLabel(style)}.`;
+  return t("styling.noMainForStyle", { style: styleLabel(style) });
 }
 
 export function styleOutfits(
@@ -377,8 +389,8 @@ export function styleOutfits(
         severity: "missing",
         message:
           request.wardrobe === "owned"
-            ? "Add a few of your own pieces to get outfit suggestions."
-            : "The sample closet is empty.",
+            ? t("styling.addOwnPieces")
+            : t("styling.sampleEmpty"),
         ids: [],
         actions:
           request.wardrobe === "owned"
@@ -458,10 +470,14 @@ export function styleOutfits(
           code: "no-garment-type",
           severity: "missing",
           message: other
-            ? `Your ${label} is marked ${styleLabel(otherStyle(request.style))}. There is no ${label} for a ${styleLabel(request.style)} outfit.`
+            ? t("styling.kindOtherStyle", {
+                kind: label,
+                other: styleLabel(otherStyle(request.style)),
+                style: styleLabel(request.style),
+              })
             : pool.some((piece) => piece.kind === type)
-              ? `Your only ${label} is set aside for this request.`
-              : `There is no ${label} in this closet yet.`,
+              ? t("styling.kindSetAside", { kind: label })
+              : t("styling.kindNone", { kind: label }),
           ids: other ? [other.id] : [],
           actions: [
             { type: "clear-type" },
@@ -497,27 +513,23 @@ export function styleOutfits(
       gap(mainPieceWords(request.style), [
         { type: "set-style", style: otherStyle(request.style) },
       ]);
-    else
-      gap("Add a top, tunic, or dress to style a complete outfit.", [
-        { type: "add-pieces" },
-      ]);
+    else gap(t("styling.gapMain"), [{ type: "add-pieces" }]);
   }
   const bottoms = keptRole("bottom").length
     ? keptRole("bottom")
     : eligibleRole("bottom");
   if (mains.length && mains.every(needsBottom) && !bottoms.length)
-    gap(
-      `Add trousers or a skirt that suits a ${styleLabel(request.style)} outfit.`,
-      [{ type: "add-pieces" }],
-    );
+    gap(t("styling.gapBottom", { style: styleLabel(request.style) }), [
+      { type: "add-pieces" },
+    ]);
   if (!keptRole("shoes").length && !eligibleRole("shoes").length)
-    gap("Add shoes to complete an outfit.", [{ type: "add-pieces" }]);
+    gap(t("styling.gapShoes"), [{ type: "add-pieces" }]);
   if (
     request.hijab === "always" &&
     !keptRole("hijab").length &&
     !eligibleRole("hijab").length
   )
-    gap("Add a hijab to complete an outfit.", [{ type: "add-pieces" }]);
+    gap(t("styling.gapHijab"), [{ type: "add-pieces" }]);
   if (gaps.length) return fail("missing", gaps);
 
   const warm =

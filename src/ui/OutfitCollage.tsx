@@ -5,6 +5,7 @@ import type { Category, Piece } from "../domain/closet";
 import { photoSource } from "./photos";
 import sampleFrames from "./sample-frames.json";
 import { theme } from "./theme";
+import { t } from "../i18n";
 
 type Placement = {
   x: number;
@@ -113,10 +114,8 @@ export function OutfitCollage({
     >
       {pieces.length === 0 ? (
         <View style={styles.empty}>
-          <Text style={styles.emptyTitle}>Start with a piece you love.</Text>
-          <Text style={styles.emptyCopy}>
-            Choose below and watch your outfit come together here.
-          </Text>
+          <Text style={styles.emptyTitle}>{t("collage.emptyTitle")}</Text>
+          <Text style={styles.emptyCopy}>{t("collage.emptyBody")}</Text>
         </View>
       ) : (
         <View style={{ width: size, height: size }}>
@@ -152,7 +151,7 @@ export function OutfitCollage({
                     accessible
                     accessibilityLabel={
                       keptIds.includes(piece.id)
-                        ? `${piece.name}, kept`
+                        ? t("outfit.keptLabel", { name: piece.name })
                         : piece.name
                     }
                     contentFit={frame ? "fill" : "contain"}

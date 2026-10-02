@@ -20,6 +20,7 @@ import {
   Screen,
 } from "../../src/ui";
 import { theme } from "../../src/ui/theme";
+import { t } from "../../src/i18n";
 
 export default function ReplacePiece() {
   const { width, fontScale } = useWindowDimensions();
@@ -37,9 +38,11 @@ export default function ReplacePiece() {
     return (
       <Screen centered>
         <Message
-          title="This piece is no longer in the outfit"
-          description="Go back to see today's outfit."
-          action={<Button label="Go back" onPress={() => router.back()} />}
+          title={t("replace.goneTitle")}
+          description={t("common.backToToday")}
+          action={
+            <Button label={t("common.goBack")} onPress={() => router.back()} />
+          }
         />
       </Screen>
     );
@@ -81,9 +84,12 @@ export default function ReplacePiece() {
     <View style={styles.screen}>
       <Stack.Screen
         options={{
-          title: `Change the ${target.name.toLowerCase()}`,
+          title: t("replace.title", { name: target.name.toLowerCase() }),
           headerLeft: () => (
-            <HeaderAction label="Cancel" onPress={() => router.back()} />
+            <HeaderAction
+              label={t("common.cancel")}
+              onPress={() => router.back()}
+            />
           ),
         }}
       />
@@ -97,8 +103,8 @@ export default function ReplacePiece() {
             accessibilityLiveRegion="polite"
           >
             {chosen
-              ? `Trying ${chosen.piece.name}. Everything else stays the same.`
-              : "Choose an alternative to preview it in the whole outfit."}
+              ? t("common.trying", { name: chosen.piece.name })
+              : t("replace.choose")}
           </AppText>
           {chosen?.problems.map((problem) => (
             <AppText key={problem.message} style={styles.summary}>
@@ -131,7 +137,7 @@ export default function ReplacePiece() {
                     piece={item.piece}
                     compact={!wide}
                     selected={choice === item.piece.id}
-                    selectedLabel="Trying"
+                    selectedLabel={t("common.tryingLabel")}
                     onPress={() =>
                       setChoice(choice === item.piece.id ? null : item.piece.id)
                     }
@@ -141,11 +147,9 @@ export default function ReplacePiece() {
             />
           ) : (
             <View style={styles.none}>
-              <AppText>
-                No other piece works here without changing more of the outfit.
-              </AppText>
+              <AppText>{t("replace.none")}</AppText>
               <Button
-                label="Restyle without this piece"
+                label={t("replace.restyle")}
                 secondary
                 busy={busy}
                 onPress={() => {
@@ -165,7 +169,7 @@ export default function ReplacePiece() {
                         },
                         session.revision,
                       ),
-                    "The outfit could not be restyled. Please try again.",
+                    t("common.restyleError"),
                   );
                 }}
               />
@@ -177,7 +181,7 @@ export default function ReplacePiece() {
         <View style={styles.footerContent}>
           <ErrorMessage message={error} />
           <Button
-            label="Use this piece"
+            label={t("replace.use")}
             busy={busy}
             disabled={!chosen}
             onPress={() => {
@@ -192,7 +196,7 @@ export default function ReplacePiece() {
                       new Date().toISOString(),
                       randomUUID(),
                     ),
-                  "This change could not be saved. Please try again.",
+                  t("piece.error.save"),
                 );
             }}
           />

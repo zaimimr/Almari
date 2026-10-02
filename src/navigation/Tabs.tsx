@@ -1,6 +1,7 @@
 import { Tabs } from "expo-router";
 import Feather from "@expo/vector-icons/Feather";
 import { theme } from "../ui/theme";
+import { t } from "../i18n";
 
 export default function ClosetTabs() {
   return (
@@ -20,7 +21,7 @@ export default function ClosetTabs() {
       <Tabs.Screen
         name="today"
         options={{
-          title: "Today",
+          title: t("nav.today"),
           tabBarIcon: ({ color, size }) => (
             <Feather name="sun" color={color} size={size} />
           ),
@@ -29,7 +30,7 @@ export default function ClosetTabs() {
       <Tabs.Screen
         name="closet"
         options={{
-          title: "Closet",
+          title: t("nav.closet"),
           tabBarIcon: ({ color, size }) => (
             <Feather name="grid" color={color} size={size} />
           ),
@@ -38,7 +39,7 @@ export default function ClosetTabs() {
       <Tabs.Screen
         name="looks"
         options={{
-          title: "Looks",
+          title: t("nav.looks"),
           tabBarIcon: ({ color, size }) => (
             <Feather name="bookmark" color={color} size={size} />
           ),

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import { useCloset } from "../../src/state/closet";
-import { occasionLabel, piecesForLook } from "../../src/domain/closet";
+import { piecesForLook } from "../../src/domain/closet";
 import {
   AppText,
   Button,
@@ -12,6 +12,7 @@ import {
   Screen,
 } from "../../src/ui";
 import { confirmAction } from "../../src/ui/confirm";
+import { occasionName, t } from "../../src/i18n";
 
 export default function LookDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -24,11 +25,11 @@ export default function LookDetail() {
     return (
       <Screen centered>
         <Message
-          title="This look is no longer here"
-          description="Your other saved looks are still in Looks."
+          title={t("look.goneTitle")}
+          description={t("look.goneBody")}
           action={
             <Button
-              label="Go to looks"
+              label={t("look.goToLooks")}
               onPress={() => router.replace("/looks")}
             />
           }
@@ -42,9 +43,9 @@ export default function LookDetail() {
     if (
       busy ||
       !(await confirmAction(
-        "Remove this look?",
-        "The pieces will stay in your closet.",
-        "Remove",
+        t("look.removeTitle"),
+        t("look.removeBody"),
+        t("common.remove"),
       ))
     )
       return;
@@ -56,7 +57,7 @@ export default function LookDetail() {
       }));
       router.back();
     } catch {
-      setError("This look could not be removed. Please try again.");
+      setError(t("error.lookRemove"));
     } finally {
       setBusy(false);
     }
@@ -66,21 +67,23 @@ export default function LookDetail() {
     <FormScreen>
       <AppText variant="title">{look.name}</AppText>
       {look.occasion ? (
-        <AppText muted>{occasionLabel(look.occasion)}</AppText>
+        <AppText muted>{occasionName(look.occasion)}</AppText>
       ) : null}
       <AppText muted>
-        {pieces.length} {pieces.length === 1 ? "piece" : "pieces"} from your
-        closet
+        {pieces.length === 1
+          ? t("looksTab.countOne")
+          : t("looksTab.countMany", { count: pieces.length })}
       </AppText>
       <OutfitCollage pieces={pieces} />
       {missing ? (
         <AppText>
-          {missing} {missing === 1 ? "piece is" : "pieces are"} no longer in
-          your closet. Edit this look to choose a replacement.
+          {missing === 1
+            ? t("look.missingOne")
+            : t("look.missingMany", { count: missing })}
         </AppText>
       ) : null}
       <Button
-        label="Change pieces"
+        label={t("look.changePieces")}
         disabled={busy}
         onPress={() => router.push({ pathname: "/look/build", params: { id } })}
       />
@@ -89,7 +92,7 @@ export default function LookDetail() {
       ))}
       <ErrorMessage message={error} />
       <Button
-        label="Remove look"
+        label={t("look.remove")}
         danger
         busy={busy}
         onPress={() => {

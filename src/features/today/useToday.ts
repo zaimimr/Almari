@@ -7,7 +7,7 @@ import type {
   Piece,
   Weather,
 } from "../../domain/closet";
-import { isAvailable, occasionLabel, styleLabel } from "../../domain/closet";
+import { isAvailable } from "../../domain/closet";
 import {
   activeSession,
   clockFor,
@@ -16,7 +16,7 @@ import {
   saveForecast,
 } from "../../domain/today";
 import { forecastFor, forecastWeather } from "../../domain/weather";
-import { t } from "../../i18n";
+import { occasionName, styleName, t } from "../../i18n";
 import { useCloset } from "../../state/closet";
 
 export function useToday() {
@@ -53,7 +53,7 @@ export function useToday() {
         await update(transform);
         return true;
       } catch {
-        setError("This change could not be saved. Please try again.");
+        setError(t("piece.error.save"));
         return false;
       } finally {
         setBusy(false);
@@ -125,17 +125,26 @@ export function useToday() {
   };
 }
 
+const warmthKeys = {
+  warm: "weather.warm",
+  mild: "weather.mild",
+  cold: "weather.cold",
+} as const;
+
 export function weatherText(weather: Weather) {
-  if (weather.source === "unknown") return "Weather not set";
-  const warmth = { warm: "Warm", mild: "Mild", cold: "Cold" }[weather.warmth];
-  const rain = { dry: "", rain: ", rain", snow: ", snow" }[
-    weather.precipitation
-  ];
+  if (weather.source === "unknown") return t("weather.unset");
+  const warmth = t(warmthKeys[weather.warmth]);
+  const rain =
+    weather.precipitation === "rain"
+      ? t("weather.rainSuffix")
+      : weather.precipitation === "snow"
+        ? t("weather.snowSuffix")
+        : "";
   const where =
     weather.exposure === "mostly-indoors"
-      ? ", mostly indoors"
+      ? t("weather.indoorsSuffix")
       : weather.exposure === "time-outside"
-        ? ", time outside"
+        ? t("weather.outsideSuffix")
         : "";
   return `${warmth}${rain}${where}`;
 }
@@ -143,11 +152,13 @@ export function weatherText(weather: Weather) {
 export function contextText(
   request: NonNullable<ReturnType<typeof useToday>["session"]>["request"],
 ) {
-  return `${occasionLabel(request.occasion)} · ${styleLabel(request.style)} · ${weatherText(request.weather)}`;
+  return `${occasionName(request.occasion)} · ${styleName(request.style)} · ${weatherText(request.weather)}`;
 }
 
 export function pieceCount(pieces: Piece[]) {
-  return `${pieces.length} ${pieces.length === 1 ? "piece" : "pieces"}`;
+  return pieces.length === 1
+    ? t("common.pieceCountOne")
+    : t("common.pieceCountMany", { count: pieces.length });
 }
 
 export function coverageText(request: OutfitRequest) {

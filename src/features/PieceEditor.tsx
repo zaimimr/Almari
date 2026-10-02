@@ -94,9 +94,7 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
       if (source === "camera") {
         const permission = await ImagePicker.requestCameraPermissionsAsync();
         if (!permission.granted) {
-          setError(
-            "Camera access is off. You can choose a photo, or enable camera access in Settings.",
-          );
+          setError(t("error.cameraOffOne"));
           return;
         }
       }
@@ -116,7 +114,7 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
         setNewImage(true);
       }
     } catch {
-      setError("The photo could not be opened. Please choose it again.");
+      setError(t("error.photoOpen"));
     }
   }
 
@@ -171,9 +169,7 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
       router.back();
     } catch {
       if (copiedPhoto) void discardPhoto(copiedPhoto).catch(() => undefined);
-      setError(
-        "This piece could not be saved. Check that your device has free space, then try again.",
-      );
+      setError(t("error.pieceSave"));
     } finally {
       setBusy(false);
     }
@@ -183,11 +179,13 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
     if (!piece || busy) return;
     const uses = usedIn(closet, piece.id);
     const confirmed = await confirmAction(
-      "Remove this piece?",
+      t("editor.removeTitle"),
       uses
-        ? `It appears in ${uses} saved ${uses === 1 ? "look" : "looks"}. Those looks will show that this piece is missing.`
-        : "This removes the piece and its closet photo from this device.",
-      "Remove",
+        ? uses === 1
+          ? t("editor.removeUsedOne")
+          : t("editor.removeUsedMany", { count: uses })
+        : t("editor.removeBody"),
+      t("common.remove"),
     );
     if (!confirmed) return;
     setBusy(true);
@@ -210,7 +208,7 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
       allowClose();
       router.dismissTo("/closet");
     } catch {
-      setError("This piece could not be removed. Please try again.");
+      setError(t("error.pieceRemove"));
     } finally {
       setBusy(false);
     }
@@ -220,10 +218,10 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
     <FormScreen>
       <Stack.Screen
         options={{
-          title: piece ? t("piece.edit.title") : "Add a piece",
+          title: piece ? t("piece.edit.title") : t("capture.addPiece"),
           headerLeft: () => (
             <HeaderAction
-              label={piece ? "Back" : "Cancel"}
+              label={piece ? t("common.back") : t("common.cancel")}
               onPress={() => router.back()}
             />
           ),
@@ -235,13 +233,13 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
             source={newImage ? { uri: image } : photoSource(image)}
             style={styles.image}
             contentFit="contain"
-            accessibilityLabel="Clothing photo preview"
+            accessibilityLabel={t("editor.photoPreview")}
           />
         ) : (
           <View style={styles.photoHint}>
-            <AppText variant="heading">Start with a photo.</AppText>
+            <AppText variant="heading">{t("editor.startTitle")}</AppText>
             <AppText muted style={styles.hint}>
-              A clear photo in natural light helps you see the colors you love.
+              {t("editor.startBody")}
             </AppText>
           </View>
         )}
@@ -265,7 +263,7 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
       <View style={styles.actions}>
         <View style={styles.action}>
           <Button
-            label={image ? "Change photo" : "Choose a photo"}
+            label={image ? t("editor.changePhoto") : t("editor.choosePhoto")}
             secondary
             disabled={busy}
             onPress={() => {
@@ -276,7 +274,7 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
         {Platform.OS !== "web" ? (
           <View style={styles.action}>
             <Button
-              label="Take a photo"
+              label={t("common.takePhoto")}
               secondary
               disabled={busy}
               onPress={() => {
@@ -287,9 +285,9 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
         ) : null}
       </View>
       <Field
-        label="Name"
+        label={t("piece.name")}
         testID="piece-name"
-        placeholder="e.g. Mauve chiffon hijab"
+        placeholder={t("editor.nameHint")}
         value={name}
         onChangeText={setName}
         maxLength={80}
@@ -406,7 +404,7 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
       ) : null}
       <ErrorMessage message={error} />
       <Button
-        label={piece ? "Save changes" : "Add to closet"}
+        label={piece ? t("common.saveChanges") : t("editor.addToCloset")}
         onPress={() => {
           void save();
         }}
@@ -421,12 +419,12 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
       />
       <AppText variant="caption" muted>
         {piece?.source === "sample"
-          ? "A sample piece for trying outfit combinations."
-          : "Saved on this device. Photos keep their original backgrounds."}
+          ? t("editor.sampleNote")
+          : t("editor.savedNote")}
       </AppText>
       {piece ? (
         <Button
-          label="Remove piece"
+          label={t("editor.remove")}
           danger
           disabled={busy}
           onPress={() => {
