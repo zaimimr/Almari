@@ -4,6 +4,7 @@ import Foundation
 let sRGB = CGColorSpace(name: CGColorSpace.sRGB)!
 let context = CIContext(options: [.workingColorSpace: sRGB])
 let enhancer = GarmentEnhancer(context: context)
+let quality = PhotoQuality(enhancer: enhancer)
 let hueTolerance = 3.0
 let castTolerance = 4.0
 var failures: [String] = []
@@ -78,6 +79,43 @@ func checkEnhancement(_ name: String, _ garment: CIImage, canvas: CGRect, grey: 
   return enhanced
 }
 
+func checkQuality(_ name: String, _ garment: CIImage, canvas: CGRect, grey: CIImage) {
+  let neutral = scene(garment, sheet: grey, canvas: canvas)
+  let sharp = quality.measure(photo: neutral.photo, mask: neutral.mask)
+  let blurred = quality.measure(
+    photo: neutral.photo.applyingGaussianBlur(sigma: 8).cropped(to: canvas), mask: neutral.mask)
+  check(
+    blurred.sharpness < sharp.sharpness * 0.5,
+    "\(name) blur not detected: \(sharp.sharpness) then \(blurred.sharpness)")
+  check(sharp.clipped.isEmpty, "\(name) reported cut edges \(sharp.clipped) with space around it")
+  check((sharp.coverage ?? 1) < 0.9, "\(name) coverage \(String(describing: sharp.coverage))")
+  check(
+    (sharp.lightSpread ?? 99) < 8,
+    "\(name) even light reported as mixed: \(String(describing: sharp.lightSpread))")
+  let dark = quality.measure(photo: tinted(neutral.photo, 0.3, 0.3, 0.3), mask: neutral.mask)
+  check(
+    dark.brightness < 0.22 && sharp.brightness > 0.22,
+    "\(name) brightness \(sharp.brightness) then \(dark.brightness)")
+  let cut = CGRect(
+    x: canvas.minX, y: garment.extent.midY, width: canvas.width,
+    height: canvas.maxY - garment.extent.midY)
+  let hem = quality.measure(photo: neutral.photo.cropped(to: cut), mask: neutral.mask.cropped(to: cut))
+  check(hem.clipped == ["bottom"], "\(name) cut hem reported as \(hem.clipped)")
+  let merged = quality.measure(photo: neutral.photo, mask: CIImage(color: .white).cropped(to: canvas))
+  check((merged.coverage ?? 0) > 0.9, "\(name) merged background coverage \(String(describing: merged.coverage))")
+  let warmHalf = CIImage(color: CIColor(red: 0.7, green: 0.62, blue: 0.5)).cropped(
+    to: CGRect(x: canvas.minX, y: canvas.minY, width: canvas.width / 2, height: canvas.height))
+  let mixed = scene(
+    garment, sheet: warmHalf.composited(over: CIImage(color: CIColor(red: 0.55, green: 0.62, blue: 0.72))),
+    canvas: canvas)
+  let spread = quality.measure(photo: mixed.photo, mask: mixed.mask).lightSpread ?? 0
+  check(spread > 8, "\(name) mixed light spread \(spread)")
+  print(
+    String(
+      format: "%@: sharpness %.0f, blurred %.0f, brightness %.2f, coverage %.2f, mixed light %.1f",
+      name, sharp.sharpness, blurred.sharpness, sharp.brightness, sharp.coverage ?? 0, spread))
+}
+
 let arguments = CommandLine.arguments
 guard arguments.count > 1 else {
   print("Usage: closet-checks <folder of transparent garment PNGs> [output folder]")
@@ -103,6 +141,7 @@ for file in files {
   let canvas = garment.extent.insetBy(dx: -size.width * 0.25, dy: -size.height * 0.25)
   let grey = CIImage(color: CIColor(red: 0.62, green: 0.62, blue: 0.62))
   guard let enhanced = checkEnhancement(name, garment, canvas: canvas, grey: grey) else { continue }
+  checkQuality(name, garment, canvas: canvas, grey: grey)
   if let output {
     let side = (max(size.width, size.height) * 1.06).rounded(.up)
     let square = CGRect(x: 0, y: 0, width: side, height: side)
