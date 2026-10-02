@@ -3,15 +3,20 @@ import ClosetVision, {
   type PreparedGarment,
 } from "../../modules/closet-vision/src";
 import type { ClosetRepository } from "../domain/repository";
-import type { ImportJob, Piece, Prepared } from "../domain/closet";
+import type { Closet, ImportJob, Piece, Prepared } from "../domain/closet";
+import { proposalsFromRegions } from "../domain/capture";
 import {
   attributeRefreshVersion,
   failImport,
+  fileStem,
   finishImport,
   finishRefresh,
+  jobStem,
+  orphanedFiles,
   piecesToRefresh,
   recoverImports,
   refreshPiece,
+  splitCapture,
   startImport,
 } from "../domain/importing";
 import { discardPhoto, photoUri } from "../storage/local";
@@ -25,9 +30,43 @@ export function discardImportFiles(job: ImportJob, keepOriginal = false) {
     job.prepared?.cutout,
     job.prepared?.thumbnail,
     job.label?.photo,
+    job.region?.cutout,
   ];
   for (const file of files)
     if (file) void discardPhoto(file).catch(() => undefined);
+}
+
+export async function changeImports(
+  update: (transform: (closet: Closet) => Closet) => Promise<void>,
+  transform: (closet: Closet) => Closet,
+) {
+  let files: string[] = [];
+  await update((current) => {
+    const next = transform(current);
+    files = orphanedFiles(current, next);
+    return next;
+  });
+  for (const file of files) void discardPhoto(file).catch(() => undefined);
+}
+
+async function parseCapture(repository: ClosetRepository, job: ImportJob) {
+  const found = await ClosetVision.parseGarments(
+    photoUri(job.source),
+    fileStem(job.source),
+  ).catch(() => ({ regions: [], people: 0 }));
+  const plan = proposalsFromRegions(found.regions, found.people);
+  let applied = false;
+  await repository.update((closet) => {
+    const next = splitCapture(closet, job.id, plan);
+    applied = next !== closet;
+    return next;
+  });
+  const kept = new Set(
+    applied ? plan.proposals.map((proposal) => proposal.region.cutout) : [],
+  );
+  for (const region of found.regions)
+    if (!kept.has(region.cutout))
+      void discardPhoto(region.cutout).catch(() => undefined);
 }
 
 export function preparedFrom(result: PreparedGarment): Prepared {
@@ -57,10 +96,19 @@ export function useImportRunner(repository: ClosetRepository, ready: boolean) {
       running = true;
       try {
         await repository.update((closet) => startImport(closet, job.id));
+        if (!job.captureId) {
+          await parseCapture(repository, job);
+          return;
+        }
         try {
           const result = await ClosetVision.prepare(
             photoUri(job.source),
-            job.id,
+            jobStem(job),
+            job.crop
+              ? { crop: job.crop }
+              : job.region
+                ? { cutout: job.region.cutout }
+                : undefined,
           );
           const prepared = preparedFrom(result);
           const current = repository

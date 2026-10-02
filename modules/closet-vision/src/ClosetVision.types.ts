@@ -30,3 +30,29 @@ export type PreparedGarment = {
 export type ReadLabelResult = { photo: string; lines: string[] };
 
 export type LabelExtraction = { json: string | null };
+
+export type GarmentRegionKind =
+  | "head"
+  | "upper"
+  | "skirt"
+  | "pants"
+  | "dress"
+  | "belt"
+  | "shoes"
+  | "bag"
+  | "sunglasses";
+
+export type GarmentRegion = {
+  kind: GarmentRegionKind;
+  cutout: string;
+  frame: { x: number; y: number; width: number; height: number };
+  share: number;
+  partial: boolean;
+};
+
+export type GarmentParse = { regions: GarmentRegion[]; people: number };
+
+export type PrepareOptions = {
+  cutout?: string;
+  crop?: { x: number; y: number; width: number; height: number };
+};

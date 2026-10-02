@@ -16,6 +16,24 @@ struct Swatch: Record {
   @Field var share: Double = 0
 }
 
+struct GarmentRegionRecord: Record {
+  @Field var kind: String = ""
+  @Field var cutout: String = ""
+  @Field var frame: [String: Double] = [:]
+  @Field var share: Double = 0
+  @Field var partial: Bool = false
+}
+
+struct GarmentParse: Record {
+  @Field var regions: [GarmentRegionRecord] = []
+  @Field var people: Int = 0
+}
+
+struct PrepareOptions: Record {
+  @Field var cutout: String? = nil
+  @Field var crop: [String: Double]? = nil
+}
+
 struct PreparedGarment: Record {
   @Field var original: String = ""
   @Field var cutout: String? = nil
@@ -106,6 +124,7 @@ final class GarmentPipeline {
   private let context = CIContext(options: [.workingColorSpace: CGColorSpace(name: CGColorSpace.sRGB)!])
   private var model: MLModel?
   private var labels: [(group: String, value: String, embeddings: [[Float]])] = []
+  private var parser: ClothesParser?
 
   private var bundle: Bundle? {
     let host = Bundle(for: GarmentPipeline.self)
@@ -118,8 +137,65 @@ final class GarmentPipeline {
       .appendingPathComponent("closet-photos", isDirectory: true)
   }
 
-  func prepare(sourceUri: String, id: String) throws -> PreparedGarment {
-    try queue.sync { try run(sourceUri: sourceUri, id: id) }
+  func prepare(sourceUri: String, id: String, options: PrepareOptions?) throws -> PreparedGarment {
+    try queue.sync { try run(sourceUri: sourceUri, id: id, options: options) }
+  }
+
+  func parseGarments(sourceUri: String, id: String) throws -> GarmentParse {
+    try queue.sync {
+      let source = sourceUri.hasPrefix("file://") ? URL(string: sourceUri)! : URL(fileURLWithPath: sourceUri)
+      guard let loaded = CIImage(contentsOf: source, options: [.applyOrientationProperty: true]) else {
+        throw PrepareError.unreadable
+      }
+      let image = scaled(
+        loaded.transformed(by: CGAffineTransform(translationX: -loaded.extent.minX, y: -loaded.extent.minY)),
+        longEdge: 2048)
+      try FileManager.default.createDirectory(at: photos, withIntermediateDirectories: true)
+      let parse = try loadParser().parse(image)
+      var result = GarmentParse()
+      result.people = parse.people
+      for (index, region) in GarmentRegions.find(parse.grid, person: parse.people > 0).enumerated() {
+        let name = "\(id)-region-\(index + 1).png"
+        try write(parse.cutout(image, region: region), to: name, extent: nil)
+        var record = GarmentRegionRecord()
+        record.kind = region.kind
+        record.cutout = name
+        record.frame = parse.frame(of: region)
+        record.share = region.share
+        record.partial = region.partial
+        result.regions.append(record)
+      }
+      return result
+    }
+  }
+
+  private func loadParser() throws -> ClothesParser {
+    if let parser { return parser }
+    guard let bundle, let url = bundle.url(forResource: "ClothesParser", withExtension: "mlmodelc") else {
+      throw PrepareError.resources
+    }
+    let configuration = MLModelConfiguration()
+    #if targetEnvironment(simulator)
+      configuration.computeUnits = .cpuOnly
+    #else
+      configuration.computeUnits = .all
+    #endif
+    let loaded = ClothesParser(model: try MLModel(contentsOf: url, configuration: configuration), context: context)
+    parser = loaded
+    return loaded
+  }
+
+  private func cropped(_ image: CIImage, to frame: [String: Double]) -> CIImage {
+    let x = CGFloat(frame["x"] ?? 0)
+    let y = CGFloat(frame["y"] ?? 0)
+    let width = CGFloat(frame["width"] ?? 1)
+    let height = CGFloat(frame["height"] ?? 1)
+    let rect = CGRect(
+      x: x * image.extent.width, y: (1 - y - height) * image.extent.height,
+      width: width * image.extent.width, height: height * image.extent.height
+    ).integral.intersection(image.extent)
+    guard rect.width >= 16, rect.height >= 16 else { return image }
+    return image.cropped(to: rect).transformed(by: CGAffineTransform(translationX: -rect.minX, y: -rect.minY))
   }
 
   private func loadResources() throws {
@@ -149,7 +225,7 @@ final class GarmentPipeline {
 
   private func elapsed(_ start: Date) -> Int { Int(Date().timeIntervalSince(start) * 1000) }
 
-  private func run(sourceUri: String, id: String) throws -> PreparedGarment {
+  private func run(sourceUri: String, id: String, options: PrepareOptions?) throws -> PreparedGarment {
     var result = PreparedGarment()
     var timings: [String: Int] = [:]
     let started = Date()
@@ -167,31 +243,47 @@ final class GarmentPipeline {
     result.original = original
     image = image.transformed(by: CGAffineTransform(translationX: -image.extent.minX, y: -image.extent.minY))
     image = scaled(image, longEdge: 2048)
+    if let crop = options?.crop { image = cropped(image, to: crop) }
     result.width = Int(image.extent.width)
     result.height = Int(image.extent.height)
     timings["load"] = elapsed(started)
 
     let maskStart = Date()
     var garment = image
-    guard let working = context.createCGImage(image, from: image.extent) else { throw PrepareError.unreadable }
-    let request = VNGenerateForegroundInstanceMaskRequest()
-    #if targetEnvironment(simulator)
-      if let devices = try? request.supportedComputeStageDevices {
-        for (stage, options) in devices {
-          if let cpu = options.first(where: { $0.description.localizedCaseInsensitiveContains("cpu") }) {
-            request.setComputeDevice(cpu, for: stage)
+    var found = false
+    if let cutout = options?.cutout {
+      guard let loaded = CIImage(contentsOf: photos.appendingPathComponent(cutout)) else {
+        throw PrepareError.unreadable
+      }
+      garment = scaled(
+        loaded.transformed(by: CGAffineTransform(translationX: -loaded.extent.minX, y: -loaded.extent.minY)),
+        longEdge: 1536)
+      result.instances = 1
+      found = true
+    } else {
+      guard let working = context.createCGImage(image, from: image.extent) else { throw PrepareError.unreadable }
+      let request = VNGenerateForegroundInstanceMaskRequest()
+      #if targetEnvironment(simulator)
+        if let devices = try? request.supportedComputeStageDevices {
+          for (stage, options) in devices {
+            if let cpu = options.first(where: { $0.description.localizedCaseInsensitiveContains("cpu") }) {
+              request.setComputeDevice(cpu, for: stage)
+            }
           }
         }
+      #endif
+      let handler = VNImageRequestHandler(cgImage: working)
+      if (try? handler.perform([request])) != nil, let observation = request.results?.first,
+        !observation.allInstances.isEmpty,
+        let buffer = try? observation.generateMaskedImage(
+          ofInstances: observation.allInstances, from: handler, croppedToInstancesExtent: true)
+      {
+        result.instances = observation.allInstances.count
+        garment = scaled(CIImage(cvPixelBuffer: buffer), longEdge: 1536)
+        found = true
       }
-    #endif
-    let handler = VNImageRequestHandler(cgImage: working)
-    if (try? handler.perform([request])) != nil, let observation = request.results?.first,
-      !observation.allInstances.isEmpty,
-      let buffer = try? observation.generateMaskedImage(
-        ofInstances: observation.allInstances, from: handler, croppedToInstancesExtent: true)
-    {
-      result.instances = observation.allInstances.count
-      garment = scaled(CIImage(cvPixelBuffer: buffer), longEdge: 1536)
+    }
+    if found {
       let side = max(garment.extent.width, garment.extent.height)
       let square = CGRect(x: 0, y: 0, width: side, height: side)
       let offsetX = (side - garment.extent.width) / 2
@@ -315,8 +407,12 @@ public class ClosetVisionModule: Module {
       true
     }
 
-    AsyncFunction("prepare") { (sourceUri: String, id: String) throws -> PreparedGarment in
-      try GarmentPipeline.shared.prepare(sourceUri: sourceUri, id: id)
+    AsyncFunction("prepare") { (sourceUri: String, id: String, options: PrepareOptions?) throws -> PreparedGarment in
+      try GarmentPipeline.shared.prepare(sourceUri: sourceUri, id: id, options: options)
+    }
+
+    AsyncFunction("parseGarments") { (sourceUri: String, id: String) throws -> GarmentParse in
+      try GarmentPipeline.shared.parseGarments(sourceUri: sourceUri, id: id)
     }
 
     AsyncFunction("readLabel") { (sourceUri: String, id: String) throws -> ReadLabelResult in
