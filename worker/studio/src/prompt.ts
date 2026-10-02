@@ -17,7 +17,7 @@ const ghost =
 
 const layouts: Record<Category, string> = {
   hijab:
-    "a flat lay seen from directly above, neatly folded so the fabric and both ends show",
+    "a flat lay seen from directly above, loosely draped so the fabric and both ends show",
   top: ghost,
   tunic: ghost,
   dress: ghost,
@@ -39,6 +39,7 @@ export function studioPrompt({
   return [
     "Turn this photo into a professional studio product photo of the exact same garment.",
     `Garment type: ${type} (${nouns[category]}). It must stay ${type}. Never turn it into another kind of clothing.`,
+    "Show only this one item. Do not add any other clothing or items under, behind or around it.",
     name ? `The owner calls it "${name}".` : null,
     colour ? `Its main colour is ${colour}.` : null,
     "Keep the exact same colours, pattern, print, texture, fabric, length, cut, proportions, seams, buttons, pockets, embroidery and every other detail. Do not add or remove anything.",
