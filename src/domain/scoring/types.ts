@@ -6,7 +6,11 @@ import type {
   Taste,
 } from "../closet";
 
-export type ScoreResult = { score: number; reasons: string[] };
+export type ScoreResult = {
+  score: number;
+  reasons: string[];
+  fallback?: "missing-embedding";
+};
 
 export type ScoreContext = {
   profile: StyleProfile;
