@@ -18,6 +18,7 @@ import {
 import {
   correctImport,
   dismissAdvice,
+  importStudioSource,
   keepDuplicate,
   nameFor,
   removeImport,
@@ -240,8 +241,9 @@ export default function CheckPiece() {
   }
 
   async function makeStudio() {
-    if (!prepared.cutout) return;
-    const file = await studio.make(prepared.cutout, job!.id, {
+    const source = importStudioSource(job!);
+    if (!source) return;
+    const file = await studio.make(source, job!.id, {
       category,
       kind,
       name,

@@ -391,7 +391,7 @@ export const nb: Record<Key, string> = {
   "photo.studioOffline": "Du er uten nett. Prøv igjen når du er tilkoblet.",
   "photo.studioLimit":
     "Du har brukt opp dagens studiobilder. Prøv igjen i morgen.",
-  "photo.studioNote": "Studio sender bildet til Google.",
+  "photo.studioNote": "Studio sender bildet til Cloudflare.",
   "duplicate.title": "Har du dette i garderoben fra før?",
   "duplicate.named": "Det ligner veldig på {name}.",
   "duplicate.unnamed": "Det ligner veldig på et annet plagg du har lagt til.",

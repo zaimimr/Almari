@@ -181,6 +181,31 @@ final class GarmentPipeline {
     }
   }
 
+  func studioInput(sourceUri: String, id: String) throws -> String {
+    try queue.sync {
+      let source = sourceUri.hasPrefix("file://") ? URL(string: sourceUri)! : URL(fileURLWithPath: sourceUri)
+      guard let loaded = CIImage(contentsOf: source, options: [.applyOrientationProperty: true]) else {
+        throw PrepareError.unreadable
+      }
+      let image = scaled(
+        loaded.transformed(by: CGAffineTransform(translationX: -loaded.extent.minX, y: -loaded.extent.minY)),
+        longEdge: 500)
+      let extent = CGRect(
+        x: 0, y: 0, width: min(500, image.extent.width.rounded(.down)),
+        height: min(500, image.extent.height.rounded(.down)))
+      guard extent.width > 0, extent.height > 0 else { throw PrepareError.unreadable }
+      let flat = image.composited(over: CIImage(color: .white)).cropped(to: extent)
+      try FileManager.default.createDirectory(at: photos, withIntermediateDirectories: true)
+      let name = "\(id)-studio-input.jpg"
+      do {
+        try context.writeJPEGRepresentation(
+          of: flat, to: photos.appendingPathComponent(name), colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!,
+          options: [kCGImageDestinationLossyCompressionQuality as CIImageRepresentationOption: 0.9])
+      } catch { throw PrepareError.storage }
+      return name
+    }
+  }
+
   func parseSelfie(_ image: CIImage) -> ClothesParse? {
     queue.sync { try? loadParser().parse(image) }
   }
@@ -476,6 +501,10 @@ public class ClosetVisionModule: Module {
 
     AsyncFunction("parseGarments") { (sourceUri: String, id: String) throws -> GarmentParse in
       try GarmentPipeline.shared.parseGarments(sourceUri: sourceUri, id: id)
+    }
+
+    AsyncFunction("studioInput") { (sourceUri: String, id: String) throws -> String in
+      try GarmentPipeline.shared.studioInput(sourceUri: sourceUri, id: id)
     }
 
     View(SelfieCameraView.self) {

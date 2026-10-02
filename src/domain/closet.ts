@@ -1312,7 +1312,8 @@ export function withVariant(piece: Piece, variant: Variant): Piece {
 }
 
 export function studioSource(piece: Piece): string | null {
-  return pieceVariant(piece) ? piece.variants!.plain! : null;
+  if (!pieceVariant(piece)) return null;
+  return piece.variants!.enhanced ?? piece.variants!.plain!;
 }
 
 export function withStudio(piece: Piece, studio: string): Piece {

@@ -390,7 +390,7 @@ export const en = {
   "photo.studioOffline": "You are offline. Try again when you are connected.",
   "photo.studioLimit":
     "You have used today's studio photos. Try again tomorrow.",
-  "photo.studioNote": "Studio sends this photo to Google.",
+  "photo.studioNote": "Studio sends this photo to Cloudflare.",
   "duplicate.title": "Is this already in your closet?",
   "duplicate.named": "It looks very like {name}.",
   "duplicate.unnamed": "It looks very like another piece you added.",

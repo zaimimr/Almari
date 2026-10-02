@@ -19,6 +19,8 @@ export default {
   ): Promise<PreparedGarment> => Promise.reject(new Error("unavailable")),
   parseGarments: (_sourceUri: string, _id: string): Promise<GarmentParse> =>
     Promise.reject(new Error("unavailable")),
+  studioInput: (_sourceUri: string, _id: string): Promise<string> =>
+    Promise.reject(new Error("unavailable")),
   readLabel: (_sourceUri: string, _id: string): Promise<ReadLabelResult> =>
     Promise.reject(new Error("unavailable")),
   labelModelAvailable: (): Promise<boolean> => Promise.resolve(false),

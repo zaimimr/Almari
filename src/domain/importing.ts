@@ -318,6 +318,11 @@ export function setImportLabel(
   });
 }
 
+export function importStudioSource(job: ImportJob): string | null {
+  if (!job.prepared?.cutout || !job.prepared.enhanced) return null;
+  return job.prepared.enhanced;
+}
+
 export function setImportStudio(
   closet: Closet,
   id: string,
@@ -325,7 +330,7 @@ export function setImportStudio(
 ): Closet {
   return updateJob(closet, id, (job) => {
     if (job.state !== "ready" && job.state !== "review") return job;
-    if (!job.prepared?.cutout || !job.prepared.enhanced) return job;
+    if (!job.prepared || !importStudioSource(job)) return job;
     return { ...job, prepared: { ...job.prepared, studio }, variant: "studio" };
   });
 }

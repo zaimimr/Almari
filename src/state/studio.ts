@@ -1,7 +1,14 @@
 import { useState } from "react";
 import type { Category, GarmentKind } from "../domain/taxonomy";
 import { t } from "../i18n";
-import { installId, keepPhotoBytes, photoUpload } from "../storage/local";
+import ClosetVision from "../../modules/closet-vision/src";
+import {
+  discardPhoto,
+  installId,
+  keepPhotoBytes,
+  photoUpload,
+  photoUri,
+} from "../storage/local";
 
 export type StudioPiece = {
   category: Category;
@@ -16,13 +23,23 @@ const studioToken = process.env.EXPO_PUBLIC_STUDIO_TOKEN;
 
 export const studioAvailable = Boolean(studioUrl && studioToken);
 
+async function studioInput(source: string, id: string) {
+  if (!ClosetVision.isAvailable()) return null;
+  try {
+    return await ClosetVision.studioInput(photoUri(source), id);
+  } catch {
+    throw new Error("failed");
+  }
+}
+
 export async function renderStudio(
-  cutout: string,
+  source: string,
   id: string,
   piece: StudioPiece,
 ): Promise<string> {
+  const input = await studioInput(source, id);
   const body = new FormData();
-  body.append("image", (await photoUpload(cutout)) as Blob);
+  body.append("image", (await photoUpload(input ?? source)) as Blob);
   body.append("category", piece.category);
   if (piece.kind) body.append("kind", piece.kind);
   if (piece.name?.trim()) body.append("name", piece.name.trim());
@@ -38,6 +55,8 @@ export async function renderStudio(
     });
   } catch {
     throw new Error("offline");
+  } finally {
+    if (input) void discardPhoto(input).catch(() => undefined);
   }
   if (response.status === 429) throw new Error("limit");
   if (!response.ok) throw new Error("failed");
@@ -63,14 +82,14 @@ export function useStudioMaker() {
   const [making, setMaking] = useState(false);
   const [problem, setProblem] = useState<StudioProblem | null>(null);
   async function make(
-    cutout: string,
+    source: string,
     id: string,
     piece: StudioPiece,
   ): Promise<string | null> {
     setMaking(true);
     setProblem(null);
     try {
-      return await renderStudio(cutout, id, piece);
+      return await renderStudio(source, id, piece);
     } catch (error) {
       setProblem(studioFailure(error));
       return null;

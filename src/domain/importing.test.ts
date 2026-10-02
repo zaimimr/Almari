@@ -43,6 +43,7 @@ import {
   retakeImport,
   retryImport,
   setImportLabel,
+  importStudioSource,
   setImportStudio,
   splitCapture,
   startImport,
@@ -1094,12 +1095,15 @@ test("a studio shot is a third variant and the real photo is always kept", () =>
   assert.equal(original.variants, undefined);
 });
 
-test("a studio shot needs a cutout and is made from the plain cutout", () => {
+test("a studio shot needs a cutout and is made from the enhanced cutout", () => {
   const plainOnly = finished();
+  assert.equal(importStudioSource(plainOnly.imports[0]!), null);
   assert.equal(setImportStudio(plainOnly, "job", "s.png"), plainOnly);
-  const piece = acceptImports(finished({ enhanced: "job-enhanced.png" }))
-    .pieces[0]!;
-  assert.equal(studioSource(piece), "job.png");
+  const ready = finished({ enhanced: "job-enhanced.png" });
+  assert.equal(importStudioSource(ready.imports[0]!), "job-enhanced.png");
+  const piece = acceptImports(ready).pieces[0]!;
+  assert.equal(studioSource(piece), "job-enhanced.png");
+  assert.equal(studioSource(withVariant(piece, "plain")), "job-enhanced.png");
   const studio = withStudio(piece, "job-studio.png");
   assert.equal(studio.photo, "job-studio.png");
   assert.equal(studio.variants?.studio, "job-studio.png");
