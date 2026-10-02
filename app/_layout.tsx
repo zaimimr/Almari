@@ -62,6 +62,18 @@ export default function RootLayout() {
             name="today/replace"
             options={{ title: "Change a piece", presentation: "modal" }}
           />
+          <Stack.Screen
+            name="onboarding/index"
+            options={{ title: t("onboarding.hijab.title") }}
+          />
+          <Stack.Screen
+            name="onboarding/colours"
+            options={{ title: t("colours.title") }}
+          />
+          <Stack.Screen
+            name="today/profile"
+            options={{ title: t("profile.title") }}
+          />
         </Stack>
       </ClosetProvider>
     </SafeAreaProvider>

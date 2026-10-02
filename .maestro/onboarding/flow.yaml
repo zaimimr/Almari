@@ -1,0 +1,51 @@
+appId: com.zaimimran.almari
+---
+- launchApp:
+    clearState: true
+- assertVisible: "Step 1 of 6"
+- takeScreenshot: planning/build/onboarding/01-hijab
+- tapOn: "Always"
+- tapOn: "Full: arms, legs and neck"
+- tapOn: "Next"
+- assertVisible: "Step 2 of 6"
+- assertVisible:
+    text: "Centimetres and °C"
+    selected: true
+- takeScreenshot: planning/build/onboarding/02-place
+- tapOn: "Skip"
+- assertVisible: "Step 3 of 6"
+- tapOn:
+    id: "height-cm"
+- inputText: "1.65"
+- hideKeyboard
+- tapOn: "Next"
+- assertVisible: "Enter a height between 120 and 220 cm."
+- tapOn:
+    id: "height-cm"
+- eraseText: 10
+- inputText: "165"
+- hideKeyboard
+- tapOn: "Hourglass"
+- takeScreenshot: planning/build/onboarding/03-body
+- tapOn: "Next"
+- assertVisible: "Step 4 of 6"
+- tapOn: "Loose"
+- tapOn: "Soft and neutral"
+- tapOn: "Desi"
+- takeScreenshot: planning/build/onboarding/04-taste
+- tapOn: "Next"
+- assertVisible: "Step 5 of 6"
+- tapOn: "Medium, warm"
+- assertVisible: "Your colours: Warm autumn"
+- takeScreenshot: planning/build/onboarding/05-colours
+- tapOn: "Next"
+- assertVisible: "You are set"
+- takeScreenshot: planning/build/onboarding/06-done
+- tapOn: "Start with the sample closet"
+- assertVisible: "A little inspiration for today."
+- assertVisible:
+    id: "today-context"
+    text: ".*Desi.*"
+- launchApp
+- assertVisible: "A little inspiration for today."
+- assertNotVisible: "Step 1 of 6"

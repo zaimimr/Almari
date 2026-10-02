@@ -1,0 +1,12 @@
+appId: com.zaimimran.almari
+---
+- launchApp:
+    clearState: true
+- repeat:
+    times: 5
+    commands:
+      - tapOn: "Skip"
+- assertVisible: "You are set"
+- tapOn: "Start with the sample closet"
+- assertVisible: "Start with your everyday style."
+- takeScreenshot: planning/build/onboarding/skipped-today
