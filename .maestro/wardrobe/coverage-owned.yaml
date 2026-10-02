@@ -1,0 +1,47 @@
+appId: com.zaimimran.almari
+env:
+  SHOT: ""
+---
+- launchApp
+- scrollUntilVisible:
+    element: "My clothes"
+- tapOn: "My clothes"
+- scrollUntilVisible:
+    element: "Check before wearing"
+- assertVisible: "The sleeve length of Rose tunic is not confirmed yet."
+- takeScreenshot: planning/build/wardrobe/${SHOT}coverage-review
+- tapOn: "Answer one question"
+- assertVisible: "How long are the sleeves on Rose tunic?"
+- takeScreenshot: planning/build/wardrobe/${SHOT}coverage-question
+- tapOn: "Long"
+- tapOn: "Save answer"
+- assertNotVisible: "The sleeve length of Rose tunic is not confirmed yet."
+- takeScreenshot: planning/build/wardrobe/${SHOT}coverage-ready
+- tapOn: "Closet"
+- tapOn: "Rose tunic.*"
+- tapOn: "Edit"
+- scrollUntilVisible:
+    element: "Fabric"
+    centerElement: true
+- tapOn: "Fabric: Chiffon"
+- scrollUntilVisible:
+    element: "Save changes"
+- tapOn: "Save changes"
+- tapOn: "Back"
+- tapOn: "Today"
+- scrollUntilVisible:
+    element: "Rose tunic may be see-through, so its sleeves are not confirmed."
+- tapOn: "Answer one question"
+- assertVisible: "Can you see through Rose tunic?"
+- takeScreenshot: planning/build/wardrobe/${SHOT}coverage-see-through
+- tapOn: "See-through"
+- tapOn: "Save answer"
+- assertVisible: "No combination in this closet meets your sleeve and hem choices."
+- takeScreenshot: planning/build/wardrobe/${SHOT}coverage-r07
+- tapOn: "Everyday style"
+- tapOn: "Full: arms, legs and neck"
+- assertNotVisible: "Sleeves"
+- scrollUntilVisible:
+    element: "Sleeves to the wrist and hems to the ankle are checked.*"
+- assertVisible: "Sleeves to the wrist and hems to the ankle are checked. Outfits only count sleeves and lengths you have confirmed. Neckline is not checked yet."
+- takeScreenshot: planning/build/wardrobe/${SHOT}coverage-full

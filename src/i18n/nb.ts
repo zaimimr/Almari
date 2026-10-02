@@ -867,4 +867,44 @@ export const nb: Record<Key, string> = {
     "Modell trenger en bildeavlesning av hvert plagg. 1 av plaggene dine mangler det, så Regler setter sammen forslagene som kan ta det med.",
   "stylist.unreadMany":
     "Modell trenger en bildeavlesning av hvert plagg. {count} av plaggene dine mangler det, så Regler setter sammen forslagene som kan ta dem med.",
+  "coverage.levelLabel": "Dekning",
+  "coverage.sleevesLabel": "Ermer",
+  "coverage.hemLabel": "Lengde",
+  "coverage.helpFull":
+    "Ermer til håndleddet og lengde til ankelen blir sjekket. Antrekk teller bare ermer og lengder du har bekreftet. Halsåpning blir ikke sjekket ennå.",
+  "coverage.helpModerate":
+    "Ermer til albuen og lengde til midt på leggen blir sjekket. Antrekk teller bare ermer og lengder du har bekreftet. Halsåpning blir ikke sjekket ennå.",
+  "coverage.helpOwn":
+    "Velg hvor lange ermer og lengder må være. Valg du ikke setter, blir ikke sjekket, og I dag sier fra om det. Antrekk teller bare ermer og lengder du har bekreftet. Halsåpning blir ikke sjekket ennå.",
+  "coverage.helpUnset":
+    "La dette stå åpent hvis du vil bestemme senere. Da blir ermer og lengder ikke sjekket, og I dag sier fra om det.",
+  "coverage.sleevesUnset": "Ermer er ikke satt, så de blir ikke sjekket.",
+  "coverage.sleevesWrist": "Ermer til håndleddet blir sjekket.",
+  "coverage.sleevesElbow": "Ermer til albuen blir sjekket.",
+  "coverage.hemUnset": "Lengde er ikke satt, så den blir ikke sjekket.",
+  "coverage.hemAnkle": "Lengde til ankelen blir sjekket.",
+  "coverage.hemCalf": "Lengde til midt på leggen blir sjekket.",
+  "coverage.necklineUnchecked": "Halsåpning blir ikke sjekket ennå.",
+  "check.title": "Ett spørsmål",
+  "check.nothingTitle": "Ingenting å sjekke",
+  "check.nothingBody":
+    "Dette plagget er allerede bekreftet for dette antrekket.",
+  "check.notNow": "Ikke nå",
+  "check.whySeeThrough":
+    "Svaret ditt avgjør om plagget kan telle for valgene dine for ermer og lengde.",
+  "check.suggested":
+    "Foreslått ut fra bildet. Svaret ditt blir lagret og aldri byttet ut.",
+  "check.kept": "Svaret ditt blir lagret og aldri byttet ut.",
+  "check.answer": "Svaret ditt",
+  "check.save": "Lagre svaret",
+  "check.saveError": "Svaret kunne ikke lagres. Prøv igjen.",
+  "check.useAnother": "Bruk et annet plagg",
+  "common.restyleError":
+    "Antrekket kunne ikke settes sammen på nytt. Prøv igjen.",
+  "today.layoutNote":
+    "Oppsettet viser hvordan plaggene passer sammen, ikke hvordan de sitter.",
+  "today.checkBeforeWearing": "Sjekk før du tar det på",
+  "today.noLongerFits":
+    "Dette antrekket passer ikke lenger til valgene dine. {problems}",
+  "today.findNew": "Finn et nytt antrekk",
 };

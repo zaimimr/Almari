@@ -128,6 +128,7 @@ export default function AdjustToday() {
                   style: request.style,
                   hijab: preset.hijab,
                   sample: false,
+                  coverage: preset.coverage,
                 },
                 clockFor(new Date()),
                 false,

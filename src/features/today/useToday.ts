@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppState } from "react-native";
 import ClosetVision from "../../../modules/closet-vision/src";
-import type { Closet, Piece, Weather } from "../../domain/closet";
+import type {
+  Closet,
+  OutfitRequest,
+  Piece,
+  Weather,
+} from "../../domain/closet";
 import { isAvailable, occasionLabel, styleLabel } from "../../domain/closet";
 import {
   activeSession,
@@ -11,6 +16,7 @@ import {
   saveForecast,
 } from "../../domain/today";
 import { forecastFor, forecastWeather } from "../../domain/weather";
+import { t } from "../../i18n";
 import { useCloset } from "../../state/closet";
 
 export function useToday() {
@@ -142,4 +148,28 @@ export function contextText(
 
 export function pieceCount(pieces: Piece[]) {
   return `${pieces.length} ${pieces.length === 1 ? "piece" : "pieces"}`;
+}
+
+export function coverageText(request: OutfitRequest) {
+  const sleeve = request.coverage?.sleeve ?? null;
+  const hem = request.coverage?.hem ?? null;
+  return [
+    sleeve === null
+      ? t("coverage.sleevesUnset")
+      : sleeve === "any"
+        ? ""
+        : t(
+            sleeve === "long"
+              ? "coverage.sleevesWrist"
+              : "coverage.sleevesElbow",
+          ),
+    hem === null
+      ? t("coverage.hemUnset")
+      : hem === "any"
+        ? ""
+        : t(hem === "ankle" ? "coverage.hemAnkle" : "coverage.hemCalf"),
+    t("coverage.necklineUnchecked"),
+  ]
+    .filter(Boolean)
+    .join(" ");
 }

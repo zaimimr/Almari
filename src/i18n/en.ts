@@ -854,6 +854,43 @@ export const en = {
     "Model needs a photo reading of every piece. 1 of your pieces has none, so Rules styles the requests that could include it.",
   "stylist.unreadMany":
     "Model needs a photo reading of every piece. {count} of your pieces have none, so Rules styles the requests that could include them.",
+  "coverage.levelLabel": "Coverage",
+  "coverage.sleevesLabel": "Sleeves",
+  "coverage.hemLabel": "Hem",
+  "coverage.helpFull":
+    "Sleeves to the wrist and hems to the ankle are checked. Outfits only count sleeves and lengths you have confirmed. Neckline is not checked yet.",
+  "coverage.helpModerate":
+    "Sleeves to the elbow and hems to mid-calf are checked. Outfits only count sleeves and lengths you have confirmed. Neckline is not checked yet.",
+  "coverage.helpOwn":
+    "Choose how long sleeves and hems need to be. Unset choices are not checked, and Today says so. Outfits only count sleeves and lengths you have confirmed. Neckline is not checked yet.",
+  "coverage.helpUnset":
+    "Leave this unset to decide later. Sleeves and hems are then not checked, and Today says so.",
+  "coverage.sleevesUnset": "Sleeves are not set, so they are not checked.",
+  "coverage.sleevesWrist": "Sleeves to the wrist are checked.",
+  "coverage.sleevesElbow": "Sleeves to the elbow are checked.",
+  "coverage.hemUnset": "Hem is not set, so it is not checked.",
+  "coverage.hemAnkle": "Hem to the ankle is checked.",
+  "coverage.hemCalf": "Hem to mid-calf is checked.",
+  "coverage.necklineUnchecked": "Neckline is not checked yet.",
+  "check.title": "One question",
+  "check.nothingTitle": "Nothing to check",
+  "check.nothingBody": "This piece is already confirmed for this outfit.",
+  "check.notNow": "Not now",
+  "check.whySeeThrough":
+    "Your answer decides whether this piece can count for your sleeve and hem choices.",
+  "check.suggested":
+    "Suggested from the photo. Your answer is kept and never replaced.",
+  "check.kept": "Your answer is kept and never replaced.",
+  "check.answer": "Your answer",
+  "check.save": "Save answer",
+  "check.saveError": "Your answer could not be saved. Please try again.",
+  "check.useAnother": "Use another piece",
+  "common.restyleError": "The outfit could not be restyled. Please try again.",
+  "today.layoutNote":
+    "The layout shows how pieces go together, not how they fit.",
+  "today.checkBeforeWearing": "Check before wearing",
+  "today.noLongerFits": "This outfit no longer fits your choices. {problems}",
+  "today.findNew": "Find a new outfit",
 };
 
 export type Key = keyof typeof en;

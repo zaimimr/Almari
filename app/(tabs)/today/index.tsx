@@ -45,6 +45,7 @@ import {
 } from "../../../src/domain/today";
 import {
   contextText,
+  coverageText,
   pieceCount,
   useToday,
 } from "../../../src/features/today/useToday";
@@ -249,6 +250,12 @@ function TodayContent() {
   const reasons = showOutfit
     ? rulesScorer.score(pieces, request, scoreContext(closet)).reasons
     : [];
+  const checks = reviewProblems.filter(
+    (problem) => problem.severity === "review",
+  );
+  const broken = reviewProblems.filter(
+    (problem) => problem.severity !== "review",
+  );
   const worn = wornNow(closet);
   const tip = showOutfit
     ? outfitTip(
@@ -442,11 +449,49 @@ function TodayContent() {
             {pieceCount(pieces)} from {source}
             {kept.length ? `, ${kept.length} kept` : ""}
           </AppText>
-          {reviewProblems.length ? (
+          {broken.length ? (
+            <ProblemCard
+              message={t("today.noLongerFits", {
+                problems: broken.map((problem) => problem.message).join(" "),
+              })}
+              busy={busy}
+              actions={[
+                {
+                  label: t("today.findNew"),
+                  onPress: () => {
+                    void run(startOver);
+                  },
+                },
+              ]}
+            />
+          ) : null}
+          {checks.length ? (
             <View style={styles.review}>
-              <AppText style={styles.label}>Check before wearing</AppText>
-              {reviewProblems.map((problem) => (
-                <AppText key={problem.message}>{problem.message}</AppText>
+              <AppText style={styles.label}>
+                {t("today.checkBeforeWearing")}
+              </AppText>
+              {checks.map((problem) => (
+                <View key={problem.message} style={styles.check}>
+                  <AppText>{problem.message}</AppText>
+                  {problem.actions
+                    .filter(
+                      (action) =>
+                        action.type === "check-piece" ||
+                        action.type === "edit-piece",
+                    )
+                    .map((action) => (
+                      <Button
+                        key={actionLabel(action)}
+                        label={actionLabel(action)}
+                        secondary
+                        compact
+                        disabled={busy}
+                        onPress={() => {
+                          void act(action);
+                        }}
+                      />
+                    ))}
+                </View>
               ))}
             </View>
           ) : null}
@@ -600,9 +645,8 @@ function TodayContent() {
           </AppText>
         ) : null}
         {closet.styling.layout !== "full" ? (
-          <AppText variant="caption" muted>
-            Sleeve, neckline, and hem coverage are not checked yet. The layout
-            shows how pieces go together, not how they fit.
+          <AppText variant="caption" muted testID="coverage-note">
+            {coverageText(request)} {t("today.layoutNote")}
           </AppText>
         ) : null}
       </View>
@@ -716,6 +760,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.accentSoft,
   },
   outfit: { gap: 12 },
+  check: { gap: 8 },
   review: {
     gap: 6,
     padding: 12,

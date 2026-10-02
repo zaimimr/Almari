@@ -1,0 +1,24 @@
+appId: com.zaimimran.almari
+env:
+  SHOT: ""
+---
+- runFlow: start.yaml
+- tapOn: "Set my everyday style"
+- tapOn: "Work"
+- tapOn: "Western"
+- tapOn: "Always include a hijab"
+- scrollUntilVisible:
+    element: "My own line"
+- tapOn: "My own line"
+- scrollUntilVisible:
+    element: "To the wrist"
+- tapOn: "To the wrist"
+- takeScreenshot: planning/build/wardrobe/${SHOT}coverage-everyday
+- scrollUntilVisible:
+    element: "Save everyday style"
+- tapOn: "Save everyday style"
+- scrollUntilVisible:
+    element:
+      id: "coverage-note"
+- assertVisible: ".*Sleeves to the wrist are checked.*"
+- assertNotVisible: "Check before wearing"
