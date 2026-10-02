@@ -247,3 +247,23 @@ Known limitations:
 - Screens that existed before this part keep their English text until Part 8 moves them into the catalog.
 - Changing a style setting keeps today's outfit; the next Change uses the new settings.
 - On a phone screen the flat lay is tall, so the reasons and Change, Not for me and Wear this sit below the fold and need a scroll.
+
+## Part 7: Trained model and comparison (done, 2 October 2026)
+
+What works:
+
+- A small outfit compatibility head (50,944 parameters) trained on Polyvore Outfits over the same SigLIP 2 image embeddings the app stores for each piece. Training, evaluation and export scripts are in `modules/closet-vision/model/compat`. The head runs in TypeScript with no extra native model.
+- Style settings has a Stylist choice: Rules, Model or Compare. Compare takes turns for each new suggestion, starting from an engine fixed by the date, and Change stays with the engine of its list. Nothing on Today shows which engine styled an outfit.
+- Model keeps every hard constraint and shows the rules layer's reasons. When a piece that could be suggested has no photo reading, the suggestion is styled by Rules and recorded as Rules.
+- Every feedback event records the engine and the outfit's position in its list.
+- Compare results, under Style settings, shows per engine and split by Western and Desi: would wear in the first three, Not my style, and Wore this.
+- The Stylist setting sits next to the card layout setting, and both new screens' texts are in English and bokmål.
+
+Evidence: Polyvore test numbers, nondisjoint AUC 0.9279 and fill in the blank 0.6828, disjoint AUC 0.9233 and fill in the blank 0.6961 (README in `modules/closet-vision/model/compat`). Rated outfit set: Rules pairwise 1.000 with 0 bad in the top three, Model pairwise 0.333 with 3 bad in the top three (12 outfits in 3 requests, the developer smoke set). `npm run check` passes with 349 domain tests, including model scorer determinism, the fallback without embeddings, Compare alternation and results aggregation. Screens checked in the simulator with Maestro on a Release build (Stylist setting and Compare results in English at normal and the largest text size, in bokmål, and Today under Compare without an engine label); screenshots are in [planning/build/model](../build/model).
+
+Known limitations:
+
+- Polyvore has no hijabs, kurtas, shalwar, abayas or dupattas, so Model is out of its training data for Desi outfits and treats a hijab as a scarf.
+- Polyvore item image rights are unclear. Use is personal only. The licence is reviewed again before any public App Store release, and the head is removed if it cannot be cleared.
+- Pieces saved before Part 2, or added in the manual editor, have no photo reading, so Model falls back to Rules for requests that could include them until they are photographed again.
+- The results are only as good as her feedback count; a few events per engine are not enough to choose a winner.
