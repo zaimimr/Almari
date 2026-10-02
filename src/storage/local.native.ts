@@ -41,3 +41,8 @@ export async function discardPhoto(photo: string) {
 export function lowOnSpace() {
   return Paths.availableDiskSpace < 300 * 1024 * 1024;
 }
+
+export async function discardTemporary(uri: string) {
+  const file = new File(uri);
+  if (file.exists) file.delete();
+}

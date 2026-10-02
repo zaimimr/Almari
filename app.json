@@ -12,6 +12,9 @@
       "bundleIdentifier": "com.zaimimran.almari",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
+      },
+      "entitlements": {
+        "com.apple.developer.weatherkit": true
       }
     },
     "web": {
@@ -23,7 +26,7 @@
         "expo-image-picker",
         {
           "photosPermission": "Choose clothing photos to add to your closet.",
-          "cameraPermission": "Photograph a piece for your closet.",
+          "cameraPermission": "Photograph your clothes, or take a selfie to find your colours.",
           "microphonePermission": false
         }
       ],
