@@ -267,3 +267,27 @@ Known limitations:
 - Polyvore item image rights are unclear. Use is personal only. The licence is reviewed again before any public App Store release, and the head is removed if it cannot be cleared.
 - Pieces saved before Part 2, or added in the manual editor, have no photo reading, so Model falls back to Rules for requests that could include them until they are photographed again.
 - The results are only as good as her feedback count; a few events per engine are not enough to choose a winner.
+
+## Part 8: The rest of D3 (done, 2 October 2026)
+
+What works:
+
+- Coverage: her one coverage answer from onboarding (Full, Moderate or My own line) decides what is checked, and Everyday style shows the same answer, with sleeve and hem choices only for her own line. Only confirmed sleeve and length values count. An outfit with an unknown coverage fact is shown under Check before wearing with one question, never as ready (R02). Coats and open abayas never certify what is beneath them, and a see-through piece never certifies anything (R07). See-through and open front are asked only when an outfit depends on them, as one question. Neckline is still not checked, and Today says so.
+- Hijab comparison: Compare hijabs (or tapping the hijab) shows the current hijab and up to three alternatives ranked by the active stylist, each previewed in the whole outfit with one short reason when there is evidence. Use this hijab changes only the hijab, and Undo last change restores it (R03).
+- Saved looks on Today: From your looks lists saved looks that fit the request as saved, separately from variants with missing, unavailable or archived pieces. Fill the gap keeps the remaining pieces and restyles the rest. The saved look itself never changes (R04).
+- Archive: on the item page next to Mark as unavailable, reversible with Back in my closet, separate from Remove piece and from Unavailable. Archived pieces are never suggested, never offered as replacements or hijabs, and sit on their own Archived shelf in the closet.
+- Weather for her clothes: warmth, rain and snow are proposed from fabric and subcategory and shown as suggested on the item page. Weather checks use only what she confirms, for the forecast and for weather she picks by hand; a suggested value is named under Check before wearing with a link to the piece.
+- Language: every screen follows the phone, English or bokmål. The screens from before these parts are in the catalogs, `src/domain/catalog.test.ts` checks that bokmål is complete, and `npm run strings` fails on any hard-coded screen text.
+
+Automated checks: `npm run check` with new tests in `coverage.test.ts` (R02, R07, the one question, one coverage vocabulary, sample fixtures), `wardrobe.test.ts` (archive, R03, R04), `pieceWeather.test.ts` (proposals, confirmed values, manual and forecast weather) and `catalog.test.ts` (bokmål complete, placeholders, no nynorsk words), plus `npm run strings`. 361 domain tests pass. `npx expo-doctor` and `npx expo export --platform ios --platform web` pass.
+
+Screens checked on a simulator Release build with Maestro flows in `.maestro/wardrobe` (coverage, hijab, looks, archive, weather at default and accessibility-large text, and bokmål). The stylist, onboarding and capture suites were run again on the same build and pass. Screenshots are in [planning/build/wardrobe](../build/wardrobe).
+
+Known limitations:
+
+- Neckline, slits and lining are not checked.
+- Sample clothes have fixture sleeve and length values; they are not facts about real garments.
+- Rain and snow suitability is never taken from a photo: boots are only suggested, and nothing counts until she confirms it.
+- The hijab sheet has no zoom yet.
+- Variants are repaired by restyling around the remaining pieces; when nothing fits, Today explains why instead of showing a repair preview.
+- Sample piece names are stored data and stay in English on a Norwegian phone.
