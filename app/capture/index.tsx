@@ -1,5 +1,11 @@
 import { useState } from "react";
-import { Linking, Pressable, StyleSheet, View } from "react-native";
+import {
+  Linking,
+  Pressable,
+  StyleSheet,
+  View,
+  useWindowDimensions,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
@@ -205,13 +211,14 @@ export default function AddPieces() {
     const card = tips[tip]!;
     const last = tip === tips.length - 1;
     return (
-      <FormScreen>
+      <FormScreen key={tip}>
         <Stack.Screen
           options={{
             title: "Photo tips",
             headerLeft: () => (
               <HeaderAction label="Skip" onPress={() => void finishTips()} />
             ),
+            headerRight: () => null,
           }}
         />
         <AppText variant="caption" muted>
@@ -390,16 +397,26 @@ function JobTile({
   onRetake: () => void;
   onRemove: () => void;
 }) {
+  const { fontScale } = useWindowDimensions();
   const image = job.prepared?.thumbnail ?? job.source;
   const openable = job.state === "ready" || job.state === "review";
   return (
-    <View style={styles.tile}>
+    <View
+      style={[
+        styles.tile,
+        fontScale >= 2 ? styles.tileWide : fontScale >= 1.3 && styles.tileHalf,
+      ]}
+    >
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`${job.name ?? "Photo"}, ${stateLabel[job.state]}${job.advice ? `, ${t("capture.photoTip")}` : ""}`}
         disabled={!openable}
         onPress={onOpen}
-        style={[styles.tilePhoto, job.state === "review" && styles.review]}
+        style={[
+          styles.tilePhoto,
+          fontScale >= 2 && styles.tilePhotoWide,
+          job.state === "review" && styles.review,
+        ]}
       >
         <Image
           source={{ uri: photoUri(image) }}
@@ -466,6 +483,8 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
   },
   tile: { width: "31%", gap: 4 },
+  tileHalf: { width: "47%" },
+  tileWide: { width: "100%" },
   tilePhoto: {
     aspectRatio: 1,
     borderRadius: theme.radius,
@@ -476,6 +495,7 @@ const styles = StyleSheet.create({
     padding: 6,
     backgroundColor: theme.colors.background,
   },
+  tilePhotoWide: { aspectRatio: 4 / 3 },
   review: { borderColor: theme.colors.accent, borderWidth: 2, padding: 5 },
   image: { width: "100%", height: "100%" },
   badge: {

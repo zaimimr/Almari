@@ -18,11 +18,6 @@ env:
     direction: DOWN
     timeout: 60000
 - tapOn: "Next tip"
-- scrollUntilVisible:
-    element:
-      text: "A white piece on a grey sheet"
-    direction: UP
-    visibilityPercentage: 50
 - assertVisible: "A white piece on a grey sheet"
 - takeScreenshot: planning/build/04-capture/tips-2${SUFFIX}
 - scrollUntilVisible:
@@ -31,11 +26,6 @@ env:
     direction: DOWN
     timeout: 60000
 - tapOn: "Next tip"
-- scrollUntilVisible:
-    element:
-      text: "A whole piece inside the phone frame with space around it"
-    direction: UP
-    visibilityPercentage: 50
 - assertVisible: "A whole piece inside the phone frame with space around it"
 - takeScreenshot: planning/build/04-capture/tips-3${SUFFIX}
 - scrollUntilVisible:
