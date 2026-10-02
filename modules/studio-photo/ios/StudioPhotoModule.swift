@@ -27,7 +27,6 @@ final class StudioQueue {
   }
 
   init() {
-    Memory.cacheLimit = 128 * 1024 * 1024
     for name in [UIApplication.didEnterBackgroundNotification, UIApplication.didReceiveMemoryWarningNotification] {
       NotificationCenter.default.addObserver(forName: name, object: nil, queue: nil) { [weak self] _ in
         self?.cancelAll()
@@ -57,7 +56,7 @@ final class StudioQueue {
     if ProcessInfo.processInfo.thermalState.rawValue >= ProcessInfo.ThermalState.serious.rawValue {
       throw StudioError.thermal
     }
-    if engine == nil && os_proc_available_memory() < 3_500_000_000 { throw StudioError.memory }
+    if engine == nil && os_proc_available_memory() < 4_300_000_000 { throw StudioError.memory }
   }
 
   private func loadEngine() throws -> StudioEngine {

@@ -290,10 +290,14 @@ final class StudioTransformer: Module {
     let textMod = textModulation(temb)
     for block in doubleBlocks {
       (text, image) = block(image, text: text, imageMod: imageMod, textMod: textMod, cos: cos, sin: sin)
+      eval(text, image)
     }
     var joined = concatenated([text, image], axis: 1)
     let mod = singleModulation(temb)[0]
-    for block in singleBlocks { joined = block(joined, mod: mod, cos: cos, sin: sin) }
+    for block in singleBlocks {
+      joined = block(joined, mod: mod, cos: cos, sin: sin)
+      eval(joined)
+    }
     return projOut(normOut(joined[0..., text.shape[1]..., 0...], temb))
   }
 }

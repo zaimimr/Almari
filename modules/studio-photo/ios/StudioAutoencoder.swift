@@ -6,6 +6,11 @@ private func groupNorm(_ channels: Int) -> GroupNorm {
   GroupNorm(groupCount: 32, dimensions: channels, eps: 1e-6, pytorchCompatible: true)
 }
 
+private func evaluated(_ x: MLXArray) -> MLXArray {
+  eval(x)
+  return x
+}
+
 private func conv(_ input: Int, _ output: Int, kernel: Int = 3, stride: Int = 1, padding: Int = 1) -> Conv2d {
   Conv2d(inputChannels: input, outputChannels: output, kernelSize: .init(kernel), stride: .init(stride),
     padding: .init(padding))
@@ -103,7 +108,7 @@ final class DownBlock: Module {
   }
 
   func callAsFunction(_ x: MLXArray) -> MLXArray {
-    let h = resnets.reduce(x) { $1($0) }
+    let h = resnets.reduce(x) { evaluated($1($0)) }
     return downsamplers?[0](h) ?? h
   }
 }
@@ -118,7 +123,7 @@ final class UpBlock: Module {
   }
 
   func callAsFunction(_ x: MLXArray) -> MLXArray {
-    let h = resnets.reduce(x) { $1($0) }
+    let h = resnets.reduce(x) { evaluated($1($0)) }
     return upsamplers?[0](h) ?? h
   }
 }
@@ -142,7 +147,7 @@ final class StudioEncoder: Module {
   }
 
   func callAsFunction(_ x: MLXArray) -> MLXArray {
-    convOut(silu(normOut(midBlock(downBlocks.reduce(convIn(x)) { $1($0) }))))
+    convOut(silu(normOut(midBlock(downBlocks.reduce(evaluated(convIn(x))) { evaluated($1($0)) }))))
   }
 }
 
@@ -165,8 +170,13 @@ final class StudioDecoder: Module {
   }
 
   func callAsFunction(_ x: MLXArray) -> MLXArray {
-    convOut(silu(normOut(upBlocks.reduce(midBlock(convIn(x))) { $1($0) })))
+    convOut(silu(normOut(upBlocks.reduce(evaluated(midBlock(convIn(x)))) { evaluated($1($0)) })))
   }
+}
+
+final class LatentStats {
+  var mean = MLXArray.zeros([1, 1, 1, 128])
+  var deviation = MLXArray.ones([1, 1, 1, 128])
 }
 
 final class StudioAutoencoder: Module {
@@ -174,8 +184,7 @@ final class StudioAutoencoder: Module {
   @ModuleInfo var decoder: StudioDecoder
   @ModuleInfo(key: "quant_conv") var quantConv: Conv2d
   @ModuleInfo(key: "post_quant_conv") var postQuantConv: Conv2d
-  var mean = MLXArray.zeros([1, 1, 1, 128])
-  var deviation = MLXArray.ones([1, 1, 1, 128])
+  let stats = LatentStats()
 
   override init() {
     _encoder.wrappedValue = StudioEncoder()
@@ -193,34 +202,34 @@ final class StudioAutoencoder: Module {
         stats[key] = value.asType(.float32)
         continue
       }
-      weights[key] = (value.ndim == 4 ? value.transposed(0, 2, 3, 1) : value).asType(.float32)
+      weights[key] = (value.ndim == 4 ? value.transposed(0, 2, 3, 1) : value).asType(.bfloat16)
     }
     guard let mean = stats["bn.running_mean"], let variance = stats["bn.running_var"] else {
       throw StudioError.weights
     }
     try model.update(parameters: ModuleParameters.unflattened(weights), verify: [.all])
-    model.mean = mean.reshaped(1, 1, 1, -1)
-    model.deviation = MLX.sqrt(variance + 1e-4).reshaped(1, 1, 1, -1)
-    eval(model, model.mean, model.deviation)
+    model.stats.mean = mean.reshaped(1, 1, 1, -1)
+    model.stats.deviation = MLX.sqrt(variance + 1e-4).reshaped(1, 1, 1, -1)
+    eval(model, model.stats.mean, model.stats.deviation)
     return model
   }
 
   func encode(_ image: MLXArray) -> MLXArray {
-    let latent = quantConv(encoder(image))[0..., 0..., 0..., ..<32]
+    let latent = quantConv(encoder(image.asType(.bfloat16)))[0..., 0..., 0..., ..<32].asType(.float32)
     let (b, h, w) = (latent.dim(0), latent.dim(1) / 2 * 2, latent.dim(2) / 2 * 2)
     let patches = latent[0..., ..<h, ..<w, 0...]
       .reshaped(b, h / 2, 2, w / 2, 2, 32)
       .transposed(0, 1, 3, 5, 2, 4)
       .reshaped(b, h / 2, w / 2, 128)
-    return (patches - mean) / deviation
+    return (patches - stats.mean) / stats.deviation
   }
 
   func decode(_ patches: MLXArray) -> MLXArray {
     let (b, h, w) = (patches.dim(0), patches.dim(1), patches.dim(2))
-    let latent = (patches * deviation + mean)
+    let latent = (patches * stats.deviation + stats.mean)
       .reshaped(b, h, w, 32, 2, 2)
       .transposed(0, 1, 4, 2, 5, 3)
       .reshaped(b, h * 2, w * 2, 32)
-    return decoder(postQuantConv(latent))
+    return decoder(postQuantConv(latent.asType(.bfloat16))).asType(.float32)
   }
 }

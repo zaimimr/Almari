@@ -355,3 +355,31 @@ Owner checks on her iPhone (TestFlight build):
 3. Colours, Take a selfie: the live front camera shows with the oval. Covering the camera, standing far away, very close, off centre, turning the head and moving each give the matching instruction; facing a window and holding still gives Ready.
 4. Take the photo: the frozen selfie shows skin, hair and eye points in the right places. Dragging each point changes its swatch, and the season changes when the skin point is moved to a much lighter or darker area. Save, then check the Photos app has no new selfie.
 5. Builder: pick one piece, Fill the rest, tap the hijab in the preview and choose another, check the name follows until you type your own, save.
+
+## Studio photos on the phone (built, 2 October 2026, not yet tried on her iPhone)
+
+Owner decision: a generative Studio product shot made on the phone with FLUX.2 [klein] 4B. Nothing is uploaded, the setting is off by default, the shot is chosen per piece, and the real photo is always kept. The spike and its numbers are in [On-device Studio](../research/ON-DEVICE-STUDIO.md).
+
+What works:
+
+- Licence: klein 4B, its text encoder and VAE, and the mlx-community 4-bit weights are all Apache 2.0. The 9B is non-commercial and not used.
+- Profile, App, Studio photos opens a screen with Off and On. Turning it on downloads the model (2.35 GB, straight from Hugging Face at pinned commits) with progress and Cancel. Once it is downloaded, the screen shows the size and Delete model. The files live in Application Support and are excluded from backup.
+- When Studio is on and the model is ready, Check this piece and the item page show Studio next to Enhanced and Plain for pieces that have a cutout. The first tap makes the shot from the plain cutout. After that she can switch between the three at any time. The original photo is never replaced.
+- `modules/studio-photo` is a local Expo module: an MLX Swift port of the klein transformer, the VAE encoder and our own VAE decoder, with mlx-swift 0.31.6 added through `spm_dependency`. The prompt is fixed and was encoded once on the Mac (`model/embed.py`), so the 8 GB text encoder never ships. One shot runs at a time on a serial queue. The queue is cancelled when the app goes to the background or gets a memory warning, the model is unloaded once the queue is empty, and a shot is refused when the phone is too warm or has less than 4.3 GB available. The simulator reports Studio as unavailable.
+- Data: `Variant` gains `studio`, `Variants` and `Prepared` gain `studio`, and `styling.studio` is false by default. Closets saved before this open unchanged. Studio files count as used files, so removing a piece or import removes its studio shot.
+
+Evidence: on the Mac (M2 Pro), the same Swift code made a 512 x 512 shot in about 20 s with a 3.9 GB peak footprint (`modules/studio-photo/checks`). Results are in [mac-compare.jpg](../build/studio/mac-compare.jpg). `npm run check` passes with 370 domain tests, including tests for variant selection, setting the default to off and migration. The app builds for the Closet Development simulator.
+
+Owner checks on her iPhone:
+
+- The download over Wi-Fi: time, and whether it survives a short trip to another app.
+- Seconds per shot, how warm the phone gets, and whether a second and third shot slow down.
+- Quality on her own pieces: a white garment, embroidery, a long dress, a hijab.
+- Whether Delete model frees the 2.35 GB in Settings, iPhone Storage.
+
+Known limitations:
+
+- iPhone speed is an estimate (60 to 90 s) and has not been measured.
+- The download runs in the foreground. If iOS stops it in the background, Download picks up from the files that are already complete.
+- Shots are 512 x 512 on a white background, with no cutout or transparency, so the closet canvas shows the white square.
+- Command-line builds need `-skipPackagePluginValidation`, or the Xcode default noted in the research doc (now set on this Mac), plus the Metal Toolchain component (installed).

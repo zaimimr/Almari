@@ -36,6 +36,7 @@ final class StudioEngine {
   let context = CIContext(options: [.workingColorSpace: CGColorSpace(name: CGColorSpace.sRGB)!])
 
   init(transformer files: [URL], autoencoder: URL, prompt: URL) throws {
+    Memory.cacheLimit = 64 * 1024 * 1024
     var weights: [String: MLXArray] = [:]
     for file in files { weights.merge(try MLX.loadArrays(url: file)) { _, new in new } }
     let model = StudioTransformer()
