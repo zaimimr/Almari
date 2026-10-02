@@ -19,6 +19,7 @@ KINDS = {
  "tunic": ("tunic", None, ["a long tunic top"]),
  "trousers": ("bottom", None, ["a pair of trousers", "a pair of tailored pants"]),
  "jeans": ("bottom", None, ["a pair of blue denim jeans"]),
+ "shorts": ("bottom", None, ["a pair of shorts", "a pair of knee-length shorts"]),
  "wide-leg": ("bottom", None, ["a pair of wide-leg palazzo trousers"]),
  "shalwar": ("bottom", DESI, ["salwar trousers, loose gathered South Asian trousers"]),
  "churidar": ("bottom", DESI, ["churidar trousers, tight South Asian trousers gathered at the ankle"]),

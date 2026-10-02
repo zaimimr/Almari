@@ -413,7 +413,7 @@
       "source": "western-hijab:18",
       "layer": "style",
       "when": { "profile": { "bottoms": ["skirts"] }, "style": ["western"] },
-      "if": { "has": { "kind": ["trousers", "jeans", "wide-leg"] } },
+      "if": { "has": { "kind": ["trousers", "jeans", "shorts", "wide-leg"] } },
       "weight": -1.0
     },
     {
@@ -915,7 +915,7 @@
           { "has": { "role": ["main"], "embellishment": ["heavy"] } },
           {
             "any": [
-              { "has": { "kind": ["jeans"] } },
+              { "has": { "kind": ["jeans", "shorts"] } },
               {
                 "has": {
                   "role": ["bottom"],
@@ -1364,6 +1364,30 @@
         }
       },
       "weight": -0.8
+    },
+    {
+      "id": "shorts-warm",
+      "source": "almari:shorts",
+      "layer": "style",
+      "when": { "weather": ["warm"], "maxFormality": 1 },
+      "if": { "has": { "kind": ["shorts"] } },
+      "weight": 0.4
+    },
+    {
+      "id": "shorts-cold",
+      "source": "almari:shorts",
+      "layer": "style",
+      "when": { "weather": ["cold", "mild"] },
+      "if": { "has": { "kind": ["shorts"] } },
+      "weight": -1.5
+    },
+    {
+      "id": "shorts-dressy-occasion",
+      "source": "almari:shorts",
+      "layer": "style",
+      "when": { "minFormality": 3 },
+      "if": { "has": { "kind": ["shorts"] } },
+      "weight": -1.5
     },
     {
       "id": "abaya-centred",

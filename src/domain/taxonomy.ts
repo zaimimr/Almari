@@ -100,6 +100,7 @@ export const garmentKinds = [
   { id: "tunic", label: "Tunic", category: "tunic", styles: null },
   { id: "trousers", label: "Trousers", category: "bottom", styles: null },
   { id: "jeans", label: "Jeans", category: "bottom", styles: null },
+  { id: "shorts", label: "Shorts", category: "bottom", styles: null },
   { id: "wide-leg", label: "Wide-leg", category: "bottom", styles: null },
   { id: "shalwar", label: "Shalwar", category: "bottom", styles: desi },
   { id: "churidar", label: "Churidar", category: "bottom", styles: desi },

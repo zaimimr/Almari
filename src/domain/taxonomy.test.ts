@@ -20,6 +20,7 @@ const table: Record<string, string[]> = {
   bottom: [
     "Trousers",
     "Jeans",
+    "Shorts",
     "Wide-leg",
     "Shalwar",
     "Churidar",
@@ -43,7 +44,7 @@ const table: Record<string, string[]> = {
   accessory: ["Dupatta", "Jewellery", "Belt"],
 };
 
-test("the taxonomy offers 9 categories and 46 subcategories in the agreed order", () => {
+test("the taxonomy offers 9 categories and 47 subcategories in the agreed order", () => {
   assert.deepEqual(
     categories.map((category) => category.label),
     [
@@ -58,7 +59,7 @@ test("the taxonomy offers 9 categories and 46 subcategories in the agreed order"
       "Accessories",
     ],
   );
-  assert.equal(offeredKinds.length, 46);
+  assert.equal(offeredKinds.length, 47);
   for (const category of categories)
     assert.deepEqual(
       kindsIn(category.id).map((kind) => kind.label),
@@ -88,8 +89,8 @@ test("every subcategory id stored before version 3 keeps its category", () => {
     ["dupatta", "accessory"],
   ];
   for (const [id, category] of before) assert.equal(categoryOf(id), category);
-  assert.equal(garmentKinds.length, 48);
-  assert.equal(new Set(garmentKinds.map((kind) => kind.id)).size, 48);
+  assert.equal(garmentKinds.length, 49);
+  assert.equal(new Set(garmentKinds.map((kind) => kind.id)).size, 49);
   assert.deepEqual(retiredKinds, ["shoes", "bag"]);
   assert.equal(isOffered("shoes"), false);
   assert.equal(isOffered("bag"), false);
@@ -147,7 +148,7 @@ test("fixed styles follow the agreed table", () => {
     if (!expected) decided++;
     assert.deepEqual(fixedStyles(kind.id), expected, kind.id);
   }
-  assert.equal(decided, 18);
+  assert.equal(decided, 19);
 });
 
 test("the bundled label file describes every offered subcategory and both styles", () => {

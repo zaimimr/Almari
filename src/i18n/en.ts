@@ -28,6 +28,7 @@ export const en = {
   "kind.tunic": "Tunic",
   "kind.trousers": "Trousers",
   "kind.jeans": "Jeans",
+  "kind.shorts": "Shorts",
   "kind.wide-leg": "Wide-leg",
   "kind.shalwar": "Shalwar",
   "kind.churidar": "Churidar",

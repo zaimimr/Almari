@@ -30,6 +30,7 @@ export const nb: Record<Key, string> = {
   "kind.tunic": "Tunika",
   "kind.trousers": "Bukse",
   "kind.jeans": "Jeans",
+  "kind.shorts": "Shorts",
   "kind.wide-leg": "Vide bukser",
   "kind.shalwar": "Shalwar",
   "kind.churidar": "Churidar",
