@@ -1,4 +1,5 @@
 import { adviceReason } from "./quality";
+import { findDuplicate } from "./duplicates";
 import {
   confirmAttribute,
   mergeProposal,
@@ -78,7 +79,14 @@ function reviewCapture(closet: Closet, id: string): Closet {
     const reason = adviceReason(job.prepared.quality);
     const advice =
       reason && !job.adviceShown?.includes(reason) ? reason : undefined;
-    return { ...job, advice };
+    const duplicateOf =
+      findDuplicate(closet, id, job.prepared.embedding) ?? undefined;
+    return {
+      ...job,
+      advice,
+      duplicateOf,
+      state: duplicateOf ? "review" : job.state,
+    };
   });
 }
 
@@ -137,6 +145,18 @@ export function dismissAdvice(closet: Closet, id: string): Closet {
           ...job,
           advice: undefined,
           adviceShown: [...(job.adviceShown ?? []), job.advice],
+        }
+      : job,
+  );
+}
+
+export function keepDuplicate(closet: Closet, id: string): Closet {
+  return updateJob(closet, id, (job) =>
+    job.duplicateOf
+      ? {
+          ...job,
+          duplicateOf: undefined,
+          state: job.checks?.length ? "review" : "ready",
         }
       : job,
   );
@@ -225,6 +245,7 @@ export function correctImport(
       attributeCheck: undefined,
       keepOriginal: change.keepOriginal ?? job.keepOriginal,
       variant: change.variant ?? job.variant,
+      duplicateOf: undefined,
       sources,
       question: undefined,
       checks: [],

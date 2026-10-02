@@ -24,6 +24,7 @@ import {
   finishImport,
   fileStem,
   finishRefresh,
+  keepDuplicate,
   jobStem,
   orphanedFiles,
   piecesToRefresh,
@@ -780,4 +781,51 @@ test("P05 photo advice is shown once and never blocks saving", () => {
   assert.equal(acceptImports(closet).pieces.length, 1);
   const decoded = decodeCloset(JSON.stringify(closet));
   assert.deepEqual(decoded.imports[0]!.adviceShown, ["blur"]);
+});
+
+const vector = (...values: number[]) =>
+  btoa(
+    String.fromCharCode(
+      ...Array.from({ length: 768 }, (_, index) => (values[index] ?? 0) & 255),
+    ),
+  );
+
+test("a new photo very close to an owned piece asks Same piece or Different piece", () => {
+  const owned: Piece = {
+    id: "owned",
+    name: "Black hijab",
+    category: "hijab",
+    kind: "hijab",
+    photo: "owned.png",
+    createdAt: "2026-09-01T08:00:00Z",
+    source: "owned",
+    embedding: vector(100, 0),
+  };
+  const start = { ...queued(), pieces: [owned] };
+  const close = prepared({ embedding: vector(100, 38) });
+  let closet = finishImport(startImport(start, "job"), "job", close);
+  assert.equal(closet.imports[0]!.duplicateOf, "owned");
+  assert.equal(closet.imports[0]!.state, "review");
+  assert.equal(acceptImports(closet).pieces.length, 1);
+
+  const kept = keepDuplicate(closet, "job");
+  assert.equal(kept.imports[0]!.duplicateOf, undefined);
+  assert.equal(kept.imports[0]!.state, "ready");
+  assert.equal(keepDuplicate(kept, "job"), kept);
+  assert.equal(finishImport(kept, "job", close), kept);
+  assert.equal(acceptImports(kept).pieces.length, 2);
+
+  const corrected = correctImport(closet, "job", {
+    name: "Second black hijab",
+  });
+  assert.equal(corrected.imports[0]!.duplicateOf, undefined);
+  assert.equal(corrected.imports[0]!.state, "ready");
+
+  closet = finishImport(
+    startImport(start, "job"),
+    "job",
+    prepared({ embedding: vector(100, 40) }),
+  );
+  assert.equal(closet.imports[0]!.duplicateOf, undefined);
+  assert.equal(closet.imports[0]!.state, "ready");
 });

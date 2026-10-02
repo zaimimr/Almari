@@ -150,6 +150,7 @@ export type ImportJob = {
   variant?: Variant;
   advice?: AdviceReason;
   adviceShown?: AdviceReason[];
+  duplicateOf?: string;
   captureId?: string;
   region?: GarmentRegion;
   crop?: Frame;
@@ -517,6 +518,7 @@ function isImportJob(value: unknown): value is ImportJob {
       (list): list is AdviceReason[] =>
         Array.isArray(list) && list.every(isAdviceReason),
     ) &&
+    optional(value.duplicateOf, isString) &&
     optional(value.captureId, isString) &&
     optional(value.region, isGarmentRegion) &&
     optional(value.crop, isFrame) &&
