@@ -17,3 +17,4 @@ modules/closet-vision/model/*.mlpackage
 modules/closet-vision/model/web/
 modules/closet-vision/model/ov/
 modules/closet-vision/model/extra/
+planning/eval/closet.json

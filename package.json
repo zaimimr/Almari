@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "tsx --test src/domain/*.test.ts src/domain/scoring/*.test.ts",
     "lint": "eslint .",
+    "evaluate": "tsx scripts/evaluate-outfits.ts",
     "check": "npm run typecheck && npm run lint && npm run format:check && npm test",
     "format": "prettier --write app src package.json app.json tsconfig.json eslint.config.js",
     "format:check": "prettier --check app src package.json app.json tsconfig.json eslint.config.js"
