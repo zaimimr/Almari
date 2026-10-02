@@ -17,6 +17,8 @@ import {
   savePiece,
   removePiece,
   usedIn,
+  pieceVariant,
+  withVariant,
 } from "../domain/closet";
 import {
   confirmAttribute,
@@ -24,6 +26,7 @@ import {
   withDetails,
 } from "../domain/attributes";
 import { confirmEdits } from "../domain/recognition";
+import { unlinkPiece } from "../domain/sets";
 import { categoryName, kindName, styleName, stylesName, t } from "../i18n";
 import { useCloset } from "../state/closet";
 import { measurePiece } from "../state/imports";
@@ -73,12 +76,16 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
         attributes: piece?.attributes,
         sources: piece?.sources,
       }) ||
+    image !== (piece?.photo ?? null) ||
     newImage;
   const kindOptions = category ? kindsIn(category) : [];
   const fixed = kind ? fixedStyles(kind) : undefined;
   const needsKind = (piece?.source ?? "owned") === "owned";
   const kindMissing = needsKind && (!kind || !isOffered(kind));
   const allowClose = useDiscardChanges(dirty, busy);
+  const photoPiece =
+    piece && !newImage && image ? { ...piece, photo: image } : null;
+  const variant = photoPiece ? pieceVariant(photoPiece) : null;
 
   async function pick(source: "camera" | "library") {
     setError(null);
@@ -118,9 +125,7 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
     setError(null);
     let copiedPhoto: string | null = null;
     try {
-      const photo = newImage
-        ? (copiedPhoto = await keepPhoto(image))
-        : piece!.photo;
+      const photo = newImage ? (copiedPhoto = await keepPhoto(image)) : image;
       const chosenStyles = fixed ?? worn;
       const base: Piece = {
         id,
@@ -143,6 +148,8 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
         ...(piece?.status ? { status: piece.status } : {}),
         ...(piece?.away ? { away: piece.away } : {}),
         ...(piece?.label ? { label: piece.label } : {}),
+        ...(piece?.variants && !newImage ? { variants: piece.variants } : {}),
+        ...(piece?.setId ? { setId: piece.setId } : {}),
       };
       const confirmed = confirmEdits(piece, base);
       await update((current) =>
@@ -152,7 +159,12 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
         ),
       );
       if (piece && newImage)
-        void discardPhoto(piece.photo).catch(() => undefined);
+        for (const file of new Set([
+          piece.photo,
+          piece.variants?.enhanced,
+          piece.variants?.plain,
+        ]))
+          if (file) void discardPhoto(file).catch(() => undefined);
       if (newImage) void measurePiece({ update }, confirmed);
       allowClose();
       router.back();
@@ -179,10 +191,16 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
     if (!confirmed) return;
     setBusy(true);
     try {
-      await update((current) => removePiece(current, piece.id));
-      void discardPhoto(piece.photo).catch(() => undefined);
-      if (piece.original && piece.original !== piece.photo)
-        void discardPhoto(piece.original).catch(() => undefined);
+      await update((latest) =>
+        removePiece(unlinkPiece(latest, piece.id), piece.id),
+      );
+      for (const file of new Set([
+        piece.photo,
+        piece.original,
+        piece.variants?.enhanced,
+        piece.variants?.plain,
+      ]))
+        if (file) void discardPhoto(file).catch(() => undefined);
       if (piece.label)
         void discardPhoto(piece.label.photo).catch(() => undefined);
       allowClose();
@@ -224,6 +242,22 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
           </View>
         )}
       </View>
+      {photoPiece && variant ? (
+        <View style={styles.categories}>
+          <Chip
+            label={t("photo.enhanced")}
+            selected={variant === "enhanced"}
+            disabled={busy}
+            onPress={() => setImage(withVariant(photoPiece, "enhanced").photo)}
+          />
+          <Chip
+            label={t("photo.plain")}
+            selected={variant === "plain"}
+            disabled={busy}
+            onPress={() => setImage(withVariant(photoPiece, "plain").photo)}
+          />
+        </View>
+      ) : null}
       <View style={styles.actions}>
         <View style={styles.action}>
           <Button

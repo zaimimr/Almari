@@ -15,6 +15,7 @@ import {
   type Fact,
   type FactKey,
 } from "../../src/domain/facts";
+import { setMembers, unlinkPiece } from "../../src/domain/sets";
 import { dropFromToday } from "../../src/domain/today";
 import { MissingPiece } from "../../src/features/MissingPiece";
 import { t } from "../../src/i18n";
@@ -47,6 +48,7 @@ export default function PieceDetail() {
     ? choice.options.find((option) => option.id === choice.current)
     : undefined;
   const uses = usedIn(closet, pieceId);
+  const members = setMembers(closet, piece);
 
   const change = async (transform: (current: Closet) => Closet) => {
     setBusy(true);
@@ -68,6 +70,18 @@ export default function PieceDetail() {
         if (saved) setOpen(null);
       },
     );
+  };
+
+  const leaveSet = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await update((latest) => unlinkPiece(latest, pieceId));
+    } catch {
+      setError(t("sets.removeFailed"));
+    } finally {
+      setBusy(false);
+    }
   };
 
   const markAway = (reason: AwayReason | null) => {
@@ -202,6 +216,21 @@ export default function PieceDetail() {
                 params: { id: pieceId, target: "piece" },
               })
             }
+          />
+        </View>
+      ) : null}
+      {members.length ? (
+        <View style={styles.section} testID="piece-set">
+          <AppText style={styles.label}>{t("sets.partOf")}</AppText>
+          <AppText>{members.map((item) => item.name).join(", ")}</AppText>
+          <Button
+            label={t("sets.remove")}
+            secondary
+            compact
+            disabled={busy}
+            onPress={() => {
+              void leaveSet();
+            }}
           />
         </View>
       ) : null}

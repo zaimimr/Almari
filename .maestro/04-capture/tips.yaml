@@ -7,16 +7,46 @@ env:
 - tapOn: "Add pieces"
 - runFlow:
     when:
-      visible: "Take a photo"
+      notVisible: "A piece beside a window in soft daylight"
     commands:
       - tapOn: "Photo tips"
 - assertVisible: "A piece beside a window in soft daylight"
 - takeScreenshot: planning/build/04-capture/tips-1${SUFFIX}
+- scrollUntilVisible:
+    element:
+      text: "Next tip"
+    direction: DOWN
+    timeout: 60000
 - tapOn: "Next tip"
+- scrollUntilVisible:
+    element:
+      text: "A white piece on a grey sheet"
+    direction: UP
+    visibilityPercentage: 50
 - assertVisible: "A white piece on a grey sheet"
 - takeScreenshot: planning/build/04-capture/tips-2${SUFFIX}
+- scrollUntilVisible:
+    element:
+      text: "Next tip"
+    direction: DOWN
+    timeout: 60000
 - tapOn: "Next tip"
+- scrollUntilVisible:
+    element:
+      text: "A whole piece inside the phone frame with space around it"
+    direction: UP
+    visibilityPercentage: 50
 - assertVisible: "A whole piece inside the phone frame with space around it"
 - takeScreenshot: planning/build/04-capture/tips-3${SUFFIX}
+- scrollUntilVisible:
+    element:
+      text: "Start adding pieces"
+    direction: DOWN
+    timeout: 60000
 - tapOn: "Start adding pieces"
+- scrollUntilVisible:
+    element:
+      text: "Take a photo"
+    direction: DOWN
+    visibilityPercentage: 50
 - assertVisible: "Take a photo"

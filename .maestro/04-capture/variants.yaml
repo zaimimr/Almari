@@ -1,0 +1,29 @@
+appId: com.zaimimran.almari
+env:
+  SUFFIX: ""
+---
+- launchApp
+- tapOn: "Closet"
+- scrollUntilVisible:
+    element:
+      text: "Fixture kurta.*"
+    direction: DOWN
+    centerElement: true
+    visibilityPercentage: 50
+- tapOn: "Fixture kurta.*"
+- tapOn: "Edit"
+- assertVisible: "Enhanced"
+- assertVisible: "Plain"
+- takeScreenshot: planning/build/04-capture/piece-enhanced${SUFFIX}
+- tapOn: "Plain"
+- takeScreenshot: planning/build/04-capture/piece-plain${SUFFIX}
+- scrollUntilVisible:
+    element:
+      text: "Save changes"
+    direction: DOWN
+    timeout: 60000
+- tapOn: "Save changes"
+- tapOn: "Edit"
+- assertVisible:
+    text: "Plain"
+    selected: true

@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { FlatList, ScrollView, StyleSheet, View } from "react-native";
 import { Stack, router } from "expo-router";
+import { randomUUID } from "expo-crypto";
 import { useCloset } from "../../../src/state/closet";
 import { occasions } from "../../../src/domain/closet";
+import { linkSet } from "../../../src/domain/sets";
 import {
   closetChips,
   filterPieces,
@@ -14,6 +16,7 @@ import {
   AppText,
   Button,
   Chip,
+  ErrorMessage,
   Field,
   HeaderAction,
   Message,
@@ -30,7 +33,11 @@ type FilterOption = {
 };
 
 export default function ClosetScreen() {
-  const { closet } = useCloset();
+  const { closet, update } = useCloset();
+  const [selecting, setSelecting] = useState(false);
+  const [chosen, setChosen] = useState<string[]>([]);
+  const [linked, setLinked] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<ClosetFilter>(noFilter);
   const [search, setSearch] = useState("");
   const sampleCount = closet.pieces.filter(
@@ -69,10 +76,38 @@ export default function ClosetScreen() {
     })),
   ];
 
+  function toggleSelecting() {
+    setSelecting(!selecting);
+    setChosen([]);
+    setLinked(false);
+    setError(null);
+  }
+
+  async function link() {
+    setError(null);
+    try {
+      await update((current) => linkSet(current, chosen, randomUUID()));
+      setSelecting(false);
+      setChosen([]);
+      setLinked(true);
+    } catch {
+      setError(t("sets.linkFailed"));
+    }
+  }
+
   return (
     <View style={styles.screen}>
       <Stack.Screen
         options={{
+          headerLeft:
+            closet.pieces.length > 1
+              ? () => (
+                  <HeaderAction
+                    label={selecting ? t("capture.cancel") : t("sets.select")}
+                    onPress={toggleSelecting}
+                  />
+                )
+              : undefined,
           headerRight: () => (
             <HeaderAction
               label="Add pieces"
@@ -90,6 +125,7 @@ export default function ClosetScreen() {
         keyboardDismissMode="on-drag"
         contentContainerStyle={styles.content}
         columnWrapperStyle={styles.row}
+        extraData={{ selecting, chosen }}
         ListHeaderComponent={
           <View style={styles.intro}>
             <AppText muted>
@@ -97,6 +133,23 @@ export default function ClosetScreen() {
                 ? "A little space for the pieces you love."
                 : `${closet.pieces.length} ${closet.pieces.length === 1 ? "piece" : "pieces"}, ready for a new combination.`}
             </AppText>
+            {selecting ? (
+              <View style={styles.starter}>
+                <AppText muted>{t("sets.hint")}</AppText>
+                <Button
+                  label={t("sets.link")}
+                  disabled={chosen.length < 2}
+                  onPress={() => {
+                    void link();
+                  }}
+                />
+                <ErrorMessage message={error} />
+              </View>
+            ) : linked ? (
+              <AppText accessibilityLiveRegion="polite">
+                {t("sets.linked")}
+              </AppText>
+            ) : null}
             {sampleCount > 0 ? (
               <View style={styles.starter}>
                 <AppText variant="caption" muted>
@@ -201,11 +254,18 @@ export default function ClosetScreen() {
           <View style={styles.cell}>
             <PieceTile
               piece={item}
+              selected={selecting && chosen.includes(item.id)}
               onPress={() =>
-                router.push({
-                  pathname: "/piece/[id]",
-                  params: { id: item.id },
-                })
+                selecting
+                  ? setChosen((current) =>
+                      current.includes(item.id)
+                        ? current.filter((id) => id !== item.id)
+                        : [...current, item.id],
+                    )
+                  : router.push({
+                      pathname: "/piece/[id]",
+                      params: { id: item.id },
+                    })
               }
             />
           </View>
