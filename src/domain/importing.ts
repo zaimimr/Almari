@@ -176,6 +176,41 @@ export function retryImport(closet: Closet, id: string): Closet {
   );
 }
 
+export function retakeImport(
+  closet: Closet,
+  id: string,
+  source: string,
+): Closet {
+  return updateJob(closet, id, (job) => {
+    if (job.source === source) return job;
+    if (!["ready", "review", "failed"].includes(job.state)) return job;
+    return {
+      ...job,
+      source,
+      state: "queued",
+      attempts: 0,
+      prepared: undefined,
+      kind: undefined,
+      name: undefined,
+      alternatives: undefined,
+      checks: undefined,
+      keepOriginal: undefined,
+      variant: undefined,
+      error: undefined,
+      advice: undefined,
+      duplicateOf: undefined,
+      captureId: undefined,
+      region: undefined,
+      crop: undefined,
+      people: undefined,
+      adviceShown: [
+        ...(job.adviceShown ?? []),
+        ...(job.advice ? [job.advice] : []),
+      ],
+    };
+  });
+}
+
 export function recoverImports(closet: Closet): Closet {
   if (!closet.imports.some((job) => job.state === "preparing")) return closet;
   return {

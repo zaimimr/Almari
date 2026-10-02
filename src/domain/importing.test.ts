@@ -32,6 +32,7 @@ import {
   recoverImports,
   refreshPiece,
   removeImport,
+  retakeImport,
   retryImport,
   setImportLabel,
   splitCapture,
@@ -828,4 +829,86 @@ test("a new photo very close to an owned piece asks Same piece or Different piec
   );
   assert.equal(closet.imports[0]!.duplicateOf, undefined);
   assert.equal(closet.imports[0]!.state, "ready");
+});
+
+test("retake replaces the photo in place and repeating it changes nothing", () => {
+  let closet = finishImport(
+    startImport(queued(), "job"),
+    "job",
+    prepared({ enhanced: "job-enhanced.png" }),
+  );
+  closet = correctImport(closet, "job", { variant: "plain" });
+  closet = retakeImport(closet, "job", "second-original.jpg");
+  assert.equal(closet.imports.length, 1);
+  const job = closet.imports[0]!;
+  assert.equal(job.id, "job");
+  assert.equal(job.source, "second-original.jpg");
+  assert.equal(job.state, "queued");
+  assert.equal(job.attempts, 0);
+  assert.equal(job.prepared, undefined);
+  assert.equal(job.name, undefined);
+  assert.equal(job.variant, undefined);
+  assert.equal(retakeImport(closet, "job", "second-original.jpg"), closet);
+
+  const preparing = startImport(closet, "job");
+  assert.equal(retakeImport(preparing, "job", "third-original.jpg"), preparing);
+
+  closet = finishImport(
+    preparing,
+    "job",
+    prepared({ original: "second-original.jpg", cutout: "second.png" }),
+  );
+  closet = acceptImports(closet);
+  assert.equal(closet.pieces.length, 1);
+  assert.equal(closet.pieces[0]!.id, "job");
+  assert.equal(closet.pieces[0]!.photo, "second.png");
+  assert.equal(closet.pieces[0]!.original, "second-original.jpg");
+  assert.equal(retakeImport(closet, "job", "third-original.jpg"), closet);
+});
+
+test("a failed photo can be retaken", () => {
+  let closet = failImport(startImport(queued(), "job"), "job", "unreadable");
+  closet = retakeImport(closet, "job", "second-original.jpg");
+  assert.equal(closet.imports[0]!.state, "queued");
+  assert.equal(closet.imports[0]!.error, undefined);
+});
+
+test("P05 a retake that is still blurry is not nagged again", () => {
+  let closet = finishImport(startImport(queued(), "job"), "job", blurry());
+  assert.equal(closet.imports[0]!.advice, "blur");
+  closet = retakeImport(closet, "job", "second-original.jpg");
+  assert.deepEqual(closet.imports[0]!.adviceShown, ["blur"]);
+  closet = finishImport(startImport(closet, "job"), "job", blurry());
+  assert.equal(closet.imports[0]!.advice, undefined);
+  closet = retakeImport(closet, "job", "third-original.jpg");
+  const dark = prepared({
+    quality: {
+      sharpness: 200,
+      brightness: 0.05,
+      clipped: [],
+      coverage: 0.3,
+      lightSpread: 1,
+    },
+  });
+  closet = finishImport(startImport(closet, "job"), "job", dark);
+  assert.equal(closet.imports[0]!.advice, "dark");
+});
+
+test("a retaken piece from a photo of several pieces is parsed again on its own", () => {
+  let closet = splitCapture(
+    startImport(queued(), "job"),
+    "job",
+    proposalsFromRegions([region("upper", 1), region("pants", 2)], 1),
+  );
+  closet = finishImport(startImport(closet, "job-2"), "job-2", prepared());
+  closet = retakeImport(closet, "job-2", "second-original.jpg");
+  const job = closet.imports.find((item) => item.id === "job-2")!;
+  assert.equal(job.captureId, undefined);
+  assert.equal(job.region, undefined);
+  assert.equal(job.people, undefined);
+  assert.equal(jobStem(job), "second");
+  assert.equal(
+    closet.imports.find((item) => item.id === "job")!.captureId,
+    "job",
+  );
 });
