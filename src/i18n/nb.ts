@@ -432,4 +432,23 @@ export const nb: Record<Key, string> = {
   "styling.tooMany":
     "Det er for mange kombinasjoner å sjekke på én gang. Behold et plagg eller velg en plaggtype for å snevre inn søket.",
   "styling.incomplete": "Disse valgene gir ikke et helt antrekk.",
+
+  "pieceWeather.warmUnconfirmed":
+    "{name} ser varm nok ut, men du har ikke bekreftet det.",
+  "pieceWeather.rainUnconfirmed":
+    "{name} kan passe i regn, men du har ikke bekreftet det.",
+  "pieceWeather.snowUnconfirmed":
+    "{name} kan passe i snø, men du har ikke bekreftet det.",
+  "styling.noWarmLayer":
+    "Dette antrekket har ikke noe lag merket som varmt nok for tid ute i kulden.",
+  "styling.noWarmLayerCloset":
+    "Garderoben din har ikke noe lag merket som varmt nok for tid ute i kulden.",
+  "styling.theseShoes": "Disse skoene",
+  "styling.shoesNotRain": "{name} er ikke merket som egnet for regn.",
+  "styling.shoesNotSnow": "{name} er ikke merket som egnet for snø.",
+  "styling.noRainShoes":
+    "Garderoben din har ikke sko merket som egnet for regn.",
+  "styling.noSnowShoes":
+    "Garderoben din har ikke sko merket som egnet for snø.",
+  "today.openPiece": "Åpne {name}",
 };

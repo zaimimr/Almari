@@ -170,6 +170,11 @@ function TodayContent() {
           pathname: "/today/check",
           params: { id: action.id, ask: action.ask },
         });
+      case "edit-piece":
+        return router.push({
+          pathname: "/piece/[id]",
+          params: { id: action.id },
+        });
     }
   }
 
@@ -193,6 +198,8 @@ function TodayContent() {
         return "Use the sample closet";
       case "check-piece":
         return t("check.action");
+      case "edit-piece":
+        return t("today.openPiece", { name: nameOf(action.id) });
     }
   }
 

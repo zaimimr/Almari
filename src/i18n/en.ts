@@ -429,6 +429,25 @@ export const en = {
   "styling.tooMany":
     "There are too many combinations to check at once. Keep a piece or choose a garment type to narrow the search.",
   "styling.incomplete": "These choices do not make a complete outfit.",
+
+  "pieceWeather.warmUnconfirmed":
+    "{name} looks warm enough, but you have not confirmed it.",
+  "pieceWeather.rainUnconfirmed":
+    "{name} may suit rain, but you have not confirmed it.",
+  "pieceWeather.snowUnconfirmed":
+    "{name} may suit snow, but you have not confirmed it.",
+  "styling.noWarmLayer":
+    "This outfit has no layer marked warm enough for time outside in the cold.",
+  "styling.noWarmLayerCloset":
+    "Your closet does not have a layer marked warm enough for time outside in the cold.",
+  "styling.theseShoes": "These shoes",
+  "styling.shoesNotRain": "{name} are not marked suitable for rain.",
+  "styling.shoesNotSnow": "{name} are not marked suitable for snow.",
+  "styling.noRainShoes":
+    "Your closet does not have footwear marked suitable for rain.",
+  "styling.noSnowShoes":
+    "Your closet does not have footwear marked suitable for snow.",
+  "today.openPiece": "Open {name}",
 };
 
 export type Key = keyof typeof en;

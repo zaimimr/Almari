@@ -406,7 +406,11 @@ test("re-preparing an owned piece fills attributes and keeps what she confirmed"
   assert.deepEqual(piecesToRefresh(done), []);
   assert.deepEqual(
     decodeCloset(JSON.stringify(savePiece(closet, piece))).pieces[0],
-    piece,
+    {
+      ...piece,
+      traits: { warmth: "light" },
+      sources: { ...piece.sources, warmth: "proposed" },
+    },
   );
 });
 

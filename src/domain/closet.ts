@@ -18,6 +18,7 @@ import {
 import { isCareLabel, withCareLabel, type CareLabel } from "./careLabel";
 import { isSwatches, type Swatch } from "./color";
 import { t } from "../i18n";
+import { withWeatherProposals } from "./pieceWeather";
 
 export * from "./taxonomy";
 
@@ -178,6 +179,13 @@ export type Weather =
       warmth: "warm" | "mild" | "cold";
       precipitation: "dry" | "rain" | "snow";
       exposure: "mostly-indoors" | "time-outside" | null;
+    }
+  | {
+      source: "forecast";
+      warmth: "warm" | "mild" | "cold";
+      precipitation: "dry" | "rain" | "snow";
+      exposure: null;
+      at: string;
     };
 
 export type Coverage = "full" | "moderate" | "own";
@@ -861,7 +869,7 @@ export function decodeCloset(...args: Parameters<typeof decodeStored>): Closet {
 }
 
 export function savePiece(closet: Closet, piece: Piece): Closet {
-  const clean = { ...piece, name: piece.name.trim() };
+  const clean = withWeatherProposals({ ...piece, name: piece.name.trim() });
   if (!isPiece(clean))
     throw new Error("Add a photo, a name, and a category for this piece.");
   const exists = closet.pieces.some((item) => item.id === piece.id);

@@ -8,6 +8,7 @@ import {
   type Style,
 } from "./closet";
 import { coverageProblems } from "./coverage";
+import { confirmedWeather, unconfirmedWeather } from "./pieceWeather";
 
 export type Role =
   | "main"
@@ -50,7 +51,8 @@ export type ProblemAction =
   | { type: "choose-pieces" }
   | { type: "add-pieces" }
   | { type: "use-samples" }
-  | { type: "check-piece"; id: string; ask: "sleeve" | "length" };
+  | { type: "check-piece"; id: string; ask: "sleeve" | "length" }
+  | { type: "edit-piece"; id: string };
 
 export type Problem = {
   code:
@@ -121,7 +123,7 @@ function fitsStyle(piece: Piece, style: Style) {
 
 function outside(request: OutfitRequest) {
   return (
-    request.weather.source === "manual" &&
+    request.weather.source !== "unknown" &&
     request.weather.exposure !== "mostly-indoors"
   );
 }
@@ -170,52 +172,77 @@ function weatherProblems(
   pool: Piece[],
 ): Problem[] {
   const weather = request.weather;
-  if (weather.source !== "manual") return [];
+  if (weather.source === "unknown") return [];
+  const clear: ProblemAction[] =
+    weather.source === "manual" ? [{ type: "clear-weather" }] : [];
   const problems: Problem[] = [];
   const shoes = outfit.find((piece) => roleOf(piece) === "shoes");
   const shoeIds = shoes ? [shoes.id] : [];
   const poolShoes = pool.filter((piece) => roleOf(piece) === "shoes");
+  const unconfirmed = (piece: Piece, message: string): Problem => ({
+    code: "weather-gap",
+    severity: "review",
+    message,
+    ids: [piece.id],
+    actions: [{ type: "edit-piece", id: piece.id }, ...clear],
+  });
   if (weather.warmth === "cold" && outside(request)) {
-    const warm = outfit.some(
-      (piece) =>
-        (roleOf(piece) === "layer" || roleOf(piece) === "outer") &&
-        piece.traits?.warmth === "warm",
+    const layers = outfit.filter(
+      (piece) => roleOf(piece) === "layer" || roleOf(piece) === "outer",
     );
-    if (!warm)
-      problems.push({
-        code: "weather-gap",
-        severity: "review",
-        message: pool.some((piece) => piece.traits?.warmth === "warm")
-          ? "This outfit has no layer marked warm enough for time outside in the cold."
-          : "Your closet does not have a layer marked warm enough for time outside in the cold.",
-        ids: [],
-        actions: [{ type: "clear-weather" }],
-      });
+    const maybe = layers.find(
+      (piece) => unconfirmedWeather(piece, "warmth") === "warm",
+    );
+    if (!layers.some((piece) => confirmedWeather(piece, "warmth") === "warm"))
+      problems.push(
+        maybe
+          ? unconfirmed(
+              maybe,
+              t("pieceWeather.warmUnconfirmed", { name: maybe.name }),
+            )
+          : {
+              code: "weather-gap",
+              severity: "review",
+              message: pool.some(
+                (piece) => confirmedWeather(piece, "warmth") === "warm",
+              )
+                ? t("styling.noWarmLayer")
+                : t("styling.noWarmLayerCloset"),
+              ids: [],
+              actions: clear,
+            },
+      );
   }
-  if (weather.precipitation === "snow" && shoes?.traits?.snow !== true)
+  const footwear = (key: "rain" | "snow") => {
+    if (shoes && confirmedWeather(shoes, key) === true) return;
+    if (shoes && unconfirmedWeather(shoes, key) === true) {
+      problems.push(
+        unconfirmed(
+          shoes,
+          t(
+            key === "rain"
+              ? "pieceWeather.rainUnconfirmed"
+              : "pieceWeather.snowUnconfirmed",
+            { name: shoes.name },
+          ),
+        ),
+      );
+      return;
+    }
     problems.push({
       code: "weather-gap",
       severity: "review",
-      message: poolShoes.some((piece) => piece.traits?.snow === true)
-        ? `${shoes?.name ?? "These shoes"} are not marked suitable for snow.`
-        : "Your closet does not have footwear marked suitable for snow.",
+      message: poolShoes.some((piece) => confirmedWeather(piece, key) === true)
+        ? t(key === "rain" ? "styling.shoesNotRain" : "styling.shoesNotSnow", {
+            name: shoes?.name ?? t("styling.theseShoes"),
+          })
+        : t(key === "rain" ? "styling.noRainShoes" : "styling.noSnowShoes"),
       ids: shoeIds,
-      actions: [{ type: "clear-weather" }],
+      actions: clear,
     });
-  if (
-    weather.precipitation === "rain" &&
-    outside(request) &&
-    shoes?.traits?.rain !== true
-  )
-    problems.push({
-      code: "weather-gap",
-      severity: "review",
-      message: poolShoes.some((piece) => piece.traits?.rain === true)
-        ? `${shoes?.name ?? "These shoes"} are not marked suitable for rain.`
-        : "Your closet does not have footwear marked suitable for rain.",
-      ids: shoeIds,
-      actions: [{ type: "clear-weather" }],
-    });
+  };
+  if (weather.precipitation === "snow") footwear("snow");
+  if (weather.precipitation === "rain" && outside(request)) footwear("rain");
   return problems;
 }
 
