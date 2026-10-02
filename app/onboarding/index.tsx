@@ -155,7 +155,7 @@ export default function Onboarding() {
   const position = onboardingSteps.indexOf(step) + 1;
 
   return (
-    <FormScreen>
+    <FormScreen key={step}>
       <Stack.Screen
         options={{
           title: t(`onboarding.${step}.title`),
