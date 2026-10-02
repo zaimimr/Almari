@@ -79,10 +79,7 @@ async function generate(env: Env, image: File, prompt: string) {
 export default {
   async fetch(request, env, ctx): Promise<Response> {
     if (request.method !== "POST") return fail("method", 405);
-    if (
-      !env.APP_TOKEN ||
-      request.headers.get("authorization") !== `Bearer ${env.APP_TOKEN}`
-    )
+    if (!env.APP_TOKEN || request.headers.get("x-app-token") !== env.APP_TOKEN)
       return fail("token", 401);
     const install = request.headers.get("x-install-id");
     if (!isInstallId(install)) return fail("install", 400);

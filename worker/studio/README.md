@@ -1,6 +1,6 @@
 # Almari studio worker
 
-Turns a piece cutout into a studio photo with Gemini. The app posts multipart form data (`image`, `category`, optional `kind`, `name`, `colour`) with `Authorization: Bearer <APP_TOKEN>` and `X-Install-Id`.
+Turns a piece cutout into a studio photo with Gemini. The app posts multipart form data (`image`, `category`, optional `kind`, `name`, `colour`) with `X-App-Token: <APP_TOKEN>` and `X-Install-Id`.
 
 ## Deploy
 

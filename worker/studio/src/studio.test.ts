@@ -153,7 +153,7 @@ describe("worker", () => {
       new Request("https://studio.test", {
         method: "POST",
         headers: {
-          authorization: "Bearer secret",
+          "x-app-token": "secret",
           "x-install-id": install,
           ...headers,
         },
@@ -164,9 +164,7 @@ describe("worker", () => {
     );
 
   it("needs the app token", async () => {
-    expect((await call(setup(), { authorization: "Bearer nope" })).status).toBe(
-      401,
-    );
+    expect((await call(setup(), { "x-app-token": "nope" })).status).toBe(401);
   });
 
   it("needs an install id", async () => {
