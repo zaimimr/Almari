@@ -286,18 +286,6 @@ final class GarmentPipeline {
       image, from: image.extent, format: .RGBA8, colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
   }
 
-  private func area(
-    template: CIImage, photo: CIImage, garment: CIImage, placed: PlacedGarment
-  ) -> [String: Double]? {
-    guard let templatePicture = render(template), let photoPicture = render(photo),
-      let match = CutoutMapping.locate(template: templatePicture, photo: photoPicture, scales: 1...1)
-    else { return nil }
-    return CutoutMapping.record(
-      CutoutMapping.area(
-        garmentOrigin: match.origin, scale: garment.extent.width / template.extent.width, side: placed.side,
-        offset: placed.offset, garment: garment.extent.size, photo: photo.extent.size))
-  }
-
   private func place(
     _ garment: CIImage, correction: LightCorrection, id: String, enhancer: GarmentEnhancer
   ) throws -> PlacedGarment {
@@ -410,7 +398,6 @@ final class GarmentPipeline {
     result.original = original
     image = image.transformed(by: CGAffineTransform(translationX: -image.extent.minX, y: -image.extent.minY))
     image = scaled(image, longEdge: 2048)
-    let full = image
     if let crop = options?.crop { image = cropped(image, to: crop) }
     result.width = Int(image.extent.width)
     result.height = Int(image.extent.height)
@@ -420,7 +407,6 @@ final class GarmentPipeline {
     var garment = image
     var found = false
     var mask: CIImage? = nil
-    var template: CIImage? = nil
     let enhancer = GarmentEnhancer(context: context)
     if let cutout = options?.cutout {
       guard let loaded = CIImage(contentsOf: photos.appendingPathComponent(cutout)) else {
@@ -428,7 +414,6 @@ final class GarmentPipeline {
       }
       let region = loaded.transformed(
         by: CGAffineTransform(translationX: -loaded.extent.minX, y: -loaded.extent.minY))
-      template = region
       garment = scaled(region, longEdge: 1536)
       result.instances = 1
       found = true
@@ -457,7 +442,6 @@ final class GarmentPipeline {
           mask = CIImage(cvPixelBuffer: scaledMask)
         }
         let masked = CIImage(cvPixelBuffer: buffer)
-        template = masked
         garment = scaled(masked, longEdge: 1536)
         found = true
       }
@@ -469,7 +453,6 @@ final class GarmentPipeline {
       result.enhanced = placed.enhanced
       result.thumbnail = placed.thumbnail
       result.frame = placed.frame
-      if let template { result.area = area(template: template, photo: full, garment: garment, placed: placed) }
     }
     timings["cutout"] = elapsed(maskStart)
     let qualityStart = Date()
