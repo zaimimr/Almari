@@ -23,7 +23,7 @@ import {
   type Style,
   type Variant,
 } from "./closet";
-import { categoryForRegion, type CapturePlan } from "./capture";
+import { categoryForRegion, wholePhoto, type CapturePlan } from "./capture";
 import { withCareLabel, type CareLabel } from "./careLabel";
 import { colorName, type Swatch } from "./color";
 import { attributeCheck, proposeAttributes, recognize } from "./recognition";
@@ -108,7 +108,8 @@ export function finishImport(
     const checks: CheckReason[] = [];
     if (recognition.question) checks.push("uncertain");
     if (!prepared.cutout) checks.push("no-cutout");
-    if (prepared.instances > 1) checks.push("several");
+    if (prepared.instances > 1 || othersInWholePhoto(job))
+      checks.push("several");
     const base: Described = {
       category: recognition.category,
       kind: recognition.kind,
@@ -324,6 +325,17 @@ export function fileStem(source: string): string {
   return source.replace(/-original(\.[^.]*)?$/, "").replace(/\.[^.]*$/, "");
 }
 
+function othersInWholePhoto(job: ImportJob): boolean {
+  return (
+    (job.people ?? 0) > 1 &&
+    !job.region &&
+    job.crop?.x === wholePhoto.x &&
+    job.crop.y === wholePhoto.y &&
+    job.crop.width === wholePhoto.width &&
+    job.crop.height === wholePhoto.height
+  );
+}
+
 export function jobStem(job: ImportJob): string {
   return job.stem ?? (job.region || job.crop ? job.id : fileStem(job.source));
 }
@@ -347,7 +359,15 @@ export function splitCapture(
         region: proposal.region,
         ...people,
       }))
-    : [{ ...job, state: "queued", captureId: id, ...people }];
+    : [
+        {
+          ...job,
+          state: "queued",
+          captureId: id,
+          ...people,
+          ...(plan.checkWhole ? { crop: wholePhoto } : {}),
+        },
+      ];
   return {
     ...closet,
     imports: closet.imports.flatMap((item) => (item.id === id ? jobs : [item])),
@@ -434,13 +454,19 @@ function pieceFiles(piece: Piece): (string | null | undefined)[] {
   ];
 }
 
+export function filesInUse(closet: Closet): Set<string> {
+  return new Set(
+    [
+      ...closet.imports.flatMap(jobFiles),
+      ...closet.pieces.flatMap(pieceFiles),
+    ].filter((file): file is string => Boolean(file)),
+  );
+}
+
 export function orphanedFiles(before: Closet, after: Closet): string[] {
-  const kept = new Set([
-    ...after.imports.flatMap(jobFiles),
-    ...after.pieces.flatMap(pieceFiles),
-  ]);
+  const kept = filesInUse(after);
   return [...new Set(before.imports.flatMap(jobFiles))].filter(
-    (file): file is string => Boolean(file) && !kept.has(file),
+    (file): file is string => typeof file === "string" && !kept.has(file),
   );
 }
 

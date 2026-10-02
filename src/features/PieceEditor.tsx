@@ -25,6 +25,7 @@ import {
   fitAttributes,
   withDetails,
 } from "../domain/attributes";
+import { filesInUse } from "../domain/importing";
 import { confirmEdits } from "../domain/recognition";
 import { unlinkPiece } from "../domain/sets";
 import { categoryName, kindName, styleName, stylesName, t } from "../i18n";
@@ -191,18 +192,21 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
     if (!confirmed) return;
     setBusy(true);
     try {
-      await update((latest) =>
-        removePiece(unlinkPiece(latest, piece.id), piece.id),
-      );
+      let inUse = new Set<string>();
+      await update((latest) => {
+        const next = removePiece(unlinkPiece(latest, piece.id), piece.id);
+        inUse = filesInUse(next);
+        return next;
+      });
       for (const file of new Set([
         piece.photo,
         piece.original,
         piece.variants?.enhanced,
         piece.variants?.plain,
+        piece.label?.photo,
       ]))
-        if (file) void discardPhoto(file).catch(() => undefined);
-      if (piece.label)
-        void discardPhoto(piece.label.photo).catch(() => undefined);
+        if (file && !inUse.has(file))
+          void discardPhoto(file).catch(() => undefined);
       allowClose();
       router.dismissTo("/closet");
     } catch {

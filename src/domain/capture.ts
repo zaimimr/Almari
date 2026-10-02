@@ -14,6 +14,16 @@ export type CapturePlan = {
   proposals: CaptureProposal[];
   people: number;
   notice: "others-ignored" | null;
+  checkWhole: boolean;
+};
+
+export const wholePhoto: Frame = { x: 0, y: 0, width: 1, height: 1 };
+
+export const unparsedCapture: CapturePlan = {
+  proposals: [],
+  people: 0,
+  notice: null,
+  checkWhole: true,
 };
 
 const regionOrder: GarmentRegionKind[] = [
@@ -38,7 +48,7 @@ export function proposalsFromRegions(
 ): CapturePlan {
   const notice = people > 1 ? "others-ignored" : null;
   if (!regions.length || (people === 0 && regions.length === 1))
-    return { proposals: [], people, notice };
+    return { proposals: [], people, notice, checkWhole: people > 1 };
   const proposals = [...regions]
     .sort(
       (a, b) =>
@@ -46,7 +56,7 @@ export function proposalsFromRegions(
         b.share - a.share,
     )
     .map((region) => ({ region, category: categoryForRegion(region.kind) }));
-  return { proposals, people, notice };
+  return { proposals, people, notice, checkWhole: false };
 }
 
 export const minBox = 0.05;

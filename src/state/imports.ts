@@ -4,7 +4,7 @@ import ClosetVision, {
 } from "../../modules/closet-vision/src";
 import type { ClosetRepository } from "../domain/repository";
 import type { Closet, ImportJob, Piece, Prepared } from "../domain/closet";
-import { proposalsFromRegions } from "../domain/capture";
+import { proposalsFromRegions, unparsedCapture } from "../domain/capture";
 import {
   attributeRefreshVersion,
   failImport,
@@ -42,8 +42,10 @@ async function parseCapture(repository: ClosetRepository, job: ImportJob) {
   const found = await ClosetVision.parseGarments(
     photoUri(job.source),
     fileStem(job.source),
-  ).catch(() => ({ regions: [], people: 0 }));
-  const plan = proposalsFromRegions(found.regions, found.people);
+  ).catch(() => null);
+  const plan = found
+    ? proposalsFromRegions(found.regions, found.people)
+    : unparsedCapture;
   let applied = false;
   await repository.update((closet) => {
     const next = splitCapture(closet, job.id, plan);
@@ -53,7 +55,7 @@ async function parseCapture(repository: ClosetRepository, job: ImportJob) {
   const kept = new Set(
     applied ? plan.proposals.map((proposal) => proposal.region.cutout) : [],
   );
-  for (const region of found.regions)
+  for (const region of found?.regions ?? [])
     if (!kept.has(region.cutout))
       void discardPhoto(region.cutout).catch(() => undefined);
 }

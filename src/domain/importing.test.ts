@@ -4,6 +4,7 @@ import {
   decodeCloset,
   emptyCloset,
   garmentKinds,
+  removePiece,
   savePiece,
   type Closet,
   type GarmentRegion,
@@ -12,7 +13,7 @@ import {
   type Prepared,
 } from "./closet";
 import type { CareLabel } from "./careLabel";
-import { proposalsFromRegions } from "./capture";
+import { proposalsFromRegions, unparsedCapture } from "./capture";
 import {
   acceptImports,
   addToCapture,
@@ -23,6 +24,7 @@ import {
   failImport,
   finishImport,
   fileStem,
+  filesInUse,
   finishRefresh,
   importFailure,
   isSettled,
@@ -965,4 +967,63 @@ test("a failed preparation keeps storage and unreadable reasons and calls the re
   assert.equal(importFailure(new Error("resources")), "processing");
   assert.equal(importFailure("storage"), "processing");
   assert.equal(importFailure(undefined), "processing");
+});
+
+test("removing a piece keeps the photo that a sibling from the same capture still uses", () => {
+  let closet = splitOutfit();
+  closet = finishImport(startImport(closet, "job"), "job", prepared());
+  closet = acceptImports(closet);
+  const piece = closet.pieces.find((item) => item.id === "job")!;
+  assert.equal(piece.original, "job-original.jpg");
+  const inUse = filesInUse(removePiece(closet, "job"));
+  assert.ok(inUse.has("job-original.jpg"));
+  assert.ok(!inUse.has("job.png"));
+  assert.ok(filesInUse(closet).has("job.png"));
+});
+
+test("several people with no garment found are checked and can be cropped before the whole photo is used", () => {
+  let closet = splitCapture(
+    startImport(queued(), "job"),
+    "job",
+    proposalsFromRegions([], 2),
+  );
+  const whole = { x: 0, y: 0, width: 1, height: 1 };
+  let job = closet.imports[0]!;
+  assert.deepEqual(job.crop, whole);
+  assert.equal(job.people, 2);
+  assert.deepEqual(
+    captureJobs(closet, "job").map((item) => item.id),
+    ["job"],
+  );
+  closet = finishImport(startImport(closet, "job"), "job", prepared());
+  job = closet.imports[0]!;
+  assert.equal(job.state, "review");
+  assert.ok(job.checks?.includes("several"));
+  assert.equal(acceptImports(closet).pieces.length, 0);
+  const box = { x: 0.25, y: 0.25, width: 0.5, height: 0.5 };
+  closet = cropCapture(closet, "job", box, "job-crop-1");
+  closet = finishImport(
+    startImport(closet, "job"),
+    "job",
+    prepared({ original: "job-crop-1-original.jpg", cutout: "job-crop-1.png" }),
+  );
+  assert.ok(!closet.imports[0]!.checks?.includes("several"));
+});
+
+test("a photo the parser could not read is checked for several subjects and can be cropped", () => {
+  let closet = splitCapture(
+    startImport(queued(), "job"),
+    "job",
+    unparsedCapture,
+  );
+  const job = closet.imports[0]!;
+  assert.deepEqual(job.crop, { x: 0, y: 0, width: 1, height: 1 });
+  assert.equal(job.people, undefined);
+  assert.equal(captureJobs(closet, "job").length, 1);
+  closet = finishImport(
+    startImport(closet, "job"),
+    "job",
+    prepared({ instances: 2 }),
+  );
+  assert.ok(closet.imports[0]!.checks?.includes("several"));
 });
