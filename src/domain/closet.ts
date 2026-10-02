@@ -176,7 +176,89 @@ export type Weather =
       warmth: "warm" | "mild" | "cold";
       precipitation: "dry" | "rain" | "snow";
       exposure: "mostly-indoors" | "time-outside" | null;
+    }
+  | {
+      source: "forecast";
+      warmth: "warm" | "mild" | "cold";
+      precipitation: "dry" | "rain" | "snow";
+      exposure: null;
+      at: string;
     };
+
+export type ForecastWeather = Extract<Weather, { source: "forecast" }>;
+
+export type Units = "metric" | "imperial";
+export type Coverage = "full" | "moderate" | "own";
+
+export const bodyShapes = [
+  "pear",
+  "apple",
+  "hourglass",
+  "rectangle",
+  "inverted-triangle",
+  "athletic",
+] as const;
+export type BodyShape = (typeof bodyShapes)[number];
+
+export const seasons = [
+  "light-spring",
+  "warm-spring",
+  "clear-spring",
+  "light-summer",
+  "cool-summer",
+  "soft-summer",
+  "soft-autumn",
+  "warm-autumn",
+  "deep-autumn",
+  "deep-winter",
+  "cool-winter",
+  "clear-winter",
+] as const;
+export type Season = (typeof seasons)[number];
+
+export type ColourProfile = {
+  skin: [number, number, number] | null;
+  hair: [number, number, number] | null;
+  eyes: [number, number, number] | null;
+  undertone: "warm" | "cool" | "neutral";
+  depth: "light" | "medium" | "deep";
+  contrast: "low" | "medium" | "high";
+  season: Season;
+  source: "measured" | "swatch" | "confirmed";
+};
+
+export type StyleProfile = {
+  coverageLevel: Coverage | null;
+  heightCm: number | null;
+  bodyShape: BodyShape | null;
+  fit: "loose" | "structured" | "depends" | null;
+  colourLean: "bold" | "soft" | "depends" | null;
+  styleLean: "desi" | "western" | "both" | null;
+  colour: ColourProfile | null;
+};
+
+export const heightRange = { min: 120, max: 220 };
+
+export type Place = { name: string; latitude: number; longitude: number };
+
+export type ForecastHour = {
+  at: string;
+  celsius: number;
+  precipitation: "none" | "rain" | "snow";
+  chance: number;
+  windMs: number;
+};
+
+export type Forecast = {
+  date: string;
+  fetchedAt: string;
+  weather: ForecastWeather;
+  low: number;
+  high: number;
+  attribution: { logo: string; url: string };
+};
+
+export type CardLayout = "minimal" | "reasons" | "full";
 
 export type EverydayStyle = {
   version: number;
@@ -218,6 +300,12 @@ export type Styling = {
   everyday: EverydayStyle | null;
   wardrobe: WardrobeMode;
   today: TodayState | null;
+  profile: StyleProfile;
+  units: Units;
+  place: Place | null;
+  forecast: Forecast | null;
+  onboarded: boolean;
+  layout: CardLayout;
 };
 
 export type Closet = {
@@ -231,10 +319,26 @@ export type Closet = {
   attributeRefresh?: number;
 };
 
+export const neutralProfile: StyleProfile = {
+  coverageLevel: null,
+  heightCm: null,
+  bodyShape: null,
+  fit: null,
+  colourLean: null,
+  styleLean: null,
+  colour: null,
+};
+
 export const emptyStyling: Styling = {
   everyday: null,
   wardrobe: "sample",
   today: null,
+  profile: neutralProfile,
+  units: "metric",
+  place: null,
+  forecast: null,
+  onboarded: false,
+  layout: "reasons",
 };
 
 export const emptyCloset: Closet = {
@@ -554,10 +658,14 @@ function isWardrobe(value: unknown): value is WardrobeMode {
 function isWeather(value: unknown): value is Weather {
   if (!isRecord(value)) return false;
   if (value.source === "unknown") return true;
+  const known =
+    ["warm", "mild", "cold"].includes(value.warmth as string) &&
+    ["dry", "rain", "snow"].includes(value.precipitation as string);
+  if (value.source === "forecast")
+    return known && value.exposure === null && isString(value.at);
   return (
     value.source === "manual" &&
-    ["warm", "mild", "cold"].includes(value.warmth as string) &&
-    ["dry", "rain", "snow"].includes(value.precipitation as string) &&
+    known &&
     (value.exposure === null ||
       value.exposure === "mostly-indoors" ||
       value.exposure === "time-outside")
@@ -677,7 +785,10 @@ export function migrateV1(
     pieces,
     looks: value.looks,
     sampleCatalog: value.sampleWardrobeAdded ? 1 : 0,
-    styling: emptyStyling,
+    styling: {
+      ...emptyStyling,
+      onboarded: pieces.some((piece) => piece.source === "owned"),
+    },
     imports: [],
   };
 }
@@ -769,9 +880,116 @@ function decodeStored(
   };
 }
 
-export function decodeCloset(...args: Parameters<typeof decodeStored>): Closet {
+export const isNullableIn =
+  (options: readonly unknown[]) =>
+  (value: unknown): boolean =>
+    value === null || options.includes(value);
+
+const isNumber = (value: unknown): value is number =>
+  typeof value === "number" && Number.isFinite(value);
+
+const isLab = (value: unknown) =>
+  value === null ||
+  (Array.isArray(value) && value.length === 3 && value.every(isNumber));
+
+function isColourProfile(value: unknown): value is ColourProfile {
+  return (
+    isRecord(value) &&
+    isLab(value.skin) &&
+    isLab(value.hair) &&
+    isLab(value.eyes) &&
+    ["warm", "cool", "neutral"].includes(value.undertone as string) &&
+    ["light", "medium", "deep"].includes(value.depth as string) &&
+    ["low", "medium", "high"].includes(value.contrast as string) &&
+    seasons.includes(value.season as Season) &&
+    ["measured", "swatch", "confirmed"].includes(value.source as string)
+  );
+}
+
+function isProfile(value: unknown): value is StyleProfile {
+  return (
+    isRecord(value) &&
+    isNullableIn(["full", "moderate", "own"])(value.coverageLevel) &&
+    (value.heightCm === null ||
+      (Number.isInteger(value.heightCm) &&
+        (value.heightCm as number) >= heightRange.min &&
+        (value.heightCm as number) <= heightRange.max)) &&
+    isNullableIn(bodyShapes)(value.bodyShape) &&
+    isNullableIn(["loose", "structured", "depends"])(value.fit) &&
+    isNullableIn(["bold", "soft", "depends"])(value.colourLean) &&
+    isNullableIn(["desi", "western", "both"])(value.styleLean) &&
+    (value.colour === null || isColourProfile(value.colour))
+  );
+}
+
+function isPlace(value: unknown): value is Place {
+  return (
+    isRecord(value) &&
+    isString(value.name) &&
+    isNumber(value.latitude) &&
+    Math.abs(value.latitude) <= 90 &&
+    isNumber(value.longitude) &&
+    Math.abs(value.longitude) <= 180
+  );
+}
+
+function isForecast(value: unknown): value is Forecast {
+  return (
+    isRecord(value) &&
+    isString(value.date) &&
+    isString(value.fetchedAt) &&
+    isWeather(value.weather) &&
+    value.weather.source === "forecast" &&
+    isNumber(value.low) &&
+    isNumber(value.high) &&
+    isRecord(value.attribution) &&
+    isString(value.attribution.logo) &&
+    isString(value.attribution.url)
+  );
+}
+
+function withOnboardingState(closet: Closet): Closet {
+  const stored: Record<string, unknown> = { ...closet.styling };
+  const profile =
+    stored.profile === undefined
+      ? neutralProfile
+      : isRecord(stored.profile)
+        ? { ...neutralProfile, ...stored.profile }
+        : null;
+  const styling = {
+    ...closet.styling,
+    profile,
+    units: stored.units ?? "metric",
+    place: stored.place ?? null,
+    forecast: stored.forecast ?? null,
+    onboarded:
+      stored.onboarded ??
+      closet.pieces.some((piece) => piece.source === "owned"),
+    layout: stored.layout ?? "reasons",
+  };
+  if (
+    !isProfile(styling.profile) ||
+    (styling.units !== "metric" && styling.units !== "imperial") ||
+    !(styling.place === null || isPlace(styling.place)) ||
+    !(styling.forecast === null || isForecast(styling.forecast)) ||
+    !isBoolean(styling.onboarded) ||
+    !["minimal", "reasons", "full"].includes(styling.layout as string)
+  )
+    throw unreadable();
+  return { ...closet, styling: styling as Styling };
+}
+
+function decodeWithoutOnboarding(
+  ...args: Parameters<typeof decodeStored>
+): Closet {
   const closet = decodeStored(...args);
   return { ...closet, imports: closet.imports.map(withPalette) };
+}
+
+export function decodeCloset(
+  ...args: Parameters<typeof decodeWithoutOnboarding>
+): Closet {
+  return withOnboardingState(decodeWithoutOnboarding(...args));
 }
 
 export function savePiece(closet: Closet, piece: Piece): Closet {

@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   decodeCloset,
   emptyCloset,
+  neutralProfile,
   pieceVariant,
   piecesForLook,
   removePiece,
@@ -411,7 +412,15 @@ test("a version 2 closet opens as version 3 with every piece, look, Today sessio
   assert.equal(migrated.version, 3);
   assert.deepEqual(migrated.pieces, closetV2.pieces);
   assert.deepEqual(migrated.looks, closetV2.looks);
-  assert.deepEqual(migrated.styling, closetV2.styling);
+  assert.deepEqual(migrated.styling, {
+    ...closetV2.styling,
+    profile: neutralProfile,
+    units: "metric",
+    place: null,
+    forecast: null,
+    onboarded: true,
+    layout: "reasons",
+  });
   assert.equal(migrated.sampleCatalog, 2);
   assert.equal(migrated.photoTipsSeen, true);
   assert.deepEqual(
