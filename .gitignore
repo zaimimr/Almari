@@ -26,3 +26,4 @@ __pycache__/
 planning/eval/closet.json
 
 credentials/
+credentials.json
