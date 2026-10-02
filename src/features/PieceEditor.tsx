@@ -162,6 +162,7 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
           piece.photo,
           piece.variants?.enhanced,
           piece.variants?.plain,
+          piece.variants?.studio,
         ]))
           if (file) void discardPhoto(file).catch(() => undefined);
       if (newImage) void measurePiece({ update }, confirmed);
@@ -201,6 +202,7 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
         piece.original,
         piece.variants?.enhanced,
         piece.variants?.plain,
+        piece.variants?.studio,
         piece.label?.photo,
       ]))
         if (file && !inUse.has(file))

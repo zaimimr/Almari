@@ -318,6 +318,18 @@ export function setImportLabel(
   });
 }
 
+export function setImportStudio(
+  closet: Closet,
+  id: string,
+  studio: string,
+): Closet {
+  return updateJob(closet, id, (job) => {
+    if (job.state !== "ready" && job.state !== "review") return job;
+    if (!job.prepared?.cutout || !job.prepared.enhanced) return job;
+    return { ...job, prepared: { ...job.prepared, studio }, variant: "studio" };
+  });
+}
+
 export function removeImport(closet: Closet, id: string): Closet {
   return updateJob(closet, id, () => null);
 }
@@ -443,6 +455,7 @@ function jobFiles(job: ImportJob): (string | null | undefined)[] {
     job.prepared?.cutout,
     job.prepared?.thumbnail,
     job.prepared?.enhanced,
+    job.prepared?.studio,
   ];
 }
 
@@ -453,6 +466,7 @@ function pieceFiles(piece: Piece): (string | null | undefined)[] {
     piece.label?.photo,
     piece.variants?.enhanced,
     piece.variants?.plain,
+    piece.variants?.studio,
   ];
 }
 
@@ -488,8 +502,13 @@ export function pieceFromImport(job: ImportJob): Piece | null {
     return null;
   const useCutout = Boolean(job.prepared.cutout) && !job.keepOriginal;
   const enhanced = useCutout ? (job.prepared.enhanced ?? null) : null;
+  const studio = enhanced ? (job.prepared.studio ?? null) : null;
   const cutoutPhoto =
-    enhanced && job.variant !== "plain" ? enhanced : job.prepared.cutout!;
+    studio && job.variant === "studio"
+      ? studio
+      : enhanced && job.variant !== "plain"
+        ? enhanced
+        : job.prepared.cutout!;
   const styles = job.styles ?? fixedStyles(job.kind);
   const sources: Sources =
     job.sources ??
@@ -503,7 +522,13 @@ export function pieceFromImport(job: ImportJob): Piece | null {
     sources,
     photo: useCutout ? cutoutPhoto : job.prepared.original,
     ...(enhanced
-      ? { variants: { enhanced, plain: job.prepared.cutout! } }
+      ? {
+          variants: {
+            enhanced,
+            plain: job.prepared.cutout!,
+            ...(studio ? { studio } : {}),
+          },
+        }
       : {}),
     original: job.prepared.original,
     ...(useCutout && job.prepared.frame ? { frame: job.prepared.frame } : {}),

@@ -47,9 +47,9 @@ export type Quality = {
   lightSpread: number | null;
 };
 
-export type Variant = "enhanced" | "plain";
+export type Variant = "enhanced" | "plain" | "studio";
 
-export type Variants = { enhanced?: string; plain?: string };
+export type Variants = { enhanced?: string; plain?: string; studio?: string };
 
 export const adviceReasons = [
   "merged",
@@ -130,6 +130,7 @@ export type Prepared = {
   palette: Swatch[];
   embedding: string | null;
   enhanced?: string | null;
+  studio?: string | null;
   quality?: Quality | null;
 };
 
@@ -424,6 +425,7 @@ export type Styling = {
   onboarded: boolean;
   layout: CardLayout;
   language: Language;
+  studio: boolean;
 };
 
 export type Closet = {
@@ -470,6 +472,7 @@ export const emptyStyling: Styling = {
   onboarded: false,
   layout: "reasons",
   language: "system",
+  studio: false,
 };
 
 export const emptyCloset: Closet = {
@@ -665,12 +668,13 @@ function isVariants(value: unknown): value is Variants {
   return (
     isRecord(value) &&
     optional(value.enhanced, isString) &&
-    optional(value.plain, isString)
+    optional(value.plain, isString) &&
+    optional(value.studio, isString)
   );
 }
 
 const isVariant = (value: unknown): value is Variant =>
-  value === "enhanced" || value === "plain";
+  value === "enhanced" || value === "plain" || value === "studio";
 
 function isPrepared(value: unknown): value is Prepared {
   return (
@@ -687,6 +691,7 @@ function isPrepared(value: unknown): value is Prepared {
       : isSwatches(value.palette) &&
         (value.embedding === null || isEmbedding(value.embedding))) &&
     optional(value.enhanced, isNullableString) &&
+    optional(value.studio, isNullableString) &&
     optional(value.quality, isNullableQuality)
   );
 }
@@ -1246,6 +1251,7 @@ function withOnboardingState(closet: Closet): Closet {
       closet.pieces.some((piece) => piece.source === "owned"),
     layout: stored.layout ?? "reasons",
     language: stored.language ?? "system",
+    studio: stored.studio ?? false,
   };
   if (
     !isProfile(styling.profile) ||
@@ -1254,7 +1260,8 @@ function withOnboardingState(closet: Closet): Closet {
     !(styling.forecast === null || isForecast(styling.forecast)) ||
     !isBoolean(styling.onboarded) ||
     !["minimal", "reasons", "full"].includes(styling.layout as string) ||
-    !["system", "en", "nb"].includes(styling.language as string)
+    !["system", "en", "nb"].includes(styling.language as string) ||
+    !isBoolean(styling.studio)
   )
     throw unreadable();
   return { ...closet, styling: styling as Styling };
@@ -1286,9 +1293,10 @@ export function savePiece(closet: Closet, piece: Piece): Closet {
 }
 
 export function pieceVariant(piece: Piece): Variant | null {
-  const { enhanced, plain } = piece.variants ?? {};
+  const { enhanced, plain, studio } = piece.variants ?? {};
   if (!enhanced || !plain) return null;
   if (piece.photo === enhanced) return "enhanced";
+  if (studio && piece.photo === studio) return "studio";
   if (piece.photo === plain) return "plain";
   return null;
 }
@@ -1296,6 +1304,19 @@ export function pieceVariant(piece: Piece): Variant | null {
 export function withVariant(piece: Piece, variant: Variant): Piece {
   const photo = piece.variants?.[variant];
   return photo && photo !== piece.photo ? { ...piece, photo } : piece;
+}
+
+export function studioSource(piece: Piece): string | null {
+  return pieceVariant(piece) ? piece.variants!.plain! : null;
+}
+
+export function withStudio(piece: Piece, studio: string): Piece {
+  if (!studioSource(piece)) return piece;
+  return {
+    ...piece,
+    photo: studio,
+    variants: { ...piece.variants, studio },
+  };
 }
 
 export function saveLook(closet: Closet, look: Look): Closet {

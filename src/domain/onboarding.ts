@@ -170,7 +170,11 @@ export function resetCloset(closet: Closet): {
   return {
     closet: addSampleWardrobe({
       ...emptyCloset,
-      styling: { ...emptyCloset.styling, language: closet.styling.language },
+      styling: {
+        ...emptyCloset.styling,
+        language: closet.styling.language,
+        studio: closet.styling.studio,
+      },
     }),
     files: closetFiles(closet),
   };
