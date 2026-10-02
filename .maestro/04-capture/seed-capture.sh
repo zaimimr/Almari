@@ -22,6 +22,6 @@ jobs='[
   {"id":"single","source":"single-original.jpg","createdAt":"2026-10-01T08:00:00Z","state":"queued","attempts":0}
 ]'
 closet=$(sqlite3 "$db" "select value from storage where key = 'closet.v3'")
-next=$(printf '%s' "$closet" | jq -c --argjson jobs "$jobs" '.imports = $jobs + (.imports | map(select((.id | startswith("group") or startswith("single")) | not)))')
+next=$(printf '%s' "$closet" | jq -c --argjson jobs "$jobs" '.imports = $jobs + (.imports | map(select((.id | startswith("group") or startswith("single")) or .captureId == "group" | not)))')
 escaped=$(printf '%s' "$next" | sed "s/'/''/g")
 sqlite3 "$db" "update storage set value = '$escaped' where key = 'closet.v3'"

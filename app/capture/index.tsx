@@ -8,12 +8,14 @@ import { Stack, router } from "expo-router";
 import type { ImportJob } from "../../src/domain/closet";
 import {
   acceptImports,
+  captureJobs,
   queueImport,
   removeImport,
   retryImport,
 } from "../../src/domain/importing";
+import { t } from "../../src/i18n";
 import { useCloset } from "../../src/state/closet";
-import { discardImportFiles } from "../../src/state/imports";
+import { changeImports } from "../../src/state/imports";
 import { discardPhoto, keepPhotoAs, photoUri } from "../../src/storage/local";
 import {
   AppText,
@@ -61,6 +63,13 @@ export default function AddPieces() {
   ).length;
   const checks = jobs.filter((job) => job.state === "review").length;
   const failed = jobs.filter((job) => job.state === "failed").length;
+  const captures = [
+    ...new Set(
+      jobs
+        .filter((job) => job.captureId && (job.region || job.crop))
+        .map((job) => job.captureId!),
+    ),
+  ];
 
   async function finishTips() {
     setTip(null);
@@ -130,12 +139,8 @@ export default function AddPieces() {
     if (busy || !ready) return;
     setBusy(true);
     setError(null);
-    const accepted = closet.imports.filter((job) => job.state === "ready");
     try {
-      await update(acceptImports);
-      for (const job of accepted)
-        if (job.prepared?.thumbnail)
-          void discardPhoto(job.prepared.thumbnail).catch(() => undefined);
+      await changeImports(update, acceptImports);
       if (!closet.imports.some((job) => job.state !== "ready")) router.back();
     } catch {
       setError("These pieces could not be saved. Please try again.");
@@ -146,8 +151,7 @@ export default function AddPieces() {
 
   async function remove(job: ImportJob) {
     try {
-      await update((current) => removeImport(current, job.id));
-      discardImportFiles(job);
+      await changeImports(update, (current) => removeImport(current, job.id));
     } catch {
       setError("This photo could not be removed. Please try again.");
     }
@@ -235,6 +239,29 @@ export default function AddPieces() {
               .join(" · ")}
           </AppText>
         ) : null}
+        {captures.map((capture) => {
+          const count = captureJobs(closet, capture).length;
+          return (
+            <View key={capture} style={styles.capture}>
+              <AppText>
+                {count === 1
+                  ? t("capture.foundOne")
+                  : t("capture.found", { count })}
+              </AppText>
+              <Button
+                label={t("capture.review")}
+                secondary
+                compact
+                onPress={() =>
+                  router.push({
+                    pathname: "/capture/group/[id]",
+                    params: { id: capture },
+                  })
+                }
+              />
+            </View>
+          );
+        })}
         <View style={styles.grid}>
           {jobs.map((job) => (
             <JobTile
@@ -346,6 +373,15 @@ const styles = StyleSheet.create({
   actions: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
   action: { flexGrow: 1, flexBasis: 140 },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
+  capture: {
+    gap: 8,
+    padding: 12,
+    borderRadius: theme.radius,
+    borderCurve: "continuous",
+    borderWidth: 1,
+    borderColor: theme.colors.line,
+    backgroundColor: theme.colors.surface,
+  },
   tile: { width: "31%", gap: 4 },
   tilePhoto: {
     aspectRatio: 1,

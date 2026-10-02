@@ -32,7 +32,7 @@ import {
 } from "../../src/i18n";
 import { labelLines } from "../../src/state/careLabel";
 import { useCloset } from "../../src/state/closet";
-import { discardImportFiles } from "../../src/state/imports";
+import { changeImports } from "../../src/state/imports";
 import { photoUri } from "../../src/storage/local";
 import {
   AppText,
@@ -226,8 +226,7 @@ export default function CheckPiece() {
   async function remove() {
     setBusy(true);
     try {
-      await update((current) => removeImport(current, job!.id));
-      discardImportFiles(job!);
+      await changeImports(update, (current) => removeImport(current, job!.id));
       router.back();
     } catch {
       setError(t("capture.removeFailed"));
@@ -286,6 +285,12 @@ export default function CheckPiece() {
       ) : null}
       {checks.includes("several") ? (
         <AppText>{t("capture.several")}</AppText>
+      ) : null}
+      {checks.includes("partial") ? (
+        <View style={styles.section}>
+          <AppText style={styles.label}>{t("capture.partial")}</AppText>
+          <AppText>{t("capture.partialCheck")}</AppText>
+        </View>
       ) : null}
       <View style={styles.section}>
         <AppText style={styles.label}>

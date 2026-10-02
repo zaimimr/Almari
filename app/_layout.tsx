@@ -39,6 +39,10 @@ export default function RootLayout() {
             options={{ title: "Check this piece" }}
           />
           <Stack.Screen
+            name="capture/group/[id]"
+            options={{ title: t("capture.group.title") }}
+          />
+          <Stack.Screen
             name="label/[id]"
             options={{ title: t("careLabel.title") }}
           />
