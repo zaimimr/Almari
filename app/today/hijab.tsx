@@ -21,7 +21,7 @@ import {
 import { theme } from "../../src/ui/theme";
 
 export default function CompareHijabs() {
-  const { width, fontScale } = useWindowDimensions();
+  const { width, height, fontScale } = useWindowDimensions();
   const wide = width >= 900;
   const { closet, update } = useCloset();
   const today = closet.styling.today;
@@ -119,7 +119,12 @@ export default function CompareHijabs() {
             styles.choices,
             wide
               ? styles.choicesWide
-              : { height: 300 + Math.max(0, fontScale - 1) * 160 },
+              : {
+                  height: Math.min(
+                    300 + Math.max(0, fontScale - 1) * 160,
+                    height * 0.4,
+                  ),
+                },
           ]}
         >
           {comparison.options.length ? (
@@ -156,12 +161,22 @@ export default function CompareHijabs() {
                     }
                   />
                   {index === 0 ? (
-                    <AppText variant="caption" style={styles.current}>
+                    <AppText
+                      variant="caption"
+                      style={styles.current}
+                      numberOfLines={1}
+                      maxFontSizeMultiplier={1.5}
+                    >
                       {t("hijabs.inOutfit")}
                     </AppText>
                   ) : null}
                   {item.reason ? (
-                    <AppText variant="caption" muted numberOfLines={3}>
+                    <AppText
+                      variant="caption"
+                      muted
+                      numberOfLines={fontScale > 1.3 ? 2 : 3}
+                      maxFontSizeMultiplier={1.5}
+                    >
                       {item.reason}
                     </AppText>
                   ) : null}

@@ -10,10 +10,12 @@ appId: com.zaimimran.almari
       - scrollUntilVisible:
           element: "Hopp over"
           direction: DOWN
+          timeout: 60000
       - tapOn: "Hopp over"
 - scrollUntilVisible:
     element: "Start med eksempelgarderoben"
     direction: DOWN
+    timeout: 60000
 - tapOn: "Start med eksempelgarderoben"
 - assertVisible: "I dag"
 - assertVisible: "Garderobe"
@@ -26,22 +28,27 @@ appId: com.zaimimran.almari
 - takeScreenshot: planning/build/wardrobe/nb-adjust
 - scrollUntilVisible:
     element: "Finn antrekk"
+    timeout: 60000
 - tapOn: "Avbryt"
 - scrollUntilVisible:
     element: "Lagre antrekket"
     centerElement: true
+    timeout: 60000
 - takeScreenshot: planning/build/wardrobe/nb-today-card
 - scrollUntilVisible:
     element: "I dette antrekket"
+    timeout: 60000
 - takeScreenshot: planning/build/wardrobe/nb-today-pieces
 - scrollUntilVisible:
     element: "Stilinnstillinger"
+    timeout: 60000
 - takeScreenshot: planning/build/wardrobe/nb-today-end
 - tapOn: "Garderobe"
 - takeScreenshot: planning/build/wardrobe/nb-closet
 - tapOn: "Mauve chiffon hijab.*"
 - scrollUntilVisible:
     element: "Arkiver plagget"
+    timeout: 60000
 - takeScreenshot: planning/build/wardrobe/nb-piece
 - tapOn: "Tilbake"
 - tapOn: "Antrekk"

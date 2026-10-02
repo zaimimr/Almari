@@ -382,7 +382,11 @@ export function PieceTile({
         <PiecePhoto piece={piece} />
         {selected ? (
           <View style={styles.selectedBadge}>
-            <AppText variant="caption" style={styles.selectedLabel}>
+            <AppText
+              variant="caption"
+              style={styles.selectedLabel}
+              maxFontSizeMultiplier={1.4}
+            >
               {selectedLabel}
             </AppText>
           </View>

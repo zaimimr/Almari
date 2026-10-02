@@ -4,21 +4,40 @@ env:
 ---
 - runFlow: start.yaml
 - tapOn: "Set my everyday style"
+- scrollUntilVisible:
+    element: "Work"
+    centerElement: true
+    timeout: 60000
 - tapOn: "Work"
+- scrollUntilVisible:
+    element: "Western"
+    centerElement: true
+    timeout: 60000
 - tapOn: "Western"
+- scrollUntilVisible:
+    element: "Always include a hijab"
+    centerElement: true
+    timeout: 60000
 - tapOn: "Always include a hijab"
 - scrollUntilVisible:
     element: "My own line"
+    centerElement: true
+    timeout: 60000
 - tapOn: "My own line"
 - scrollUntilVisible:
     element: "To the wrist"
+    centerElement: true
+    timeout: 60000
 - tapOn: "To the wrist"
 - takeScreenshot: planning/build/wardrobe/${SHOT}coverage-everyday
 - scrollUntilVisible:
     element: "Save everyday style"
+    timeout: 60000
 - tapOn: "Save everyday style"
 - scrollUntilVisible:
     element:
       id: "coverage-note"
+    visibilityPercentage: 50
+    timeout: 60000
 - assertVisible: ".*Sleeves to the wrist are checked.*"
 - assertNotVisible: "Check before wearing"

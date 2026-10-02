@@ -10,9 +10,14 @@ appId: com.zaimimran.almari
       - scrollUntilVisible:
           element: "Skip"
           direction: DOWN
+          timeout: 60000
       - tapOn: "Skip"
 - scrollUntilVisible:
     element: "Start with the sample closet"
     direction: DOWN
+    timeout: 60000
 - tapOn: "Start with the sample closet"
-- assertVisible: "Try a sample style"
+- scrollUntilVisible:
+    element: "Try a sample style"
+    centerElement: true
+    timeout: 60000

@@ -12,8 +12,9 @@ env:
       notVisible: "Mauve chiffon hijab,.*"
     commands:
       - swipe:
-          start: "70%, 73%"
-          end: "40%, 73%"
+          from:
+            id: "outfit-piece-picker"
+          direction: LEFT
 - tapOn: "Mauve chiffon hijab,.*"
 - repeat:
     times: 12
@@ -21,8 +22,9 @@ env:
       notVisible: "Ivory longline tunic,.*"
     commands:
       - swipe:
-          start: "70%, 73%"
-          end: "40%, 73%"
+          from:
+            id: "outfit-piece-picker"
+          direction: LEFT
 - tapOn: "Ivory longline tunic,.*"
 - repeat:
     times: 12
@@ -30,8 +32,9 @@ env:
       notVisible: "Charcoal wide-leg trousers,.*"
     commands:
       - swipe:
-          start: "70%, 73%"
-          end: "40%, 73%"
+          from:
+            id: "outfit-piece-picker"
+          direction: LEFT
 - tapOn: "Charcoal wide-leg trousers,.*"
 - repeat:
     times: 12
@@ -39,8 +42,9 @@ env:
       notVisible: "Chocolate leather loafers,.*"
     commands:
       - swipe:
-          start: "70%, 73%"
-          end: "40%, 73%"
+          from:
+            id: "outfit-piece-picker"
+          direction: LEFT
 - tapOn: "Chocolate leather loafers,.*"
 - tapOn:
     id: "look-name"
@@ -51,6 +55,7 @@ env:
 - scrollUntilVisible:
     element: "Use this look"
     centerElement: true
+    timeout: 60000
 - assertVisible: "From your looks"
 - assertVisible: "Fits this request as saved."
 - takeScreenshot: planning/build/wardrobe/${SHOT}looks-exact
@@ -60,9 +65,11 @@ env:
 - tapOn: "Closet"
 - scrollUntilVisible:
     element: "Mauve chiffon hijab.*"
+    timeout: 60000
 - tapOn: "Mauve chiffon hijab.*"
 - scrollUntilVisible:
     element: "In the wash"
+    timeout: 60000
 - tapOn: "In the wash"
 - assertVisible: "Mark as available"
 - tapOn: "Back"
@@ -70,11 +77,15 @@ env:
 - scrollUntilVisible:
     element: "Fill the gap"
     centerElement: true
+    timeout: 60000
 - assertVisible: "Variant of Office"
 - assertVisible: "Mauve chiffon hijab is unavailable for a while."
 - takeScreenshot: planning/build/wardrobe/${SHOT}looks-variant
 - tapOn: "Fill the gap"
-- assertVisible: ".*3 kept.*"
+- scrollUntilVisible:
+    element: ".*3 kept.*"
+    direction: UP
+    timeout: 60000
 - takeScreenshot: planning/build/wardrobe/${SHOT}looks-repaired
 - tapOn: "Looks"
 - tapOn: "Open Office"

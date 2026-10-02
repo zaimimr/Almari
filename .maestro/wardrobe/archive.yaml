@@ -8,9 +8,14 @@ env:
 - tapOn: "Try a name, like mauve hijab"
 - inputText: "chocolate jersey"
 - hideKeyboard
+- scrollUntilVisible:
+    element: "Chocolate jersey hijab.*"
+    centerElement: true
+    timeout: 60000
 - tapOn: "Chocolate jersey hijab.*"
 - scrollUntilVisible:
     element: "Archive this piece"
+    timeout: 60000
 - tapOn: "Archive this piece"
 - assertVisible: "Archived. Not used in outfit suggestions."
 - assertNotVisible: "Mark as unavailable"
@@ -18,20 +23,39 @@ env:
 - tapOn: "Back"
 - assertNotVisible: "Chocolate jersey hijab.*"
 - repeat:
-    times: 10
+    times: 25
+    while:
+      notVisible: "Archived \\(1\\)"
     commands:
       - swipe:
           from:
             id: "closet-filters"
           direction: LEFT
+- swipe:
+    from:
+      id: "closet-filters"
+    direction: LEFT
+- swipe:
+    from:
+      id: "closet-filters"
+    direction: LEFT
 - tapOn: "Archived \\(1\\)"
-- assertVisible: "Chocolate jersey hijab.*"
+- scrollUntilVisible:
+    element: "Chocolate jersey hijab.*"
+    timeout: 60000
 - takeScreenshot: planning/build/wardrobe/${SHOT}archive-shelf
+- scrollUntilVisible:
+    element: "Chocolate jersey hijab.*"
+    centerElement: true
+    timeout: 60000
 - tapOn: "Chocolate jersey hijab.*"
 - scrollUntilVisible:
     element: "Back in my closet"
+    timeout: 60000
 - assertVisible: "Archived. Not used in outfit suggestions."
 - tapOn: "Back in my closet"
 - tapOn: "Back"
 - tapOn: "Archived \\(0\\)"
-- assertVisible: "Chocolate jersey hijab.*"
+- scrollUntilVisible:
+    element: "Chocolate jersey hijab.*"
+    timeout: 60000

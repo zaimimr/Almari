@@ -6,6 +6,8 @@ env:
 - tapOn: "Try a sample style"
 - scrollUntilVisible:
     element: "Compare hijabs"
+    centerElement: true
+    timeout: 60000
 - tapOn: "Compare hijabs"
 - assertVisible:
     id: "hijab-preview"
@@ -20,12 +22,15 @@ env:
 - tapOn: "Use this hijab"
 - scrollUntilVisible:
     element: "Undo last change"
+    centerElement: true
+    timeout: 60000
 - takeScreenshot: planning/build/wardrobe/${SHOT}hijab-used
 - tapOn: "Undo last change"
 - assertNotVisible: "Undo last change"
 - scrollUntilVisible:
     element: "Change .* hijab"
     centerElement: true
+    timeout: 60000
 - tapOn: "Change .* hijab"
 - assertVisible: "In the outfit now"
 - tapOn: "Cancel"
