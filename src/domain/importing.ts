@@ -19,6 +19,7 @@ import {
   type Prepared,
   type Sources,
   type Style,
+  type Variant,
 } from "./closet";
 import { categoryForRegion, type CapturePlan } from "./capture";
 import { withCareLabel, type CareLabel } from "./careLabel";
@@ -149,6 +150,7 @@ export function correctImport(
     styles?: Style[];
     name?: string;
     keepOriginal?: boolean;
+    variant?: Variant;
     attribute?: { key: AttributeKey; value: AttributeValue };
   },
 ): Closet {
@@ -198,6 +200,7 @@ export function correctImport(
       attributeSources: described.sources,
       attributeCheck: undefined,
       keepOriginal: change.keepOriginal ?? job.keepOriginal,
+      variant: change.variant ?? job.variant,
       sources,
       question: undefined,
       checks: [],
@@ -318,11 +321,18 @@ function jobFiles(job: ImportJob): (string | null | undefined)[] {
     job.prepared?.original,
     job.prepared?.cutout,
     job.prepared?.thumbnail,
+    job.prepared?.enhanced,
   ];
 }
 
 function pieceFiles(piece: Piece): (string | null | undefined)[] {
-  return [piece.photo, piece.original, piece.label?.photo];
+  return [
+    piece.photo,
+    piece.original,
+    piece.label?.photo,
+    piece.variants?.enhanced,
+    piece.variants?.plain,
+  ];
 }
 
 export function orphanedFiles(before: Closet, after: Closet): string[] {
@@ -339,6 +349,9 @@ export function pieceFromImport(job: ImportJob): Piece | null {
   if (job.state !== "ready" || !job.prepared || !job.kind || !job.name)
     return null;
   const useCutout = Boolean(job.prepared.cutout) && !job.keepOriginal;
+  const enhanced = useCutout ? (job.prepared.enhanced ?? null) : null;
+  const cutoutPhoto =
+    enhanced && job.variant !== "plain" ? enhanced : job.prepared.cutout!;
   const styles = job.styles ?? fixedStyles(job.kind);
   const sources: Sources =
     job.sources ??
@@ -350,7 +363,10 @@ export function pieceFromImport(job: ImportJob): Piece | null {
     kind: job.kind,
     ...(styles ? { styles } : {}),
     sources,
-    photo: useCutout ? job.prepared.cutout! : job.prepared.original,
+    photo: useCutout ? cutoutPhoto : job.prepared.original,
+    ...(enhanced
+      ? { variants: { enhanced, plain: job.prepared.cutout! } }
+      : {}),
     original: job.prepared.original,
     ...(useCutout && job.prepared.frame ? { frame: job.prepared.frame } : {}),
     createdAt: job.createdAt,

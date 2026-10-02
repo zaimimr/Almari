@@ -34,6 +34,20 @@ export type Traits = {
 
 export type Frame = { x: number; y: number; width: number; height: number };
 
+export type QualityEdge = "top" | "bottom" | "left" | "right";
+
+export type Quality = {
+  sharpness: number;
+  brightness: number;
+  clipped: QualityEdge[];
+  coverage: number | null;
+  lightSpread: number | null;
+};
+
+export type Variant = "enhanced" | "plain";
+
+export type Variants = { enhanced?: string; plain?: string };
+
 export const garmentRegionKinds = [
   "head",
   "upper",
@@ -88,6 +102,8 @@ export type Piece = {
   away?: AwayReason;
   label?: CareLabel;
   captureId?: string;
+  variants?: Variants;
+  setId?: string;
 };
 
 export type Prepared = {
@@ -99,6 +115,8 @@ export type Prepared = {
   labels: LabelScore[];
   palette: Swatch[];
   embedding: string | null;
+  enhanced?: string | null;
+  quality?: Quality | null;
 };
 
 export type ImportJob = {
@@ -119,6 +137,7 @@ export type ImportJob = {
   attributeCheck?: AttributeKey;
   checks?: ("uncertain" | "no-cutout" | "several" | "attribute" | "partial")[];
   keepOriginal?: boolean;
+  variant?: Variant;
   captureId?: string;
   region?: GarmentRegion;
   crop?: Frame;
@@ -342,7 +361,9 @@ function isPiece(value: unknown): value is Piece {
     ) &&
     (value.status === "away") === (value.away !== undefined) &&
     optional(value.label, isCareLabel) &&
-    optional(value.captureId, isString)
+    optional(value.captureId, isString) &&
+    optional(value.variants, isVariants) &&
+    optional(value.setId, isString)
   );
 }
 
@@ -364,6 +385,40 @@ function isLabelScore(value: unknown): value is LabelScore {
   );
 }
 
+const qualityEdges = ["top", "bottom", "left", "right"];
+
+const isNullableNumber = (value: unknown): value is number | null =>
+  value === null || typeof value === "number";
+
+const isNullableString = (value: unknown): value is string | null =>
+  value === null || isString(value);
+
+function isQuality(value: unknown): value is Quality {
+  return (
+    isRecord(value) &&
+    typeof value.sharpness === "number" &&
+    typeof value.brightness === "number" &&
+    Array.isArray(value.clipped) &&
+    value.clipped.every((edge) => qualityEdges.includes(edge as string)) &&
+    optional(value.coverage, isNullableNumber) &&
+    optional(value.lightSpread, isNullableNumber)
+  );
+}
+
+const isNullableQuality = (value: unknown): value is Quality | null =>
+  value === null || isQuality(value);
+
+function isVariants(value: unknown): value is Variants {
+  return (
+    isRecord(value) &&
+    optional(value.enhanced, isString) &&
+    optional(value.plain, isString)
+  );
+}
+
+const isVariant = (value: unknown): value is Variant =>
+  value === "enhanced" || value === "plain";
+
 function isPrepared(value: unknown): value is Prepared {
   return (
     isRecord(value) &&
@@ -377,7 +432,9 @@ function isPrepared(value: unknown): value is Prepared {
     (value.palette === undefined
       ? value.color === null || isRgb(value.color)
       : isSwatches(value.palette) &&
-        (value.embedding === null || isEmbedding(value.embedding)))
+        (value.embedding === null || isEmbedding(value.embedding))) &&
+    optional(value.enhanced, isNullableString) &&
+    optional(value.quality, isNullableQuality)
   );
 }
 
@@ -438,6 +495,7 @@ function isImportJob(value: unknown): value is ImportJob {
         list.every((item) => checkReasons.includes(item as string)),
     ) &&
     optional(value.keepOriginal, isBoolean) &&
+    optional(value.variant, isVariant) &&
     optional(value.captureId, isString) &&
     optional(value.region, isGarmentRegion) &&
     optional(value.crop, isFrame) &&
@@ -704,6 +762,19 @@ export function savePiece(closet: Closet, piece: Piece): Closet {
       ? closet.pieces.map((item) => (item.id === piece.id ? clean : item))
       : [clean, ...closet.pieces],
   };
+}
+
+export function pieceVariant(piece: Piece): Variant | null {
+  const { enhanced, plain } = piece.variants ?? {};
+  if (!enhanced || !plain) return null;
+  if (piece.photo === enhanced) return "enhanced";
+  if (piece.photo === plain) return "plain";
+  return null;
+}
+
+export function withVariant(piece: Piece, variant: Variant): Piece {
+  const photo = piece.variants?.[variant];
+  return photo && photo !== piece.photo ? { ...piece, photo } : piece;
 }
 
 export function saveLook(closet: Closet, look: Look): Closet {

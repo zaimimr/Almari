@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   decodeCloset,
   emptyCloset,
+  pieceVariant,
   piecesForLook,
   removePiece,
   saveLook,
@@ -10,6 +11,7 @@ import {
   setPieceLabel,
   type Piece,
   type Prepared,
+  withVariant,
 } from "./closet";
 import type { CareLabel } from "./careLabel";
 import { closetV2, ids } from "./closet-v2.fixture";
@@ -606,4 +608,29 @@ test("C19 a malformed care label is refused instead of stored", () => {
     materials: [{ fibre: "cotton", percent: 140 }],
   };
   assert.throws(() => decodeCloset(JSON.stringify(stored)));
+});
+
+test("enhanced and plain variants switch the closet photo and keep both files", () => {
+  const piece: Piece = {
+    ...hijab,
+    photo: "hijab-enhanced.png",
+    variants: { enhanced: "hijab-enhanced.png", plain: "hijab.png" },
+  };
+  assert.equal(pieceVariant(piece), "enhanced");
+  const plain = withVariant(piece, "plain");
+  assert.equal(plain.photo, "hijab.png");
+  assert.equal(pieceVariant(plain), "plain");
+  assert.deepEqual(plain.variants, piece.variants);
+  assert.equal(withVariant(plain, "plain"), plain);
+  assert.equal(pieceVariant(hijab), null);
+  assert.equal(withVariant(hijab, "enhanced"), hijab);
+  const saved = savePiece(emptyCloset, plain);
+  assert.deepEqual(decodeCloset(JSON.stringify(saved)).pieces[0], plain);
+});
+
+test("a piece with an empty variant or set id is rejected", () => {
+  assert.throws(() =>
+    savePiece(emptyCloset, { ...hijab, variants: { enhanced: "" } }),
+  );
+  assert.throws(() => savePiece(emptyCloset, { ...hijab, setId: "" }));
 });

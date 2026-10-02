@@ -697,3 +697,61 @@ test("a stored job with an unknown region kind is rejected", () => {
   stored.imports[0].region.kind = "gloves";
   assert.throws(() => decodeCloset(JSON.stringify(stored)));
 });
+
+test("the enhanced image is the default and the plain cutout is kept", () => {
+  let closet = finishImport(
+    startImport(queued(), "job"),
+    "job",
+    prepared({ enhanced: "job-enhanced.png" }),
+  );
+  const enhanced = acceptImports(closet).pieces[0]!;
+  assert.equal(enhanced.photo, "job-enhanced.png");
+  assert.deepEqual(enhanced.variants, {
+    enhanced: "job-enhanced.png",
+    plain: "job.png",
+  });
+  closet = correctImport(closet, "job", { variant: "plain" });
+  const plain = acceptImports(closet).pieces[0]!;
+  assert.equal(plain.photo, "job.png");
+  assert.deepEqual(plain.variants, enhanced.variants);
+  const original = acceptImports(
+    correctImport(closet, "job", { keepOriginal: true }),
+  ).pieces[0]!;
+  assert.equal(original.photo, "job-original.jpg");
+  assert.equal(original.variants, undefined);
+  const without = acceptImports(
+    finishImport(startImport(queued(), "job"), "job", prepared()),
+  ).pieces[0]!;
+  assert.equal(without.photo, "job.png");
+  assert.equal(without.variants, undefined);
+  assert.deepEqual(orphanedFiles(closet, acceptImports(closet)), [
+    "job-thumb.png",
+  ]);
+  assert.deepEqual(orphanedFiles(closet, removeImport(closet, "job")).sort(), [
+    "job-enhanced.png",
+    "job-original.jpg",
+    "job-thumb.png",
+    "job.png",
+  ]);
+});
+
+test("import jobs saved before enhancement still open", () => {
+  const closet = finishImport(startImport(queued(), "job"), "job", prepared());
+  const stored = JSON.parse(JSON.stringify(closet));
+  assert.equal(
+    decodeCloset(JSON.stringify(stored)).imports[0]!.prepared!.enhanced,
+    undefined,
+  );
+  stored.imports[0].prepared.enhanced = null;
+  stored.imports[0].prepared.quality = {
+    sharpness: 120,
+    brightness: 0.5,
+    clipped: ["top"],
+  };
+  assert.deepEqual(
+    decodeCloset(JSON.stringify(stored)).imports[0]!.prepared!.quality,
+    { sharpness: 120, brightness: 0.5, clipped: ["top"] },
+  );
+  stored.imports[0].prepared.quality = { sharpness: "sharp" };
+  assert.throws(() => decodeCloset(JSON.stringify(stored)));
+});
