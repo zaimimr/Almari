@@ -59,42 +59,42 @@ function form(fields: Record<string, string | File>) {
 describe("studioPrompt", () => {
   it("names the garment type and keeps it", () => {
     const prompt = studioPrompt({ category: "bottom", kind: "wide-leg" });
-    expect(prompt).toContain("Garment type: wide leg (bottoms)");
+    expect(prompt).toContain("Item category: wide leg (bottoms)");
     expect(prompt).toContain("It must stay wide leg.");
     expect(prompt).toContain("Never turn it into another kind of clothing.");
-    expect(prompt).toContain("length, cut");
+    expect(prompt).toContain("length, width, cut");
     expect(prompt).toContain("flat lay");
   });
 
   it("falls back to the category and picks a layout for it", () => {
-    expect(studioPrompt({ category: "dress" })).toContain("ghost mannequin");
+    expect(studioPrompt({ category: "layer" })).toContain("closure state");
     expect(studioPrompt({ category: "shoes" })).toContain(
       "It must stay shoes.",
     );
-    expect(studioPrompt({ category: "hijab" })).toContain("both ends");
+    expect(studioPrompt({ category: "hijab" })).toContain("loose loop");
   });
 
   it("asks for a clean studio shot with nothing added", () => {
     const prompt = studioPrompt({ category: "top", kind: "t-shirt" });
     for (const part of [
       "white background",
-      "No person",
-      "no hands",
-      "no hanger",
-      "text, logos",
-      "pressed",
+      "people",
+      "hands",
+      "hanger",
+      "added text, added logos",
+      "accidental wrinkles",
     ])
       expect(prompt).toContain(part);
   });
 
-  it("adds the name and colour only when given", () => {
-    expect(studioPrompt({ category: "bottom" })).not.toContain("owner calls");
+  it("leaves the name out and adds the colour only when given", () => {
+    expect(studioPrompt({ category: "bottom" })).not.toContain("main colour");
     const prompt = studioPrompt({
       category: "bottom",
       name: "Denim shorts",
       colour: "light blue",
     });
-    expect(prompt).toContain('The owner calls it "Denim shorts".');
+    expect(prompt).not.toContain("Denim shorts");
     expect(prompt).toContain("Its main colour is light blue.");
   });
 });
