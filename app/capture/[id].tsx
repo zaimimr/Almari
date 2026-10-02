@@ -24,6 +24,7 @@ import {
   removeImport,
   setImportStudio,
 } from "../../src/domain/importing";
+import { mainColourName } from "../../src/domain/color";
 import { attributeLabelKey, attributeValueKey } from "../../src/domain/facts";
 import { adviceFor } from "../../src/domain/quality";
 import { rankCategories, rankKinds } from "../../src/domain/recognition";
@@ -247,6 +248,7 @@ export default function CheckPiece() {
       category,
       kind,
       name,
+      colour: mainColourName(job!.prepared?.palette),
     });
     if (!file) return;
     let applied = false;

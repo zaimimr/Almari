@@ -26,6 +26,7 @@ import {
   fitAttributes,
   withDetails,
 } from "../domain/attributes";
+import { mainColourName } from "../domain/color";
 import { filesInUse } from "../domain/importing";
 import { confirmEdits } from "../domain/recognition";
 import { unlinkPiece } from "../domain/sets";
@@ -100,6 +101,7 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
       category: category ?? piece.category,
       kind,
       name,
+      colour: mainColourName(piece.colors),
     });
     if (!file) return;
     await update((current) => {

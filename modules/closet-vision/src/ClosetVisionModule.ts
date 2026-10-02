@@ -20,6 +20,7 @@ declare class ClosetVisionModule extends NativeModule {
   ): Promise<PreparedGarment>;
   parseGarments(sourceUri: string, id: string): Promise<GarmentParse>;
   studioInput(sourceUri: string, id: string): Promise<string>;
+  whitenBackground(sourceUri: string, id: string): Promise<string>;
   readLabel(sourceUri: string, id: string): Promise<ReadLabelResult>;
   labelModelAvailable(): Promise<boolean>;
   extractLabel(text: string): Promise<LabelExtraction>;
@@ -46,6 +47,8 @@ export default native ?? {
     Promise.reject(new Error("unavailable")),
   studioInput: (_sourceUri: string, _id: string): Promise<string> =>
     Promise.reject(new Error("unavailable")),
+  whitenBackground: async (sourceUri: string, _id: string): Promise<string> =>
+    sourceUri,
   readLabel: (_sourceUri: string, _id: string): Promise<ReadLabelResult> =>
     Promise.reject(new Error("unavailable")),
   labelModelAvailable: (): Promise<boolean> => Promise.resolve(false),

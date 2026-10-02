@@ -122,6 +122,14 @@ export function colorName(rgb: Rgb) {
   return best.name;
 }
 
+export function mainColourName(swatches: Swatch[] | undefined) {
+  const main = (swatches ?? []).reduce<Swatch | null>(
+    (best, swatch) => (!best || swatch.share > best.share ? swatch : best),
+    null,
+  );
+  return main ? colorName(main.rgb).toLowerCase() : null;
+}
+
 export function deltaE([l1, a1, b1]: Lab, [l2, a2, b2]: Lab) {
   const c1 = Math.hypot(a1, b1);
   const c2 = Math.hypot(a2, b2);

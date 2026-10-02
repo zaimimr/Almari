@@ -14,6 +14,7 @@ export type StudioPiece = {
   category: Category;
   kind?: GarmentKind;
   name?: string;
+  colour?: string | null;
 };
 
 type StudioProblem = "offline" | "limit" | "failed";
@@ -43,6 +44,7 @@ export async function renderStudio(
   body.append("category", piece.category);
   if (piece.kind) body.append("kind", piece.kind);
   if (piece.name?.trim()) body.append("name", piece.name.trim());
+  if (piece.colour) body.append("colour", piece.colour);
   let response: Response;
   try {
     response = await fetch(studioUrl!, {
@@ -61,10 +63,18 @@ export async function renderStudio(
   if (response.status === 429) throw new Error("limit");
   if (!response.ok) throw new Error("failed");
   const type = response.headers.get("content-type") ?? "";
-  return keepPhotoBytes(
-    new Uint8Array(await response.arrayBuffer()),
-    `${id}-studio${type.includes("png") ? ".png" : ".jpg"}`,
-  );
+  const extension = type.includes("png") ? ".png" : ".jpg";
+  const bytes = new Uint8Array(await response.arrayBuffer());
+  if (!ClosetVision.isAvailable())
+    return keepPhotoBytes(bytes, `${id}-studio${extension}`);
+  const raw = await keepPhotoBytes(bytes, `${id}-studio-raw${extension}`);
+  try {
+    const white = await ClosetVision.whitenBackground(photoUri(raw), id);
+    void discardPhoto(raw).catch(() => undefined);
+    return white;
+  } catch {
+    return raw;
+  }
 }
 
 export function studioFailure(error: unknown): StudioProblem {

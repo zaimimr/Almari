@@ -21,6 +21,8 @@ export default {
     Promise.reject(new Error("unavailable")),
   studioInput: (_sourceUri: string, _id: string): Promise<string> =>
     Promise.reject(new Error("unavailable")),
+  whitenBackground: async (sourceUri: string, _id: string): Promise<string> =>
+    sourceUri,
   readLabel: (_sourceUri: string, _id: string): Promise<ReadLabelResult> =>
     Promise.reject(new Error("unavailable")),
   labelModelAvailable: (): Promise<boolean> => Promise.resolve(false),

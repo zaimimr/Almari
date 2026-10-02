@@ -206,6 +206,16 @@ final class GarmentPipeline {
     }
   }
 
+  func whitenBackground(sourceUri: String, id: String) throws -> String {
+    let source = sourceUri.hasPrefix("file://") ? URL(string: sourceUri)! : URL(fileURLWithPath: sourceUri)
+    try FileManager.default.createDirectory(at: photos, withIntermediateDirectories: true)
+    let name = "\(id)-studio.jpg"
+    guard StudioBackground.whiten(source: source, target: photos.appendingPathComponent(name)) else {
+      throw PrepareError.unreadable
+    }
+    return name
+  }
+
   func parseSelfie(_ image: CIImage) -> ClothesParse? {
     queue.sync { try? loadParser().parse(image) }
   }
@@ -505,6 +515,10 @@ public class ClosetVisionModule: Module {
 
     AsyncFunction("studioInput") { (sourceUri: String, id: String) throws -> String in
       try GarmentPipeline.shared.studioInput(sourceUri: sourceUri, id: id)
+    }
+
+    AsyncFunction("whitenBackground") { (sourceUri: String, id: String) throws -> String in
+      try GarmentPipeline.shared.whitenBackground(sourceUri: sourceUri, id: id)
     }
 
     View(SelfieCameraView.self) {

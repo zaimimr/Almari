@@ -7,6 +7,7 @@ import {
   deltaE,
   echoes,
   isSwatches,
+  mainColourName,
   pairRelation,
   relationFrom,
   toLab,
@@ -214,4 +215,28 @@ test("stored palettes hold up to three valid swatches", () => {
   assert.equal(isSwatches([{ rgb: [1, 2], share: 0.5 }]), false);
   assert.equal(isSwatches([{ rgb: [1, 2, 3], share: 0 }]), false);
   assert.equal(isSwatches(null), false);
+});
+
+test("mainColourName names the largest swatch in plain English", () => {
+  assert.equal(
+    mainColourName([
+      { rgb: [200, 200, 200], share: 0.2 },
+      { rgb: [20, 20, 22], share: 0.8 },
+    ]),
+    "black",
+  );
+  assert.equal(mainColourName([{ rgb: [36, 46, 78], share: 1 }]), "navy");
+  assert.equal(
+    mainColourName([{ rgb: [192, 192, 194], share: 1 }]),
+    "light grey",
+  );
+  assert.equal(
+    mainColourName([{ rgb: [140, 182, 222], share: 1 }]),
+    "sky blue",
+  );
+});
+
+test("mainColourName is null without swatches", () => {
+  assert.equal(mainColourName([]), null);
+  assert.equal(mainColourName(undefined), null);
 });
