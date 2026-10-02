@@ -402,6 +402,7 @@ export const nb: Record<Key, string> = {
   "cutout.medium": "Middels",
   "cutout.large": "Stor",
   "cutout.undo": "Angre",
+  "cutout.hold": "Hold på et plagg for å velge det",
   "cutout.reset": "Tilbakestill",
   "cutout.failed": "Bildet kunne ikke åpnes for redigering.",
   "cutout.saveFailed": "Utklippet kunne ikke lagres. Prøv igjen.",

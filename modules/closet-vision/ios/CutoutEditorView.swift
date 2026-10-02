@@ -38,6 +38,7 @@ final class CutoutCanvas: UIView {
 final class CutoutEditorView: ExpoView, UIScrollViewDelegate {
   let onReady = EventDispatcher()
   let onEdit = EventDispatcher()
+  let onSelect = EventDispatcher()
 
   var original: String?
   var cutout: String?
@@ -50,6 +51,9 @@ final class CutoutEditorView: ExpoView, UIScrollViewDelegate {
   private let faded = UIImageView()
   private let kept = UIImageView()
   private let cover = CALayer()
+  private let spinner = UIActivityIndicatorView(style: .medium)
+  private var selector: CutoutSelector?
+  private var selecting = false
   private let queue = DispatchQueue(label: "almari.cutout.editor")
   private var requested: String?
   private var photo: CIImage?
@@ -86,6 +90,12 @@ final class CutoutEditorView: ExpoView, UIScrollViewDelegate {
     canvas.moved = { [weak self] points in self?.move(through: points) }
     canvas.ended = { [weak self] in self?.finish() }
     canvas.cancelled = { [weak self] in self?.cancel() }
+    let press = UILongPressGestureRecognizer(target: self, action: #selector(pressed(_:)))
+    press.minimumPressDuration = 0.4
+    canvas.addGestureRecognizer(press)
+    spinner.color = .white
+    spinner.hidesWhenStopped = true
+    addSubview(spinner)
   }
 
   override func layoutSubviews() {
@@ -222,6 +232,7 @@ final class CutoutEditorView: ExpoView, UIScrollViewDelegate {
     pixels = (width, height)
     initial = prepared.alpha
     history = []
+    selector = CutoutSelector(photo: prepared.photo, picture: prepared.picture)
     let image = UIImage(cgImage: prepared.picture)
     faded.image = image
     kept.image = image
@@ -318,8 +329,87 @@ final class CutoutEditorView: ExpoView, UIScrollViewDelegate {
     return width
   }
 
+  @objc private func pressed(_ gesture: UILongPressGestureRecognizer) {
+    guard gesture.state == .began, !saving, !selecting, let selector, canvas.bounds.width > 0 else { return }
+    let location = gesture.location(in: canvas)
+    let spot = CGPoint(x: location.x / canvas.bounds.width, y: location.y / canvas.bounds.height)
+    let width = pixels.width
+    let height = pixels.height
+    selecting = true
+    spinner.center = gesture.location(in: self)
+    spinner.startAnimating()
+    queue.async { [weak self] in
+      let alpha = selector.select(at: spot)
+      let outline = alpha.flatMap { Self.outline($0, width: width, height: height) }
+      DispatchQueue.main.async {
+        guard let self else { return }
+        self.selecting = false
+        self.spinner.stopAnimating()
+        guard let alpha, !self.saving, self.selector === selector else { return }
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        self.remember()
+        self.apply(alpha)
+        self.edited()
+        self.onSelect()
+        if let outline { self.glow(outline) }
+      }
+    }
+  }
+
+  private static func outline(_ alpha: [UInt8], width: Int, height: Int) -> CGImage? {
+    guard let mask = grayImage(alpha, width: width, height: height) else { return nil }
+    let radius = max(2, Double(max(width, height)) / 400)
+    let zero = CIVector(x: 0, y: 0, z: 0, w: 0)
+    let edge = CIImage(cgImage: mask)
+      .applyingFilter("CIMorphologyGradient", parameters: [kCIInputRadiusKey: radius])
+      .applyingFilter(
+        "CIColorMatrix",
+        parameters: [
+          "inputRVector": zero, "inputGVector": zero, "inputBVector": zero,
+          "inputAVector": CIVector(x: 1, y: 0, z: 0, w: 0), "inputBiasVector": CIVector(x: 1, y: 1, z: 1, w: 0),
+        ]
+      )
+      .cropped(to: CGRect(x: 0, y: 0, width: width, height: height))
+    return GarmentPipeline.shared.render(edge)
+  }
+
+  private func glow(_ outline: CGImage) {
+    let line = CALayer()
+    line.frame = canvas.bounds
+    line.contents = outline
+    line.shadowColor = UIColor.white.cgColor
+    line.shadowOffset = .zero
+    line.shadowRadius = 6
+    line.shadowOpacity = 1
+    let sweep = CAGradientLayer()
+    sweep.frame = line.bounds.insetBy(dx: -12, dy: -12)
+    sweep.startPoint = CGPoint(x: 0, y: 0)
+    sweep.endPoint = CGPoint(x: 1, y: 1)
+    sweep.colors = [UIColor(white: 1, alpha: 0.35), .white, UIColor(white: 1, alpha: 0.35)].map(\.cgColor)
+    sweep.locations = [1, 1.15, 1.3]
+    line.mask = sweep
+    canvas.layer.addSublayer(line)
+    let move = CABasicAnimation(keyPath: "locations")
+    move.fromValue = [-0.3, -0.15, 0]
+    move.toValue = [1, 1.15, 1.3]
+    move.duration = 0.7
+    move.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+    sweep.add(move, forKey: "sweep")
+    let fade = CABasicAnimation(keyPath: "opacity")
+    fade.fromValue = 1
+    fade.toValue = 0
+    fade.beginTime = CACurrentMediaTime() + 0.5
+    fade.duration = 0.5
+    fade.fillMode = .forwards
+    fade.isRemovedOnCompletion = false
+    CATransaction.begin()
+    CATransaction.setCompletionBlock { line.removeFromSuperlayer() }
+    line.add(fade, forKey: "fade")
+    CATransaction.commit()
+  }
+
   private func begin(at location: CGPoint) {
-    guard !saving, let stencil, canvas.bounds.width > 0 else { return }
+    guard !saving, !selecting, let stencil, canvas.bounds.width > 0 else { return }
     remember()
     let width = prepareStroke()
     let spot = point(location)

@@ -51,19 +51,58 @@ enum GarmentRegions {
 
   static let colourGap = 18.0
   static let colourKept = 0.85
+  static let seedRadius = 6
 
   static func held(_ grid: LabelGrid, chroma: [SIMD2<Double>]? = nil) -> FoundRegion? {
-    guard var found = largest(grid, kind: "held", wanted: clothing) else { return nil }
-    if let chroma, chroma.count == grid.labels.count, let even = consistent(found, grid: grid, chroma: chroma) {
-      found = even
-    }
-    let region = solid(found, width: grid.width, height: grid.height, gap: heldGap)
+    guard let found = largest(grid, kind: "held", wanted: clothing) else { return nil }
+    let region = settled(found, grid: grid, chroma: chroma)
     return region.share >= minRegionShare ? region : nil
   }
 
-  static func consistent(_ region: FoundRegion, grid: LabelGrid, chroma: [SIMD2<Double>]) -> FoundRegion? {
-    let a = region.pixels.map { chroma[$0].x }.sorted()
-    let b = region.pixels.map { chroma[$0].y }.sorted()
+  static func picked(_ grid: LabelGrid, at index: Int, chroma: [SIMD2<Double>]? = nil) -> FoundRegion? {
+    let width = grid.width
+    let least = Double(grid.labels.count) * minComponentShare
+    let parts = components(grid, wanted: clothing).filter { Double($0.count) >= least }
+    let x = index % width
+    let y = index / width
+    func distance(_ part: [Int]) -> Int {
+      part.reduce(Int.max) { best, pixel in
+        let dx = pixel % width - x
+        let dy = pixel / width - y
+        return min(best, dx * dx + dy * dy)
+      }
+    }
+    guard let part = parts.first(where: { $0.contains(index) }) ?? parts.min(by: { distance($0) < distance($1) })
+    else { return nil }
+    let found = bounded(kind: "held", pixels: part, width: width, total: grid.labels.count)
+    let region = settled(found, grid: grid, chroma: chroma, seed: index)
+    return region.share >= minRegionShare ? region : nil
+  }
+
+  private static func settled(
+    _ found: FoundRegion, grid: LabelGrid, chroma: [SIMD2<Double>]?, seed: Int? = nil
+  ) -> FoundRegion {
+    var found = found
+    if let chroma, chroma.count == grid.labels.count,
+      let even = consistent(found, grid: grid, chroma: chroma, seed: seed)
+    {
+      found = even
+    }
+    return solid(found, width: grid.width, height: grid.height, gap: heldGap)
+  }
+
+  static func consistent(
+    _ region: FoundRegion, grid: LabelGrid, chroma: [SIMD2<Double>], seed: Int? = nil
+  ) -> FoundRegion? {
+    let width = grid.width
+    let near = seed.map { seed in
+      region.pixels.filter {
+        abs($0 % width - seed % width) <= seedRadius && abs($0 / width - seed / width) <= seedRadius
+      }
+    }
+    let sample = near?.isEmpty == false ? near! : region.pixels
+    let a = sample.map { chroma[$0].x }.sorted()
+    let b = sample.map { chroma[$0].y }.sorted()
     guard !a.isEmpty else { return nil }
     let reference = SIMD2(a[a.count / 2], b[b.count / 2])
     var labels = [UInt8](repeating: 0, count: grid.labels.count)
@@ -71,9 +110,13 @@ enum GarmentRegions {
       let gap = chroma[index] - reference
       if (gap * gap).sum() < colourGap * colourGap { labels[index] = 1 }
     }
-    guard
-      let kept = largest(
-        LabelGrid(width: grid.width, height: grid.height, labels: labels), kind: region.kind, wanted: [1]),
+    let even = LabelGrid(width: width, height: grid.height, labels: labels)
+    if let seed, near?.isEmpty == false, labels[seed] == 1,
+      let part = components(even, wanted: [1]).first(where: { $0.contains(seed) })
+    {
+      return bounded(kind: region.kind, pixels: part, width: width, total: labels.count)
+    }
+    guard let kept = largest(even, kind: region.kind, wanted: [1]),
       Double(kept.pixels.count) >= Double(region.pixels.count) * colourKept
     else { return nil }
     return kept
@@ -82,36 +125,40 @@ enum GarmentRegions {
   static func largest(_ grid: LabelGrid, kind: String, wanted: Set<UInt8>) -> FoundRegion? {
     let width = grid.width
     let height = grid.height
+    let parts = components(grid, wanted: wanted).map { pixels -> (pixels: [Int], distance: Double) in
+      let count = Double(pixels.count)
+      let dx = (Double(pixels.reduce(0) { $0 + $1 % width }) / count + 0.5) / Double(width) - 0.5
+      let dy = (Double(pixels.reduce(0) { $0 + $1 / width }) / count + 0.5) / Double(height) - 0.5
+      return (pixels, (dx * dx + dy * dy).squareRoot())
+    }
+    guard let size = parts.map(\.pixels.count).max(),
+      let best = parts.filter({ Double($0.pixels.count) >= Double(size) * similarSize })
+        .min(by: { $0.distance < $1.distance })?.pixels
+    else { return nil }
+    return bounded(kind: kind, pixels: best, width: width, total: grid.labels.count)
+  }
+
+  private static func components(_ grid: LabelGrid, wanted: Set<UInt8>) -> [[Int]] {
+    let width = grid.width
     let total = grid.labels.count
     var seen = [Bool](repeating: false, count: total)
-    var parts: [(pixels: [Int], distance: Double)] = []
+    var parts: [[Int]] = []
     for start in 0..<total where !seen[start] && wanted.contains(grid.labels[start]) {
       var stack = [start]
       var pixels: [Int] = []
-      var sumX = 0
-      var sumY = 0
       seen[start] = true
       while let index = stack.popLast() {
         pixels.append(index)
         let x = index % width
-        sumX += x
-        sumY += index / width
         for next in [x > 0 ? index - 1 : -1, x < width - 1 ? index + 1 : -1, index - width, index + width]
         where next >= 0 && next < total && !seen[next] && wanted.contains(grid.labels[next]) {
           seen[next] = true
           stack.append(next)
         }
       }
-      let count = Double(pixels.count)
-      let dx = (Double(sumX) / count + 0.5) / Double(width) - 0.5
-      let dy = (Double(sumY) / count + 0.5) / Double(height) - 0.5
-      parts.append((pixels, (dx * dx + dy * dy).squareRoot()))
+      parts.append(pixels)
     }
-    guard let size = parts.map(\.pixels.count).max(),
-      let best = parts.filter({ Double($0.pixels.count) >= Double(size) * similarSize })
-        .min(by: { $0.distance < $1.distance })?.pixels
-    else { return nil }
-    return bounded(kind: kind, pixels: best, width: width, total: total)
+    return parts
   }
 
   static func solid(_ region: FoundRegion, width: Int, height: Int, gap: Int) -> FoundRegion {

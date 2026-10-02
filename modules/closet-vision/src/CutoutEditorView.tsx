@@ -12,6 +12,7 @@ export type CutoutEditorProps = {
   brushSize: number;
   onReady: (event: { nativeEvent: { state: "ready" | "failed" } }) => void;
   onEdit: (event: { nativeEvent: { canUndo: boolean } }) => void;
+  onSelect?: () => void;
   ref?: Ref<CutoutEditorHandle>;
 };
 

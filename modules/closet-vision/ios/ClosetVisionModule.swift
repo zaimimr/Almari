@@ -316,6 +316,27 @@ final class GarmentPipeline {
       ], side: side, offset: CGPoint(x: offsetX, y: offsetY))
   }
 
+  static func foregroundRequest() -> VNGenerateForegroundInstanceMaskRequest {
+    let request = VNGenerateForegroundInstanceMaskRequest()
+    #if targetEnvironment(simulator)
+      if let devices = try? request.supportedComputeStageDevices {
+        for (stage, options) in devices {
+          if let cpu = options.first(where: { $0.description.localizedCaseInsensitiveContains("cpu") }) {
+            request.setComputeDevice(cpu, for: stage)
+          }
+        }
+      }
+    #endif
+    return request
+  }
+
+  func parseHeld(_ image: CIImage) -> (parse: ClothesParse, chroma: [SIMD2<Double>])? {
+    queue.sync {
+      guard let parse = try? loadParser().parse(image) else { return nil }
+      return (parse, chroma(image, parse: parse))
+    }
+  }
+
   func parseSelfie(_ image: CIImage) -> ClothesParse? {
     queue.sync { try? loadParser().parse(image) }
   }
@@ -452,16 +473,7 @@ final class GarmentPipeline {
       found = true
     } else {
       guard let working = context.createCGImage(image, from: image.extent) else { throw PrepareError.unreadable }
-      let request = VNGenerateForegroundInstanceMaskRequest()
-      #if targetEnvironment(simulator)
-        if let devices = try? request.supportedComputeStageDevices {
-          for (stage, options) in devices {
-            if let cpu = options.first(where: { $0.description.localizedCaseInsensitiveContains("cpu") }) {
-              request.setComputeDevice(cpu, for: stage)
-            }
-          }
-        }
-      #endif
+      let request = Self.foregroundRequest()
       let handler = VNImageRequestHandler(cgImage: working)
       if (try? handler.perform([request])) != nil, let observation = request.results?.first,
         !observation.allInstances.isEmpty,
@@ -672,7 +684,7 @@ public class ClosetVisionModule: Module {
     }
 
     View(CutoutEditorView.self) {
-      Events("onReady", "onEdit")
+      Events("onReady", "onEdit", "onSelect")
 
       Prop("original") { (view: CutoutEditorView, original: String?) in
         view.original = original

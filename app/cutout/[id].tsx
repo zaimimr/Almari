@@ -53,6 +53,7 @@ export default function AdjustCutout() {
   const [mode, setMode] = useState<CutoutMode>("restore");
   const [brush, setBrush] = useState<BrushSize>("medium");
   const [canUndo, setCanUndo] = useState(false);
+  const [held, setHeld] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const allowClose = useDiscardChanges(canUndo, busy);
@@ -128,6 +129,7 @@ export default function AdjustCutout() {
           brushSize={brushSizes[brush]}
           onReady={(event) => setState(event.nativeEvent.state)}
           onEdit={(event) => setCanUndo(event.nativeEvent.canUndo)}
+          onSelect={() => setHeld(true)}
         />
         {state === "loading" || busy ? (
           <View style={styles.loading} pointerEvents="none">
@@ -164,6 +166,14 @@ export default function AdjustCutout() {
             />
           ))}
         </View>
+        <AppText
+          variant="caption"
+          muted
+          style={held ? styles.hidden : undefined}
+          accessibilityElementsHidden={held}
+        >
+          {t("cutout.hold")}
+        </AppText>
         <ErrorMessage message={error} />
         <View style={styles.row}>
           <View style={styles.action}>
@@ -220,4 +230,5 @@ const styles = StyleSheet.create({
     gap: theme.space.sm,
   },
   action: { flexGrow: 1, minWidth: 120 },
+  hidden: { opacity: 0 },
 });

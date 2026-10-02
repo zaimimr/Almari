@@ -401,6 +401,7 @@ export const en = {
   "cutout.medium": "Medium",
   "cutout.large": "Large",
   "cutout.undo": "Undo",
+  "cutout.hold": "Hold on a piece to select it",
   "cutout.reset": "Reset",
   "cutout.failed": "This photo could not be opened for editing.",
   "cutout.saveFailed": "The cut-out could not be saved. Try again.",
