@@ -24,18 +24,6 @@ import { discardPhoto, photoUri } from "../storage/local";
 export const canPrepareOnDevice = ClosetVision.isAvailable();
 export const addPiecesRoute = canPrepareOnDevice ? "/capture" : "/piece/new";
 
-export function discardImportFiles(job: ImportJob, keepOriginal = false) {
-  const files = [
-    keepOriginal ? null : job.source,
-    job.prepared?.cutout,
-    job.prepared?.thumbnail,
-    job.label?.photo,
-    job.region?.cutout,
-  ];
-  for (const file of files)
-    if (file) void discardPhoto(file).catch(() => undefined);
-}
-
 export async function changeImports(
   update: (transform: (closet: Closet) => Closet) => Promise<void>,
   transform: (closet: Closet) => Closet,
@@ -118,7 +106,12 @@ export function useImportRunner(repository: ClosetRepository, ready: boolean) {
             await repository.update((closet) =>
               finishImport(closet, job.id, prepared),
             );
-          else discardImportFiles({ ...job, prepared }, true);
+          else {
+            const closet = repository.getSnapshot();
+            const stale = { ...closet, imports: [{ ...job, prepared }] };
+            for (const file of orphanedFiles(stale, closet))
+              void discardPhoto(file).catch(() => undefined);
+          }
         } catch {
           await repository.update((closet) =>
             failImport(closet, job.id, "processing"),

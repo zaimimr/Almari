@@ -274,8 +274,9 @@ export function cropCapture(closet: Closet, id: string, crop: Frame): Closet {
           state: "queued",
           attempts: 0,
           captureId: job.captureId,
-          ...(job.region ? { region: job.region } : {}),
+          ...(job.region ? { region: { ...job.region, partial: false } } : {}),
           ...(job.people ? { people: job.people } : {}),
+          ...(job.label ? { label: job.label } : {}),
           crop,
         }
       : job,

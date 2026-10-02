@@ -637,6 +637,25 @@ test("a box drawn by hand prepares a piece again or adds one that was missed", (
   assert.equal(addToCapture(added, "job", "extra", box, "x"), added);
 });
 
+test("a hand drawn box clears the partly visible check and keeps the care label", () => {
+  const label: CareLabel = {
+    photo: "job-label.jpg",
+    materials: [{ fibre: "cotton", percent: 100 }],
+  };
+  let closet = splitCapture(
+    startImport(queued(), "job"),
+    "job",
+    proposalsFromRegions([region("upper", 1, true)], 1),
+  );
+  closet = finishImport(startImport(closet, "job"), "job", prepared());
+  closet = setImportLabel(closet, "job", label);
+  const box = { x: 0.1, y: 0.1, width: 0.8, height: 0.8 };
+  const job = cropCapture(closet, "job", box).imports[0]!;
+  assert.equal(job.region?.partial, false);
+  assert.equal(job.region?.kind, "upper");
+  assert.deepEqual(job.label, label);
+});
+
 test("dropping one piece from a photo keeps the files the others still use", () => {
   let closet = splitOutfit();
   closet = finishImport(startImport(closet, "job"), "job", prepared());
