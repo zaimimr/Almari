@@ -683,6 +683,7 @@ export const en = {
     "Camera access is off. Choose a selfie instead, or turn on camera access in Settings.",
   "colours.cameraFailed": "The camera could not open. Choose a selfie instead.",
   "colours.busy": "Measuring your colours",
+  "colours.paletteLabel": "{label}: {names}",
   "colours.retake.dark":
     "The photo is too dark to read your colours. Move closer to a window and try again.",
   "colours.retake.mixed":
@@ -1309,6 +1310,12 @@ export const en = {
   "role.one.hijab": "hijab",
   "role.one.bag": "bag",
   "role.one.accessory": "accessory",
+
+  "calendar.previous": "Previous month",
+  "calendar.next": "Next month",
+
+  "choice.clearedOne": "1 choice cleared",
+  "choice.clearedMany": "{count} choices cleared",
 };
 
 export type Key = keyof typeof en;

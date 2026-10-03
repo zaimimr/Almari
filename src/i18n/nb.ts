@@ -695,6 +695,7 @@ export const nb: Record<Key, string> = {
     "Kameratilgang er slått av. Velg en selfie i stedet, eller slå på kameratilgang i Innstillinger.",
   "colours.cameraFailed": "Kameraet kunne ikke åpnes. Velg en selfie i stedet.",
   "colours.busy": "Måler fargene dine",
+  "colours.paletteLabel": "{label}: {names}",
   "colours.retake.dark":
     "Bildet er for mørkt til å lese fargene. Gå nærmere et vindu og prøv igjen.",
   "colours.retake.mixed":
@@ -1330,4 +1331,10 @@ export const nb: Record<Key, string> = {
   "role.one.hijab": "hijab",
   "role.one.bag": "veske",
   "role.one.accessory": "tilbehør",
+
+  "calendar.previous": "Forrige måned",
+  "calendar.next": "Neste måned",
+
+  "choice.clearedOne": "1 valg fjernet",
+  "choice.clearedMany": "{count} valg fjernet",
 };
