@@ -11,12 +11,20 @@ import { useLargeText } from "./useLargeText";
 export type TextRole =
   "title" | "headline" | "body" | "subhead" | "footnote" | "mark";
 export type TextTone =
-  "ink" | "muted" | "disabled" | "plum" | "error" | "onPlum" | "onMedia";
+  | "ink"
+  | "muted"
+  | "disabled"
+  | "placeholder"
+  | "plum"
+  | "error"
+  | "onPlum"
+  | "onMedia";
 
 export const toneColor: Record<TextTone, keyof Colors> = {
   ink: "ink",
   muted: "inkMuted",
   disabled: "inkDisabled",
+  placeholder: "placeholder",
   plum: "plum",
   error: "error",
   onPlum: "onPlum",

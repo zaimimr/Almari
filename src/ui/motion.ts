@@ -67,6 +67,21 @@ export function useReduceMotion(): boolean {
   return reduce;
 }
 
+export function useAfterWait(active: boolean): boolean {
+  const [waited, setWaited] = useState(false);
+
+  useEffect(() => {
+    if (!active) return;
+    const id = setTimeout(() => setWaited(true), motion.timer.wait);
+    return () => {
+      clearTimeout(id);
+      setWaited(false);
+    };
+  }, [active]);
+
+  return active && waited;
+}
+
 const rise: EntryExitAnimationFunction = () => {
   "worklet";
   return {
