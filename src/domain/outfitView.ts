@@ -1,12 +1,19 @@
 import type {
   Category,
+  CoverageNeed,
   GarmentKind,
   OutfitRequest,
   Piece,
   StyleProfile,
 } from "./closet";
 import type { Rgb } from "./color";
-import { colourWord, garmentWord, say, type NameLocale } from "./outfitName";
+import {
+  colourWord,
+  garmentWord,
+  mainPiece,
+  say,
+  type NameLocale,
+} from "./outfitName";
 import { ruleBook } from "./scoring/rulebook";
 import { baseWeight, occasionLevel, ruleHits } from "./scoring/rules";
 import { roleOf, type Role } from "./styling";
@@ -117,6 +124,75 @@ export function coverageChecks(
     text: t("coverage.neckline"),
   });
   return checks;
+}
+
+const subjects: Partial<Record<GarmentKind, "One" | "Many">> = {
+  blazer: "One",
+  cardigan: "One",
+  jacket: "One",
+  coat: "One",
+  trousers: "Many",
+  jeans: "Many",
+  "wide-leg": "Many",
+  shalwar: "One",
+  churidar: "One",
+  sharara: "One",
+  gharara: "One",
+  lehenga: "One",
+  skirt: "One",
+};
+
+function reaches(
+  piece: Piece,
+  key: "sleeve" | "length",
+  order: string[],
+  need: string,
+) {
+  const value = confirmed(piece, key);
+  return value !== null && order.indexOf(value) >= order.indexOf(need);
+}
+
+export function coverageNote(
+  pieces: Piece[],
+  need: CoverageNeed | undefined,
+  locale: NameLocale,
+): string | null {
+  const main = mainPiece(pieces);
+  if (!need || !main) return null;
+  const others = pieces.filter((piece) => piece !== main);
+  const named = (piece: Piece, roles: Role[]) =>
+    !!piece.kind && !!subjects[piece.kind] && roles.includes(roleOf(piece));
+  const note = (piece: Piece, key: string) =>
+    say(locale, `coverageNote.${key}`, {
+      piece: say(locale, `kind.subject.${piece.kind}`),
+    });
+  const sleeve = need.sleeve;
+  if (
+    (sleeve === "elbow" || sleeve === "long") &&
+    !reaches(main, "sleeve", sleeveOrder, sleeve)
+  ) {
+    const layer = others.find(
+      (piece) =>
+        named(piece, ["layer", "outer"]) &&
+        reaches(piece, "sleeve", sleeveOrder, sleeve),
+    );
+    if (layer) return note(layer, "arms");
+  }
+  const hem = need.hem;
+  if (
+    (hem === "calf" || hem === "ankle") &&
+    !reaches(main, "length", lengthOrder, hem)
+  ) {
+    const bottom = others.find(
+      (piece) =>
+        named(piece, ["bottom"]) && reaches(piece, "length", lengthOrder, hem),
+    );
+    if (bottom) {
+      const length = confirmed(bottom, "length") === "ankle" ? "ankle" : "calf";
+      return note(bottom, `${length}${subjects[bottom.kind!]}`);
+    }
+  }
+  return null;
 }
 
 const neutrals: Rgb[] = [

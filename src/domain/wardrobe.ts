@@ -8,8 +8,11 @@ import {
   type Piece,
   type Traits,
 } from "./closet";
-import { isNeverWear } from "./preferences";
+import { filterPieces, lastWorn, noFilter } from "./closetFilters";
+import { hasAnyWear } from "./feedback";
+import { isNeverWear, wearMoreIds } from "./preferences";
 import { evaluateOutfit, roleOf, type Problem } from "./styling";
+import { activeSession, type Clock } from "./today";
 
 export function setArchived(
   closet: Closet,
@@ -190,4 +193,35 @@ export function matchingLooks(
     });
   }
   return { exact, variants };
+}
+
+export function rediscover(closet: Closet, clock: Clock, limit = 6): Piece[] {
+  if (!hasAnyWear(closet)) return [];
+  const today = closet.styling.today;
+  const shown = today ? activeSession(today).pieceIds : [];
+  const pool = closet.pieces.filter(
+    (piece) =>
+      piece.source === "owned" &&
+      isAvailable(piece) &&
+      !shown.includes(piece.id) &&
+      !isNeverWear(closet.styling.profile, piece),
+  );
+  const context = { lastWorn: lastWorn(closet), today: clock.localDate };
+  const more = wearMoreIds(closet);
+  const group = (
+    wear: "never-worn" | "not-worn-lately",
+    key: (piece: Piece) => string,
+  ) =>
+    filterPieces(pool, { ...noFilter, wear }, context).sort(
+      (a, b) =>
+        Number(more.includes(b.id)) - Number(more.includes(a.id)) ||
+        key(a).localeCompare(key(b)),
+    );
+  return [
+    ...group("never-worn", (piece) => piece.createdAt),
+    ...group(
+      "not-worn-lately",
+      (piece) => context.lastWorn[piece.id] ?? "",
+    ).filter((piece) => context.lastWorn[piece.id]),
+  ].slice(0, limit);
 }

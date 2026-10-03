@@ -12,6 +12,7 @@ import {
   type Piece,
 } from "./closet";
 import { colorName } from "./color";
+import { woreLately } from "./feedback";
 import { setNeverWear } from "./preferences";
 import { addSampleWardrobe, sampleTraits } from "./samples";
 import {
@@ -26,9 +27,11 @@ import {
 import {
   hijabAlternatives,
   matchingLooks,
+  rediscover,
   setArchived,
   shelf,
 } from "./wardrobe";
+import { at, ownedCloset, piece, styledSample } from "./test-helpers";
 
 const day = "2026-10-01";
 const samples = addSampleWardrobe(emptyCloset);
@@ -410,4 +413,46 @@ test("R04 using a saved look changes only today's outfit and can be undone", () 
     before.pieceIds,
   );
   assert.equal(applyLook(used, office.pieceIds, before.revision), used);
+});
+
+test("rediscover waits for a wear, then never worn first, then not worn lately, wear more first", () => {
+  const pieces = [
+    piece("never-a", "top", { createdAt: "2026-08-01T00:00:00Z" }),
+    piece("never-b", "top", { createdAt: "2026-09-01T00:00:00Z" }),
+    piece("march", "dress"),
+    piece("fav", "bottom"),
+    piece("away", "top", { status: "away", away: "wash" }),
+  ];
+  const closet = {
+    ...ownedCloset(pieces),
+    styling: { ...styledSample().styling, wardrobe: "owned" as const },
+  };
+  const clock = at("2026-10-02T08:00:00+02:00");
+  assert.deepEqual(rediscover(closet, clock), []);
+  let worn: Closet = {
+    ...closet,
+    feedback: [
+      {
+        id: "m",
+        at: "2026-03-14T10:00:00Z",
+        kind: "wore" as const,
+        pieceIds: ["march"],
+        request: closet.styling.today!.everyday.request,
+        engine: "rules" as const,
+        scope: "piece" as const,
+      },
+    ],
+  };
+  worn = woreLately(worn, ["fav"], "2026-10-01T12:00:00Z", (id) => `w-${id}`);
+  const withMore = {
+    ...worn,
+    styling: {
+      ...worn.styling,
+      profile: { ...worn.styling.profile, wearMore: ["never-b"] },
+    },
+  };
+  assert.deepEqual(
+    rediscover(withMore, clock).map((p) => p.id),
+    ["never-b", "never-a", "march"],
+  );
 });

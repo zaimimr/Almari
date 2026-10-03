@@ -9,7 +9,14 @@ import {
   type StyleProfile,
 } from "./closet";
 import type { Attributes } from "./attributes";
-import { coverageChecks, flatLay, outfitTip, tipText } from "./outfitView";
+import {
+  coverageChecks,
+  coverageNote,
+  flatLay,
+  outfitTip,
+  tipText,
+} from "./outfitView";
+import { piece as plainPiece } from "./test-helpers";
 
 const request = (changes: Partial<OutfitRequest> = {}): OutfitRequest => ({
   occasion: "work",
@@ -221,5 +228,48 @@ test("a bag that is away still counts as hers, so no bag tip is shown", () => {
   assert.equal(
     outfitTip(outfit, [...outfit, bag], request(), neutralProfile),
     null,
+  );
+});
+
+test("the coverage line names the layer or bottom that does the work", () => {
+  const need = { sleeve: "long" as const, hem: "ankle" as const };
+  const abaya = plainPiece("a", "dress", {
+    kind: "abaya",
+    attributes: { sleeve: "long", length: "ankle" },
+    sources: { sleeve: "confirmed", length: "confirmed" },
+  });
+  const top = plainPiece("t", "top", {
+    kind: "top",
+    attributes: { sleeve: "short" },
+    sources: { sleeve: "confirmed" },
+  });
+  const blazer = plainPiece("b", "layer", {
+    kind: "blazer",
+    attributes: { sleeve: "long" },
+    sources: { sleeve: "confirmed" },
+  });
+  const kameez = plainPiece("k", "tunic", {
+    kind: "kameez",
+    attributes: { sleeve: "long", length: "thigh" },
+    sources: { sleeve: "confirmed", length: "confirmed" },
+  });
+  const trousers = plainPiece("tr", "bottom", {
+    kind: "trousers",
+    attributes: { length: "ankle" },
+    sources: { length: "confirmed" },
+  });
+  assert.equal(coverageNote([abaya], need, "en"), null);
+  assert.equal(
+    coverageNote([top, blazer, trousers], need, "en"),
+    "Blazer covers the arms.",
+  );
+  assert.equal(
+    coverageNote([kameez, trousers], need, "en"),
+    "Trousers reach the ankle.",
+  );
+  assert.equal(coverageNote([kameez, trousers], undefined, "en"), null);
+  assert.equal(
+    coverageNote([kameez, trousers], need, "nb"),
+    "Buksen når til ankelen.",
   );
 });

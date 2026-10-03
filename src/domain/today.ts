@@ -102,9 +102,39 @@ function sessionFor(
 }
 
 export function activeSession(today: TodayState): Session {
+  if (today.active === "tomorrow" && today.tomorrow) return today.tomorrow;
   return today.active === "occasion" && today.occasion
     ? today.occasion
     : today.everyday;
+}
+
+const dayOf = (session: Session, today: TodayState) =>
+  session.date ?? today.localDate;
+
+function restyle(
+  closet: Closet,
+  session: Session,
+  today: TodayState,
+  request: OutfitRequest = session.request,
+): Session {
+  const next = sessionFor(
+    closet,
+    request,
+    dayOf(session, today),
+    session.revision + 1,
+    session.engine ?? null,
+  );
+  return session.date ? { ...next, date: session.date } : next;
+}
+
+function undated({ date: _date, ...session }: Session): Session {
+  return session;
+}
+
+export function nextLocalDate(localDate: string): string {
+  const next = new Date(`${localDate}T00:00:00Z`);
+  next.setUTCDate(next.getUTCDate() + 1);
+  return next.toISOString().slice(0, 10);
 }
 
 function withToday(closet: Closet, today: TodayState): Closet {
@@ -122,9 +152,11 @@ function withActive(
   if (next === session) return closet;
   return withToday(
     closet,
-    today.active === "occasion"
-      ? { ...today, occasion: next }
-      : { ...today, everyday: next },
+    today.active === "tomorrow"
+      ? { ...today, tomorrow: next }
+      : today.active === "occasion"
+        ? { ...today, occasion: next }
+        : { ...today, everyday: next },
   );
 }
 
@@ -133,26 +165,29 @@ export function ensureToday(closet: Closet, clock: Clock): Closet {
   if (!preset) return closet;
   const current = closet.styling.today;
   if (current?.localDate === clock.localDate) return closet;
-  const everyday = sessionFor(
-    closet,
-    everydayRequest(
-      preset,
-      closet.styling.wardrobe,
-      coverageLevel(closet),
-      weatherFor(closet, clock.localDate, clock.timeZone),
-    ),
-    clock.localDate,
-    (current?.everyday.revision ?? 0) + 1,
-    null,
-  );
-  const keepOccasion = current?.active === "occasion" && current.occasion;
+  const everyday =
+    current?.tomorrow?.date === clock.localDate
+      ? undated(current.tomorrow)
+      : sessionFor(
+          closet,
+          everydayRequest(
+            preset,
+            closet.styling.wardrobe,
+            coverageLevel(closet),
+            weatherFor(closet, clock.localDate, clock.timeZone),
+          ),
+          clock.localDate,
+          (current?.everyday.revision ?? 0) + 1,
+          null,
+        );
+  const plan = current?.occasion;
   return withToday(closet, {
     localDate: clock.localDate,
     timeZone: clock.timeZone,
     presetVersion: preset.version,
     everyday,
-    occasion: keepOccasion ? current.occasion : null,
-    active: keepOccasion ? "occasion" : "everyday",
+    occasion: plan?.date && plan.date >= clock.localDate ? plan : null,
+    active: "everyday",
   });
 }
 
@@ -200,30 +235,105 @@ export function applyRequest(
   return withActive(closet, (session, today) =>
     session.revision !== expectedRevision
       ? session
-      : sessionFor(
-          closet,
-          request,
-          today.localDate,
-          session.revision + 1,
-          session.engine ?? null,
-        ),
+      : restyle(closet, session, today, request),
   );
 }
 
-export function startOccasion(closet: Closet, request: OutfitRequest): Closet {
+function withOccasion(
+  closet: Closet,
+  request: OutfitRequest,
+  date?: string,
+): Closet {
   const today = closet.styling.today;
   if (!today) return closet;
+  const session = sessionFor(
+    closet,
+    request,
+    date ?? today.localDate,
+    (today.occasion?.revision ?? 0) + 1,
+    activeSession(today).engine ?? null,
+  );
   return withToday(closet, {
     ...today,
     active: "occasion",
-    occasion: sessionFor(
-      closet,
-      request,
-      today.localDate,
-      (today.occasion?.revision ?? 0) + 1,
-      activeSession(today).engine ?? null,
-    ),
+    occasion: date ? { ...session, date } : session,
   });
+}
+
+export function startOccasion(closet: Closet, request: OutfitRequest): Closet {
+  return withOccasion(closet, request);
+}
+
+export function startPlan(
+  closet: Closet,
+  request: OutfitRequest,
+  date: string,
+): Closet {
+  return withOccasion(closet, request, date);
+}
+
+export function unsavedPlan(closet: Closet): Session | null {
+  const today = closet.styling.today;
+  const plan = today?.occasion;
+  if (!today || !plan?.date || today.active === "occasion") return null;
+  if (plan.date < today.localDate) return null;
+  const key = [...plan.pieceIds].sort().join(",");
+  return closet.looks.some(
+    (look) => [...look.pieceIds].sort().join(",") === key,
+  )
+    ? null
+    : plan;
+}
+
+export function resumePlan(closet: Closet): Closet {
+  const today = closet.styling.today;
+  if (!today?.occasion) return closet;
+  return withToday(closet, { ...today, active: "occasion" });
+}
+
+export function discardPlan(closet: Closet): Closet {
+  const today = closet.styling.today;
+  if (!today?.occasion) return closet;
+  return withToday(closet, {
+    ...today,
+    occasion: null,
+    active: today.active === "occasion" ? "everyday" : today.active,
+  });
+}
+
+export function prepareTomorrow(
+  closet: Closet,
+  clock: Clock,
+  forecast: Weather,
+): Closet {
+  const ready = ensureToday(closet, clock);
+  const preset = ready.styling.everyday;
+  const today = ready.styling.today;
+  if (!preset || !today) return closet;
+  const date = nextLocalDate(clock.localDate);
+  const session = sessionFor(
+    ready,
+    everydayRequest(
+      preset,
+      ready.styling.wardrobe,
+      coverageLevel(ready),
+      forecast,
+    ),
+    date,
+    1,
+    null,
+  );
+  return withToday(ready, {
+    ...today,
+    tomorrow: { ...session, date },
+    active: "tomorrow",
+  });
+}
+
+export function backToToday(closet: Closet): Closet {
+  const today = closet.styling.today;
+  if (!today) return closet;
+  return withToday(closet, { ...today, active: "everyday" });
 }
 
 export function backToEveryday(closet: Closet): Closet {
@@ -238,7 +348,7 @@ export function tryAnother(closet: Closet, expectedRevision: number): Closet {
     const result = resultFor(
       closet,
       session.request,
-      today.localDate,
+      dayOf(session, today),
       session.engine ?? "rules",
     );
     const cursor = session.cursor + 1;
@@ -256,13 +366,7 @@ export function tryAnother(closet: Closet, expectedRevision: number): Closet {
 
 export function startOver(closet: Closet): Closet {
   return withActive(closet, (session, today) =>
-    sessionFor(
-      closet,
-      session.request,
-      today.localDate,
-      session.revision + 1,
-      session.engine ?? null,
-    ),
+    restyle(closet, session, today),
   );
 }
 
@@ -354,20 +458,25 @@ export function applyLook(
 export function dropFromToday(closet: Closet, id: string): Closet {
   const today = closet.styling.today;
   if (!today) return closet;
-  const restyle = (session: Session) =>
+  const drop = (session: Session) =>
     session.pieceIds.includes(id) && !session.request.keptIds.includes(id)
-      ? sessionFor(
-          closet,
-          session.request,
-          today.localDate,
-          session.revision + 1,
-          session.engine ?? null,
-        )
+      ? restyle(closet, session, today)
       : session;
-  const everyday = restyle(today.everyday);
-  const occasion = today.occasion ? restyle(today.occasion) : null;
-  if (everyday === today.everyday && occasion === today.occasion) return closet;
-  return withToday(closet, { ...today, everyday, occasion });
+  const everyday = drop(today.everyday);
+  const occasion = today.occasion ? drop(today.occasion) : null;
+  const tomorrow = today.tomorrow ? drop(today.tomorrow) : undefined;
+  if (
+    everyday === today.everyday &&
+    occasion === today.occasion &&
+    tomorrow === today.tomorrow
+  )
+    return closet;
+  return withToday(closet, {
+    ...today,
+    everyday,
+    occasion,
+    ...(tomorrow ? { tomorrow } : {}),
+  });
 }
 
 export function saveForecast(closet: Closet, forecast: Forecast): Closet {
@@ -380,15 +489,10 @@ export function saveForecast(closet: Closet, forecast: Forecast): Closet {
   const refresh = (session: Session, exposure: ForecastWeather["exposure"]) => {
     const weather = { ...forecast.weather, exposure };
     return session.request.weather.source === "manual" ||
+      dayOf(session, today) !== forecast.date ||
       JSON.stringify(session.request.weather) === JSON.stringify(weather)
       ? session
-      : sessionFor(
-          saved,
-          { ...session.request, weather },
-          today.localDate,
-          session.revision + 1,
-          session.engine ?? null,
-        );
+      : restyle(saved, session, today, { ...session.request, weather });
   };
   const everyday = refresh(
     today.everyday,

@@ -163,9 +163,11 @@ function withSession(closet: Closet, session: Session): Closet {
     styling: {
       ...closet.styling,
       today:
-        today.active === "occasion"
-          ? { ...today, occasion: session }
-          : { ...today, everyday: session },
+        today.active === "tomorrow"
+          ? { ...today, tomorrow: session }
+          : today.active === "occasion"
+            ? { ...today, occasion: session }
+            : { ...today, everyday: session },
     },
   };
 }
