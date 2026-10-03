@@ -8,6 +8,8 @@ import {
   rankPieces,
   swapOptions,
 } from "./builder";
+import { colorName } from "./color";
+import { setNeverWear } from "./preferences";
 import { addSampleWardrobe } from "./samples";
 import { roleOf } from "./styling";
 import { saveEverydayStyle } from "./today";
@@ -142,6 +144,31 @@ test("swap shows up to three other pieces for the same slot, never a picked or a
     clock.localDate,
   ).map((item) => item.id);
   assert.deepEqual(bottoms, ["sample-ivory-trousers"]);
+});
+
+test("never wear leaves Fill the rest and the swap, the picker strip keeps it", () => {
+  const picked = ["sample-ivory-tunic", "sample-charcoal-trousers"];
+  const request = builderRequest(styled, picked);
+  const isHijab = (id: string) => roleOf(piece(id)) === "hijab";
+  const before = fillOutfit(styled, request, clock.localDate);
+  assert.ok("ids" in before);
+  const usual = before.ids.find(isHijab)!;
+  const colour = colorName(piece(usual).colors![0]!.rgb);
+  const never = setNeverWear(styled, [{ colour, on: "hijabs" }]);
+  const filled = fillOutfit(never, request, clock.localDate);
+  assert.ok("ids" in filled);
+  const hijab = filled.ids.find(isHijab);
+  assert.ok(hijab && hijab !== usual);
+  assert.ok(
+    !swapOptions(never, request, filled.ids, hijab, clock.localDate).some(
+      (item) => item.id === usual,
+    ),
+  );
+  assert.ok(
+    rankPieces(never, request, picked, never.pieces, clock.localDate).some(
+      (item) => item.id === usual,
+    ),
+  );
 });
 
 test("the name follows the pieces until she types her own", () => {

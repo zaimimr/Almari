@@ -256,3 +256,13 @@ test("a formal set split across outfits is penalised and a set worn together is 
     ),
   );
 });
+
+test("a bridal piece is read as heavy by the rules", () => {
+  const hijab = make("beaded hijab", "hijab", "hijab", {
+    embellishment: "heavy",
+  });
+  const bridal = make("bridal kameez", "tunic", "kameez", {
+    embellishment: "bridal",
+  });
+  assert.ok(hitIds([bridal, hijab]).includes("statement-hijab-busy-main"));
+});

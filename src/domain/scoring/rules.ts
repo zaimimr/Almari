@@ -7,7 +7,7 @@ import {
   type Sparkle,
   type StyleProfile,
 } from "../closet";
-import { formalityFor } from "../attributes";
+import { formalityFor, type Attributes } from "../attributes";
 import { sparkleOf } from "../facts";
 import { deltaE, type Lab } from "../color";
 import { bestColours } from "../colourAnalysis";
@@ -91,7 +91,7 @@ export function factsFor(pieces: Piece[], thresholds: Thresholds): Facts[] {
       print:
         printPatterns.includes(attributes.pattern ?? "") ||
         (attributes.pattern === "embroidered" &&
-          attributes.embellishment === "heavy"),
+          ruleEmbellishment(attributes) === "heavy"),
       formality:
         attributes.formality ??
         formalityFor({
@@ -124,6 +124,9 @@ function certainFor(facts: Facts, selector: Selector, scope: Scope) {
   });
 }
 
+const ruleEmbellishment = ({ embellishment }: Attributes) =>
+  embellishment === "bridal" ? "heavy" : embellishment;
+
 function among<T>(list: T[] | undefined, value: T | null | undefined) {
   return (
     !list || (value !== undefined && value !== null && list.includes(value))
@@ -147,7 +150,8 @@ function matches(facts: Facts, selector: Selector, scope: Scope): boolean {
   if (!among(selector.pattern, attributes.pattern)) return false;
   if (!among(selector.scale, attributes.scale)) return false;
   if (!among(selector.fabric, attributes.fabric)) return false;
-  if (!among(selector.embellishment, attributes.embellishment)) return false;
+  if (!among(selector.embellishment, ruleEmbellishment(attributes)))
+    return false;
   if (!among(selector.length, attributes.length)) return false;
   if (!among(selector.volume, attributes.volume)) return false;
   if (!among(selector.sleeve, attributes.sleeve)) return false;

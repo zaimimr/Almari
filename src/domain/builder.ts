@@ -109,7 +109,7 @@ export function rankPieces(
   const outfit = pieceIds.flatMap((id) =>
     closet.pieces.filter((piece) => piece.id === id),
   );
-  const ranked = allowedPieces(closet, candidates)
+  const ranked = candidates
     .filter((piece) => !pieceIds.includes(piece.id))
     .map((piece) => ({ piece, ...fit([...outfit, piece]) }))
     .sort(byFit)

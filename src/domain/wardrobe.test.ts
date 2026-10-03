@@ -11,6 +11,8 @@ import {
   type OutfitRequest,
   type Piece,
 } from "./closet";
+import { colorName } from "./color";
+import { setNeverWear } from "./preferences";
 import { addSampleWardrobe, sampleTraits } from "./samples";
 import {
   activeSession,
@@ -237,6 +239,19 @@ test("R03 away, archived and set-aside hijabs are not offered", () => {
     comparison.options.map((option) => option.piece.id),
     ["sample-chocolate-hijab"],
   );
+});
+
+test("a never-wear colour on clothes keeps that hijab, on hijabs drops it", () => {
+  const colour = colorName([78, 52, 42]);
+  const offered = (on: "clothes" | "hijabs") =>
+    hijabAlternatives(
+      setNeverWear(hijabs, [{ colour, on }]),
+      request(),
+      outfit,
+      byPreference,
+    )!.options.map((option) => option.piece.id);
+  assert.ok(offered("clothes").includes("sample-chocolate-hijab"));
+  assert.ok(!offered("hijabs").includes("sample-chocolate-hijab"));
 });
 
 test("R03 using a hijab changes only the hijab and undo restores the outfit", () => {

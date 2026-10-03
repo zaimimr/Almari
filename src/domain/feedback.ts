@@ -54,7 +54,9 @@ function statement(pieces: Piece[]) {
     (facts) =>
       facts.print ||
       facts.color.main?.colorClass === "accent" ||
-      ["light", "heavy"].includes(facts.piece.attributes?.embellishment ?? ""),
+      ["light", "heavy", "bridal"].includes(
+        facts.piece.attributes?.embellishment ?? "",
+      ),
   ).length;
 }
 
