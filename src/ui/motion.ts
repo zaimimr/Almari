@@ -5,6 +5,7 @@ import {
   FadeIn,
   LinearTransition,
   ReduceMotion,
+  useReducedMotion,
   withTiming,
   type EntryExitAnimationFunction,
   type EntryOrExitLayoutType,
@@ -47,7 +48,8 @@ export function timing<T extends number | string>(
 }
 
 export function useReduceMotion(): boolean {
-  const [reduce, setReduce] = useState(false);
+  const atStart = useReducedMotion();
+  const [reduce, setReduce] = useState(atStart);
 
   useEffect(() => {
     let active = true;
