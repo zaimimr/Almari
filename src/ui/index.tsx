@@ -7,6 +7,7 @@ export {
   type ChipRowProps,
 } from "./Chip";
 export { Field, type FieldProps } from "./Field";
+export { FlatLay, type FlatLayProps } from "./FlatLay";
 export { Footer, type FooterProps } from "./Footer";
 export { HeaderItem, type HeaderItemProps } from "./HeaderItem";
 export { useMeasuredMax } from "./measure";
@@ -17,3 +18,4 @@ export { Segmented } from "./Segmented";
 export { Silk, type SilkProps } from "./Silk";
 export { Symbol } from "./symbol";
 export { Text, type TextRole, type TextTone } from "./Text";
+export { Tile, type TileProps, type TileState } from "./Tile";

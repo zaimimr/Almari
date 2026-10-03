@@ -22,8 +22,8 @@ import { Image } from "expo-image";
 import type { SFSymbol } from "expo-symbols";
 import type { Piece } from "../domain/closet";
 import { Button, type ButtonProps } from "./Button";
+import { FlatLay } from "./FlatLay";
 import { timing, useAfterWait, useReduceMotion } from "./motion";
-import { OutfitCollage } from "./OutfitCollage";
 import { photoSource } from "./photos";
 import { Symbol } from "./symbol";
 import { Text } from "./Text";
@@ -103,7 +103,7 @@ function LeadingView({ leading, media }: { leading: Leading; media: boolean }) {
           style={styles.thumb}
         />
       ) : "lay" in leading ? (
-        <OutfitCollage pieces={leading.lay} />
+        <FlatLay pieces={leading.lay} size={leading.size ?? "row"} />
       ) : (
         <View
           style={[

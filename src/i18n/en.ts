@@ -1293,6 +1293,20 @@ export const en = {
   "notify.today": "See today's outfit",
   "notify.tomorrow": "See tomorrow's outfit",
   "closet.sectionLabel": "{category}, {pieces}",
+  "common.loading": "Loading",
+  "common.tryAgain": "Try again",
+  "common.undo": "Undo",
+  "result.removed": "Removed",
+  "capture.colourLabel": "Colour: {colour}",
+  "build.slotEmpty": "No {role}",
+  "role.one.main": "main piece",
+  "role.one.bottom": "bottoms",
+  "role.one.layer": "layer",
+  "role.one.outer": "outer layer",
+  "role.one.shoes": "shoes",
+  "role.one.hijab": "hijab",
+  "role.one.bag": "bag",
+  "role.one.accessory": "accessory",
 };
 
 export type Key = keyof typeof en;
