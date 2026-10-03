@@ -8,8 +8,10 @@ import {
   type Piece,
   type Style,
 } from "./closet";
+import { t } from "../i18n";
 import { colorName, toLab, toLch } from "./color";
 import {
+  colourKeys,
   needsDetails,
   pieceCoverage,
   wearSeason,
@@ -106,7 +108,9 @@ function matchesWear(
 function matchesSearch(piece: Piece, search: string): boolean {
   const query = search.trim().toLowerCase();
   if (!query) return true;
-  return [piece.name, colourOf(piece) ?? ""].some((text) =>
+  const colour = colourOf(piece);
+  const key = colour ? colourKeys[colour] : undefined;
+  return [piece.name, colour ?? "", key ? t(key) : ""].some((text) =>
     text.toLowerCase().includes(query),
   );
 }

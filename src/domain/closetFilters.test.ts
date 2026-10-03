@@ -12,6 +12,7 @@ import {
   type ClosetFilter,
 } from "./closetFilters";
 import { ownedCloset, piece } from "./test-helpers";
+import { setLanguage } from "../i18n";
 
 const shaped = (id: string, changes: Partial<Piece>): Piece => ({
   id,
@@ -188,6 +189,9 @@ test("search matches the colour name and coverage filters use piece coverage", (
   assert.deepEqual(shown({ search: "blush" }), ["h"]);
   assert.deepEqual(shown({ search: "CHIFFON" }), ["h"]);
   assert.deepEqual(shown({ colour: "Blush" }), ["h"]);
+  setLanguage("nb");
+  assert.deepEqual(shown({ search: "pudderrosa" }), ["h"]);
+  setLanguage("en");
   assert.deepEqual(shown({ coverage: "full" }), ["bl"]);
   assert.deepEqual(shown({ coverage: "needs-details" }), ["d"]);
 });

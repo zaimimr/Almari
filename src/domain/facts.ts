@@ -55,7 +55,7 @@ export type FactChoice = {
 
 type AttributeFact = Extract<FactKey, AttributeKey>;
 
-const colourKeys: Record<string, Key> = {
+export const colourKeys: Record<string, Key> = {
   Black: "colour.black",
   Charcoal: "colour.charcoal",
   Grey: "colour.grey",
