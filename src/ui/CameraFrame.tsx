@@ -2,6 +2,7 @@ import {
   useEffect,
   useId,
   useRef,
+  useState,
   type PropsWithChildren,
   type ReactNode,
 } from "react";
@@ -65,14 +66,15 @@ const hidden = {
   importantForAccessibility: "no-hide-descendants",
 } as const;
 
-const crossfade = {
-  entering: FadeIn.duration(motion.duration.base)
-    .easing(motion.easing.silk)
-    .reduceMotion(ReduceMotion.Never),
-  exiting: FadeOut.duration(motion.duration.quick)
-    .easing(motion.easing.release)
-    .reduceMotion(ReduceMotion.Never),
-};
+const fadeIn = FadeIn.duration(motion.duration.base)
+  .easing(motion.easing.silk)
+  .reduceMotion(ReduceMotion.Never);
+const fadeOut = FadeOut.duration(motion.duration.quick)
+  .easing(motion.easing.release)
+  .reduceMotion(ReduceMotion.Never);
+const fadeOutReduced = FadeOut.duration(motion.duration.base).reduceMotion(
+  ReduceMotion.Never,
+);
 
 const ringWidth = 4;
 const ringGap = 6;
@@ -98,6 +100,23 @@ function useLiveGuide(text: string | undefined, quiet: boolean) {
   }, [text, quiet]);
 }
 
+function useHeldFrame({ x, y, width, height }: Frame, active: boolean) {
+  const [held, setHeld] = useState({ x, y, width, height });
+  const last = useRef(0);
+
+  useEffect(() => {
+    if (!active) return;
+    const wait = Math.max(0, last.current + motion.timer.dwell - Date.now());
+    const id = setTimeout(() => {
+      last.current = Date.now();
+      setHeld({ x, y, width, height });
+    }, wait);
+    return () => clearTimeout(id);
+  }, [active, x, y, width, height]);
+
+  return held;
+}
+
 function useSafeHeight(): number {
   const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -113,6 +132,7 @@ function Outline({
 }) {
   const colors = useColors();
   const reduce = useReduceMotion();
+  const held = useHeldFrame(frame, reduce);
   const x = useSharedValue(frame.x);
   const y = useSharedValue(frame.y);
   const width = useSharedValue(frame.width);
@@ -125,8 +145,9 @@ function Outline({
   }, [visible]);
 
   useEffect(() => {
+    if (reduce) return;
     const move = (value: SharedValue<number>, to: number) =>
-      value.set(reduce ? to : timing(to, "quick", "silk"));
+      value.set(timing(to, "quick", "silk"));
     move(x, frame.x);
     move(y, frame.y);
     move(width, frame.width);
@@ -161,14 +182,11 @@ function Outline({
     opacity: visible.get(),
     transform: [{ translateX: x.get() }, { translateY: y.get() }],
   }));
+  const shown = useAnimatedStyle(() => ({ opacity: visible.get() }));
   const found = useAnimatedStyle(() => ({ opacity: solid.get() }));
 
-  return (
-    <Animated.View
-      pointerEvents="none"
-      style={[styles.outline, box]}
-      {...hidden}
-    >
+  const marks = (
+    <>
       <View style={[styles.halo, { borderColor: colors.ink }]} />
       <View
         style={[
@@ -179,6 +197,44 @@ function Outline({
       <Animated.View
         style={[styles.stroke, { borderColor: colors.blush }, found]}
       />
+    </>
+  );
+
+  if (reduce) {
+    return (
+      <Animated.View
+        pointerEvents="none"
+        style={[styles.outline, shown]}
+        {...hidden}
+      >
+        <LayoutAnimationConfig skipEntering>
+          <Animated.View
+            key={`${held.x}:${held.y}:${held.width}:${held.height}`}
+            entering={fadeIn}
+            exiting={fadeOut}
+            style={[
+              styles.outline,
+              {
+                width: held.width,
+                height: held.height,
+                transform: [{ translateX: held.x }, { translateY: held.y }],
+              },
+            ]}
+          >
+            {marks}
+          </Animated.View>
+        </LayoutAnimationConfig>
+      </Animated.View>
+    );
+  }
+
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[styles.outline, box]}
+      {...hidden}
+    >
+      {marks}
     </Animated.View>
   );
 }
@@ -227,6 +283,7 @@ export function CameraFrame({
   children,
 }: CameraFrameProps) {
   const colors = useColors();
+  const reduce = useReduceMotion();
   const { ax } = useLargeText();
   const { width } = useWindowDimensions();
   const safeHeight = useSafeHeight();
@@ -253,8 +310,8 @@ export function CameraFrame({
       <LayoutAnimationConfig skipEntering>
         <Animated.View
           key={guide}
-          entering={crossfade.entering}
-          exiting={crossfade.exiting}
+          entering={fadeIn}
+          exiting={reduce ? fadeOutReduced : fadeOut}
         >
           <Text role="mark" tone="onMedia">
             {guide}
@@ -350,6 +407,7 @@ export function FaceCircle({
   testID,
 }: FaceCircleProps) {
   const colors = useColors();
+  const reduce = useReduceMotion();
   const safeHeight = useSafeHeight();
   const diameter = Math.max(
     0,
@@ -486,8 +544,8 @@ export function FaceCircle({
         <LayoutAnimationConfig skipEntering>
           <Animated.View
             key={guide}
-            entering={crossfade.entering}
-            exiting={crossfade.exiting}
+            entering={fadeIn}
+            exiting={reduce ? fadeOutReduced : fadeOut}
           >
             <Text role="headline" style={styles.centred}>
               {guide}
