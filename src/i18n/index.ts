@@ -29,7 +29,9 @@ const speakIn = (next: Locale) =>
 speakIn(locale);
 
 export function setLanguage(language: Language) {
-  locale = localeFrom(language, phoneLanguage);
+  const next = localeFrom(language, phoneLanguage);
+  if (next === locale) return;
+  locale = next;
   speakIn(locale);
 }
 

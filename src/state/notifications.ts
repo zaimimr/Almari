@@ -24,7 +24,15 @@ export async function notificationPermission(): Promise<
   return status === "undetermined" ? "undetermined" : "denied";
 }
 
+let pending: Promise<void> = Promise.resolve();
+
 export async function syncSchedule(plan: NotificationPlan | null) {
+  const run = pending.catch(() => undefined).then(() => schedule(plan));
+  pending = run;
+  return run;
+}
+
+async function schedule(plan: NotificationPlan | null) {
   await Notifications.cancelAllScheduledNotificationsAsync();
   if (!plan || (await notificationPermission()) !== "granted") return;
   await Notifications.scheduleNotificationAsync({
