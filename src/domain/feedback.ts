@@ -216,10 +216,11 @@ export function giveFeedback(
   const session = activeSession(today);
   if (session.revision !== expectedRevision || !session.pieceIds.length)
     return closet;
+  const day = session.date ?? today.localDate;
   const outfits = resultFor(
     closet,
     session.request,
-    today.localDate,
+    day,
     session.engine ?? "rules",
   ).outfits;
   const next =
@@ -234,7 +235,7 @@ export function giveFeedback(
   const ranked = resultFor(
     recorded,
     session.request,
-    today.localDate,
+    day,
     session.engine ?? "rules",
   ).outfits;
   const cursor = ranked.findIndex(

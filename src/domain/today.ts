@@ -311,6 +311,8 @@ export function prepareTomorrow(
   const today = ready.styling.today;
   if (!preset || !today) return closet;
   const date = nextLocalDate(clock.localDate);
+  if (today.tomorrow?.date === date)
+    return withToday(ready, { ...today, active: "tomorrow" });
   const session = sessionFor(
     ready,
     everydayRequest(

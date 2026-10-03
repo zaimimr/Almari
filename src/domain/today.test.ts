@@ -121,3 +121,25 @@ test("a planned look survives the night and a removed piece never breaks the mor
   assert.equal(morning.looks[0]?.plannedFor, "2026-10-11");
   assert.ok(morning.styling.today!.everyday.pieceIds.length > 0);
 });
+
+test("opening tomorrow's outfit again keeps the evening's changes", () => {
+  const clock = at("2026-10-04T21:00:00+02:00");
+  const tomorrow = prepareTomorrow(
+    styledSample("2026-10-04T21:00:00+02:00"),
+    clock,
+    weather,
+  );
+  const session = activeSession(tomorrow.styling.today!);
+  const hijab = tomorrow.pieces.find(
+    (p) => p.category === "hijab" && !session.pieceIds.includes(p.id),
+  )!;
+  const current = session.pieceIds.find(
+    (id) => tomorrow.pieces.find((p) => p.id === id)?.category === "hijab",
+  )!;
+  const kept = backToToday(
+    replacePiece(tomorrow, current, hijab.id, session.revision),
+  );
+  const again = prepareTomorrow(kept, clock, weather);
+  assert.equal(again.styling.today!.active, "tomorrow");
+  assert.ok(activeSession(again.styling.today!).pieceIds.includes(hijab.id));
+});
