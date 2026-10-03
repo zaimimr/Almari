@@ -1,0 +1,39 @@
+# Almari redesign migration
+
+Historical notes for Lane 1. The rules live in `design-system.md`.
+
+## What the before screens show
+
+1. **Two outfit pictures.** Today draws the outfit as a grid of tiles in tinted beds (`tab-today.png`). Looks, replace and hijab draw it as a flat lay (`tab-looks.png`). The same outfit looks like two different things.
+2. **The left edge does not line up.** The native large title starts at 16 pt, the content at 24 pt. You can see the step on every tab root.
+3. **Copied components.** A hand-made copy of `Chip` in the piece editor, four copies of the pinned footer, four card styles with different padding and fill.
+4. **Too much text.** Intro sentences under every title, helper captions under chip groups, a paragraph above the capture actions (`capture-index.png`).
+5. **Sheets.** Eleven routes float up as modals, can be dragged half away, and stack (`today-replace.png`, `capture-index.png`).
+
+`design-system.md` fixes each one: one outfit picture, one gutter, one chip, one footer, one card fill, labels and values instead of sentences, and no sheets.
+
+## Component migration
+
+File and line references to the code being replaced. They describe the code at commit `0ea6928` and are not maintained after Lane 1 lands.
+
+| Component | Replaces |
+|---|---|
+| `Text` | `AppText` (`src/ui/index.tsx:31`), `ErrorMessage` (`index.tsx:169`), copied typography in `OutfitView.tsx:112-131` and `OutfitCollage.tsx:119-120`, `styles.link` (`index.tsx:457`, `OnboardingBar.tsx:76`, `ForecastNote.tsx:74`), the 25 local `label: { fontWeight: "600" }` styles (for example `PieceSections.tsx:124`, `AttributeEditor.tsx:88`, `SavedLooks.tsx:144`, `today/index.tsx:782`) |
+| `Screen` | `Screen` (`index.tsx:49`), `FormScreen` (`index.tsx:62`), `OnboardingBar` (`src/features/OnboardingBar.tsx:8`), the hand-built tab-root `ScrollView`s (`today/index.tsx:748-749`, `closet/index.tsx:292-293`, `looks/index.tsx:121-122`), `MissingPiece` (`src/features/MissingPiece.tsx:5`, which also stops `router.replace("/closet")` at `:14`), the per-screen `headerLeft` lambdas (`PieceEditor.tsx:264-268`, `capture/index.tsx:211, 249`, `capture/[id].tsx:154, 359`, `capture/scan.tsx:229`, `look/build.tsx:180`, `today/replace.tsx:88`, `today/adjust.tsx:236`), the `presentation: "modal"` options (`app/_layout.tsx:31-90`), the mixed side paddings (`index.tsx:422`, `OnboardingBar.tsx:68`, `look/build.tsx:396`) |
+| `HeaderItem` | `HeaderAction` (`index.tsx:129`), the text capsules in `tab-today.png`, `tab-closet.png`, `tab-looks.png`, `capture-index.png`, header lambdas at `closet/index.tsx:106, 115`, `looks/index.tsx:23`, `piece/[id].tsx:112`, `capture/index.tsx:255`, `capture/scan.tsx:235`, `today/index.tsx:93`. Feather icons in `OnboardingBar.tsx:27` and `src/navigation/Tabs.tsx` (web) retire on iOS |
+| `Footer` | `capture/index.tsx:376` (styles `:543-555`), `look/build.tsx:341` (`:410-420`), `today/replace.tsx:180` (`:233-245`), `today/hijab.tsx:193` (`:238-250`), `capture/group/[id].tsx:356`, `today/pieces.tsx:184`, the scrolling Save buttons at `PieceEditor.tsx:480` |
+| `Button` | `Button` (`index.tsx:81`) and its flags, `ActivityIndicator` busy (`index.tsx:121`), `cutout/[id].tsx:136`, `ForecastNote.tsx:44-54` "Data sources" (now the Apple Weather mark on the forecast chip), compact secondary row actions (`SavedLooks.tsx:47, 81, 95`, `AttributeEditor.tsx:68`, `PieceSections.tsx:39`, `today/index.tsx:679`) |
+| `Section` | `SavedLooks.tsx:32-33`, `PieceSections.tsx:34-37, 74-75`, `AttributeEditor.tsx:28-34`, `ChoiceGroup` labels (`index.tsx:316`), `today/index.tsx:785`, `piece/[id].tsx:362-363`, `capture/[id].tsx:570`, `today/adjust.tsx:362`, helper captions `PieceSections.tsx:112-116`, `PieceEditor.tsx:463-465, 494-498`, `AttributeEditor.tsx:31-33` |
+| `Row` | Saved-look cards `SavedLooks.tsx:37-58, 66-92` (`:145-154`, `Thumbs` `:126`), `PieceRow` (`today/index.tsx:692`, `:794-813`), Looks collage list (`looks/index.tsx:83-100`, `:131`), Profile answer rows (`profile/index.tsx:128`, `:229`), `Stat` tiles (`profile/index.tsx:209`, `:220`), `ArchiveSection` (`PieceSections.tsx:30`) |
+| `Chip`, `ChipRow` | `Chip` (`index.tsx:264`), `Filters` (`index.tsx:223`), `ChoiceGroup` (`index.tsx:301`) with four or more options or no required value (`today/adjust.tsx:249-301`, `today/everyday.tsx:114-151`, `today/style.tsx:132, 216, 223`, `onboarding/colours.tsx:190-210`), category chips `PieceEditor.tsx:375-401` (`:538-546`), photo variant chips (`PieceEditor.tsx:291-316`, `PhotoChoice.tsx:53-102`), `FactChip` (`piece/[id].tsx:295`, `:366-381`), `AttributeEditor.tsx:56-64`, the context line and Adjust button (`today/index.tsx:758-764`) |
+| `Segmented` | `ChoiceGroup` with two or three required options: `PieceSections.tsx:78-110`, `capture/[id].tsx:500`, `today/index.tsx:316`, `profile/index.tsx:172`, `today/check.tsx:126` |
+| `Field` | `Field` (`index.tsx:154`, `:458-471`), form-bottom errors (`PieceEditor.tsx:479`, `PieceSections.tsx:51, 117`, `today/index.tsx`), Closet search (`closet/index.tsx:174`), builder name (`look/build.tsx:350`, `:409`) |
+| `Tile` | `PieceTile` (`index.tsx:352`, `:508-535`), `PiecePhoto` (`index.tsx:332`), `JobTile` (`capture/index.tsx:399`, `:507-541`), `PhotoChoice.tsx:118-130`, `BodyShapes.tsx:33-58` (`:78-99`), `Thumbs` (`SavedLooks.tsx:126`), `pieceThumb` (`today/index.tsx:801`), cells in `look/build.tsx:397-401`, `today/replace.tsx:228-231`, `today/hijab.tsx:232-236`, the "Selected" badge (`index.tsx:523`), "Kept" badges (`OutfitView.tsx:158-173`, `OutfitCollage.tsx:209-224`, hard-coded English at `:184`) |
+| `FlatLay` | `OutfitView` (`src/ui/OutfitView.tsx:52`, with reasons, checks and tips at `:111-131`), `OutfitCollage` render (`:95`, `arrangePieces` at `:18` kept), collage empty text (`:117-121`), `Thumbs` (`SavedLooks.tsx:126`), `looks/index.tsx:100`, previews in `today/replace.tsx:98`, `today/hijab.tsx:100`, `today/pieces.tsx:111`, `today/index.tsx:551`, `look/build.tsx:190`, `look/[id].tsx:77` |
+| `Expander` | `/today/replace`, `/today/check`, `/today/hijab` (`app/_layout.tsx:78, 82, 86`), fact question card (`piece/[id].tsx:170`, `:383-389`), "Looks right" (`AttributeEditor.tsx:67-76`), review card (`today/index.tsx:471`, `:774-781`), capture-group box mode, in-flow `Notice` (`capture/[id].tsx:331, 400, 417`) |
+| `Banner` | `Notice` (`index.tsx:195`), occasion banner (`today/index.tsx:302`, `:765-771`), `ProblemCard` (`today/index.tsx:666`, `:787-793`), `capture/scan.tsx:246`, `capture/index.tsx:289`, capture group card (`capture/index.tsx:324`, `:498-506`), the sample-closet caption on Today, `ForecastNote` text states (`ForecastNote.tsx:22-62`) |
+| `ResultBar` | Undo buttons (`today/index.tsx:394, 539`), undo hint (`today/hijab.tsx:205`), the Save look trip to `/look/build` from Today, "Showing" disabled state (`SavedLooks.tsx:48-51`) |
+| `EmptyState` | `Message` (`index.tsx:177`) in all fourteen uses, `MissingPiece`, Closet first-piece block (`closet/index.tsx:231-247`, `:305-317`), `OutfitCollage.tsx:117-121`, `look/build.tsx:294`, `today/pieces.tsx:148`, `PieceEditor.tsx:281-286` |
+| `Silk` | `ActivityIndicator` at `index.tsx:121`, `cutout/[id].tsx:136` (overlay `:212`), `onboarding/colours.tsx:135`, the shine sweep `ScanLift.tsx:245-250`, "Making..." labels (`PieceEditor.tsx:305-307`, `PhotoChoice.tsx:70`), `OnboardingBar.tsx:79-85` |
+| `CameraFrame` | `SelfieCamera.tsx:104-155`, `ScanLift.tsx:234-265` (logic kept, `raised` shadow at `:251` becomes the elevation tokens), `SamplePoints.tsx:163-188` (`boxShadow` at `:176`), `capture/scan.tsx:289, 297` (`:386-429`), `cutout/[id].tsx:140` (`:211-232`) |
+| Kept as is | `confirmAction` (`src/ui/confirm.ts:4`); `TipDrawing` (`src/ui/TipDrawing.tsx`) as the illustration inside the three tip cards on Add pieces, drawn in `inkMuted` only |
