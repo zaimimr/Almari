@@ -48,7 +48,7 @@ appId: com.zaimimran.almari
 - tapOn: "Everyday style"
 - waitForAnimationToEnd
 - takeScreenshot: docs/redesign/screens/before/today-everyday
-- tapOn: "Cancel"
+- tapOn: "Back"
 - waitForAnimationToEnd
 - tapOn: "Try a sample style"
 - scrollUntilVisible:
@@ -59,7 +59,7 @@ appId: com.zaimimran.almari
 - tapOn: "Adjust.*"
 - waitForAnimationToEnd
 - takeScreenshot: docs/redesign/screens/before/today-adjust
-- tapOn: "Cancel"
+- tapOn: "Back"
 - waitForAnimationToEnd
 - scrollUntilVisible:
     element: "Compare hijabs"
@@ -76,7 +76,7 @@ appId: com.zaimimran.almari
     timeout: 15000
 - waitForAnimationToEnd
 - takeScreenshot: docs/redesign/screens/before/today-hijab
-- tapOn: "Cancel"
+- tapOn: "Back"
 - waitForAnimationToEnd
 - scrollUntilVisible:
     element: "Change .*(tunic|trousers|kurta|blazer|abaya|loafers|bag|shalwar|dress)"
@@ -90,7 +90,7 @@ appId: com.zaimimran.almari
 - tapOn: "Change .*(tunic|trousers|kurta|blazer|abaya|loafers|bag|shalwar|dress)"
 - waitForAnimationToEnd
 - takeScreenshot: docs/redesign/screens/before/today-replace
-- tapOn: "Cancel"
+- tapOn: "Back"
 - waitForAnimationToEnd
 - scrollUntilVisible:
     element: "Choose pieces.*"
@@ -104,7 +104,7 @@ appId: com.zaimimran.almari
 - tapOn: "Choose pieces.*"
 - waitForAnimationToEnd
 - takeScreenshot: docs/redesign/screens/before/today-pieces
-- tapOn: "Cancel"
+- tapOn: "Back"
 - waitForAnimationToEnd
 - scrollUntilVisible:
     element: "Style settings"
@@ -122,15 +122,17 @@ appId: com.zaimimran.almari
     element: "Compare results"
     centerElement: true
     timeout: 60000
+- swipe:
+    start: 50%, 40%
+    end: 50%, 60%
+    duration: 1500
+- waitForAnimationToEnd
 - tapOn: "Compare results"
 - waitForAnimationToEnd
 - takeScreenshot: docs/redesign/screens/before/today-stylist-results
-- swipe:
-    start: 50%, 12%
-    end: 50%, 90%
-    duration: 800
+- tapOn: "Back"
 - waitForAnimationToEnd
-- tapOn: "Cancel"
+- tapOn: "Back"
 - waitForAnimationToEnd
 - openLink: almari://today/check?id=sample-ivory-tunic&ask=sleeve
 - tapOn:
@@ -167,11 +169,15 @@ appId: com.zaimimran.almari
 - tapOn: "Build a look"
 - waitForAnimationToEnd
 - takeScreenshot: docs/redesign/screens/before/look-build
-- tapOn: "Cancel"
+- tapOn: "Back"
+- waitForAnimationToEnd
+- tapOn: "Today"
 - waitForAnimationToEnd
 - tapOn: "Profile"
 - waitForAnimationToEnd
 - takeScreenshot: docs/redesign/screens/before/tab-profile
+- tapOn: "Back"
+- waitForAnimationToEnd
 - tapOn: "Closet"
 - waitForAnimationToEnd
 - takeScreenshot: docs/redesign/screens/before/tab-closet
@@ -220,10 +226,7 @@ appId: com.zaimimran.almari
 - tapOn: "Add care label"
 - waitForAnimationToEnd
 - takeScreenshot: docs/redesign/screens/before/label
-- swipe:
-    start: 50%, 12%
-    end: 50%, 90%
-    duration: 800
+- tapOn: "Back"
 - waitForAnimationToEnd
 - tapOn:
     text: "Skip"

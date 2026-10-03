@@ -52,7 +52,20 @@
           "backgroundColor": "#FFFFFF"
         }
       ],
-      "expo-localization"
+      "expo-localization",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/brand/icon.png",
+          "color": "#675469"
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Find your city for the weather. Rounded to your city, sent only to Apple for the forecast."
+        }
+      ]
     ],
     "icon": "./assets/brand/icon.png",
     "locales": {

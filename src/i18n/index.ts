@@ -5,6 +5,7 @@ import type {
   Occasion,
   Style,
 } from "../domain/closet";
+import { setAccessibilityLanguage } from "../../modules/accessibility-language/src";
 import { deviceLanguage } from "./deviceLanguage";
 import { en, type Key } from "./en";
 import { nb } from "./nb";
@@ -22,8 +23,14 @@ const phoneLanguage = deviceLanguage();
 
 export let locale: Locale = localeFor(phoneLanguage);
 
+const speakIn = (next: Locale) =>
+  setAccessibilityLanguage(next === "nb" ? "nb-NO" : "en");
+
+speakIn(locale);
+
 export function setLanguage(language: Language) {
   locale = localeFrom(language, phoneLanguage);
+  speakIn(locale);
 }
 
 export const t = (key: Key, vars?: Vars) =>
