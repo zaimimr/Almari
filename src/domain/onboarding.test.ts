@@ -11,6 +11,7 @@ import {
   applyAnswer,
   finishOnboarding,
   onboardingSteps,
+  placeFrom,
   previousStep,
   setName,
   skipStep,
@@ -406,4 +407,16 @@ test("the name is trimmed and the greeting follows the hour", () => {
   assert.equal(greeting(null, 9, "en"), "Good morning");
   assert.equal(greeting("Sara", 15, "nb"), "Hei, Sara");
   assert.equal(greetingShort("Sara", "en"), "Hi, Sara");
+});
+
+test("a place is trimmed, rounded and validated", () => {
+  assert.deepEqual(placeFrom(" Oslo ", 59.91273, 10.74609, "device"), {
+    name: "Oslo",
+    latitude: 59.91,
+    longitude: 10.75,
+    source: "device",
+  });
+  assert.equal(placeFrom("Oslo", Number.NaN, 10, "search"), null);
+  assert.equal(placeFrom("Oslo", 91, 10, "search"), null);
+  assert.equal(placeFrom("   ", 59.9, 10.7, "search"), null);
 });

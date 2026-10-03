@@ -1,6 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { guideLimits, selfieGuide, type CameraReading } from "./selfieGuide";
+import {
+  guideLimits,
+  readyToCapture,
+  selfieGuide,
+  type CameraReading,
+} from "./selfieGuide";
 
 const good: CameraReading = {
   face: { x: 0.3, y: 0.22, width: 0.4, height: 0.4 },
@@ -77,4 +82,24 @@ test("movement asks her to hold still", () => {
     "still",
   );
   assert.equal(selfieGuide(read({ motion: guideLimits.motion })), "ready");
+});
+
+test("capture fires once ready has held 700 ms and resets when the guide leaves ready", () => {
+  const ready = (at: number) => ({ guide: "ready" as const, at });
+  assert.equal(readyToCapture([ready(0), ready(300), ready(650)], 650), false);
+  assert.equal(readyToCapture([ready(0), ready(300), ready(700)], 700), true);
+  assert.equal(
+    readyToCapture(
+      [ready(0), { guide: "still", at: 400 }, ready(500), ready(900)],
+      900,
+    ),
+    false,
+  );
+  assert.equal(
+    readyToCapture(
+      [ready(0), { guide: "still", at: 400 }, ready(500), ready(1200)],
+      1200,
+    ),
+    true,
+  );
 });

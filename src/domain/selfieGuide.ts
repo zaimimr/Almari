@@ -45,3 +45,15 @@ export function selfieGuide(reading: CameraReading): Guide {
   if (motion > guideLimits.motion) return "still";
   return "ready";
 }
+
+export type GuideSample = { guide: Guide; at: number };
+
+export function readyToCapture(
+  samples: GuideSample[],
+  now: number,
+  hold = 700,
+): boolean {
+  const lastOther = samples.findLastIndex((sample) => sample.guide !== "ready");
+  const since = samples[lastOther + 1];
+  return since !== undefined && now - since.at >= hold;
+}

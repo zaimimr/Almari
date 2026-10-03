@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { seasons, type ColourProfile } from "./closet";
-import { toLab, toLch, toRgb } from "./color";
+import { seasons, type ColourProfile, type Season } from "./closet";
+import { deltaE, toLab, toLch, toRgb, type Lab } from "./color";
 import {
   adjustColours,
   analyseColours,
@@ -10,6 +10,7 @@ import {
   depthOf,
   fromSelfie,
   labHex,
+  paletteFor,
   resampleColours,
   seasonFor,
   seasonFromSwatch,
@@ -275,4 +276,28 @@ test("moving a sample point re-reads that colour and the season with it", () => 
   );
   const eyes = resampleColours(measured, "eyes", [60, 0, 5]);
   assert.deepEqual(eyes.eyes, [60, 0, 5]);
+});
+
+test("hair covered drops the hair point and the palette has a go-easy set", () => {
+  const reading = {
+    skin: [60, 10, 20] as Lab,
+    hair: [20, 5, 5] as Lab,
+    eyes: [30, 2, 2] as Lab,
+    light: "ok" as const,
+  };
+  const covered = fromSelfie(reading, true);
+  assert.ok("profile" in covered && covered.profile.hair === null);
+  const open = fromSelfie(reading, false);
+  assert.ok("profile" in open && open.profile.hair !== null);
+  const palette = paletteFor({ season: "warm-autumn" as Season });
+  assert.equal(
+    palette.best.length,
+    bestColours({ season: "warm-autumn" as Season }).length,
+  );
+  assert.equal(palette.goEasy.length, 6);
+  assert.ok(
+    palette.goEasy.every(
+      (lab) => !palette.best.some((b) => deltaE(b, lab) < 1),
+    ),
+  );
 });

@@ -153,6 +153,30 @@ function withPreset(
   return saveEverydayStyle(closet, preset, clock, true);
 }
 
+export function placeFrom(
+  name: string,
+  latitude: number,
+  longitude: number,
+  source: "device" | "search",
+): Place | null {
+  const clean = name.trim();
+  const round = (value: number) => Math.round(value * 100) / 100;
+  if (
+    !clean ||
+    !Number.isFinite(latitude) ||
+    !Number.isFinite(longitude) ||
+    Math.abs(latitude) > 90 ||
+    Math.abs(longitude) > 180
+  )
+    return null;
+  return {
+    name: clean,
+    latitude: round(latitude),
+    longitude: round(longitude),
+    source,
+  };
+}
+
 export function setName(closet: Closet, name: string): Closet {
   const { name: _name, ...styling } = closet.styling;
   const clean = name.trim().slice(0, 40);

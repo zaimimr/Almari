@@ -1,6 +1,7 @@
 import type { ColourProfile, Season } from "./closet";
 import {
   contrastRange,
+  deltaE,
   toLab,
   toLch,
   toRgb,
@@ -113,11 +114,16 @@ export function resampleColours(
 
 export function fromSelfie(
   reading: SelfieReading,
+  hairCovered = false,
 ): { profile: ColourProfile } | { retake: Retake } {
   if (reading.light !== "ok") return { retake: reading.light };
   if (!reading.skin) return { retake: "no-face" };
   return {
-    profile: analyseColours(reading.skin, reading.hair, reading.eyes),
+    profile: analyseColours(
+      reading.skin,
+      hairCovered ? null : reading.hair,
+      reading.eyes,
+    ),
   };
 }
 
@@ -260,6 +266,38 @@ const paletteLab = Object.fromEntries(
 
 export function bestColours(profile: Pick<ColourProfile, "season">): Lab[] {
   return paletteLab[profile.season];
+}
+
+const opposites: Record<Season, Season> = {
+  "light-spring": "deep-winter",
+  "deep-winter": "light-spring",
+  "light-summer": "deep-autumn",
+  "deep-autumn": "light-summer",
+  "warm-spring": "cool-summer",
+  "cool-summer": "warm-spring",
+  "warm-autumn": "cool-winter",
+  "cool-winter": "warm-autumn",
+  "clear-spring": "soft-summer",
+  "soft-summer": "clear-spring",
+  "clear-winter": "soft-autumn",
+  "soft-autumn": "clear-winter",
+};
+
+export function oppositeSeason(season: Season): Season {
+  return opposites[season];
+}
+
+export function paletteFor(profile: Pick<ColourProfile, "season">): {
+  best: Lab[];
+  goEasy: Lab[];
+} {
+  const best = bestColours(profile);
+  const nearest = (lab: Lab) =>
+    Math.min(...best.map((colour) => deltaE(colour, lab)));
+  const goEasy = [...paletteLab[oppositeSeason(profile.season)]]
+    .sort((a, b) => nearest(b) - nearest(a))
+    .slice(0, 6);
+  return { best, goEasy };
 }
 
 export function labHex(lab: Lab) {
