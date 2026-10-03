@@ -186,15 +186,14 @@ test("body answers fill height and shape, and prefer not to say stays null", () 
   );
   assert.equal(closet.styling.profile.heightCm, 165);
   assert.equal(closet.styling.profile.bodyShape, "pear");
-  assert.equal(
-    applyAnswer(
-      closet,
-      "body",
-      { units: "metric", heightCm: null, bodyShape: null },
-      clock,
-    ).styling.profile.bodyShape,
-    null,
-  );
+  const preferNot = applyAnswer(
+    closet,
+    "body",
+    { units: "metric", heightCm: null, bodyShape: null },
+    clock,
+  ).styling.profile;
+  assert.equal(preferNot.bodyShape, null);
+  assert.equal(preferNot.bodyAnswered, true);
 });
 
 test("style Desi sets the everyday style, and Both keeps it", () => {

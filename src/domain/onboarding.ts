@@ -259,7 +259,7 @@ export function applyAnswer<S extends AnswerStep>(
     const { units, ...body } = answer as Answers["body"];
     return withProfile(
       { ...closet, styling: { ...closet.styling, units } },
-      body,
+      { ...body, bodyAnswered: true },
     );
   }
   return withProfile(
@@ -288,7 +288,8 @@ export function finishOnboarding(closet: Closet, clock: Clock): Closet {
 }
 
 export function replayOnboarding(closet: Closet): Closet {
-  return { ...closet, styling: { ...closet.styling, onboarded: false } };
+  const { notification: _notification, ...styling } = closet.styling;
+  return { ...closet, styling: { ...styling, onboarded: false } };
 }
 
 export function resetCloset(closet: Closet): {

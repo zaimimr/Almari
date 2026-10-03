@@ -1,10 +1,15 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { emptyCloset, type Closet, type FeedbackEvent } from "./closet";
+import {
+  emptyCloset,
+  neutralProfile,
+  type Closet,
+  type FeedbackEvent,
+} from "./closet";
 import { filterPieces, lastWorn, noFilter } from "./closetFilters";
-import { closetStats, monthWearStats } from "./profileStats";
+import { closetStats, completeness, monthWearStats } from "./profileStats";
 import { addSampleWardrobe } from "./samples";
-import { at } from "./test-helpers";
+import { at, ownedCloset, piece } from "./test-helpers";
 import { setArchived } from "./wardrobe";
 
 const samples = addSampleWardrobe(emptyCloset);
@@ -123,4 +128,72 @@ test("month stats list pieces worn twice in the month's outfits and variety is t
       samples.pieces.length,
     );
   }
+});
+
+test("completeness counts only questions she can answer", () => {
+  const empty = completeness(emptyCloset);
+  assert.equal(empty.score, 0);
+  assert.deepEqual(empty.next, ["name", "hijab", "hijabStyles"]);
+  const notNeeded = {
+    ...emptyCloset,
+    styling: {
+      ...emptyCloset.styling,
+      name: "Sara",
+      place: { name: "Oslo", latitude: 59.91, longitude: 10.75 },
+      everyday: {
+        version: 1,
+        occasion: "everyday" as const,
+        style: "western" as const,
+        hijab: "not-needed" as const,
+        sample: false,
+      },
+      profile: {
+        ...neutralProfile,
+        hijabAnswered: true as const,
+        coverageAnswered: true as const,
+        coverageLevel: null,
+        fit: "loose" as const,
+        sparkle: "plain" as const,
+        styleLean: "western" as const,
+        colour: {
+          skin: [60, 10, 20] as [number, number, number],
+          hair: null,
+          eyes: null,
+          undertone: "warm" as const,
+          depth: "medium" as const,
+          contrast: "medium" as const,
+          season:
+            emptyCloset.styling.profile.colour?.season ??
+            ("warm-autumn" as never),
+          source: "measured" as const,
+        },
+        heightCm: null,
+        bodyShape: null,
+        neverWear: [],
+        wearMore: [],
+      },
+    },
+  };
+  const almost = completeness(notNeeded);
+  assert.deepEqual(almost.next, ["body"]);
+  const body = {
+    ...notNeeded,
+    styling: {
+      ...notNeeded.styling,
+      profile: { ...notNeeded.styling.profile, heightCm: 165 },
+    },
+  };
+  assert.equal(completeness(body).score, 100);
+  assert.deepEqual(completeness(body).next, []);
+  const preferNot = {
+    ...notNeeded,
+    styling: {
+      ...notNeeded.styling,
+      profile: { ...notNeeded.styling.profile, bodyAnswered: true as const },
+    },
+  };
+  assert.equal(completeness(preferNot).score, 100);
+  const unread = ownedCloset([piece("tee", "top")], preferNot);
+  assert.deepEqual(completeness(unread).next, ["details"]);
+  assert.ok(completeness(unread).score < 100);
 });

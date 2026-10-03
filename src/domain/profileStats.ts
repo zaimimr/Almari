@@ -1,5 +1,6 @@
 import type { Closet, Piece } from "./closet";
 import { filterPieces, lastWorn, noFilter } from "./closetFilters";
+import { needsDetails } from "./facts";
 import { wearDate } from "./looks";
 import { wearCounts } from "./scoring/taste";
 import type { Clock } from "./today";
@@ -57,4 +58,66 @@ export function monthWearStats(
     { lastWorn: lastWorn(closet), today: now.localDate },
   );
   return { mostWorn, variety: 1 - notLately.length / pieces.length };
+}
+
+export type QuickAdd =
+  | "name"
+  | "hijab"
+  | "hijabStyles"
+  | "coverage"
+  | "style"
+  | "fit"
+  | "sparkle"
+  | "colours"
+  | "location"
+  | "body"
+  | "never"
+  | "wearMore"
+  | "details";
+
+export function completeness(closet: Closet): {
+  score: number;
+  next: QuickAdd[];
+} {
+  const { name, everyday, place, profile } = closet.styling;
+  const owned = closet.pieces.filter(
+    (piece) => piece.source === "owned" && piece.status !== "archived",
+  );
+  const parts: [QuickAdd, boolean | null][] = [
+    ["name", !!name],
+    ["hijab", !!profile.hijabAnswered || everyday !== null],
+    [
+      "hijabStyles",
+      everyday?.hijab === "not-needed"
+        ? null
+        : profile.hijabStyles !== undefined,
+    ],
+    ["coverage", !!profile.coverageAnswered],
+    ["style", profile.styleLean !== null],
+    ["fit", profile.fit !== null],
+    ["sparkle", profile.sparkle != null],
+    ["colours", profile.colour !== null],
+    ["location", place !== null],
+    [
+      "body",
+      profile.heightCm !== null ||
+        profile.bodyShape !== null ||
+        !!profile.bodyAnswered,
+    ],
+    ["never", profile.neverWear !== undefined],
+    ["wearMore", profile.wearMore !== undefined],
+    [
+      "details",
+      owned.length ? owned.every((piece) => !needsDetails(piece).length) : null,
+    ],
+  ];
+  const applicable = parts.filter(([, answered]) => answered !== null);
+  const answered = applicable.filter(([, done]) => done).length;
+  return {
+    score: Math.round((100 * answered) / applicable.length),
+    next: applicable
+      .filter(([, done]) => !done)
+      .slice(0, 3)
+      .map(([key]) => key),
+  };
 }

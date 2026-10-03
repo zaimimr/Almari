@@ -1289,6 +1289,9 @@ export const en = {
   "today.greeting.afternoonPlain": "Good afternoon",
   "today.greeting.eveningPlain": "Good evening",
   "today.greeting.short": "Hi, {name}",
+
+  "notify.today": "See today's outfit",
+  "notify.tomorrow": "See tomorrow's outfit",
 };
 
 export type Key = keyof typeof en;

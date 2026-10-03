@@ -1310,4 +1310,7 @@ export const nb: Record<Key, string> = {
   "today.greeting.afternoonPlain": "Hei",
   "today.greeting.eveningPlain": "God kveld",
   "today.greeting.short": "Hei, {name}",
+
+  "notify.today": "Se dagens antrekk",
+  "notify.tomorrow": "Se morgendagens antrekk",
 };

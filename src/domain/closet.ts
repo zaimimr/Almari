@@ -291,6 +291,7 @@ export type StyleProfile = {
   wearMore?: string[];
   hijabAnswered?: true;
   coverageAnswered?: true;
+  bodyAnswered?: true;
 };
 
 export const settingKeys = [
@@ -1378,6 +1379,7 @@ function withOnboardingState(closet: Closet): Closet {
               wearMore: listOf(isString),
               hijabAnswered: oneOf([true]),
               coverageAnswered: oneOf([true]),
+              bodyAnswered: oneOf([true]),
             },
           )
         : null;
