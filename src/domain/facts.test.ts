@@ -8,9 +8,14 @@ import {
   attributeValueKey,
   confirmFact,
   factChoice,
+  needsDetails,
+  pieceCoverage,
   pieceFacts,
+  setColour,
   type Fact,
 } from "./facts";
+import { colorName } from "./color";
+import { ownedCloset, piece } from "./test-helpers";
 
 const bare: Piece = {
   id: "kurta",
@@ -292,4 +297,65 @@ test("confirming a free subcategory drops the old subcategory's fixed styles", (
   assert.equal(tunic.styles, undefined);
   assert.equal(tunic.sources?.styles, undefined);
   assert.equal(tunic.sources?.kind, "confirmed");
+});
+
+test("piece coverage is judged by what the piece covers", () => {
+  const blouse = piece("blouse", "top", {
+    attributes: { sleeve: "long", length: "hip", sheer: false },
+    sources: { sleeve: "confirmed", length: "confirmed" },
+  });
+  const trousers = piece("trousers", "bottom", {
+    attributes: { length: "ankle" },
+    sources: { length: "confirmed" },
+  });
+  const skirt = piece("skirt", "bottom", {
+    attributes: { length: "knee" },
+    sources: { length: "confirmed" },
+  });
+  const kameez = piece("kameez", "tunic", {
+    attributes: { sleeve: "elbow", sheer: false },
+    sources: { sleeve: "confirmed" },
+  });
+  assert.equal(pieceCoverage(blouse), "full");
+  assert.equal(pieceCoverage(trousers), "full");
+  assert.equal(pieceCoverage(skirt), "layer");
+  assert.equal(pieceCoverage(kameez), "moderate");
+  assert.equal(pieceCoverage(piece("hijab", "hijab")), null);
+  assert.equal(
+    pieceCoverage(piece("dress", "dress", { attributes: { sleeve: "long" } })),
+    null,
+  );
+});
+
+test("needs details lists only the facts coverage reads for the category", () => {
+  assert.deepEqual(needsDetails(piece("dress", "dress")), [
+    "sleeve",
+    "sheer",
+    "length",
+  ]);
+  assert.deepEqual(
+    needsDetails(
+      piece("blouse", "top", {
+        attributes: { sleeve: "long" },
+        sources: { sleeve: "proposed" },
+      }),
+    ),
+    ["sleeve", "sheer"],
+  );
+  assert.deepEqual(needsDetails(piece("trousers", "bottom")), ["length"]);
+  assert.deepEqual(needsDetails(piece("hijab", "hijab")), []);
+  assert.deepEqual(
+    needsDetails(piece("sample", "dress", { source: "sample" })),
+    [],
+  );
+});
+
+test("a corrected colour is confirmed and survives a re-prepare", () => {
+  const closet = ownedCloset([
+    piece("h", "hijab", { colors: [{ rgb: [220, 200, 170], share: 1 }] }),
+  ]);
+  const fixed = setColour(closet, "h", "Blush");
+  const swatch = fixed.pieces[0]!.colors![0]!;
+  assert.equal(colorName(swatch.rgb), "Blush");
+  assert.equal(fixed.pieces[0]!.sources?.colour, "confirmed");
 });

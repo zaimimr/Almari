@@ -16,6 +16,7 @@ import {
   activeSession,
   applyRequest,
   ensureToday,
+  everydayRequest,
   saveEverydayStyle,
   saveForecast,
 } from "./today";
@@ -291,4 +292,35 @@ test("forecast weather is treated like the same weather entered by hand", () => 
     );
   assert.deepEqual(forecasted, withoutClear(byHand));
   assert.notDeepEqual(forecasted, unknown);
+});
+
+test("the everyday exposure answer is applied to forecast weather", () => {
+  const preset = {
+    version: 1,
+    occasion: "everyday" as const,
+    style: "western" as const,
+    hijab: "always" as const,
+    sample: false,
+    exposure: "time-outside" as const,
+  };
+  const forecast = {
+    source: "forecast" as const,
+    warmth: "cold" as const,
+    precipitation: "rain" as const,
+    exposure: null,
+    at: date,
+  };
+  assert.deepEqual(everydayRequest(preset, "owned", null, forecast).weather, {
+    ...forecast,
+    exposure: "time-outside",
+  });
+  assert.deepEqual(
+    everydayRequest({ ...preset, exposure: undefined }, "owned", null, forecast)
+      .weather,
+    forecast,
+  );
+  assert.deepEqual(
+    everydayRequest(preset, "owned", null, manual).weather,
+    manual,
+  );
 });

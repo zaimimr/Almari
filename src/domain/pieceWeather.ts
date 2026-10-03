@@ -3,7 +3,13 @@ import type { Category, Closet, GarmentKind, Piece, Traits } from "./closet";
 export type WeatherKey = "warmth" | "rain" | "snow";
 
 const keys: WeatherKey[] = ["warmth", "rain", "snow"];
-const clothing: Category[] = ["top", "tunic", "dress", "layer"];
+const warmthCategories: Category[] = [
+  "top",
+  "tunic",
+  "dress",
+  "layer",
+  "hijab",
+];
 const warmFabrics: string[] = ["wool", "velvet", "knit", "karandi", "khaddar"];
 const mediumFabrics: string[] = ["denim", "jersey"];
 const mediumKinds: GarmentKind[] = ["jacket", "blazer", "cardigan", "sweater"];
@@ -18,7 +24,7 @@ export function proposedWeather(
       return { rain: false, snow: false };
     return {};
   }
-  if (!clothing.includes(piece.category)) return {};
+  if (!warmthCategories.includes(piece.category)) return {};
   if (piece.kind === "coat") return { warmth: "warm" };
   const fabric = piece.attributes?.fabric;
   if (fabric)

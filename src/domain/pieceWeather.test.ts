@@ -6,6 +6,7 @@ import {
   type OutfitRequest,
   type Piece,
 } from "./closet";
+import type { Fabric } from "./attributes";
 import { proposeWeatherTraits } from "./pieceWeather";
 import { addSampleWardrobe } from "./samples";
 import { evaluateOutfit } from "./styling";
@@ -144,20 +145,6 @@ test("warmth, rain and snow are proposed from fabric and subcategory and marked 
     }),
     "medium",
   );
-  assert.deepEqual(
-    weatherOf(
-      save(
-        owned({
-          id: "h",
-          name: "Chiffon hijab",
-          category: "hijab",
-          kind: "hijab",
-          attributes: { fabric: "chiffon" },
-        }),
-      ),
-    ),
-    { traits: undefined, sources: undefined },
-  );
   const samples = addSampleWardrobe(emptyCloset);
   assert.equal(proposeWeatherTraits(samples), samples);
 });
@@ -277,5 +264,34 @@ test("forecast weather is checked the same way, without a clear weather action",
       closet.pieces,
     ),
     [],
+  );
+});
+
+test("hijabs and layers get a warmth proposal from their fabric or kind", () => {
+  const warmth = (
+    piece: Partial<Piece> & Pick<Piece, "id" | "name" | "category">,
+  ) => save(owned(piece)).traits?.warmth;
+  const hijabIn = (fabric: Fabric) =>
+    warmth({
+      id: fabric,
+      name: `${fabric} hijab`,
+      category: "hijab",
+      kind: "hijab",
+      attributes: { fabric },
+    });
+  assert.equal(hijabIn("chiffon"), "light");
+  assert.equal(hijabIn("silk"), "light");
+  assert.equal(hijabIn("cotton"), "light");
+  assert.equal(hijabIn("jersey"), "medium");
+  assert.equal(hijabIn("wool"), "warm");
+  assert.equal(hijabIn("knit"), "warm");
+  assert.equal(
+    save(owned({ ...hijab, attributes: { fabric: "chiffon" } })).sources
+      ?.warmth,
+    "proposed",
+  );
+  assert.equal(
+    warmth({ id: "b", name: "Blazer", category: "layer", kind: "blazer" }),
+    "medium",
   );
 });

@@ -376,7 +376,7 @@ test("piece sources accept only known fields and origins", () => {
   assert.throws(() =>
     savePiece(emptyCloset, {
       ...hijab,
-      sources: { colour: "proposed" },
+      sources: { shine: "proposed" },
     } as unknown as Piece),
   );
 });
@@ -543,7 +543,11 @@ const described: Piece = {
 test("pieces keep attributes, sources, colours and the embedding through a reopen", () => {
   const closet = savePiece(emptyCloset, described);
   const reopened = decodeCloset(JSON.stringify(closet));
-  assert.deepEqual(reopened.pieces[0], described);
+  assert.deepEqual(reopened.pieces[0], {
+    ...described,
+    traits: { warmth: "light" },
+    sources: { ...described.sources, warmth: "proposed" },
+  });
 });
 
 test("invalid attributes, colours, embeddings and sources are refused", () => {
@@ -553,7 +557,7 @@ test("invalid attributes, colours, embeddings and sources are refused", () => {
     { colors: [{ rgb: [300, 0, 0], share: 0.5 }] },
     { embedding: "short" },
     { sources: { fabric: "guessed" as never } },
-    { sources: { colour: "confirmed" } as never },
+    { sources: { shine: "confirmed" } as never },
   ];
   for (const change of broken)
     assert.throws(() => savePiece(emptyCloset, { ...described, ...change }));

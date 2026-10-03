@@ -20,7 +20,8 @@ import {
   type Sparkle,
   type Warmth,
 } from "./closet";
-import { colorName } from "./color";
+import { colorName, namedSwatch } from "./color";
+import { confirmedLength, confirmedSleeve, opacity } from "./coverage";
 import { confirmedWeather } from "./pieceWeather";
 
 export type FactKey =
@@ -43,6 +44,8 @@ export type Fact = {
 };
 
 export type WearSeason = "summer" | "winter" | "all-year";
+
+export type PieceCoverage = "full" | "moderate" | "layer";
 
 export type FactChoice = {
   label: Key;
@@ -131,6 +134,81 @@ export function setSparkle(
   return savePiece(
     closet,
     confirmAttribute(piece, "embellishment", embellishmentFor[sparkle]),
+  );
+}
+
+export function setColour(
+  closet: Closet,
+  pieceId: string,
+  name: string,
+): Closet {
+  const piece = closet.pieces.find((item) => item.id === pieceId);
+  if (!piece) return closet;
+  return savePiece(closet, {
+    ...piece,
+    colors: [namedSwatch(name), ...(piece.colors ?? []).slice(1)],
+    sources: { ...piece.sources, colour: "confirmed" },
+  });
+}
+
+const coverageLevels: PieceCoverage[] = ["layer", "moderate", "full"];
+
+function coverageOf(piece: Piece, key: FactKey): PieceCoverage | null {
+  if (key === "sleeve") {
+    const sleeve = confirmedSleeve(piece);
+    if (!sleeve) return null;
+    return sleeve === "long"
+      ? "full"
+      : sleeve === "elbow"
+        ? "moderate"
+        : "layer";
+  }
+  if (key === "length") {
+    const length = confirmedLength(piece);
+    if (!length) return null;
+    return length === "ankle"
+      ? "full"
+      : length === "calf"
+        ? "moderate"
+        : "layer";
+  }
+  if (piece.attributes?.sheer === true) return "layer";
+  return opacity(piece) === "unknown" ? null : "full";
+}
+
+export function pieceCoverage(piece: Piece): PieceCoverage | null {
+  const reads = coverageReads(piece);
+  const levels = reads.map((key) => coverageOf(piece, key));
+  if (!reads.length || levels.includes(null)) return null;
+  return coverageLevels[
+    Math.min(...levels.map((level) => coverageLevels.indexOf(level!)))
+  ]!;
+}
+
+function coverageReads(piece: Piece): FactKey[] {
+  switch (piece.category) {
+    case "top":
+    case "tunic":
+    case "layer":
+      return ["sleeve", "sheer"];
+    case "bottom":
+      return ["length"];
+    case "dress":
+      return ["sleeve", "sheer", "length"];
+    default:
+      return [];
+  }
+}
+
+export function needsDetails(piece: Piece): FactKey[] {
+  if (piece.source === "sample") return [];
+  return coverageReads(piece).filter((key) =>
+    key === "sleeve"
+      ? confirmedSleeve(piece) === undefined
+      : key === "length"
+        ? confirmedLength(piece) === undefined
+        : piece.attributes?.sheer === undefined ||
+          piece.sources?.sheer === "proposed",
   );
 }
 

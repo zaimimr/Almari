@@ -46,7 +46,10 @@ export function everydayRequest(
     garmentType: null,
     keptIds: [],
     excludedIds: [],
-    weather,
+    weather:
+      weather.source === "forecast"
+        ? { ...weather, exposure: preset.exposure ?? null }
+        : weather,
     hijab: preset.hijab,
     wardrobe,
     ...(coverageNeedFor(level, preset.coverage)

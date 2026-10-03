@@ -19,7 +19,7 @@ import {
   type Pattern,
 } from "./attributes";
 import { isCareLabel, withCareLabel, type CareLabel } from "./careLabel";
-import { isSwatches, type Swatch } from "./color";
+import { colourNames, isSwatches, type Swatch } from "./color";
 import { t } from "../i18n";
 import { withWeatherProposals } from "./pieceWeather";
 
@@ -88,7 +88,14 @@ export type GarmentRegion = {
 export type Source = "proposed" | "label" | "confirmed";
 
 export type SourceKey =
-  keyof Attributes | "kind" | "styles" | "warmth" | "rain" | "snow" | "open";
+  | keyof Attributes
+  | "kind"
+  | "styles"
+  | "warmth"
+  | "rain"
+  | "snow"
+  | "open"
+  | "colour";
 
 export type Sources = Partial<Record<SourceKey, Source>>;
 
@@ -168,6 +175,7 @@ export type ImportJob = {
   error?: string;
   label?: CareLabel;
   keepAsSet?: boolean;
+  colour?: string;
 };
 
 export type Look = {
@@ -194,7 +202,7 @@ export type Weather =
       source: "forecast";
       warmth: "warm" | "mild" | "cold";
       precipitation: "dry" | "rain" | "snow";
-      exposure: null;
+      exposure: "mostly-indoors" | "time-outside" | null;
       at: string;
     };
 
@@ -605,6 +613,7 @@ const sourceKeys: readonly SourceKey[] = [
   "rain",
   "snow",
   "open",
+  "colour",
 ];
 
 const sourceValues = ["proposed", "label", "confirmed"];
@@ -828,6 +837,9 @@ function isImportJob(value: unknown): value is ImportJob {
     optional(value.error, isString) &&
     optional(value.label, isCareLabel) &&
     optional(value.keepAsSet, isBoolean) &&
+    optional(value.colour, (name): name is string =>
+      colourNames.includes(name as string),
+    ) &&
     (!["ready", "review"].includes(value.state as string) ||
       (value.prepared !== undefined &&
         value.kind !== undefined &&
@@ -861,15 +873,13 @@ function isWeather(value: unknown): value is Weather {
   const known =
     ["warm", "mild", "cold"].includes(value.warmth as string) &&
     ["dry", "rain", "snow"].includes(value.precipitation as string);
+  const exposure =
+    value.exposure === null ||
+    value.exposure === "mostly-indoors" ||
+    value.exposure === "time-outside";
   if (value.source === "forecast")
-    return known && value.exposure === null && isString(value.at);
-  return (
-    value.source === "manual" &&
-    known &&
-    (value.exposure === null ||
-      value.exposure === "mostly-indoors" ||
-      value.exposure === "time-outside")
-  );
+    return known && exposure && isString(value.at);
+  return value.source === "manual" && known && exposure;
 }
 
 function isCoverageNeed(value: unknown): value is CoverageNeed {

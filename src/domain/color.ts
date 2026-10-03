@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import type { Fabric } from "./attributes";
 import type { GarmentKind } from "./taxonomy";
 
@@ -51,6 +52,14 @@ const palette: [string, number, number, number][] = [
   ["Purple", 110, 60, 130],
   ["Plum", 95, 50, 75],
 ];
+
+export const colourNames: readonly string[] = palette.map(([name]) => name);
+
+export function namedSwatch(name: string): Swatch {
+  const entry = palette.find(([item]) => item === name);
+  if (!entry) throw new Error(t("error.listedOption"));
+  return { rgb: [entry[1], entry[2], entry[3]], share: 1 };
+}
 
 export function toLab([r, g, b]: Rgb): Lab {
   const linear = (value: number) => {

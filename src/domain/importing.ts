@@ -1,6 +1,7 @@
 import { adviceReason } from "./quality";
 import { findDuplicate } from "./duplicates";
 import {
+  attributeKeys,
   confirmAttribute,
   mergeProposal,
   withDetails,
@@ -25,7 +26,7 @@ import {
 } from "./closet";
 import { categoryForRegion, wholePhoto, type CapturePlan } from "./capture";
 import { withCareLabel, type CareLabel } from "./careLabel";
-import { colorName, type Swatch } from "./color";
+import { colorName, namedSwatch, type Swatch } from "./color";
 import { attributeCheck, proposeAttributes, recognize } from "./recognition";
 import { isSamplePhoto } from "./samples";
 
@@ -36,6 +37,10 @@ export function nameFor(kind: GarmentKind, palette: Swatch[]) {
   const top = palette[0];
   if (!top) return kindLabel(kind);
   return `${colorName(top.rgb)} ${kindLabel(kind).toLowerCase()}`;
+}
+
+function withColour(palette: Swatch[], colour: string | undefined) {
+  return colour ? [namedSwatch(colour), ...palette.slice(1)] : palette;
 }
 
 export function queueImport(
@@ -98,10 +103,11 @@ function reviewCapture(closet: Closet, id: string): Closet {
 export function finishImport(
   closet: Closet,
   id: string,
-  prepared: Prepared,
+  read: Prepared,
 ): Closet {
   const next = updateJob(closet, id, (job) => {
     if (job.state !== "preparing") return job;
+    const prepared = { ...read, palette: withColour(read.palette, job.colour) };
     const recognition = recognize(
       prepared.labels,
       (job.region && categoryForRegion(job.region.kind)) ?? undefined,
@@ -116,13 +122,35 @@ export function finishImport(
       kind: recognition.kind,
     };
     const details = proposeAttributes(prepared.labels, base);
-    const asked = attributeCheck(details, checks.includes("uncertain"));
+    const confirmed = attributeKeys.filter(
+      (key) =>
+        job.attributeSources?.[key] === "confirmed" &&
+        job.attributes?.[key] !== undefined,
+    );
+    const asked = attributeCheck(
+      {
+        ...details,
+        uncertain: details.uncertain.filter((key) => !confirmed.includes(key)),
+      },
+      checks.includes("uncertain"),
+    );
     if (asked) checks.push("attribute");
-    const described = mergeProposal(base, details.attributes);
+    const described = mergeProposal(
+      {
+        ...base,
+        attributes: Object.fromEntries(
+          confirmed.map((key) => [key, job.attributes![key]]),
+        ),
+        sources: Object.fromEntries(confirmed.map((key) => [key, "confirmed"])),
+      },
+      details.attributes,
+    );
     const styles = recognition.styles.length ? recognition.styles : undefined;
-    const sources: Sources = styles
-      ? { kind: "proposed", styles: "proposed" }
-      : { kind: "proposed" };
+    const sources: Sources = {
+      kind: "proposed",
+      ...(styles ? { styles: "proposed" } : {}),
+      ...(job.colour ? { colour: "confirmed" } : {}),
+    };
     if (job.region?.partial && !checks.includes("partial"))
       checks.push("partial");
     return {
@@ -246,6 +274,7 @@ export function correctImport(
     keepOriginal?: boolean;
     variant?: Variant;
     attribute?: { key: AttributeKey; value: AttributeValue };
+    colour?: string;
   },
 ): Closet {
   return updateJob(closet, id, (job) => {
@@ -254,13 +283,17 @@ export function correctImport(
     const fixed = fixedStyles(kind);
     const previous = fixedStyles(job.kind!) ? undefined : job.styles;
     const styles = fixed ?? (change.styles?.length ? change.styles : previous);
+    const colour = change.colour ?? job.colour;
+    const palette = withColour(job.prepared!.palette, change.colour);
     const renamed =
       change.name ??
-      (change.kind && job.name === nameFor(job.kind!, job.prepared!.palette)
-        ? nameFor(kind, job.prepared!.palette)
+      ((change.kind || change.colour) &&
+      job.name === nameFor(job.kind!, job.prepared!.palette)
+        ? nameFor(kind, palette)
         : job.name!);
     const sources: Sources = {
       kind: change.kind ? "confirmed" : (job.sources?.kind ?? "proposed"),
+      ...(colour ? { colour: "confirmed" } : {}),
     };
     if (styles)
       sources.styles =
@@ -287,6 +320,8 @@ export function correctImport(
       );
     return {
       ...job,
+      prepared: { ...job.prepared!, palette },
+      colour,
       kind,
       styles,
       name: renamed,
@@ -586,9 +621,13 @@ export function refreshPiece(
   const piece = closet.pieces.find((item) => item.id === id);
   if (!piece) return closet;
   const proposal = proposeAttributes(prepared.labels, piece);
+  const palette =
+    piece.sources?.colour === "confirmed" && piece.colors?.[0]
+      ? [piece.colors[0], ...prepared.palette.slice(1)]
+      : prepared.palette;
   const next: Piece = {
     ...mergeProposal(piece, proposal.attributes),
-    ...(prepared.palette.length ? { colors: prepared.palette } : {}),
+    ...(palette.length ? { colors: palette } : {}),
     ...(prepared.embedding ? { embedding: prepared.embedding } : {}),
   };
   return {

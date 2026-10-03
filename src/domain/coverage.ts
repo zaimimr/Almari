@@ -59,13 +59,13 @@ const lengthRank: Record<Length, number> = {
 
 const sheerFabrics: string[] = ["chiffon", "organza", "net"];
 
-function confirmedSleeve(piece: Piece) {
+export function confirmedSleeve(piece: Piece) {
   return piece.sources?.sleeve === "proposed"
     ? undefined
     : piece.attributes?.sleeve;
 }
 
-function confirmedLength(piece: Piece) {
+export function confirmedLength(piece: Piece) {
   return piece.sources?.length === "proposed"
     ? undefined
     : piece.attributes?.length;

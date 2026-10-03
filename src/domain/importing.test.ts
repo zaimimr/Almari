@@ -18,6 +18,7 @@ import {
 } from "./closet";
 import type { CareLabel } from "./careLabel";
 import { proposalsFromRegions, unparsedCapture } from "./capture";
+import { colorName, namedSwatch } from "./color";
 import {
   acceptImports,
   addToCapture,
@@ -1129,4 +1130,69 @@ test("closets saved with the old studio switch still open without it", () => {
     assert.equal("studio" in reopened.styling, false);
     assert.equal(pieceVariant(reopened.pieces[0]!), "studio");
   }
+});
+
+test("a corrected colour is written on the palette and confirmed", () => {
+  let closet = finished({
+    palette: [
+      { rgb: [220, 200, 170], share: 0.7 },
+      { rgb: [238, 235, 230], share: 0.3 },
+    ],
+  });
+  closet = correctImport(closet, "job", { colour: "Blush" });
+  const job = closet.imports[0]!;
+  assert.deepEqual(job.prepared!.palette[0], namedSwatch("Blush"));
+  assert.deepEqual(job.prepared!.palette[1], {
+    rgb: [238, 235, 230],
+    share: 0.3,
+  });
+  assert.equal(job.sources?.colour, "confirmed");
+  assert.equal(job.name, "Blush kurta");
+  assert.deepEqual(
+    decodeCloset(JSON.stringify(closet)).imports,
+    JSON.parse(JSON.stringify(closet.imports)),
+  );
+  closet = acceptImports(closet);
+  const piece = closet.pieces[0]!;
+  assert.deepEqual(piece.colors![0], namedSwatch("Blush"));
+  assert.equal(piece.sources?.colour, "confirmed");
+  const refreshed = refreshPiece(
+    closet,
+    piece.id,
+    prepared({ palette: [{ rgb: [35, 45, 75], share: 1 }] }),
+  );
+  assert.deepEqual(refreshed.pieces[0]!.colors, [namedSwatch("Blush")]);
+});
+
+test("a retake keeps the confirmed colour and confirmed details", () => {
+  let closet = correctImport(finished(), "job", {
+    colour: "Blush",
+    attribute: { key: "sleeve", value: "elbow" },
+  });
+  closet = retakeImport(closet, "job", "second-original.jpg");
+  closet = finishImport(
+    startImport(closet, "job"),
+    "job",
+    prepared({
+      original: "second-original.jpg",
+      cutout: "second.png",
+      palette: [
+        { rgb: [35, 45, 75], share: 0.8 },
+        { rgb: [248, 248, 246], share: 0.2 },
+      ],
+    }),
+  );
+  const job = closet.imports[0]!;
+  assert.equal(colorName(job.prepared!.palette[0]!.rgb), "Blush");
+  assert.deepEqual(job.prepared!.palette[1], {
+    rgb: [248, 248, 246],
+    share: 0.2,
+  });
+  assert.equal(job.sources?.colour, "confirmed");
+  assert.equal(job.attributes?.sleeve, "elbow");
+  assert.equal(job.attributeSources?.sleeve, "confirmed");
+  const piece = acceptImports(closet).pieces[0]!;
+  assert.equal(colorName(piece.colors![0]!.rgb), "Blush");
+  assert.equal(piece.sources?.colour, "confirmed");
+  assert.equal(piece.attributes?.sleeve, "elbow");
 });
