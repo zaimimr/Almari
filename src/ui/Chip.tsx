@@ -133,7 +133,9 @@ export function Chip({
       onPressOut={() => pressTo(0)}
       disabled={disabled}
       accessibilityRole={role}
-      accessibilityLabel={accessibilityLabel ?? label}
+      accessibilityLabel={
+        accessibilityLabel ?? [keyLabel, label].filter(Boolean).join(": ")
+      }
       accessibilityValue={
         accessibilityValue ? { text: accessibilityValue } : undefined
       }
@@ -141,7 +143,7 @@ export function Chip({
         role === "checkbox"
           ? { checked: selected, disabled, busy }
           : {
-              selected: kind === "action" ? undefined : selected,
+              selected: kind === "choice" ? selected : undefined,
               disabled,
               busy,
               expanded,
