@@ -324,3 +324,36 @@ test("the everyday exposure answer is applied to forecast weather", () => {
     manual,
   );
 });
+
+test("a fresh forecast keeps the everyday exposure answer", () => {
+  const outside = saveEverydayStyle(
+    addSampleWardrobe(emptyCloset),
+    {
+      occasion: "work",
+      style: "western",
+      hijab: "always",
+      sample: true,
+      exposure: "time-outside",
+    },
+    clock,
+    true,
+  );
+  const closet = saveForecast(outside, forecast());
+  const session = activeSession(closet.styling.today!);
+  assert.deepEqual(session.request.weather, {
+    ...forecast().weather,
+    exposure: "time-outside",
+  });
+  assert.equal(
+    saveForecast(closet, forecast()).styling.today,
+    closet.styling.today,
+  );
+  const next = ensureToday(
+    { ...closet, styling: { ...closet.styling, today: null } },
+    clock,
+  );
+  assert.equal(
+    saveForecast(next, forecast()).styling.today,
+    next.styling.today,
+  );
+});
