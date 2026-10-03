@@ -317,6 +317,8 @@ export type FeedbackKind =
   | "too-formal"
   | "too-plain"
   | "too-warm"
+  | "too-cold"
+  | "hijab-mismatch"
   | "not-my-style"
   | "liked"
   | "disliked";
@@ -968,6 +970,8 @@ const feedbackKinds: FeedbackKind[] = [
   "too-formal",
   "too-plain",
   "too-warm",
+  "too-cold",
+  "hijab-mismatch",
   "not-my-style",
   "liked",
   "disliked",

@@ -15,9 +15,22 @@ import type { Candidate } from "./styling";
 import { activeSession, clockFor, replacePiece, resultFor } from "./today";
 import { t } from "../i18n";
 
-export type Chip = "too-formal" | "too-plain" | "too-warm" | "not-my-style";
+export type Chip =
+  | "too-formal"
+  | "too-plain"
+  | "too-warm"
+  | "too-cold"
+  | "hijab-mismatch"
+  | "not-my-style";
 
-const chipIds: Chip[] = ["too-formal", "too-plain", "too-warm", "not-my-style"];
+const chipIds: Chip[] = [
+  "too-formal",
+  "too-plain",
+  "too-warm",
+  "too-cold",
+  "hijab-mismatch",
+  "not-my-style",
+];
 
 export const chips: { id: Chip; readonly label: string }[] = chipIds.map(
   (id) => ({
@@ -94,6 +107,7 @@ function alternative(
     }
     if (kind === "too-plain") return statement(next) > statement(now);
     if (kind === "too-warm") return warmth(next) < warmth(now);
+    if (kind === "too-cold") return warmth(next) > warmth(now);
     return changed(current, outfit.ids) >= 2;
   };
   return (
@@ -105,7 +119,9 @@ function alternative(
 }
 
 function prefers(kind: FeedbackKind) {
-  return kind === "wore" || kind === "saved" || kind === "swap";
+  return (
+    kind === "wore" || kind === "saved" || kind === "swap" || kind === "liked"
+  );
 }
 
 export function rebuildTaste(closet: Closet, profile: StyleProfile): Taste {
@@ -115,7 +131,7 @@ export function rebuildTaste(closet: Closet, profile: StyleProfile): Taste {
     if (event.undone) continue;
     if (event.kind === "wore")
       taste = countPairs(taste, event.pieceIds, "worn");
-    if (event.kind === "not-my-style")
+    if (event.kind === "not-my-style" || event.kind === "disliked")
       taste = countPairs(taste, event.pieceIds, "rejected");
     const shown = piecesFor(closet, event.pieceIds);
     const other = piecesFor(closet, event.against ?? []);
@@ -129,8 +145,8 @@ export function rebuildTaste(closet: Closet, profile: StyleProfile): Taste {
   return taste;
 }
 
-function withFeedback(closet: Closet, event: FeedbackEvent): Closet {
-  const next = { ...closet, feedback: [...closet.feedback, event] };
+function withFeedback(closet: Closet, ...events: FeedbackEvent[]): Closet {
+  const next = { ...closet, feedback: [...closet.feedback, ...events] };
   return {
     ...next,
     styling: {
@@ -204,7 +220,10 @@ export function giveFeedback(
     today.localDate,
     session.engine ?? "rules",
   ).outfits;
-  const next = alternative(closet, kind, session.pieceIds, outfits);
+  const next =
+    kind === "hijab-mismatch"
+      ? null
+      : alternative(closet, kind, session.pieceIds, outfits);
   const recorded = withFeedback(
     closet,
     eventFor(session, kind, session.pieceIds, at, id, next?.ids),
@@ -251,6 +270,7 @@ export function woreThis(
   const today = closet.styling.today;
   if (!today) return closet;
   const session = activeSession(today);
+  if (today.active === "tomorrow" || session.date) return closet;
   if (session.revision !== expectedRevision || !session.pieceIds.length)
     return closet;
   if (wornNow(closet)) return closet;
@@ -264,6 +284,127 @@ export function woreThis(
       id,
       nextShown(closet, session),
     ),
+  );
+}
+
+export function woreLately(
+  closet: Closet,
+  pieceIds: string[],
+  at: string,
+  idFor: (pieceId: string) => string,
+): Closet {
+  const today = closet.styling.today;
+  if (!today || !pieceIds.length) return closet;
+  return withFeedback(
+    closet,
+    ...pieceIds.map((pieceId): FeedbackEvent => ({
+      id: idFor(pieceId),
+      at,
+      kind: "wore",
+      pieceIds: [pieceId],
+      request: today.everyday.request,
+      engine: today.everyday.engine ?? "rules",
+      scope: "piece",
+    })),
+  );
+}
+
+export function hasAnyWear(closet: Closet): boolean {
+  const owned = new Set(
+    closet.pieces
+      .filter((piece) => piece.source === "owned")
+      .map((piece) => piece.id),
+  );
+  return closet.feedback.some(
+    (event) =>
+      event.kind === "wore" &&
+      !event.undone &&
+      event.pieceIds.some((id) => owned.has(id)),
+  );
+}
+
+export function woreLook(
+  closet: Closet,
+  lookId: string,
+  at: string,
+  id: string,
+): Closet {
+  const today = closet.styling.today;
+  const look = closet.looks.find((item) => item.id === lookId);
+  if (!today || !look) return closet;
+  return withFeedback(closet, {
+    id,
+    at,
+    kind: "wore",
+    pieceIds: look.pieceIds,
+    request: {
+      ...today.everyday.request,
+      occasion: look.occasion ?? today.everyday.request.occasion,
+    },
+    engine: today.everyday.engine ?? "rules",
+  });
+}
+
+const sameSet = (a: string[], b: string[]) =>
+  [...a].sort().join() === [...b].sort().join();
+
+function liveFor(closet: Closet, kind: FeedbackKind, pieceIds: string[]) {
+  return (
+    [...closet.feedback]
+      .reverse()
+      .find(
+        (event) =>
+          event.kind === kind &&
+          !event.undone &&
+          sameSet(event.pieceIds, pieceIds),
+      ) ?? null
+  );
+}
+
+function undoLive(closet: Closet, kind: FeedbackKind, pieceIds: string[]) {
+  return closet.feedback.map((event) =>
+    event.kind === kind && !event.undone && sameSet(event.pieceIds, pieceIds)
+      ? { ...event, undone: true }
+      : event,
+  );
+}
+
+export function likedNow(closet: Closet): FeedbackEvent | null {
+  const today = closet.styling.today;
+  if (!today) return null;
+  const { pieceIds } = activeSession(today);
+  return pieceIds.length ? liveFor(closet, "liked", pieceIds) : null;
+}
+
+export function likeOutfit(closet: Closet, at: string, id: string): Closet {
+  const today = closet.styling.today;
+  if (!today || likedNow(closet)) return closet;
+  const session = activeSession(today);
+  if (!session.pieceIds.length) return closet;
+  return withFeedback(
+    { ...closet, feedback: undoLive(closet, "disliked", session.pieceIds) },
+    eventFor(
+      session,
+      "liked",
+      session.pieceIds,
+      at,
+      id,
+      nextShown(closet, session),
+    ),
+  );
+}
+
+export function dislikeOutfit(
+  closet: Closet,
+  pieceIds: string[],
+  at: string,
+  id: string,
+): Closet {
+  const today = closet.styling.today;
+  if (!today || !pieceIds.length) return closet;
+  return withFeedback(
+    { ...closet, feedback: undoLive(closet, "liked", pieceIds) },
+    eventFor(activeSession(today), "disliked", pieceIds, at, id, undefined),
   );
 }
 

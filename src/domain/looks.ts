@@ -24,7 +24,8 @@ export function lookEntries(closet: Closet, locale: NameLocale): LookEntry[] {
   const seen = new Set(saved.map((entry) => sameSet(entry.pieceIds)));
   const worn: LookEntry[] = [];
   for (const event of [...closet.feedback].reverse()) {
-    if (event.kind !== "wore" || event.undone) continue;
+    if (event.kind !== "wore" || event.undone || event.scope === "piece")
+      continue;
     const key = sameSet(event.pieceIds);
     if (seen.has(key)) continue;
     const pieces = event.pieceIds.flatMap((id) => {

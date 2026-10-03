@@ -509,6 +509,8 @@ export const nb: Record<Key, string> = {
   "feedback.too-formal": "For pent",
   "feedback.too-plain": "For enkelt",
   "feedback.too-warm": "For varmt",
+  "feedback.too-cold": "For kaldt",
+  "feedback.hijab-mismatch": "Hijaben passer ikke",
   "feedback.not-my-style": "Ikke min stil",
   "stylist.rules": "Regler",
   "stylist.model": "Modell",

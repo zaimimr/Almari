@@ -7,17 +7,28 @@ import {
   type Closet,
 } from "./closet";
 import {
+  dislikeOutfit,
   giveFeedback,
+  hasAnyWear,
+  likeOutfit,
   recordSaved,
   saveProfile,
   swapPiece,
   undoFeedback,
+  woreLately,
+  woreLook,
   woreThis,
   wornNow,
 } from "./feedback";
+import { lookEntries } from "./looks";
 import { addSampleWardrobe } from "./samples";
 import { baseWeights, rulesScorer } from "./scoring/rulesScorer";
-import { scoreContext, tasteLimit, weightOf } from "./scoring/taste";
+import {
+  scoreContext,
+  tasteLimit,
+  wearCounts,
+  weightOf,
+} from "./scoring/taste";
 import { replacementsFor } from "./styling";
 import {
   activeSession,
@@ -25,6 +36,7 @@ import {
   saveEverydayStyle,
   startOccasion,
 } from "./today";
+import { ownedCloset, piece, styledSample } from "./test-helpers";
 
 const clock = { localDate: "2026-10-01", timeZone: "Europe/Oslo" };
 const at = "2026-10-01T08:00:00.000Z";
@@ -254,4 +266,79 @@ test("an outfit worn on an earlier day can be worn again today", () => {
   );
   assert.equal(again.feedback.length, 2);
   assert.equal(wornNow(again)?.id, "w2");
+});
+
+test("marking pieces as worn records one piece wear each and no outfit", () => {
+  const closet = {
+    ...ownedCloset([piece("a", "top"), piece("b", "bottom")]),
+    styling: { ...styledSample().styling, wardrobe: "owned" as const },
+  };
+  assert.equal(hasAnyWear(closet), false);
+  const marked = woreLately(
+    closet,
+    ["a", "b"],
+    "2026-10-01T12:00:00Z",
+    (id) => `w-${id}`,
+  );
+  assert.equal(marked.feedback.length, 2);
+  assert.ok(
+    marked.feedback.every(
+      (event) => event.scope === "piece" && event.pieceIds.length === 1,
+    ),
+  );
+  assert.deepEqual(wearCounts(marked.feedback), { a: 1, b: 1 });
+  assert.equal(hasAnyWear(marked), true);
+  assert.equal(lookEntries(marked, "en").length, 0);
+});
+
+test("wear this is refused while planning another day or on tomorrow", () => {
+  const closet = styledSample();
+  const session = activeSession(closet.styling.today!);
+  const planning = startOccasion(closet, {
+    ...session.request,
+    occasion: "eid",
+  });
+  const dated = {
+    ...planning,
+    styling: {
+      ...planning.styling,
+      today: {
+        ...planning.styling.today!,
+        occasion: { ...planning.styling.today!.occasion!, date: "2026-10-11" },
+      },
+    },
+  };
+  const revision = activeSession(dated.styling.today!).revision;
+  assert.equal(woreThis(dated, revision, "2026-10-02T09:00:00Z", "w1"), dated);
+  const worn = woreThis(closet, session.revision, "2026-10-02T09:00:00Z", "w2");
+  assert.equal(worn.feedback.filter((e) => e.kind === "wore").length, 1);
+});
+
+test("a look can be marked worn yesterday and likes are undoable taste", () => {
+  const base = styledSample();
+  const look = {
+    id: "l1",
+    name: "Office",
+    pieceIds: activeSession(base.styling.today!).pieceIds,
+    createdAt: "2026-10-01T00:00:00Z",
+    occasion: "work" as const,
+  };
+  const closet = { ...base, looks: [look] };
+  const worn = woreLook(closet, "l1", "2026-10-01T18:00:00Z", "w3");
+  assert.equal(worn.feedback.at(-1)?.kind, "wore");
+  assert.deepEqual(worn.feedback.at(-1)?.pieceIds, look.pieceIds);
+  const liked = likeOutfit(closet, "2026-10-02T09:00:00Z", "like1");
+  assert.equal(liked.feedback.at(-1)?.kind, "liked");
+  const disliked = dislikeOutfit(
+    liked,
+    look.pieceIds,
+    "2026-10-02T09:01:00Z",
+    "dis1",
+  );
+  assert.equal(disliked.feedback.find((e) => e.id === "like1")?.undone, true);
+  assert.equal(disliked.feedback.at(-1)?.kind, "disliked");
+  assert.deepEqual(
+    activeSession(disliked.styling.today!).pieceIds,
+    activeSession(liked.styling.today!).pieceIds,
+  );
 });
