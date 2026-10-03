@@ -12,7 +12,8 @@ import { ClosetRepository, type ClosetStorage } from "./repository";
 import { addSampleWardrobe } from "./samples";
 import { rulesScorer } from "./scoring/rulesScorer";
 import { scoreContext } from "./scoring/taste";
-import { replacementsFor, roleOf, styleOutfits } from "./styling";
+import { missingRoles, replacementsFor, roleOf, styleOutfits } from "./styling";
+import { piece } from "./test-helpers";
 import {
   activeSession,
   applyRequest,
@@ -447,4 +448,26 @@ test("T12 sample clothes never appear in owned suggestions and owned clothes car
       ids.some((id) => id.startsWith("my-")),
       false,
     );
+});
+
+test("missing roles name what the owned pool still needs", () => {
+  const hijab = piece("h", "hijab", { kind: "hijab" });
+  const tunic = piece("t", "tunic", { kind: "kurta" });
+  const trousers = piece("b", "bottom", { kind: "trousers" });
+  const shoes = piece("s", "shoes", { kind: "flats" });
+  const abaya = piece("a", "dress", { kind: "abaya" });
+  assert.deepEqual(missingRoles([hijab], { hijab: "always" }), [
+    "main",
+    "bottom",
+    "shoes",
+  ]);
+  assert.deepEqual(missingRoles([tunic, trousers], { hijab: "always" }), [
+    "shoes",
+    "hijab",
+  ]);
+  assert.deepEqual(missingRoles([abaya, shoes], { hijab: null }), []);
+  assert.deepEqual(
+    missingRoles([tunic, trousers, shoes, hijab], { hijab: "always" }),
+    [],
+  );
 });

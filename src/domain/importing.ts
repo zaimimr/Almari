@@ -10,10 +10,13 @@ import {
   type Described,
 } from "./attributes";
 import {
+  categories,
   categoryOf,
   fixedStyles,
+  isAvailable,
   kindLabel,
   savePiece,
+  type Category,
   type Closet,
   type Frame,
   type GarmentKind,
@@ -29,6 +32,8 @@ import { withCareLabel, type CareLabel } from "./careLabel";
 import { colorName, namedSwatch, type Swatch } from "./color";
 import { attributeCheck, proposeAttributes, recognize } from "./recognition";
 import { isSamplePhoto } from "./samples";
+import { linkSet } from "./sets";
+import { missingRoles } from "./styling";
 
 export type CheckReason =
   "uncertain" | "no-cutout" | "several" | "attribute" | "partial";
@@ -591,16 +596,92 @@ export function pieceFromImport(job: ImportJob): Piece | null {
 export function acceptImports(closet: Closet): Closet {
   let next = closet;
   const accepted: string[] = [];
+  const sets = new Map<string, string[]>();
   for (const job of closet.imports) {
     const piece = pieceFromImport(job);
     if (!piece) continue;
-    if (!closet.pieces.some((item) => item.id === piece.id))
+    if (!closet.pieces.some((item) => item.id === piece.id)) {
       next = savePiece(next, piece);
+      if (job.keepAsSet && job.captureId)
+        sets.set(job.captureId, [...(sets.get(job.captureId) ?? []), job.id]);
+    }
     accepted.push(job.id);
   }
-  return {
+  for (const [captureId, ids] of sets)
+    if (ids.length > 1) next = linkSet(next, ids, captureId);
+  return settleWardrobe({
     ...next,
     imports: next.imports.filter((job) => !accepted.includes(job.id)),
+  });
+}
+
+export function settleWardrobe(closet: Closet): Closet {
+  if (closet.styling.wardrobe !== "sample") return closet;
+  const owned = closet.pieces.filter(
+    (piece) => piece.source === "owned" && isAvailable(piece),
+  );
+  if (
+    missingRoles(owned, { hijab: closet.styling.everyday?.hijab ?? null })
+      .length
+  )
+    return closet;
+  return {
+    ...closet,
+    styling: { ...closet.styling, wardrobe: "owned", today: null },
+  };
+}
+
+export function sameCapture(pieces: Piece[]): boolean {
+  const captureId = pieces[0]?.captureId;
+  return (
+    Boolean(captureId) && pieces.every((piece) => piece.captureId === captureId)
+  );
+}
+
+export type CaptureProgress = {
+  total: number;
+  ready: number;
+  confirm: number;
+  failed: number;
+  done: boolean;
+  byCategory: { category: Category; count: number }[];
+};
+
+export function captureProgress(closet: Closet): CaptureProgress | null {
+  const jobs = closet.imports;
+  if (!jobs.length) return null;
+  const count = (state: ImportJob["state"]) =>
+    jobs.filter((job) => job.state === state).length;
+  const sorted = jobs.flatMap((job) =>
+    job.kind && (job.state === "ready" || job.state === "review")
+      ? [categoryOf(job.kind)]
+      : [],
+  );
+  return {
+    total: jobs.length,
+    ready: count("ready"),
+    confirm: count("review"),
+    failed: count("failed"),
+    done: jobs.every(isSettled),
+    byCategory: categories.flatMap(({ id }) => {
+      const found = sorted.filter((category) => category === id).length;
+      return found ? [{ category: id, count: found }] : [];
+    }),
+  };
+}
+
+export function setKeepAsSet(
+  closet: Closet,
+  captureId: string,
+  keep: boolean,
+): Closet {
+  return {
+    ...closet,
+    imports: closet.imports.map((job) => {
+      if (job.captureId !== captureId) return job;
+      const { keepAsSet: _keepAsSet, ...rest } = job;
+      return keep ? { ...rest, keepAsSet: true } : rest;
+    }),
   };
 }
 

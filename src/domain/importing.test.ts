@@ -17,12 +17,14 @@ import {
   type Prepared,
 } from "./closet";
 import type { CareLabel } from "./careLabel";
+import { piece as ownedPiece } from "./test-helpers";
 import { proposalsFromRegions, unparsedCapture } from "./capture";
 import { colorName, namedSwatch } from "./color";
 import {
   acceptImports,
   addToCapture,
   captureJobs,
+  captureProgress,
   correctImport,
   cropCapture,
   dismissAdvice,
@@ -43,7 +45,10 @@ import {
   removeImport,
   retakeImport,
   retryImport,
+  sameCapture,
   setImportLabel,
+  setKeepAsSet,
+  settleWardrobe,
   importStudioSource,
   setImportStudio,
   splitCapture,
@@ -1195,4 +1200,110 @@ test("a retake keeps the confirmed colour and confirmed details", () => {
   assert.equal(colorName(piece.colors![0]!.rgb), "Blush");
   assert.equal(piece.sources?.colour, "confirmed");
   assert.equal(piece.attributes?.sleeve, "elbow");
+});
+
+test("capture progress counts the queue and links a set on add", () => {
+  const ids = ["c1-hijab", "c1-top", "c1-fail"];
+  let closet = ids.reduce(
+    (current, id) =>
+      startImport(
+        queueImport(current, {
+          id,
+          source: `${id}-original.jpg`,
+          createdAt: "2026-10-01T08:00:00Z",
+        }),
+        id,
+      ),
+    emptyCloset,
+  );
+  assert.equal(captureProgress(emptyCloset), null);
+  assert.equal(captureProgress(closet)!.done, false);
+  closet = {
+    ...closet,
+    imports: closet.imports.map((job) => ({ ...job, captureId: "c1" })),
+  };
+  closet = finishImport(
+    closet,
+    "c1-hijab",
+    prepared({ labels: [{ group: "kind", value: "hijab", score: 0.9 }] }),
+  );
+  closet = finishImport(
+    closet,
+    "c1-top",
+    prepared({
+      labels: [{ group: "kind", value: "blouse", score: 0.9 }],
+      instances: 2,
+    }),
+  );
+  closet = failImport(closet, "c1-fail", "processing");
+  assert.deepEqual(captureProgress(closet), {
+    total: 3,
+    ready: 1,
+    confirm: 1,
+    failed: 1,
+    done: true,
+    byCategory: [
+      { category: "hijab", count: 1 },
+      { category: "top", count: 1 },
+    ],
+  });
+  closet = setKeepAsSet(closet, "c1", true);
+  assert.ok(closet.imports.every((job) => job.keepAsSet === true));
+  closet = correctImport(closet, "c1-top", { kind: "blouse" });
+  const saved = acceptImports(closet);
+  const [first, second] = saved.pieces;
+  assert.equal(saved.pieces.length, 2);
+  assert.ok(first!.setId);
+  assert.equal(first!.setId, second!.setId);
+  assert.ok(sameCapture(saved.pieces));
+  assert.equal(sameCapture([...saved.pieces, ownedPiece("x", "top")]), false);
+  assert.equal(sameCapture([]), false);
+  assert.deepEqual(captureProgress(saved), {
+    total: 1,
+    ready: 0,
+    confirm: 0,
+    failed: 1,
+    done: true,
+    byCategory: [],
+  });
+  const loose = acceptImports(setKeepAsSet(closet, "c1", false));
+  assert.ok(loose.pieces.every((item) => item.setId === undefined));
+  assert.ok(
+    setKeepAsSet(closet, "c1", false).imports.every(
+      (job) => !("keepAsSet" in job),
+    ),
+  );
+});
+
+test("owned pieces take over from the samples once they make an outfit", () => {
+  const add = (pieces: Piece[]) =>
+    pieces.reduce((current, item) => savePiece(current, item), emptyCloset);
+  const outfit = [
+    ownedPiece("t", "tunic", { kind: "kurta" }),
+    ownedPiece("b", "bottom", { kind: "trousers" }),
+    ownedPiece("s", "shoes", { kind: "flats" }),
+  ];
+  assert.equal(settleWardrobe(add(outfit)).styling.wardrobe, "owned");
+  assert.equal(
+    settleWardrobe(add(outfit.slice(0, 2))).styling.wardrobe,
+    "sample",
+  );
+  const away = add(
+    outfit.map((item) => ({ ...item, status: "archived" as const })),
+  );
+  assert.equal(settleWardrobe(away).styling.wardrobe, "sample");
+  const always = {
+    ...add(outfit),
+    styling: {
+      ...emptyCloset.styling,
+      everyday: {
+        occasion: "everyday" as const,
+        style: "desi" as const,
+        hijab: "always" as const,
+        sample: false,
+        version: 1,
+      },
+    },
+  };
+  assert.equal(settleWardrobe(always).styling.wardrobe, "sample");
 });

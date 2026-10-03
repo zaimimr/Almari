@@ -109,6 +109,25 @@ function needsBottom(piece: Piece) {
   return piece.category === "top" || piece.category === "tunic";
 }
 
+export function missingRoles(
+  pieces: Piece[],
+  request: Pick<OutfitRequest, "hijab">,
+): Role[] {
+  const has = (role: Role) => pieces.some((piece) => roleOf(piece) === role);
+  const mains = pieces.filter(
+    (piece) => roleOf(piece) === "main" || piece.kind === "abaya",
+  );
+  const whole = mains.some(
+    (piece) => piece.category === "dress" || piece.kind === "abaya",
+  );
+  return [
+    ...(mains.length ? [] : ["main" as const]),
+    ...(whole || has("bottom") ? [] : ["bottom" as const]),
+    ...(has("shoes") ? [] : ["shoes" as const]),
+    ...(request.hijab === "always" && !has("hijab") ? ["hijab" as const] : []),
+  ];
+}
+
 function otherStyle(style: Style): Style {
   return style === "desi" ? "western" : "desi";
 }
