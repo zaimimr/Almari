@@ -7,7 +7,6 @@ import {
   answersFrom,
   replayOnboarding,
   resetCloset,
-  type AnswerStep,
 } from "../../../src/domain/onboarding";
 import { closetStats } from "../../../src/domain/profileStats";
 import { formatHeight } from "../../../src/domain/units";
@@ -34,23 +33,25 @@ export default function Profile() {
   const [error, setError] = useState<string | null>(null);
   const answers = answersFrom(closet);
   const stats = closetStats(closet);
-  const { hijab, place, body, taste, colours } = answers;
+  const { hijab, coverage, place, body, style, fit, colours } = answers;
   const summary = (...parts: (string | null)[]) =>
     parts.filter(Boolean).join(", ") || t("profile.notAnswered");
-  const rows: { step: AnswerStep; title: string; text: string }[] = [
+  const rows: { step: string; title: string; text: string }[] = [
     {
       step: "hijab",
       title: t("onboarding.hijab.title"),
       text: summary(
         hijab.hijab && t(`onboarding.hijab.${hijab.hijab}`),
-        hijab.coverage && t(`onboarding.coverage.${hijab.coverage}`),
+        coverage.coverage && coverage.coverage !== "relaxed"
+          ? t(`onboarding.coverage.${coverage.coverage}`)
+          : null,
       ),
     },
     {
       step: "place",
       title: t("onboarding.place.title"),
       text: summary(
-        t(`onboarding.units.${place.units}`),
+        t(`onboarding.units.${body.units}`),
         place.place?.name ?? null,
       ),
     },
@@ -58,9 +59,7 @@ export default function Profile() {
       step: "body",
       title: t("onboarding.body.title"),
       text: summary(
-        body.heightCm === null
-          ? null
-          : formatHeight(body.heightCm, place.units),
+        body.heightCm === null ? null : formatHeight(body.heightCm, body.units),
         body.bodyShape && t(`shape.${body.bodyShape}`),
       ),
     },
@@ -68,9 +67,9 @@ export default function Profile() {
       step: "taste",
       title: t("onboarding.taste.title"),
       text: summary(
-        taste.fit && t(`onboarding.fit.${taste.fit}`),
-        taste.colourLean && t(`onboarding.colourLean.${taste.colourLean}`),
-        taste.styleLean && t(`onboarding.styleLean.${taste.styleLean}`),
+        fit.fit && t(`onboarding.fit.${fit.fit}`),
+        colours.colourLean && t(`onboarding.colourLean.${colours.colourLean}`),
+        style.styleLean && t(`onboarding.styleLean.${style.styleLean}`),
       ),
     },
     {

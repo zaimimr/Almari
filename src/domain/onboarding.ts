@@ -1,11 +1,15 @@
 import {
+  coverageNeedFor,
   emptyCloset,
   type BodyShape,
   type Closet,
   type ColourProfile,
   type Coverage,
   type EverydayStyle,
+  type HijabStyle,
+  type NotificationTime,
   type Place,
+  type Sparkle,
   type StyleProfile,
   type Units,
 } from "./closet";
@@ -14,10 +18,15 @@ import { addSampleWardrobe } from "./samples";
 import { saveEverydayStyle, type Clock } from "./today";
 
 export const onboardingSteps = [
+  "name",
   "hijab",
+  "hijabStyles",
+  "coverage",
+  "style",
+  "fit",
+  "sparkle",
   "place",
-  "body",
-  "taste",
+  "notifications",
   "colours",
   "done",
 ] as const;
@@ -25,14 +34,20 @@ export const onboardingSteps = [
 export type OnboardingStep = (typeof onboardingSteps)[number];
 
 export type Answers = {
-  hijab: {
-    hijab: "always" | "sometimes" | "no" | null;
-    coverage: Coverage | null;
+  name: { name: string | null };
+  hijab: { hijab: "always" | "sometimes" | "no" | null };
+  hijabStyles: { hijabStyles: HijabStyle[] | null };
+  coverage: { coverage: Coverage | null; answered: boolean };
+  style: { styleLean: StyleProfile["styleLean"] };
+  fit: { fit: StyleProfile["fit"] };
+  sparkle: { sparkle: Sparkle | null };
+  place: { place: Place | null };
+  notifications: { notification: NotificationTime | null };
+  colours: {
+    colour: ColourProfile | null;
+    colourLean: StyleProfile["colourLean"];
   };
-  place: { units: Units; place: Place | null };
-  body: { heightCm: number | null; bodyShape: BodyShape | null };
-  taste: Pick<StyleProfile, "fit" | "colourLean" | "styleLean">;
-  colours: { colour: ColourProfile | null };
+  body: { units: Units; heightCm: number | null; bodyShape: BodyShape | null };
 };
 
 export type AnswerStep = keyof Answers;
@@ -43,34 +58,64 @@ const hijabPreference = {
   sometimes: null,
 } as const;
 
-export function skipStep(step: OnboardingStep): OnboardingStep {
-  return onboardingSteps[onboardingSteps.indexOf(step) + 1] ?? "done";
+export function stepsFor(answers: Answers): OnboardingStep[] {
+  return onboardingSteps.filter(
+    (step) => step !== "hijabStyles" || answers.hijab.hijab !== "no",
+  );
 }
 
-export function previousStep(step: OnboardingStep): OnboardingStep | null {
-  return onboardingSteps[onboardingSteps.indexOf(step) - 1] ?? null;
+export function skipStep(
+  step: OnboardingStep,
+  answers: Answers,
+): OnboardingStep {
+  const steps = stepsFor(answers);
+  return (
+    onboardingSteps
+      .slice(onboardingSteps.indexOf(step) + 1)
+      .find((next) => steps.includes(next)) ?? "done"
+  );
+}
+
+export function previousStep(
+  step: OnboardingStep,
+  answers: Answers,
+): OnboardingStep | null {
+  const steps = stepsFor(answers);
+  return (
+    onboardingSteps
+      .slice(0, onboardingSteps.indexOf(step))
+      .reverse()
+      .find((before) => steps.includes(before)) ?? null
+  );
 }
 
 export function answersFrom(closet: Closet): Answers {
-  const { everyday, profile, units, place } = closet.styling;
+  const { everyday, profile, units, place, name, notification } =
+    closet.styling;
   return {
+    name: { name: name ?? null },
     hijab: {
       hijab:
         everyday?.hijab === "always"
           ? "always"
           : everyday?.hijab === "not-needed"
             ? "no"
-            : null,
+            : profile.hijabAnswered || everyday
+              ? "sometimes"
+              : null,
+    },
+    hijabStyles: { hijabStyles: profile.hijabStyles ?? null },
+    coverage: {
       coverage: profile.coverageLevel,
+      answered: profile.coverageAnswered === true,
     },
-    place: { units, place },
-    body: { heightCm: profile.heightCm, bodyShape: profile.bodyShape },
-    taste: {
-      fit: profile.fit,
-      colourLean: profile.colourLean,
-      styleLean: profile.styleLean,
-    },
-    colours: { colour: profile.colour },
+    style: { styleLean: profile.styleLean },
+    fit: { fit: profile.fit },
+    sparkle: { sparkle: profile.sparkle ?? null },
+    place: { place },
+    notifications: { notification: notification ?? null },
+    colours: { colour: profile.colour, colourLean: profile.colourLean },
+    body: { units, heightCm: profile.heightCm, bodyShape: profile.bodyShape },
   };
 }
 
@@ -108,55 +153,112 @@ function withPreset(
   return saveEverydayStyle(closet, preset, clock, true);
 }
 
+export function setName(closet: Closet, name: string): Closet {
+  const { name: _name, ...styling } = closet.styling;
+  const clean = name.trim().slice(0, 40);
+  return {
+    ...closet,
+    styling: clean ? { ...styling, name: clean } : styling,
+  };
+}
+
 export function applyAnswer<S extends AnswerStep>(
   closet: Closet,
   step: S,
   answer: Answers[S],
   clock: Clock,
 ): Closet {
+  if (step === "name")
+    return setName(closet, (answer as Answers["name"]).name ?? "");
   if (step === "hijab") {
-    const { hijab, coverage } = answer as Answers["hijab"];
-    const saved = withProfile(closet, { coverageLevel: coverage });
-    const styled =
-      hijab === null
-        ? saved
-        : withPreset(saved, { hijab: hijabPreference[hijab] }, clock);
-    const everyday = styled.styling.everyday;
-    if (
-      !everyday ||
-      coverage === closet.styling.profile.coverageLevel ||
-      everyday.version !== closet.styling.everyday?.version
-    )
-      return styled;
-    return saveEverydayStyle(styled, everyday, clock, true);
+    const { hijab } = answer as Answers["hijab"];
+    if (hijab === null) return closet;
+    return withPreset(
+      withProfile(closet, { hijabAnswered: true }),
+      { hijab: hijabPreference[hijab] },
+      clock,
+    );
+  }
+  if (step === "hijabStyles") {
+    const { hijabStyles } = answer as Answers["hijabStyles"];
+    const { hijabStyles: _old, ...profile } = closet.styling.profile;
+    return {
+      ...closet,
+      styling: {
+        ...closet.styling,
+        profile: hijabStyles ? { ...profile, hijabStyles } : profile,
+      },
+    };
+  }
+  if (step === "coverage") {
+    const { coverage, answered } = answer as Answers["coverage"];
+    const saved = withProfile(closet, {
+      coverageLevel: coverage,
+      ...(answered ? { coverageAnswered: true as const } : {}),
+    });
+    const everyday = saved.styling.everyday;
+    if (!everyday || coverage === closet.styling.profile.coverageLevel)
+      return saved;
+    return saveEverydayStyle(saved, everyday, clock, true);
+  }
+  if (step === "style") {
+    const { styleLean } = answer as Answers["style"];
+    const saved = withProfile(closet, { styleLean });
+    return styleLean === "desi" || styleLean === "western"
+      ? withPreset(saved, { style: styleLean }, clock)
+      : saved;
   }
   if (step === "place") {
-    const { units, place } = answer as Answers["place"];
+    const { place } = answer as Answers["place"];
     const moved =
       JSON.stringify(place) !== JSON.stringify(closet.styling.place);
     return {
       ...closet,
       styling: {
         ...closet.styling,
-        units,
         place,
         forecast: moved ? null : closet.styling.forecast,
       },
     };
   }
-  if (step === "body") return withProfile(closet, answer as Answers["body"]);
-  if (step === "taste") {
-    const taste = answer as Answers["taste"];
-    const saved = withProfile(closet, taste);
-    return taste.styleLean === "desi" || taste.styleLean === "western"
-      ? withPreset(saved, { style: taste.styleLean }, clock)
-      : saved;
+  if (step === "notifications")
+    return {
+      ...closet,
+      styling: {
+        ...closet.styling,
+        notification: (answer as Answers["notifications"]).notification,
+      },
+    };
+  if (step === "body") {
+    const { units, ...body } = answer as Answers["body"];
+    return withProfile(
+      { ...closet, styling: { ...closet.styling, units } },
+      body,
+    );
   }
-  return withProfile(closet, answer as Answers["colours"]);
+  return withProfile(
+    closet,
+    answer as Answers["fit"] | Answers["sparkle"] | Answers["colours"],
+  );
 }
 
-export function finishOnboarding(closet: Closet): Closet {
-  return { ...closet, styling: { ...closet.styling, onboarded: true } };
+export function finishOnboarding(closet: Closet, clock: Clock): Closet {
+  const done = { ...closet, styling: { ...closet.styling, onboarded: true } };
+  if (done.styling.everyday) return done;
+  const { styleLean, coverageLevel } = done.styling.profile;
+  const coverage = coverageNeedFor(coverageLevel);
+  return saveEverydayStyle(
+    done,
+    {
+      occasion: "everyday",
+      style: styleLean === "desi" ? "desi" : "western",
+      hijab: null,
+      sample: false,
+      ...(coverage ? { coverage } : {}),
+    },
+    clock,
+    true,
+  );
 }
 
 export function replayOnboarding(closet: Closet): Closet {

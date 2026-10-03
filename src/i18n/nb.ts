@@ -1281,4 +1281,12 @@ export const nb: Record<Key, string> = {
   "selfie.guide.still": "Hold deg i ro",
   "selfie.guide.ready": "Klar",
   "colours.photo": "Selfien din med målepunktene",
+
+  "today.greeting.morning": "God morgen, {name}",
+  "today.greeting.afternoon": "Hei, {name}",
+  "today.greeting.evening": "God kveld, {name}",
+  "today.greeting.morningPlain": "God morgen",
+  "today.greeting.afternoonPlain": "Hei",
+  "today.greeting.eveningPlain": "God kveld",
+  "today.greeting.short": "Hei, {name}",
 };

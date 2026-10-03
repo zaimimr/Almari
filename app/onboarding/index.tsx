@@ -13,12 +13,8 @@ import {
   answersFrom,
   applyAnswer,
   finishOnboarding,
-  onboardingSteps,
-  previousStep,
-  skipStep,
   type AnswerStep,
   type Answers,
-  type OnboardingStep,
 } from "../../src/domain/onboarding";
 import { clockFor } from "../../src/domain/today";
 import { feetAndInches, parseHeight } from "../../src/domain/units";
@@ -38,8 +34,11 @@ import {
 } from "../../src/ui";
 import { theme } from "../../src/ui/theme";
 
-const isStep = (value: unknown): value is OnboardingStep =>
-  onboardingSteps.includes(value as OnboardingStep);
+const steps = ["hijab", "place", "body", "taste", "colours", "done"] as const;
+
+type Step = (typeof steps)[number];
+
+const isStep = (value: unknown): value is Step => steps.includes(value as Step);
 
 const heightEntry = (cm: number | null) =>
   cm === null
@@ -55,9 +54,7 @@ export default function Onboarding() {
   const single =
     isStep(params.step) && params.step !== "done" ? params.step : null;
   const { closet, update } = useCloset();
-  const [step, setStep] = useState<OnboardingStep>(
-    single ?? onboardingSteps[0],
-  );
+  const [step, setStep] = useState<Step>(single ?? steps[0]);
   const [answers, setAnswers] = useState<Answers>(() => answersFrom(closet));
   const [height, setHeight] = useState(() =>
     heightEntry(closet.styling.profile.heightCm),
@@ -66,7 +63,7 @@ export default function Onboarding() {
   const [city, setCity] = useState(closet.styling.place?.name ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const units = answers.place.units;
+  const units = answers.body.units;
   const saved = closet.styling.profile.colour;
 
   function change<S extends AnswerStep>(key: S, value: Partial<Answers[S]>) {
@@ -79,7 +76,7 @@ export default function Onboarding() {
   function advance() {
     setError(null);
     if (single) router.back();
-    else setStep(skipStep(step));
+    else setStep(steps[steps.indexOf(step) + 1] ?? "done");
   }
 
   async function run(transform: (current: Closet) => Closet, then: () => void) {
@@ -97,7 +94,8 @@ export default function Onboarding() {
 
   function save() {
     if (step === "done" || step === "colours") return advance();
-    let answer: Answers[AnswerStep] = answers[step];
+    let body = answers.body;
+    let place = answers.place;
     if (step === "body") {
       const empty =
         units === "metric"
@@ -106,17 +104,47 @@ export default function Onboarding() {
       const heightCm = empty ? null : parseHeight(units, height);
       if (!empty && heightCm === null)
         return setError(t("onboarding.height.invalid"));
-      answer = { ...answers.body, heightCm };
+      body = { ...answers.body, heightCm };
     }
     if (step === "place") {
       if (city.trim() && city.trim() !== answers.place.place?.name)
         return void findCity();
-      if (!city.trim()) answer = { ...answers.place, place: null };
+      if (!city.trim()) place = { place: null };
     }
-    void run(
-      (current) => applyAnswer(current, step, answer, clockFor(new Date())),
-      advance,
-    );
+    const clock = clockFor(new Date());
+    const transforms = {
+      hijab: (current: Closet) =>
+        applyAnswer(
+          applyAnswer(current, "hijab", answers.hijab, clock),
+          "coverage",
+          answers.coverage,
+          clock,
+        ),
+      place: (current: Closet) =>
+        applyAnswer(
+          applyAnswer(current, "place", place, clock),
+          "body",
+          { ...answersFrom(current).body, units },
+          clock,
+        ),
+      body: (current: Closet) => applyAnswer(current, "body", body, clock),
+      taste: (current: Closet) =>
+        applyAnswer(
+          applyAnswer(
+            applyAnswer(current, "style", answers.style, clock),
+            "fit",
+            answers.fit,
+            clock,
+          ),
+          "colours",
+          {
+            ...answersFrom(current).colours,
+            colourLean: answers.colours.colourLean,
+          },
+          clock,
+        ),
+    };
+    void run(transforms[step], advance);
   }
 
   async function findCity() {
@@ -142,7 +170,10 @@ export default function Onboarding() {
         applyAnswer(
           current,
           "colours",
-          { colour: seasonFromSwatch(swatch) },
+          {
+            colour: seasonFromSwatch(swatch),
+            colourLean: current.styling.profile.colourLean,
+          },
           clockFor(new Date()),
         ),
       () => undefined,
@@ -150,15 +181,18 @@ export default function Onboarding() {
   }
 
   function finish(addClothes: boolean) {
-    void run(finishOnboarding, () => {
-      router.replace("/today");
-      if (addClothes) router.push(addPiecesRoute);
-    });
+    void run(
+      (current) => finishOnboarding(current, clockFor(new Date())),
+      () => {
+        router.replace("/today");
+        if (addClothes) router.push(addPiecesRoute);
+      },
+    );
   }
 
-  const position = onboardingSteps.indexOf(step) + 1;
+  const position = steps.indexOf(step) + 1;
 
-  const back = previousStep(step);
+  const back = steps[steps.indexOf(step) - 1] ?? null;
 
   return (
     <View style={styles.screen}>
@@ -178,9 +212,7 @@ export default function Onboarding() {
                 }
               : null
         }
-        progress={
-          single ? undefined : { step: position, total: onboardingSteps.length }
-        }
+        progress={single ? undefined : { step: position, total: steps.length }}
       />
       <FormScreen key={step}>
         <AppText variant="title" accessibilityRole="header">
@@ -205,9 +237,11 @@ export default function Onboarding() {
                 id,
                 label: t(`onboarding.coverage.${id}`),
               }))}
-              value={answers.hijab.coverage}
+              value={answers.coverage.coverage}
               disabled={busy}
-              onChange={(coverage) => change("hijab", { coverage })}
+              onChange={(coverage) =>
+                change("coverage", { coverage, answered: true })
+              }
             />
           </>
         ) : null}
@@ -222,7 +256,7 @@ export default function Onboarding() {
               }))}
               value={units}
               disabled={busy}
-              onChange={(next) => change("place", { units: next })}
+              onChange={(next) => change("body", { units: next })}
             />
             <Field
               label={t("onboarding.city.label")}
@@ -310,9 +344,9 @@ export default function Onboarding() {
               options={(["loose", "structured", "depends"] as const).map(
                 (id) => ({ id, label: t(`onboarding.fit.${id}`) }),
               )}
-              value={answers.taste.fit}
+              value={answers.fit.fit}
               disabled={busy}
-              onChange={(fit) => change("taste", { fit })}
+              onChange={(fit) => change("fit", { fit })}
             />
             <ChoiceGroup
               label={t("onboarding.colourLean.question")}
@@ -320,9 +354,9 @@ export default function Onboarding() {
                 id,
                 label: t(`onboarding.colourLean.${id}`),
               }))}
-              value={answers.taste.colourLean}
+              value={answers.colours.colourLean}
               disabled={busy}
-              onChange={(colourLean) => change("taste", { colourLean })}
+              onChange={(colourLean) => change("colours", { colourLean })}
             />
             <ChoiceGroup
               label={t("onboarding.styleLean.question")}
@@ -330,9 +364,9 @@ export default function Onboarding() {
                 id,
                 label: t(`onboarding.styleLean.${id}`),
               }))}
-              value={answers.taste.styleLean}
+              value={answers.style.styleLean}
               disabled={busy}
-              onChange={(styleLean) => change("taste", { styleLean })}
+              onChange={(styleLean) => change("style", { styleLean })}
             />
           </>
         ) : null}

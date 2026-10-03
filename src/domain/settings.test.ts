@@ -21,9 +21,9 @@ const owned: Piece = {
 function used(): Closet {
   const start = addSampleWardrobe(decodeCloset(null));
   const answered = applyAnswer(
-    start,
-    "hijab",
-    { hijab: "always", coverage: "full" },
+    applyAnswer(start, "hijab", { hijab: "always" }, clock),
+    "coverage",
+    { coverage: "full", answered: true },
     clock,
   );
   return {

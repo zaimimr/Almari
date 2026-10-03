@@ -158,7 +158,11 @@ export default function EverydayStyle() {
         </>
       ) : null}
       <AppText variant="caption" muted>
-        {t(level ? levelHelp[level] : "coverage.helpUnset")}
+        {t(
+          level && level !== "relaxed"
+            ? levelHelp[level]
+            : "coverage.helpUnset",
+        )}
       </AppText>
       <ErrorMessage message={error} />
       <Button

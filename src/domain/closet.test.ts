@@ -10,6 +10,7 @@ import {
   saveLook,
   savePiece,
   setPieceLabel,
+  type Closet,
   type Piece,
   type Prepared,
   withVariant,
@@ -652,4 +653,77 @@ test("a piece with an empty variant or set id is rejected", () => {
     savePiece(emptyCloset, { ...hijab, variants: { enhanced: "" } }),
   );
   assert.throws(() => savePiece(emptyCloset, { ...hijab, setId: "" }));
+});
+
+test("a closet from the shipped app opens with every new field absent", () => {
+  const stored = JSON.parse(JSON.stringify(addSampleWardrobe(emptyCloset)));
+  stored.styling.units = "metric";
+  stored.styling.profile.colour = {
+    skin: [60, 10, 20],
+    hair: null,
+    eyes: null,
+    undertone: "warm",
+    depth: "medium",
+    contrast: "medium",
+    season: "warm-autumn",
+    source: "swatch",
+  };
+  stored.feedback = [
+    {
+      id: "e1",
+      at: "2026-09-12T08:00:00.000Z",
+      kind: "wore",
+      pieceIds: ["sample-1"],
+      request: stored.styling.everyday ?? {
+        occasion: "everyday",
+        style: "western",
+        garmentType: null,
+        keptIds: [],
+        excludedIds: [],
+        weather: { source: "unknown" },
+        hijab: null,
+        wardrobe: "sample",
+      },
+      engine: "rules",
+    },
+  ];
+  const closet = decodeCloset(JSON.stringify(stored));
+  assert.equal(closet.version, 3);
+  assert.equal(closet.styling.name, undefined);
+  assert.equal(closet.styling.notification, undefined);
+  assert.equal(closet.styling.profile.hijabStyles, undefined);
+  assert.equal(closet.styling.profile.neverWear, undefined);
+  assert.equal(closet.feedback[0]?.scope, undefined);
+  assert.equal(closet.styling.profile.colour?.source, "swatch");
+});
+
+test("new optional fields survive a round trip", () => {
+  const closet: Closet = {
+    ...emptyCloset,
+    setNames: { "a,b": "Eid lunch" },
+    styling: {
+      ...emptyCloset.styling,
+      name: "Sara",
+      notification: "21:00",
+      profile: {
+        ...neutralProfile,
+        hijabStyles: ["hijab", "shayla"],
+        sparkle: "heavy",
+        neverWear: [
+          { kind: "skirt" },
+          { colour: "Black", on: "clothes" },
+          { pattern: "stripe" },
+        ],
+        wearMore: ["p1"],
+        hijabAnswered: true,
+        coverageAnswered: true,
+        coverageLevel: "relaxed",
+      },
+    },
+  };
+  const again = decodeCloset(JSON.stringify(closet));
+  assert.deepEqual(again.styling.profile, closet.styling.profile);
+  assert.equal(again.styling.name, "Sara");
+  assert.equal(again.styling.notification, "21:00");
+  assert.deepEqual(again.setNames, { "a,b": "Eid lunch" });
 });

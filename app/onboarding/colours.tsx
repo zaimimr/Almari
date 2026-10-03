@@ -116,7 +116,10 @@ export default function Colours() {
         applyAnswer(
           current,
           "colours",
-          { colour: adjustColours(profile, {}) },
+          {
+            colour: adjustColours(profile, {}),
+            colourLean: current.styling.profile.colourLean,
+          },
           clockFor(new Date()),
         ),
       );

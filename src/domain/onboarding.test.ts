@@ -12,9 +12,13 @@ import {
   finishOnboarding,
   onboardingSteps,
   previousStep,
+  setName,
   skipStep,
+  stepsFor,
   type OnboardingStep,
 } from "./onboarding";
+import { greeting } from "./greeting";
+import { at } from "./test-helpers";
 import { addSampleWardrobe } from "./samples";
 import { saveEverydayStyle } from "./today";
 import {
@@ -45,38 +49,27 @@ const colour = {
   source: "swatch" as const,
 };
 
-test("onboarding has six steps in the agreed order", () => {
-  assert.deepEqual(onboardingSteps, [
-    "hijab",
-    "place",
-    "body",
-    "taste",
-    "colours",
-    "done",
-  ]);
-});
-
 test("skip moves to the next step without saving and stops at done", () => {
-  const walked: OnboardingStep[] = ["hijab"];
+  const answers = answersFrom(fresh());
+  const walked: OnboardingStep[] = ["name"];
   while (walked[walked.length - 1] !== "done")
-    walked.push(skipStep(walked[walked.length - 1]!));
+    walked.push(skipStep(walked[walked.length - 1]!, answers));
   assert.deepEqual(walked, onboardingSteps);
-  assert.equal(skipStep("done"), "done");
+  assert.equal(skipStep("done", answers), "done");
 });
 
 test("the sample closet works with every answer skipped", () => {
-  const closet = finishOnboarding(fresh());
+  const closet = finishOnboarding(fresh(), clock);
   assert.equal(closet.styling.onboarded, true);
   assert.deepEqual(closet.styling.profile, neutralProfile);
-  assert.equal(closet.styling.everyday, null);
   assert.ok(closet.pieces.length > 0);
 });
 
 test("hijab always creates an everyday preset and stores coverage", () => {
   const closet = applyAnswer(
-    fresh(),
-    "hijab",
-    { hijab: "always", coverage: "full" },
+    applyAnswer(fresh(), "hijab", { hijab: "always" }, clock),
+    "coverage",
+    { coverage: "full", answered: true },
     clock,
   );
   assert.deepEqual(closet.styling.everyday, {
@@ -84,7 +77,7 @@ test("hijab always creates an everyday preset and stores coverage", () => {
     style: "western",
     hijab: "always",
     sample: false,
-    version: 1,
+    version: 2,
   });
   assert.equal(closet.styling.profile.coverageLevel, "full");
   assert.equal(closet.styling.today?.localDate, clock.localDate);
@@ -92,9 +85,9 @@ test("hijab always creates an everyday preset and stores coverage", () => {
 
 test("changing only the coverage level restyles today with the new coverage", () => {
   const moderate = applyAnswer(
-    fresh(),
-    "hijab",
-    { hijab: "always", coverage: "moderate" },
+    applyAnswer(fresh(), "hijab", { hijab: "always" }, clock),
+    "coverage",
+    { coverage: "moderate", answered: true },
     clock,
   );
   assert.deepEqual(moderate.styling.today?.everyday.request.coverage, {
@@ -103,8 +96,8 @@ test("changing only the coverage level restyles today with the new coverage", ()
   });
   const full = applyAnswer(
     moderate,
-    "hijab",
-    { hijab: "always", coverage: "full" },
+    "coverage",
+    { coverage: "full", answered: true },
     clock,
   );
   assert.equal(full.styling.profile.coverageLevel, "full");
@@ -122,7 +115,7 @@ test("hijab no maps to not needed and keeps her occasion and style", () => {
   const closet = applyAnswer(
     withPreset("always"),
     "hijab",
-    { hijab: "no", coverage: null },
+    { hijab: "no" },
     clock,
   );
   assert.equal(closet.styling.everyday?.hijab, "not-needed");
@@ -132,18 +125,14 @@ test("hijab no maps to not needed and keeps her occasion and style", () => {
 
 test("hijab sometimes clears the preset hijab and never creates a preset", () => {
   assert.equal(
-    applyAnswer(
-      withPreset("always"),
-      "hijab",
-      { hijab: "sometimes", coverage: null },
-      clock,
-    ).styling.everyday?.hijab,
+    applyAnswer(withPreset("always"), "hijab", { hijab: "sometimes" }, clock)
+      .styling.everyday?.hijab,
     null,
   );
   const none = applyAnswer(
-    fresh(),
-    "hijab",
-    { hijab: "sometimes", coverage: "own" },
+    applyAnswer(fresh(), "hijab", { hijab: "sometimes" }, clock),
+    "coverage",
+    { coverage: "own", answered: true },
     clock,
   );
   assert.equal(none.styling.everyday, null);
@@ -174,20 +163,15 @@ test("units and city are stored and a new city clears the old forecast", () => {
     },
   };
   const same = applyAnswer(
-    withForecast,
-    "place",
-    { units: "imperial", place: oslo },
+    applyAnswer(withForecast, "place", { place: oslo }, clock),
+    "body",
+    { units: "imperial", heightCm: null, bodyShape: null },
     clock,
   );
   assert.equal(same.styling.units, "imperial");
   assert.notEqual(same.styling.forecast, null);
   const bergen = { name: "Bergen", latitude: 60.39, longitude: 5.32 };
-  const moved = applyAnswer(
-    withForecast,
-    "place",
-    { units: "metric", place: bergen },
-    clock,
-  );
+  const moved = applyAnswer(withForecast, "place", { place: bergen }, clock);
   assert.deepEqual(moved.styling.place, bergen);
   assert.equal(moved.styling.forecast, null);
 });
@@ -196,23 +180,34 @@ test("body answers fill height and shape, and prefer not to say stays null", () 
   const closet = applyAnswer(
     fresh(),
     "body",
-    { heightCm: 165, bodyShape: "pear" },
+    { units: "metric", heightCm: 165, bodyShape: "pear" },
     clock,
   );
   assert.equal(closet.styling.profile.heightCm, 165);
   assert.equal(closet.styling.profile.bodyShape, "pear");
   assert.equal(
-    applyAnswer(closet, "body", { heightCm: null, bodyShape: null }, clock)
-      .styling.profile.bodyShape,
+    applyAnswer(
+      closet,
+      "body",
+      { units: "metric", heightCm: null, bodyShape: null },
+      clock,
+    ).styling.profile.bodyShape,
     null,
   );
 });
 
-test("taste Desi sets the everyday style, and Both keeps it", () => {
-  const desi = applyAnswer(
+test("style Desi sets the everyday style, and Both keeps it", () => {
+  let desi = applyAnswer(
     withPreset("always"),
-    "taste",
-    { fit: "loose", colourLean: "bold", styleLean: "desi" },
+    "style",
+    { styleLean: "desi" },
+    clock,
+  );
+  desi = applyAnswer(desi, "fit", { fit: "loose" }, clock);
+  desi = applyAnswer(
+    desi,
+    "colours",
+    { colour: null, colourLean: "bold" },
     clock,
   );
   assert.equal(desi.styling.everyday?.style, "desi");
@@ -226,8 +221,8 @@ test("taste Desi sets the everyday style, and Both keeps it", () => {
   );
   const both = applyAnswer(
     withPreset("always"),
-    "taste",
-    { fit: null, colourLean: null, styleLean: "both" },
+    "style",
+    { styleLean: "both" },
     clock,
   );
   assert.equal(both.styling.everyday?.style, "western");
@@ -236,31 +231,38 @@ test("taste Desi sets the everyday style, and Both keeps it", () => {
 
 test("the colour answer is stored on the profile", () => {
   assert.deepEqual(
-    applyAnswer(fresh(), "colours", { colour }, clock).styling.profile.colour,
+    applyAnswer(fresh(), "colours", { colour, colourLean: null }, clock).styling
+      .profile.colour,
     colour,
   );
 });
 
 test("answers read back from the closet for editing", () => {
-  let closet = applyAnswer(
-    fresh(),
-    "hijab",
-    { hijab: "always", coverage: "moderate" },
+  let closet = applyAnswer(fresh(), "hijab", { hijab: "always" }, clock);
+  closet = applyAnswer(
+    closet,
+    "coverage",
+    { coverage: "moderate", answered: true },
     clock,
   );
   closet = applyAnswer(
     closet,
     "body",
-    { heightCm: 170, bodyShape: null },
+    { units: "metric", heightCm: 170, bodyShape: null },
     clock,
   );
-  closet = applyAnswer(closet, "colours", { colour }, clock);
+  closet = applyAnswer(closet, "colours", { colour, colourLean: null }, clock);
   const answers = answersFrom(closet);
-  assert.deepEqual(answers.hijab, { hijab: "always", coverage: "moderate" });
-  assert.deepEqual(answers.place, { units: "metric", place: null });
-  assert.deepEqual(answers.body, { heightCm: 170, bodyShape: null });
-  assert.deepEqual(answers.colours, { colour });
-  assert.equal(answersFrom(withPreset(null)).hijab.hijab, null);
+  assert.deepEqual(answers.hijab, { hijab: "always" });
+  assert.deepEqual(answers.coverage, { coverage: "moderate", answered: true });
+  assert.deepEqual(answers.place, { place: null });
+  assert.deepEqual(answers.body, {
+    units: "metric",
+    heightCm: 170,
+    bodyShape: null,
+  });
+  assert.deepEqual(answers.colours, { colour, colourLean: null });
+  assert.equal(answersFrom(withPreset(null)).hijab.hijab, "sometimes");
   assert.equal(answersFrom(fresh()).hijab.hijab, null);
 });
 
@@ -268,10 +270,10 @@ test("finishing keeps every answer and marks her as onboarded", () => {
   const answered = applyAnswer(
     fresh(),
     "body",
-    { heightCm: 160, bodyShape: null },
+    { units: "metric", heightCm: 160, bodyShape: null },
     clock,
   );
-  const done = finishOnboarding(answered);
+  const done = finishOnboarding(answered, clock);
   assert.equal(done.styling.onboarded, true);
   assert.equal(done.styling.profile.heightCm, 160);
   assert.equal(decodeCloset(JSON.stringify(done)).styling.onboarded, true);
@@ -305,8 +307,94 @@ test("height entries outside 120 to 220 cm or with 12 inches or more are rejecte
 });
 
 test("Back goes to the step before, and the first step has no Back", () => {
-  assert.equal(previousStep("hijab"), null);
-  assert.equal(previousStep("place"), "hijab");
-  assert.equal(previousStep("colours"), "taste");
-  assert.equal(previousStep("done"), "colours");
+  const answers = answersFrom(fresh());
+  assert.equal(previousStep("name", answers), null);
+  assert.equal(previousStep("hijab", answers), "name");
+  assert.equal(previousStep("coverage", answers), "hijabStyles");
+  assert.equal(previousStep("done", answers), "colours");
+});
+
+test("ten steps in the owner's order, hijab styles skipped after Not needed", () => {
+  assert.deepEqual(
+    [...onboardingSteps],
+    [
+      "name",
+      "hijab",
+      "hijabStyles",
+      "coverage",
+      "style",
+      "fit",
+      "sparkle",
+      "place",
+      "notifications",
+      "colours",
+      "done",
+    ],
+  );
+  const answers = answersFrom(emptyCloset);
+  assert.equal(stepsFor(answers).length, 11);
+  assert.equal(skipStep("hijab", answers), "hijabStyles");
+  const no = { ...answers, hijab: { hijab: "no" as const } };
+  assert.equal(stepsFor(no).length, 10);
+  assert.equal(skipStep("hijab", no), "coverage");
+  assert.equal(previousStep("coverage", no), "hijab");
+});
+
+test("Sometimes and never answered are told apart", () => {
+  const clock = at("2026-10-02T08:00:00+02:00");
+  assert.equal(answersFrom(emptyCloset).hijab.hijab, null);
+  const sometimes = applyAnswer(
+    emptyCloset,
+    "hijab",
+    { hijab: "sometimes" },
+    clock,
+  );
+  assert.equal(sometimes.styling.profile.hijabAnswered, true);
+  assert.equal(answersFrom(sometimes).hijab.hijab, "sometimes");
+  const none = applyAnswer(
+    emptyCloset,
+    "coverage",
+    { coverage: null, answered: true },
+    clock,
+  );
+  assert.equal(none.styling.profile.coverageAnswered, true);
+  assert.equal(answersFrom(none).coverage.answered, true);
+  assert.equal(answersFrom(emptyCloset).coverage.answered, false);
+});
+
+test("finishing onboarding writes the everyday style so the sample closet lands on an outfit", () => {
+  const clock = at("2026-10-02T08:00:00+02:00");
+  let closet = applyAnswer(
+    addSampleWardrobe(emptyCloset),
+    "hijab",
+    { hijab: "always" },
+    clock,
+  );
+  closet = applyAnswer(closet, "style", { styleLean: "desi" }, clock);
+  closet = applyAnswer(
+    closet,
+    "coverage",
+    { coverage: "moderate", answered: true },
+    clock,
+  );
+  closet = finishOnboarding(closet, clock);
+  assert.equal(closet.styling.onboarded, true);
+  assert.equal(closet.styling.everyday?.occasion, "everyday");
+  assert.equal(closet.styling.everyday?.style, "desi");
+  assert.equal(closet.styling.everyday?.hijab, "always");
+  const skipped = finishOnboarding(addSampleWardrobe(emptyCloset), clock);
+  assert.equal(skipped.styling.everyday?.style, "western");
+  assert.equal(skipped.styling.everyday?.hijab, null);
+});
+
+test("the name is trimmed and the greeting follows the hour", () => {
+  const named = setName(emptyCloset, "  Sara  ");
+  assert.equal(named.styling.name, "Sara");
+  assert.equal(setName(named, "   ").styling.name, undefined);
+  assert.equal(setName(emptyCloset, "a".repeat(50)).styling.name?.length, 40);
+  assert.equal(greeting("Sara", 8, "en"), "Good morning, Sara");
+  assert.equal(greeting("Sara", 15, "en"), "Good afternoon, Sara");
+  assert.equal(greeting("Sara", 20, "nb"), "God kveld, Sara");
+  assert.equal(greeting(null, 9, "en"), "Good morning");
+  assert.equal(greeting("Sara", 15, "nb"), "Hei, Sara");
 });

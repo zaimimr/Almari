@@ -12,9 +12,11 @@ import {
 import {
   attributeKeys,
   isAttributes,
+  patterns,
   type AttributeKey,
   type Attributes,
   type Length,
+  type Pattern,
 } from "./attributes";
 import { isCareLabel, withCareLabel, type CareLabel } from "./careLabel";
 import { isSwatches, type Swatch } from "./color";
@@ -165,6 +167,7 @@ export type ImportJob = {
   people?: number;
   error?: string;
   label?: CareLabel;
+  keepAsSet?: boolean;
 };
 
 export type Look = {
@@ -173,6 +176,7 @@ export type Look = {
   pieceIds: string[];
   createdAt: string;
   occasion?: Occasion;
+  plannedFor?: string;
 };
 
 export type HijabPreference = "always" | "not-needed" | null;
@@ -197,7 +201,29 @@ export type Weather =
 export type ForecastWeather = Extract<Weather, { source: "forecast" }>;
 
 export type Units = "metric" | "imperial";
-export type Coverage = "full" | "moderate" | "own";
+export type Coverage = "full" | "moderate" | "relaxed" | "own";
+
+export const hijabStyles = [
+  "hijab",
+  "shayla",
+  "al-amira",
+  "khimar",
+  "chador",
+  "niqab",
+  "burqa",
+] as const;
+export type HijabStyle = (typeof hijabStyles)[number];
+
+export const sparkles = ["plain", "little", "heavy", "bridal"] as const;
+export type Sparkle = (typeof sparkles)[number];
+
+export type NeverWear =
+  | { kind: GarmentKind }
+  | { colour: string; on: "clothes" | "hijabs" }
+  | { pattern: Pattern };
+
+export const notificationTimes = ["06:00", "07:00", "08:00", "21:00"] as const;
+export type NotificationTime = (typeof notificationTimes)[number];
 
 export const bodyShapes = [
   "pear",
@@ -251,6 +277,12 @@ export type StyleProfile = {
   avoidAtWeddings: ("white" | "black")[];
   dupattaExpected: boolean | null;
   region: "south-asian" | "gulf" | "turkish" | "western-europe" | null;
+  hijabStyles?: HijabStyle[];
+  sparkle?: Sparkle | null;
+  neverWear?: NeverWear[];
+  wearMore?: string[];
+  hijabAnswered?: true;
+  coverageAnswered?: true;
 };
 
 export const settingKeys = [
@@ -277,7 +309,9 @@ export type FeedbackKind =
   | "too-formal"
   | "too-plain"
   | "too-warm"
-  | "not-my-style";
+  | "not-my-style"
+  | "liked"
+  | "disliked";
 
 export type FeedbackEvent = {
   id: string;
@@ -290,6 +324,7 @@ export type FeedbackEvent = {
   swap?: { from: string; to: string };
   undone?: boolean;
   against?: string[];
+  scope?: "piece";
 };
 
 export const sleeveNeeds = [
@@ -340,17 +375,23 @@ export type CoverageNeed = { sleeve: SleeveNeed | null; hem: HemNeed | null };
 
 export function coverageNeedFor(
   level: Coverage | null,
-  own: CoverageNeed | undefined,
+  own?: CoverageNeed,
 ): CoverageNeed | undefined {
   if (level === "full") return { sleeve: "long", hem: "ankle" };
   if (level === "moderate") return { sleeve: "elbow", hem: "calf" };
+  if (level === "relaxed") return { sleeve: "any", hem: "any" };
   if (level === "own") return own;
   return undefined;
 }
 
 export const heightRange = { min: 120, max: 220 };
 
-export type Place = { name: string; latitude: number; longitude: number };
+export type Place = {
+  name: string;
+  latitude: number;
+  longitude: number;
+  source?: "device" | "search";
+};
 
 export type ForecastHour = {
   at: string;
@@ -382,6 +423,7 @@ export type EverydayStyle = {
   hijab: HijabPreference;
   sample: boolean;
   coverage?: CoverageNeed;
+  exposure?: "mostly-indoors" | "time-outside" | null;
 };
 
 export type OutfitRequest = {
@@ -405,6 +447,7 @@ export type Session = {
   pieceIds: string[];
   previousPieceIds: string[] | null;
   engine?: Engine;
+  date?: string;
 };
 
 export type TodayState = {
@@ -413,7 +456,8 @@ export type TodayState = {
   presetVersion: number;
   everyday: Session;
   occasion: Session | null;
-  active: "everyday" | "occasion";
+  tomorrow?: Session;
+  active: "everyday" | "occasion" | "tomorrow";
 };
 
 export type Styling = {
@@ -430,6 +474,8 @@ export type Styling = {
   layout: CardLayout;
   language: Language;
   scan: ScanMode;
+  name?: string;
+  notification?: NotificationTime | null;
 };
 
 export type Closet = {
@@ -442,6 +488,7 @@ export type Closet = {
   feedback: FeedbackEvent[];
   photoTipsSeen?: boolean;
   attributeRefresh?: number;
+  setNames?: Record<string, string>;
 };
 
 export const neutralProfile: StyleProfile = {
@@ -780,6 +827,7 @@ function isImportJob(value: unknown): value is ImportJob {
     optional(value.people, isCount) &&
     optional(value.error, isString) &&
     optional(value.label, isCareLabel) &&
+    optional(value.keepAsSet, isBoolean) &&
     (!["ready", "review"].includes(value.state as string) ||
       (value.prepared !== undefined &&
         value.kind !== undefined &&
@@ -794,7 +842,8 @@ function isLook(value: unknown): value is Look {
     isString(value.name) &&
     isString(value.createdAt) &&
     isUniqueStrings(value.pieceIds) &&
-    value.pieceIds.length > 0
+    value.pieceIds.length > 0 &&
+    optional(value.plannedFor, isString)
   );
 }
 
@@ -839,7 +888,10 @@ function isEverydayStyle(value: unknown): value is EverydayStyle {
     isStyle(value.style) &&
     isHijabPreference(value.hijab) &&
     isBoolean(value.sample) &&
-    optional(value.coverage, isCoverageNeed)
+    optional(value.coverage, isCoverageNeed) &&
+    optional(value.exposure, (exposure): exposure is string | null =>
+      [null, "mostly-indoors", "time-outside"].includes(exposure as string),
+    )
   );
 }
 
@@ -907,6 +959,8 @@ const feedbackKinds: FeedbackKind[] = [
   "too-plain",
   "too-warm",
   "not-my-style",
+  "liked",
+  "disliked",
 ];
 
 function isFeedbackEvent(value: unknown): value is FeedbackEvent {
@@ -927,7 +981,8 @@ function isFeedbackEvent(value: unknown): value is FeedbackEvent {
     optional(value.against, isUniqueStrings) &&
     optional(value.cursor, (cursor): cursor is number =>
       Number.isInteger(cursor),
-    )
+    ) &&
+    optional(value.scope, (scope): scope is "piece" => scope === "piece")
   );
 }
 
@@ -976,7 +1031,9 @@ function isSession(value: unknown): value is Session {
     Number.isInteger(value.cursor) &&
     isRequest(value.request) &&
     isUniqueStrings(value.pieceIds) &&
-    (value.previousPieceIds === null || isUniqueStrings(value.previousPieceIds))
+    (value.previousPieceIds === null ||
+      isUniqueStrings(value.previousPieceIds)) &&
+    optional(value.date, isString)
   );
 }
 
@@ -988,8 +1045,10 @@ function isToday(value: unknown): value is TodayState {
     Number.isInteger(value.presetVersion) &&
     isSession(value.everyday) &&
     (value.occasion === null || isSession(value.occasion)) &&
+    optional(value.tomorrow, isSession) &&
     (value.active === "everyday" ||
-      (value.active === "occasion" && value.occasion !== null))
+      (value.active === "occasion" && value.occasion !== null) ||
+      (value.active === "tomorrow" && value.tomorrow !== undefined))
   );
 }
 
@@ -1163,7 +1222,12 @@ function decodeStored(
         Array.isArray(list) && list.every(isImportJob),
     ) ||
     !optional(value.photoTipsSeen, isBoolean) ||
-    !optional(value.attributeRefresh, isWholeNumber)
+    !optional(value.attributeRefresh, isWholeNumber) ||
+    !optional(
+      value.setNames,
+      (names): names is Record<string, string> =>
+        isRecord(names) && Object.values(names).every(isString),
+    )
   ) {
     throw unreadable();
   }
@@ -1202,7 +1266,7 @@ function isColourProfile(value: unknown): value is ColourProfile {
 function isProfile(value: unknown): value is StyleProfile {
   return (
     isRecord(value) &&
-    isNullableIn(["full", "moderate", "own"])(value.coverageLevel) &&
+    isNullableIn(["full", "moderate", "relaxed", "own"])(value.coverageLevel) &&
     (value.heightCm === null ||
       (Number.isInteger(value.heightCm) &&
         (value.heightCm as number) >= heightRange.min &&
@@ -1222,7 +1286,12 @@ function isPlace(value: unknown): value is Place {
     isNumber(value.latitude) &&
     Math.abs(value.latitude) <= 90 &&
     isNumber(value.longitude) &&
-    Math.abs(value.longitude) <= 180
+    Math.abs(value.longitude) <= 180 &&
+    optional(
+      value.source,
+      (source): source is "device" | "search" =>
+        source === "device" || source === "search",
+    )
   );
 }
 
@@ -1241,16 +1310,62 @@ function isForecast(value: unknown): value is Forecast {
   );
 }
 
+function isNeverWear(value: unknown): value is NeverWear {
+  if (!isRecord(value)) return false;
+  if ("kind" in value) return isKind(value.kind);
+  if ("pattern" in value) return isOneOf(patterns, value.pattern);
+  return (
+    isString(value.colour) && (value.on === "clothes" || value.on === "hijabs")
+  );
+}
+
+const listOf =
+  (check: (item: unknown) => unknown) =>
+  (value: unknown): unknown =>
+    Array.isArray(value) ? value.filter(check) : undefined;
+
+const oneOf =
+  (options: readonly unknown[]) =>
+  (value: unknown): unknown =>
+    options.includes(value) ? value : undefined;
+
+function cleaned(
+  record: Record<string, unknown>,
+  rules: Record<string, (value: unknown) => unknown>,
+) {
+  const result = { ...record };
+  for (const [key, clean] of Object.entries(rules)) {
+    if (result[key] === undefined) continue;
+    const value = clean(result[key]);
+    if (value === undefined) delete result[key];
+    else result[key] = value;
+  }
+  return result;
+}
+
 function withOnboardingState(closet: Closet): Closet {
-  const { studio: _studio, ...stored } = closet.styling as Record<
-    string,
-    unknown
-  >;
+  const { studio: _studio, ...stored } = cleaned(
+    closet.styling as Record<string, unknown>,
+    {
+      name: (name) => (isString(name) ? name : undefined),
+      notification: oneOf([null, ...notificationTimes]),
+    },
+  );
   const profile =
     stored.profile === undefined
       ? neutralProfile
       : isRecord(stored.profile)
-        ? { ...neutralProfile, ...stored.profile }
+        ? cleaned(
+            { ...neutralProfile, ...stored.profile },
+            {
+              hijabStyles: listOf(oneOf(hijabStyles)),
+              sparkle: oneOf([null, ...sparkles]),
+              neverWear: listOf(isNeverWear),
+              wearMore: listOf(isString),
+              hijabAnswered: oneOf([true]),
+              coverageAnswered: oneOf([true]),
+            },
+          )
         : null;
   const styling = {
     ...stored,

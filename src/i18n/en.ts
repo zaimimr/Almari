@@ -1260,6 +1260,14 @@ export const en = {
   "selfie.guide.still": "Hold still",
   "selfie.guide.ready": "Ready",
   "colours.photo": "Your selfie with the sample points",
+
+  "today.greeting.morning": "Good morning, {name}",
+  "today.greeting.afternoon": "Good afternoon, {name}",
+  "today.greeting.evening": "Good evening, {name}",
+  "today.greeting.morningPlain": "Good morning",
+  "today.greeting.afternoonPlain": "Good afternoon",
+  "today.greeting.eveningPlain": "Good evening",
+  "today.greeting.short": "Hi, {name}",
 };
 
 export type Key = keyof typeof en;
