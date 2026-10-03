@@ -8,7 +8,7 @@ import {
 } from "../domain/attributes";
 import { attributeLabelKey, attributeValueKey } from "../domain/facts";
 import { t } from "../i18n";
-import { AppText, Button, Chip } from "../ui";
+import { AppText, Button, Chip } from "../ui/legacy";
 import { theme } from "../ui/theme";
 
 export function AttributeEditor({

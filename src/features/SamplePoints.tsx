@@ -8,7 +8,7 @@ import ClosetVision, {
 import type { ColourProfile } from "../domain/closet";
 import { labHex } from "../domain/colourAnalysis";
 import { t } from "../i18n";
-import { AppText } from "../ui";
+import { AppText } from "../ui/legacy";
 import { theme } from "../ui/theme";
 
 type Part = SelfiePoint["part"];

@@ -6,7 +6,7 @@ import { dropFromToday } from "../domain/today";
 import { confirmPiece, setArchived } from "../domain/wardrobe";
 import { t } from "../i18n";
 import { useCloset } from "../state/closet";
-import { AppText, Button, ChoiceGroup, ErrorMessage } from "../ui";
+import { AppText, Button, ChoiceGroup, ErrorMessage } from "../ui/legacy";
 import { theme } from "../ui/theme";
 
 function useChange() {

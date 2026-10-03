@@ -6,15 +6,18 @@ export const stackOptions = {
   contentStyle: { backgroundColor: theme.colors.canvas },
   headerShadowVisible: false,
   headerBackButtonDisplayMode: "minimal" as const,
+  animation: "default" as const,
 };
 
-export const largeTitleOptions = {
-  ...stackOptions,
-  headerLargeTitleEnabled: true,
-  headerLargeTitleStyle: {
-    color: theme.colors.ink,
-    fontFamily: "Georgia",
-    fontWeight: "400" as const,
-  },
-  headerTitleStyle: { color: theme.colors.ink },
-};
+export function largeTitleOptions(fontScale: number, bold: boolean) {
+  return {
+    ...stackOptions,
+    headerLargeTitleEnabled: true,
+    headerLargeTitleStyle: {
+      color: theme.colors.ink,
+      fontFamily: bold ? "Georgia-Bold" : "Georgia",
+      fontSize: 34 * Math.min(fontScale, 1.76),
+    },
+    headerTitleStyle: { color: theme.colors.ink },
+  };
+}

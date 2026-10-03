@@ -8,7 +8,7 @@ import {
 import { engineResults, rateText } from "../../src/domain/scoring/results";
 import { styleName, t } from "../../src/i18n";
 import { useCloset } from "../../src/state/closet";
-import { AppText, FormScreen } from "../../src/ui";
+import { AppText, FormScreen } from "../../src/ui/legacy";
 import { theme } from "../../src/ui/theme";
 
 export default function StylistResults() {

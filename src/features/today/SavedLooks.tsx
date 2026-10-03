@@ -4,7 +4,7 @@ import type { Closet, Piece, Session } from "../../domain/closet";
 import { applyLook, applyRequest } from "../../domain/today";
 import { matchingLooks, type LookVariant } from "../../domain/wardrobe";
 import { t } from "../../i18n";
-import { AppText, Button, PiecePhoto } from "../../ui";
+import { AppText, Button, PiecePhoto } from "../../ui/legacy";
 import { theme } from "../../ui/theme";
 
 const initial = 2;

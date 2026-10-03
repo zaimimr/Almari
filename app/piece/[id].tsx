@@ -34,7 +34,7 @@ import {
   FormScreen,
   HeaderAction,
   PiecePhoto,
-} from "../../src/ui";
+} from "../../src/ui/legacy";
 import { theme } from "../../src/ui/theme";
 
 export default function PieceDetail() {

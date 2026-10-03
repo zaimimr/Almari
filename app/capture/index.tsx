@@ -35,7 +35,7 @@ import {
   FormScreen,
   HeaderAction,
   Notice,
-} from "../../src/ui";
+} from "../../src/ui/legacy";
 import { theme } from "../../src/ui/theme";
 import { TipDrawing } from "../../src/ui/TipDrawing";
 import {

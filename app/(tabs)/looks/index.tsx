@@ -9,7 +9,7 @@ import {
   HeaderAction,
   Message,
   OutfitCollage,
-} from "../../../src/ui";
+} from "../../../src/ui/legacy";
 import { addPiecesRoute } from "../../../src/state/imports";
 import { theme } from "../../../src/ui/theme";
 

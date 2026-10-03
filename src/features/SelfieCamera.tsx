@@ -6,7 +6,7 @@ import {
 } from "../../modules/closet-vision/src";
 import { guideLimits, selfieGuide, type Guide } from "../domain/selfieGuide";
 import { t } from "../i18n";
-import { AppText } from "../ui";
+import { AppText } from "../ui/legacy";
 import { theme } from "../ui/theme";
 
 const ovalWidth = 0.56;

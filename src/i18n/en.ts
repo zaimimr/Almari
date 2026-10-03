@@ -1292,6 +1292,7 @@ export const en = {
 
   "notify.today": "See today's outfit",
   "notify.tomorrow": "See tomorrow's outfit",
+  "closet.sectionLabel": "{category}, {pieces}",
 };
 
 export type Key = keyof typeof en;

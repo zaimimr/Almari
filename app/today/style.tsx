@@ -20,7 +20,7 @@ import {
   ErrorMessage,
   FormScreen,
   HeaderAction,
-} from "../../src/ui";
+} from "../../src/ui/legacy";
 
 type Choice<T> = { id: string; label: string; value: T };
 

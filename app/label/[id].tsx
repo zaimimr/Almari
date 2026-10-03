@@ -17,7 +17,13 @@ import { t } from "../../src/i18n";
 import { useCloset } from "../../src/state/closet";
 import { fibreLabel, readCareLabel } from "../../src/state/careLabel";
 import { discardPhoto, photoUri } from "../../src/storage/local";
-import { AppText, Button, ErrorMessage, Field, FormScreen } from "../../src/ui";
+import {
+  AppText,
+  Button,
+  ErrorMessage,
+  Field,
+  FormScreen,
+} from "../../src/ui/legacy";
 import { confirmAction } from "../../src/ui/confirm";
 import { theme } from "../../src/ui/theme";
 

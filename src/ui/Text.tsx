@@ -13,7 +13,7 @@ export type TextRole =
 export type TextTone =
   "ink" | "muted" | "disabled" | "plum" | "error" | "onPlum" | "onMedia";
 
-const toneColor: Record<TextTone, keyof Colors> = {
+export const toneColor: Record<TextTone, keyof Colors> = {
   ink: "ink",
   muted: "inkMuted",
   disabled: "inkDisabled",

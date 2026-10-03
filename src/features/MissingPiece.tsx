@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 import { t } from "../i18n";
-import { Button, Message, Screen } from "../ui";
+import { Button, Message, Screen } from "../ui/legacy";
 
 export function MissingPiece() {
   return (

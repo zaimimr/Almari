@@ -26,7 +26,7 @@ import {
   HeaderAction,
   Message,
   Screen,
-} from "../../../src/ui";
+} from "../../../src/ui/legacy";
 import { theme } from "../../../src/ui/theme";
 
 const startBox: Frame = { x: 0.25, y: 0.25, width: 0.5, height: 0.5 };

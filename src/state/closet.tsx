@@ -18,7 +18,7 @@ import {
 import { locale, setLanguage, t } from "../i18n";
 import { closetStorage } from "../storage/local";
 import { useAttributeRefresh, useImportRunner } from "./imports";
-import { Button, Message, Screen } from "../ui";
+import { Button, Message, Screen } from "../ui/legacy";
 
 const Context = createContext<ClosetRepository | null>(null);
 

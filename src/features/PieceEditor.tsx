@@ -45,7 +45,7 @@ import {
   Field,
   FormScreen,
   HeaderAction,
-} from "../ui";
+} from "../ui/legacy";
 import { theme } from "../ui/theme";
 import { confirmAction } from "../ui/confirm";
 import { useDiscardChanges } from "../navigation/useDiscardChanges";

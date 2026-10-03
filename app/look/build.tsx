@@ -36,7 +36,7 @@ import {
   HeaderAction,
   OutfitCollage,
   PieceTile,
-} from "../../src/ui";
+} from "../../src/ui/legacy";
 import { theme } from "../../src/ui/theme";
 import { locale, t } from "../../src/i18n";
 

@@ -24,7 +24,7 @@ import {
   ErrorMessage,
   FormScreen,
   HeaderAction,
-} from "../../src/ui";
+} from "../../src/ui/legacy";
 
 const levelHelp = {
   full: "coverage.helpFull",

@@ -1313,4 +1313,5 @@ export const nb: Record<Key, string> = {
 
   "notify.today": "Se dagens antrekk",
   "notify.tomorrow": "Se morgendagens antrekk",
+  "closet.sectionLabel": "{category}, {pieces}",
 };

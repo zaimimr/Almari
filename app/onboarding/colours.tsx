@@ -29,7 +29,7 @@ import {
   ChoiceGroup,
   ErrorMessage,
   FormScreen,
-} from "../../src/ui";
+} from "../../src/ui/legacy";
 import { theme } from "../../src/ui/theme";
 
 type Phase =

@@ -28,7 +28,7 @@ import {
   HeaderAction,
   Message,
   Screen,
-} from "../../src/ui";
+} from "../../src/ui/legacy";
 
 const garmentOptions = [
   {

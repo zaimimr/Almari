@@ -28,8 +28,8 @@ export const motion = {
 export type Duration = keyof typeof motion.duration;
 export type EasingName = keyof typeof motion.easing;
 
-export function timing(
-  to: number,
+export function timing<T extends number | string>(
+  to: T,
   duration: Duration,
   easing: EasingName,
   callback?: (finished?: boolean) => void,

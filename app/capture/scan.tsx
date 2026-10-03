@@ -42,7 +42,7 @@ import {
   HeaderAction,
   Notice,
   Screen,
-} from "../../src/ui";
+} from "../../src/ui/legacy";
 import { theme } from "../../src/ui/theme";
 
 const statusKeys = {

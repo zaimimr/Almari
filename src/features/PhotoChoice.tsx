@@ -3,7 +3,7 @@ import { Image } from "expo-image";
 import type { Prepared, Variant } from "../domain/closet";
 import { t } from "../i18n";
 import { photoUri } from "../storage/local";
-import { Chip } from "../ui";
+import { Chip } from "../ui/legacy";
 import { theme } from "../ui/theme";
 
 export function PhotoChoice({

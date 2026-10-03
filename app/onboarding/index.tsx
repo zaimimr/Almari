@@ -31,7 +31,7 @@ import {
   ErrorMessage,
   Field,
   FormScreen,
-} from "../../src/ui";
+} from "../../src/ui/legacy";
 import { theme } from "../../src/ui/theme";
 
 const steps = ["hijab", "place", "body", "taste", "colours", "done"] as const;

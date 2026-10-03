@@ -10,7 +10,7 @@ import {
   Message,
   OutfitCollage,
   Screen,
-} from "../../src/ui";
+} from "../../src/ui/legacy";
 import { confirmAction } from "../../src/ui/confirm";
 import { occasionName, t } from "../../src/i18n";
 

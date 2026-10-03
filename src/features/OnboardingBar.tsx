@@ -2,7 +2,7 @@ import { Pressable, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Feather from "@expo/vector-icons/Feather";
 import { t } from "../i18n";
-import { AppText } from "../ui";
+import { AppText } from "../ui/legacy";
 import { theme } from "../ui/theme";
 
 export function OnboardingBar({

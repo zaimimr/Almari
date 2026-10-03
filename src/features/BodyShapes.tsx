@@ -2,7 +2,7 @@ import { Pressable, StyleSheet, View } from "react-native";
 import { Image } from "expo-image";
 import { bodyShapes, type BodyShape } from "../domain/closet";
 import { t } from "../i18n";
-import { AppText, Chip } from "../ui";
+import { AppText, Chip } from "../ui/legacy";
 import { theme } from "../ui/theme";
 
 const drawings: Record<BodyShape, number> = {

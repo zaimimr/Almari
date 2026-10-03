@@ -29,7 +29,7 @@ import {
   HeaderAction,
   Message,
   Screen,
-} from "../../src/ui";
+} from "../../src/ui/legacy";
 import { theme } from "../../src/ui/theme";
 
 const brushes: BrushSize[] = ["small", "medium", "large"];

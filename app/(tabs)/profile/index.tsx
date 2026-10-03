@@ -21,7 +21,7 @@ import {
   ChoiceGroup,
   ErrorMessage,
   FormScreen,
-} from "../../../src/ui";
+} from "../../../src/ui/legacy";
 import { confirmAction } from "../../../src/ui/confirm";
 import { theme } from "../../../src/ui/theme";
 

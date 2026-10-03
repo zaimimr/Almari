@@ -58,7 +58,7 @@ import {
   OutfitCollage,
   OutfitView,
   PiecePhoto,
-} from "../../../src/ui";
+} from "../../../src/ui/legacy";
 import { addPiecesRoute } from "../../../src/state/imports";
 import { ForecastNote } from "../../../src/features/today/ForecastNote";
 import { SavedLooks } from "../../../src/features/today/SavedLooks";

@@ -4,7 +4,7 @@ import * as Linking from "expo-linking";
 import type { Closet, OutfitRequest } from "../../domain/closet";
 import { formatTemperature } from "../../domain/units";
 import { t } from "../../i18n";
-import { AppText } from "../../ui";
+import { AppText } from "../../ui/legacy";
 import { theme } from "../../ui/theme";
 
 export function ForecastNote({

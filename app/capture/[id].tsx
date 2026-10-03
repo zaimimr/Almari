@@ -60,7 +60,7 @@ import {
   Message,
   Notice,
   Screen,
-} from "../../src/ui";
+} from "../../src/ui/legacy";
 
 const attributeQuestions: Partial<Record<AttributeKey, Key>> = {
   length: "question.length",
