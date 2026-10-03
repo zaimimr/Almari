@@ -15,7 +15,9 @@ const engines: Engine[] = ["rules", "model"];
 const styles: Style[] = ["western", "desi"];
 
 export function engineResults(feedback: FeedbackEvent[]): EngineResult[] {
-  const live = feedback.filter((event) => !event.undone);
+  const live = feedback.filter(
+    (event) => !event.undone && event.scope !== "piece",
+  );
   return styles.flatMap((style) =>
     engines.map((engine) => {
       const events = live.filter(

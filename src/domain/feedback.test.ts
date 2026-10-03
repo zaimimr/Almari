@@ -29,6 +29,7 @@ import {
   wearCounts,
   weightOf,
 } from "./scoring/taste";
+import { engineResults } from "./scoring/results";
 import { replacementsFor } from "./styling";
 import {
   activeSession,
@@ -340,5 +341,23 @@ test("a look can be marked worn yesterday and likes are undoable taste", () => {
   assert.deepEqual(
     activeSession(disliked.styling.today!).pieceIds,
     activeSession(liked.styling.today!).pieceIds,
+  );
+});
+
+test("piece wears neither clear today's worn outfit nor count as stylist ratings", () => {
+  const closet = styled("work");
+  const current = session(closet);
+  const worn = woreThis(closet, current.revision, at, "w1");
+  const marked = woreLately(
+    worn,
+    [current.pieceIds[0]!],
+    at,
+    (id) => `p-${id}`,
+  );
+  assert.equal(wornNow(marked)?.id, "w1");
+  assert.equal(woreThis(marked, current.revision, at, "w2"), marked);
+  assert.deepEqual(
+    engineResults(marked.feedback),
+    engineResults(worn.feedback),
   );
 });

@@ -253,7 +253,10 @@ export function wornNow(closet: Closet): FeedbackEvent | null {
   const ids = [...activeSession(today).pieceIds].sort().join();
   const last = [...closet.feedback]
     .reverse()
-    .find((event) => event.kind === "wore" && !event.undone);
+    .find(
+      (event) =>
+        event.kind === "wore" && !event.undone && event.scope !== "piece",
+    );
   return last &&
     [...last.pieceIds].sort().join() === ids &&
     clockFor(new Date(last.at), today.timeZone).localDate === today.localDate
