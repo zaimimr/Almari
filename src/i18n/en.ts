@@ -1298,6 +1298,7 @@ export const en = {
   "common.undo": "Undo",
   "result.removed": "Removed",
   "capture.colourLabel": "Colour: {colour}",
+  "common.editColourHint": "Opens colour choices",
   "build.slotEmpty": "No {role}",
   "role.one.main": "main piece",
   "role.one.bottom": "bottoms",

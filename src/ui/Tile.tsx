@@ -138,8 +138,8 @@ export function Tile({
   const picture = (
     <Animated.View
       key={raw ? "raw" : "cut"}
-      entering={size === "hero" ? crossfade.entering : undefined}
-      exiting={size === "hero" ? crossfade.exiting : undefined}
+      entering={crossfade.entering}
+      exiting={crossfade.exiting}
       style={StyleSheet.absoluteFill}
     >
       {raw ? (
@@ -180,17 +180,18 @@ export function Tile({
           label={spoken}
           style={StyleSheet.absoluteFill}
         />
-      ) : state === "preparing" ? (
+      ) : (
+        picture
+      )}
+      {state === "preparing" ? (
         <Silk
           kind="sheen"
           label={spoken}
           style={[StyleSheet.absoluteFill, styles.frame]}
         >
-          {picture}
+          {null}
         </Silk>
-      ) : (
-        <LayoutAnimationConfig skipEntering>{picture}</LayoutAnimationConfig>
-      )}
+      ) : null}
       {mark && !ax ? (
         <View style={styles.markSlot} {...hidden}>
           <View style={[styles.capsule, { backgroundColor: colors.blush }]}>
@@ -239,6 +240,7 @@ export function Tile({
         !inline && { marginTop: 0 },
         { backgroundColor: hex, borderColor: colors.lineField },
       ]}
+      accessibilityIgnoresInvertColors
       {...hidden}
     />
   );
@@ -294,89 +296,106 @@ export function Tile({
   );
 
   return (
-    <View
-      style={[
-        size === "strip" && styles.strip,
-        size === "grid" && styles.grid,
-        thumb && styles.thumb,
-      ]}
-    >
-      {state === "removed" ? (
-        <>
-          {box}
-          <View style={styles.words}>
-            <Text role="subhead" tone="muted">
-              {t("result.removed")}
-            </Text>
-            {onUndoRemove ? (
-              <View style={styles.start}>
-                <Button
-                  variant="quiet"
-                  label={t("common.undo")}
-                  onPress={onUndoRemove}
-                />
-              </View>
+    <LayoutAnimationConfig skipEntering>
+      <View
+        style={[
+          size === "strip" && styles.strip,
+          size === "grid" && styles.grid,
+          thumb && styles.thumb,
+        ]}
+      >
+        {state === "removed" ? (
+          <>
+            {box}
+            <View style={styles.words}>
+              <Text role="subhead" tone="muted">
+                {t("result.removed")}
+              </Text>
+              {onUndoRemove ? (
+                <View style={styles.start}>
+                  <Button
+                    variant="quiet"
+                    label={t("common.undo")}
+                    onPress={onUndoRemove}
+                  />
+                </View>
+              ) : null}
+            </View>
+          </>
+        ) : (
+          <Pressable
+            onPress={onPress}
+            onLongPress={onLongPress}
+            onPressIn={() => {
+              if (pressable) press.set(timing(1, "quick", "silk"));
+            }}
+            onPressOut={() => press.set(timing(0, "quick", "silk"))}
+            hitSlop={
+              thumb && pressable
+                ? (theme.size.touch - theme.size.thumb) / 2
+                : undefined
+            }
+            accessible
+            accessibilityRole={pressable ? "button" : "image"}
+            accessibilityLabel={spoken}
+            accessibilityValue={
+              selectedLabel ? { text: selectedLabel } : undefined
+            }
+            accessibilityState={{
+              selected,
+              busy: waiting,
+              expanded: colour?.onPress ? Boolean(colour.expanded) : undefined,
+            }}
+            accessibilityActions={actions?.map(({ name, label: text }) => ({
+              name,
+              label: text,
+            }))}
+            onAccessibilityAction={(event) =>
+              actions
+                ?.find((action) => action.name === event.nativeEvent.actionName)
+                ?.onPress()
+            }
+            testID={state === "preparing" ? "moment-generating" : testID}
+          >
+            {box}
+            {words ? (
+              <Animated.View
+                key={waiting ? "wait" : "done"}
+                entering={crossfade.entering}
+                style={styles.words}
+              >
+                {words}
+              </Animated.View>
             ) : null}
+          </Pressable>
+        )}
+        {colour?.onPress && !waiting && state !== "removed" ? (
+          <Animated.View entering={crossfade.entering}>
+            <Pressable
+              onPress={colour.onPress}
+              accessibilityRole="button"
+              accessibilityHint={t("common.editColourHint")}
+              accessibilityState={{ expanded: colour.expanded }}
+              style={styles.colourLine}
+            >
+              {swatch(colour.hex, false)}
+              <Text role="subhead" style={styles.label}>
+                {t("capture.colourLabel", { colour: colour.name })}
+              </Text>
+            </Pressable>
+          </Animated.View>
+        ) : null}
+        {state === "failed" && onRetry ? (
+          <View style={styles.start}>
+            <Button
+              variant="quiet"
+              label={t("common.tryAgain")}
+              onPress={onRetry}
+            />
           </View>
-        </>
-      ) : (
-        <Pressable
-          onPress={onPress}
-          onLongPress={onLongPress}
-          onPressIn={() => {
-            if (pressable) press.set(timing(1, "quick", "silk"));
-          }}
-          onPressOut={() => press.set(timing(0, "quick", "silk"))}
-          hitSlop={
-            thumb && pressable
-              ? (theme.size.touch - theme.size.thumb) / 2
-              : undefined
-          }
-          accessible
-          accessibilityRole={pressable ? "button" : "image"}
-          accessibilityLabel={spoken}
-          accessibilityValue={
-            selectedLabel ? { text: selectedLabel } : undefined
-          }
-          accessibilityState={{ selected, busy: waiting }}
-          accessibilityActions={actions?.map(({ name, label: text }) => ({
-            name,
-            label: text,
-          }))}
-          onAccessibilityAction={(event) =>
-            actions
-              ?.find((action) => action.name === event.nativeEvent.actionName)
-              ?.onPress()
-          }
-          testID={state === "preparing" ? "moment-generating" : testID}
-        >
-          {box}
-          {words ? <View style={styles.words}>{words}</View> : null}
-        </Pressable>
-      )}
-      {colour?.onPress && !waiting && state !== "removed" ? (
-        <Pressable
-          onPress={colour.onPress}
-          accessibilityRole="button"
-          accessibilityState={{ expanded: colour.expanded }}
-          style={styles.colourLine}
-        >
-          {swatch(colour.hex, false)}
-          <Text role="subhead" style={styles.label}>
-            {t("capture.colourLabel", { colour: colour.name })}
-          </Text>
-        </Pressable>
-      ) : null}
-      {state === "failed" && onRetry ? (
-        <View style={styles.start}>
-          <Button
-            variant="quiet"
-            label={t("common.tryAgain")}
-            onPress={onRetry}
-          />
-        </View>
-      ) : null}
-    </View>
+        ) : null}
+      </View>
+    </LayoutAnimationConfig>
   );
 }
 

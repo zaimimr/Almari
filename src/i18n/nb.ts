@@ -1319,6 +1319,7 @@ export const nb: Record<Key, string> = {
   "common.undo": "Angre",
   "result.removed": "Fjernet",
   "capture.colourLabel": "Farge: {colour}",
+  "common.editColourHint": "Åpner fargevalg",
   "build.slotEmpty": "Mangler {role}",
   "role.one.main": "hovedplagg",
   "role.one.bottom": "underdel",

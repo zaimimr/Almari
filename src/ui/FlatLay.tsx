@@ -1,4 +1,4 @@
-import { useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import {
   Pressable,
   StyleSheet,
@@ -16,9 +16,9 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withDelay,
-  type EntryExitAnimationFunction,
   type SharedValue,
 } from "react-native-reanimated";
+import { scheduleOnRN } from "react-native-worklets";
 import { Image } from "expo-image";
 import type { Category, Piece } from "../domain/closet";
 import { roleOf, type Role } from "../domain/styling";
@@ -56,11 +56,13 @@ export type FlatLayProps = {
 
 type Laid = ReturnType<typeof arrangePieces>[number];
 
+type Phase = "still" | "in" | "out";
+
 type Swap = {
   revision?: number;
   slots: Record<string, Piece>;
   changed: string[];
-  outgoing: { key: string; laid: Laid }[];
+  outgoing: { laid: Laid; delay: number }[];
 };
 
 const sides = { row: 72, mini: 56 } as const;
@@ -141,68 +143,6 @@ function fit(laid: Laid, side: number) {
   };
 }
 
-const leave =
-  (delay: number, reduce: boolean): EntryExitAnimationFunction =>
-  () => {
-    "worklet";
-    if (reduce) {
-      return {
-        initialValues: { opacity: 1 },
-        animations: { opacity: timing(0, "base", "silk") },
-      };
-    }
-    return {
-      initialValues: { opacity: 1, transform: [{ translateY: 0 }] },
-      animations: {
-        opacity: withDelay(
-          delay,
-          timing(0, "quick", "release"),
-          ReduceMotion.Never,
-        ),
-        transform: [
-          {
-            translateY: withDelay(
-              delay,
-              timing(-4, "quick", "release"),
-              ReduceMotion.Never,
-            ),
-          },
-        ],
-      },
-    };
-  };
-
-const arrive =
-  (delay: number, reduce: boolean): EntryExitAnimationFunction =>
-  () => {
-    "worklet";
-    if (reduce) {
-      return {
-        initialValues: { opacity: 0 },
-        animations: { opacity: timing(1, "base", "silk") },
-      };
-    }
-    return {
-      initialValues: { opacity: 0, transform: [{ translateY: -6 }] },
-      animations: {
-        opacity: withDelay(
-          delay,
-          timing(1, "arrange", "fall"),
-          ReduceMotion.Never,
-        ),
-        transform: [
-          {
-            translateY: withDelay(
-              delay,
-              timing(0, "arrange", "fall"),
-              ReduceMotion.Never,
-            ),
-          },
-        ],
-      },
-    };
-  };
-
 function Gleam({
   laid,
   side,
@@ -256,8 +196,9 @@ function LaidPiece({
   laid,
   side,
   elevated,
-  entering,
-  ghost = false,
+  phase,
+  delay,
+  onGone,
   gleam,
   origin,
   mark,
@@ -268,8 +209,9 @@ function LaidPiece({
   laid: Laid;
   side: number;
   elevated: boolean;
-  entering?: EntryExitAnimationFunction;
-  ghost?: boolean;
+  phase: Phase;
+  delay: number;
+  onGone: (id: string) => void;
   gleam: boolean;
   origin: SharedValue<number>;
   mark: boolean;
@@ -281,12 +223,53 @@ function LaidPiece({
   const reduce = useReduceMotion();
   const { symbolScale } = useLargeText();
   const lift = useSharedValue(0);
+  const shown = useSharedValue(phase === "in" ? 0 : 1);
+  const drop = useSharedValue(phase === "in" && !reduce ? -6 : 0);
+  const ghost = phase === "out";
+  const id = laid.piece.id;
   const { box, image, contentFit } = fit(laid, side);
   const slopX = Math.max(0, (theme.size.touch - box.width) / 2);
   const slopY = Math.max(0, (theme.size.touch - box.height) / 2);
   const scale = Math.min(symbolScale, markCap);
   const disc = markDisc * scale;
   const { rest, lift: raised } = theme.elevation;
+
+  useEffect(() => {
+    if (phase === "still") return;
+    const arriving = phase === "in";
+    const gone = (finished?: boolean) => {
+      "worklet";
+      if (finished && !arriving) scheduleOnRN(onGone, id);
+    };
+    if (reduce) {
+      drop.set(0);
+      shown.set(timing(arriving ? 1 : 0, "base", "silk", gone));
+      return;
+    }
+    shown.set(
+      withDelay(
+        delay,
+        arriving
+          ? timing(1, "arrange", "fall")
+          : timing(0, "quick", "release", gone),
+        ReduceMotion.Never,
+      ),
+    );
+    drop.set(
+      withDelay(
+        delay,
+        arriving
+          ? timing(0, "arrange", "fall")
+          : timing(-4, "quick", "release"),
+        ReduceMotion.Never,
+      ),
+    );
+  }, [phase, delay, reduce, id, onGone, shown, drop]);
+
+  const travel = useAnimatedStyle(() => ({
+    opacity: shown.get(),
+    transform: [{ translateY: drop.get() }],
+  }));
 
   const shadow = useAnimatedStyle(() => ({
     shadowOpacity: interpolate(
@@ -311,15 +294,14 @@ function LaidPiece({
 
   return (
     <Animated.View
-      entering={entering}
       pointerEvents={ghost ? "none" : "box-none"}
-      style={[styles.piece, box, { zIndex: laid.depth }]}
+      style={[styles.piece, box, { zIndex: laid.depth }, travel]}
       {...(ghost ? hidden : null)}
     >
       <Pressable
-        nativeID={nativeID}
-        testID={ghost ? undefined : `outfit-piece-${laid.piece.id}`}
-        onPress={onPress}
+        nativeID={ghost ? undefined : nativeID}
+        testID={ghost ? undefined : `outfit-piece-${id}`}
+        onPress={ghost ? undefined : onPress}
         onPressIn={() => {
           if (onPress) lift.set(reduce ? 1 : timing(1, "base", "silk"));
         }}
@@ -328,7 +310,7 @@ function LaidPiece({
         }}
         hitSlop={{ left: slopX, right: slopX, top: slopY, bottom: slopY }}
         style={StyleSheet.absoluteFill}
-        {...access}
+        {...(ghost ? hidden : access)}
       >
         <Animated.View
           style={[
@@ -346,7 +328,9 @@ function LaidPiece({
             />
           </View>
         </Animated.View>
-        {gleam ? <Gleam laid={laid} side={side} origin={origin} /> : null}
+        {gleam && !ghost ? (
+          <Gleam laid={laid} side={side} origin={origin} />
+        ) : null}
         {mark ? (
           <View
             style={[
@@ -398,7 +382,7 @@ export function FlatLay({
   const origin = useSharedValue(0);
   const [width, setWidth] = useState(0);
   const hero = size === "hero";
-  const side = hero ? Math.min(width, maxSize ?? width) : sides[size];
+  const side = hero ? width : sides[size];
 
   const slots = slotsOf(pieces);
   const [swap, setSwap] = useState<Swap>({
@@ -410,23 +394,44 @@ export function FlatLay({
   const moved = Object.keys({ ...swap.slots, ...slots }).filter(
     (key) => swap.slots[key]?.id !== slots[key]?.id,
   );
+  const ids = new Set(pieces.map((piece) => piece.id));
+  const stagger = (changed: string[], key: string, after: number) =>
+    reduce ? 0 : (changed.indexOf(key) + after) * motion.timer.step;
   if (swap.revision !== revision || (moved.length > 0 && !hero)) {
     setSwap({ revision, slots, changed: [], outgoing: [] });
   } else if (moved.length > 0) {
     const before = arrangePieces(Object.values(swap.slots));
-    const ids = new Set(pieces.map((piece) => piece.id));
     const changed = [...moved].sort((a, b) => rankOf(a) - rankOf(b));
+    const leaving = changed.flatMap((key) => {
+      const old = swap.slots[key];
+      const laid = before.find((item) => item.piece.id === old?.id);
+      return laid && !ids.has(laid.piece.id)
+        ? [{ laid, delay: stagger(changed, key, 0) }]
+        : [];
+    });
     setSwap({
       revision,
       slots,
       changed,
-      outgoing: changed.flatMap((key) => {
-        const old = swap.slots[key];
-        const laid = before.find((item) => item.piece.id === old?.id);
-        return laid && !ids.has(laid.piece.id) ? [{ key, laid }] : [];
-      }),
+      outgoing: [
+        ...swap.outgoing.filter(
+          ({ laid }) =>
+            !ids.has(laid.piece.id) &&
+            !leaving.some((item) => item.laid.piece.id === laid.piece.id),
+        ),
+        ...leaving,
+      ],
     });
   }
+
+  const gone = useCallback(
+    (id: string) =>
+      setSwap((current) => ({
+        ...current,
+        outgoing: current.outgoing.filter(({ laid }) => laid.piece.id !== id),
+      })),
+    [],
+  );
 
   const blanks = emptyRoles.map((role) => ({
     role,
@@ -468,11 +473,6 @@ export function FlatLay({
 
   const slotOf = (piece: Piece) =>
     Object.keys(slots).find((key) => slots[key]?.id === piece.id) ?? "";
-  const stagger = (key: string, after: number) =>
-    reduce
-      ? 0
-      : swap.changed.indexOf(key) * motion.timer.step +
-        after * motion.timer.step;
 
   const interactive = hero && Boolean(onPiecePress) && !hiddenPieces;
   const described = hero && preview && !hiddenPieces;
@@ -510,12 +510,13 @@ export function FlatLay({
       interactive || described ? reading : undefined,
   };
 
-  const lay = (
+  return (
     <View
       ref={viewport}
-      onLayout={() =>
-        viewport.current?.measureInWindow((left) => origin.set(left))
-      }
+      onLayout={(event) => {
+        if (hero) setWidth(event.nativeEvent.layout.width);
+        viewport.current?.measureInWindow((left) => origin.set(left));
+      }}
       testID={
         loading
           ? "moment-loading"
@@ -543,7 +544,10 @@ export function FlatLay({
             : null)}
       style={[
         styles.viewport,
-        { width: side, height: side, backgroundColor: colors.canvas },
+        hero
+          ? [styles.hero, { maxWidth: maxSize }]
+          : { width: side, height: side },
+        { backgroundColor: colors.canvas },
       ]}
     >
       {loading ? (
@@ -575,65 +579,52 @@ export function FlatLay({
               ]}
             />
           ))}
-          {swap.outgoing.map(({ key, laid }) => (
+          {[
+            ...swap.outgoing
+              .filter(({ laid }) => !ids.has(laid.piece.id))
+              .map(({ laid, delay }) => ({
+                laid,
+                delay,
+                phase: "out" as const,
+              })),
+            ...placed.map((laid) => {
+              const key = slotOf(laid.piece);
+              const moving = swap.changed.includes(key);
+              return {
+                laid,
+                delay: moving ? stagger(swap.changed, key, 1) : 0,
+                phase: moving ? ("in" as const) : ("still" as const),
+              };
+            }),
+          ].map(({ laid, delay, phase }) => (
             <LaidPiece
-              key={`out-${key}-${laid.piece.id}`}
+              key={laid.piece.id}
               laid={laid}
               side={side}
               elevated={size !== "mini"}
-              entering={leave(stagger(key, 0), reduce)}
-              ghost
-              gleam={false}
+              phase={phase}
+              delay={delay}
+              onGone={gone}
+              gleam={state === "arranging"}
               origin={origin}
-              mark={false}
-              access={hidden}
+              mark={hero && swapMark && roleOf(laid.piece) === "hijab"}
+              nativeID={`${prefix}-${laid.piece.id}`}
+              onPress={
+                hero && onPiecePress
+                  ? () => onPiecePress(laid.piece)
+                  : undefined
+              }
+              access={accessFor(laid.piece)}
             />
           ))}
-          {placed.map((laid) => {
-            const key = slotOf(laid.piece);
-            return (
-              <LaidPiece
-                key={laid.piece.id}
-                laid={laid}
-                side={side}
-                elevated={size !== "mini"}
-                entering={
-                  swap.changed.includes(key)
-                    ? arrive(stagger(key, 1), reduce)
-                    : undefined
-                }
-                gleam={state === "arranging"}
-                origin={origin}
-                mark={hero && swapMark && roleOf(laid.piece) === "hijab"}
-                nativeID={`${prefix}-${laid.piece.id}`}
-                onPress={
-                  hero && onPiecePress
-                    ? () => onPiecePress(laid.piece)
-                    : undefined
-                }
-                access={accessFor(laid.piece)}
-              />
-            );
-          })}
         </LayoutAnimationConfig>
       ) : null}
     </View>
   );
-
-  return hero ? (
-    <View
-      style={styles.hero}
-      onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
-    >
-      {lay}
-    </View>
-  ) : (
-    lay
-  );
 }
 
 const styles = StyleSheet.create({
-  hero: { width: "100%", alignItems: "center" },
+  hero: { width: "100%", aspectRatio: 1, alignSelf: "center" },
   viewport: { position: "relative" },
   piece: { position: "absolute" },
   crop: { overflow: "hidden" },
