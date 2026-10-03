@@ -407,3 +407,165 @@ Date: 2026-10-03. Each issue is fixed in `architecture.md` and `use-cases.md`, o
 | B10-01 | Fixed | Occasion chip row in the builder, the look carries it and "Fill the rest" ranks for it; the day is set with "Plan" on look detail, one tap after save. UC-F10-01, UC-F10-02. |
 
 Blocking resolved: 5 of 6. A6-01 remains an owner decision with the Knit chip as the interim path.
+
+## Revision 1 walk
+
+Date: 2026-10-03. Walked against "Revision 1 changes" and "Owner decisions" in `architecture.md`, the revision 1 rows in `use-cases.md`, `owner-feedback.md` rounds 1 and 2, `flows/F06-today.md`, `flows/F08-change-a-piece.md`, `flows/F04-closet.md`, `illustrations-v1.png`, and `src/domain` for what exists (none of the revision 1 functions exist yet; `Coverage` is still `full | moderate | own`, onboarding still has five steps).
+
+Same person. New scenarios:
+
+- R1 Fresh install on a Sunday evening, onboarding end to end.
+- R2 Weekday, morning outfit at 07:00. Another week I try 21:00 the night before.
+- R3 Ten new photos from my camera roll, then I keep browsing while they prepare.
+- R4 Today with Rediscover and the coverage line, first week with my own clothes.
+- R5 Closet with 70 pieces: sections and filters.
+- R6 End of the month: what did I wear, and did I wear the green suit at the last family dinner?
+- R7 Profile: things I never wear, things I want to wear more, the meter.
+
+IDs are `C{flow}-NN`. A pass 2 issue that is open again keeps its pass 2 ID.
+
+### F01 Start
+
+R1. "What should we call you?" Sara, return. Hijab: Always. Then the styles cards. Hijab and Shayla look almost the same: a wrapped scarf with a long tail. Al-Amira looks like a plain hijab, not the two-piece tube cap I know. I pick Hijab and Al-Amira and guess. Coverage: the Modest figure wears a blazer, long sleeves and wide trousers to the ankle, which is how I dress for work, so I pick Modest. Everyday style: Western modest for most days. Fit: Loose. Then "How much sparkle?" For every day I say Plain; for Eid I want heavy. I tap Plain. Location in one tap, nice. 07:00 for the morning outfit. Selfie: the tips help, the circle takes the photo by itself, the palette shows hijab shades. That is the moment I wanted.
+
+| ID | Kind | Severity | Issue | What I need |
+|---|---|---|---|---|
+| C1-01 | Wrong result for Desi events | blocking | "How much sparkle?" does not say for when. I answer for every day (Plain). The rule penalises a Desi piece above my level outside wedding occasions, so Eid, a dholki or a dinner party now prefers my plain kameez over the embroidered one. Eid is one of my main reasons for the app. | Ask about events, not every day: "For Eid and parties, how much sparkle?". Everyday outfits stay plain without asking. |
+| C1-02 | Confusing picture | minor | The Modest figure (long sleeves, ankle-length trousers) is what the app later calls Fully covered on a piece. The picture and the meaning disagree. | Modest figure with elbow sleeves and a calf hem, as the domain reads it. |
+| C1-03 | Look alike | minor | Hijab and Shayla cards are near copies; Al-Amira does not show the tube cap. I guess. | Hijab wrapped and pinned close, Shayla long and loose over one shoulder, Al-Amira as the two-piece cap and tube. |
+| C1-04 | Asked, then unused | minor | Hijab styles change nothing in this revision (no scoring use), yet the meter later asks for them. | Fine to ask once. Do not count it in the meter until the stylist reads it. |
+| C1-05 | Wrong picture for me | minor | The "A mix of both" card shows western and abaya. For me the mix is western and desi; "Abaya or desi" lumps two traditions and an abaya wearer gets kameez. | Third card shows western and desi. |
+| C1-06 | Wrong default | minor | "Hair covered" starts on only for Always. On Sometimes I still take the selfie in my hijab. | Start on for Always and Sometimes. |
+| C1-07 | Counting | minor | With Not needed the styles step is skipped but the bar still reads "of 10". | Count the steps she will see. |
+| C1-08 | Same faces | minor | Every figure has the same pale face. | Vary skin tone across the set. |
+
+### F02 Add pieces
+
+R3. Add pieces, "Choose photos", ten from the camera roll. I go straight back. Closet shows "10 new pieces, 0 of 10 ready". I go to Today, press Another, look at a look. Nothing stalls. Back on Closet: "10 new pieces, 10 of 10 ready". I think they are in my closet. They are not until I tap Review and "Add 8 pieces".
+
+| ID | Kind | Severity | Issue | What I need |
+|---|---|---|---|---|
+| C2-01 | Misread as done | minor | "10 of 10 ready" reads like finished. Nothing is in the closet until "Add N pieces". | When all are ready: "10 ready to add" with Review. |
+| C2-02 | Out of sight | minor | I live on Today. The card is only on Closet, so ready pieces wait for days. | A count badge on the Closet tab while pieces wait. Nothing on Today. |
+| C2-03 | No way forward | minor | "1 could not finish" has no action. | "Try again" on the failed tile in Review. |
+| C2-04 | Unclear | minor | Every Ready tile has a colour dot that "is confirmed before Add". If each needs a tap, ten pieces cost ten taps. | The read colour stands unless I change it. |
+
+### F04 Closet
+
+R5. Sections with counts read well: "Hijabs 31", "Tops 14". The Tops chip jumps to Tops. More opens a long block with nine groups; at my larger text it fills the screen. Coverage "Fully covered" shows only my abaya and two maxi dresses. Every one of my long-sleeved blouses says "Needs layering" (see C5-01). "Not worn lately" is back under More.
+
+| ID | Kind | Severity | Issue | What I need |
+|---|---|---|---|---|
+| B4-02 | Hidden entry (open again) | minor | Revision 1 put Worn back under More. Using more of my closet is why I am here. | "Not worn lately" as a chip next to More. |
+| C4-01 | Long | minor | More has nine groups (Colour, Coverage, Season, Worn, Availability, Style, Occasion, Put away, Needs details). | Colour, Coverage, Season, Worn first; the rest after. |
+| C4-02 | Floating menu | minor | "Mark as worn", "Link as a set" and "Put away" in Select sit in a native header menu. The owner asked for no floating menus. | The same actions as footer buttons, like "New look" and "Start with these". |
+| C4-03 | Order | minor | 31 hijabs in a section in date order. | Hijabs ordered by tone inside their section, like the Change strip. |
+
+### F05 Piece
+
+| ID | Kind | Severity | Issue | What I need |
+|---|---|---|---|---|
+| C5-01 | Wrong result | blocking | `pieceCoverage` judges every piece by its own sleeve and length. A long-sleeved blouse at the hip is "Needs layering", wide trousers to the ankle have no sleeve, and the Fully covered filter returns only abayas and maxi dresses. My modest work blouses are labelled as if they were not. | Judge what the piece covers: tops by sleeve (and see-through), bottoms by length, one-piece garments by both. A long-sleeved blouse is Fully covered for the arms. |
+| C5-02 | Words | minor | "Needs details" on a hijab or shoes would be noise if sleeve and length are asked of them. | Only facts that apply to the category count. |
+
+### F06 Today
+
+R2. 07:00, "Good morning, Sara. Today's outfit is ready". Tap, splash, Today, "Good morning, Sara". Lovely. The outfit, the coverage line "Blazer covers the arms". I want another hijab. Pass 2 gave me "Compare hijabs"; it is gone. Nothing on screen says the hijab in the picture can be tapped. I press Another three times hoping for a better hijab and lose the outfit I liked.
+
+The week I chose 21:00: "Tomorrow's outfit is ready". I tap it in bed. Today shows today's outfit, the one I already wore. In the morning it is a third outfit.
+
+R4. Rediscover under Start with shows six pieces "not worn yet": my black work trousers, my grey cardigan, my favourite plum hijab. I wear them every week. The app has no history yet, and the "Mark what I wear most" offer after adding is gone.
+
+| ID | Kind | Severity | Issue | What I need |
+|---|---|---|---|---|
+| C6-01 | Main job hidden | blocking | Changing the hijab is now only a tap on the hijab in the flat lay, with a VoiceOver hint and no visible cue (F06 review log, F08). Hijab matching is why I use the app, and at 07:10 I will not discover a hidden tap. | One small, always-there mark on the hijab in the flat lay (a swap glyph), no new button in the rows. |
+| C6-02 | Main goal inert (B4-01 again) | blocking | Rediscover lists never-worn pieces, and in the first weeks that is my favourites. The pass 2 fix, "Mark what I wear most" once after the first add, is gone from the "N added" Banner; "Mark as worn" is now in a header menu in Select, Today or Yesterday only. | The one-time "Mark what I wear most" offer back on the first "N added" Banner, and Rediscover hidden until some pieces have a wear. |
+| C6-03 | Broken promise | blocking | At 21:00 the notification says "Tomorrow's outfit is ready", but the tap lands on today's outfit, and the morning builds a new one. The night-before choice is for my busiest mornings. | A 21:00 tap opens tomorrow's outfit with tomorrow's forecast, and that is the outfit Today opens on in the morning unless I change it. |
+| C6-04 | Two controls, one act | minor | After Another, thumbs down on the card and "Not for me" by Undo are both on screen and do the same thing. `flows/F06-today.md` also still says the quiet row keeps three buttons, while revision 1 says Another alone. | One rule written once in both docs. |
+| C6-05 | Same sentence daily | minor | "Abaya covers the arms and reaches the ankle" every day is noise. The line helps when a layer does the work. | Show the line when a layer or second piece meets the need. |
+| C6-06 | Narrow | minor | Rediscover is never-worn only. A dress last worn in March never comes back. | Never worn first, then not worn lately. |
+
+### F09 Looks and calendar
+
+R6. Looks, Calendar. The month with dots is calm. "Most worn" shows my plum hijab, no surprise. "Variety: 38% of your closet". I tap the day of the family dinner: the look name, no occasion.
+
+| ID | Kind | Severity | Issue | What I need |
+|---|---|---|---|---|
+| C9-01 | Missing info | minor | Before a Desi event I need "what did I wear in front of this family last time". Day rows show the look name only. | The occasion word on the day row when the look has one. |
+| C9-02 | Number with no door | minor | "Variety" is a number I cannot act on. Profile numbers are doors (hand-off rule 7). | Tap opens Closet with "Not worn lately". |
+
+### F11 Profile
+
+R7. The meter: "The stylist knows 69% of your style", chips "Add body", "Add to I'll never wear", "Add to Trying to wear more of". I skipped body on purpose. I'll never wear: one long wall of 55 garment chips. I tap Black under Colours for clothes, and my black hijabs disappear from outfits too.
+
+My sister answers hijab Not needed. Her meter shows "Pick hijab styles". The chip opens Your style, where the cards are hidden while hijab is Not needed.
+
+| ID | Kind | Severity | Issue | What I need |
+|---|---|---|---|---|
+| C11-01 | Dead end | blocking | Completeness counts hijab styles for everyone, but the step is skipped and the cards are hidden when hijab is Not needed. The chip opens a screen without the answer, and the meter never reaches 100%. | Hijab styles leave the meter when hijab is Not needed. |
+| C11-02 | Pushy meter | minor | An empty "I'll never wear" or "Trying to wear more of" is a real answer, and "Prefer not to say" for body is one too, yet the meter only fills when I add something. | Count an opened screen or a "Prefer not to say" as answered. |
+| C11-03 | Wall | minor | 55 garment chips in one block. | Garments grouped by Closet category, same order as the sections. |
+| C11-04 | Too wide | minor | A never-wear colour also removes hijabs of that colour. | Colours apply to clothes; hijabs only when I say so. |
+| C11-05 | Scattered | minor | Onboarding asked fit next to style and sparkle; on Profile fit sits under Your taste and the rest under Your style. | Fit on Your style too, one home. |
+
+### F12 App-wide
+
+| ID | Kind | Severity | Issue | What I need |
+|---|---|---|---|---|
+| C12-01 | Missing words | minor | `copy.md` has none of the revision 1 strings yet (greeting, sparkle, morning outfit, progress card, calendar, meter, never wear). | UX writer pass before build, EN and NB. |
+
+### Revision 1 summary
+
+Blocking: 6. Minor: 26.
+
+What works for me: one-tap location, auto capture and the palette, the greeting, the progress card that never blocks, sections with counts, the calendar on its own push.
+
+Blocking, in the order they hurt me:
+
+1. C6-01 Changing the hijab has no visible door on Today.
+2. C6-02 Rediscover shows my favourites; the "Mark what I wear most" offer is gone again.
+3. C6-03 The 21:00 "Tomorrow's outfit" opens today's outfit, and the morning shows a different one.
+4. C5-01 Piece coverage judges a blouse by its hem, so my modest tops read "Needs layering" and the Fully covered filter is nearly empty.
+5. C1-01 "How much sparkle?" answered for every day makes Eid and party outfits plain.
+6. C11-01 The meter's "Pick hijab styles" chip is a dead end when hijab is Not needed.
+
+### Architect response
+
+Date: 2026-10-03. Each issue is fixed in `architecture.md` and `use-cases.md`, or declined with the reason. Domain changes are rows in the Domain touches table of `architecture.md` (changed in place, since none are built yet), each with a unit test first in Phase 3. The "Revision 2 changes" section of `architecture.md` lists the whole set. `flows/F06-today.md`, `flows/F04-closet.md`, `flows/F08-change-a-piece.md` and `copy.md` are the UX designer's and UX writer's files and follow `architecture.md` in their next pass.
+
+| ID | Decision | How, or why not |
+|---|---|---|
+| C6-01 | Fixed | The hijab in the flat lay always carries a small plum swap mark at its corner, part of the hijab's own tap target; no button in the rows, no other piece marked. Inline modes table, flow list F06 and F08, UC-F06-02, UC-F08-02, UC-F12-07. |
+| C6-02 | Fixed | The "N added" Banner's second action is "Mark what I wear most" while no owned piece has a wear (after "Link as a set" when that applies, before "New look"), and it returns on every Banner until a wear exists. It opens Closet select with the quiet row. `hasAnyWear`; `rediscover` returns nothing until it is true, so Rediscover is hidden. Hand-off rule 4, UC-F02-14, UC-F02-21, UC-F04-12, UC-F06-21. |
+| C6-03 | Fixed | The 21:00 tap opens "Tomorrow's outfit": the everyday outfit for tomorrow's date with tomorrow's forecast under a Banner with "Back to today"; Another, the strip, Start with and Save work on it, "Wear this" is hidden. `TodayState.tomorrow` is promoted to the everyday session by `ensureToday` on that date, dropped after it. "Back to today" leaves a one-line "Tomorrow's outfit" Banner with "Show". Hand-off rule 11, UC-F06-23, UC-F06-18, UC-F01-19. |
+| C5-01 | Fixed | `pieceCoverage` judges by category: tops, tunics and layers by sleeve and see-through, bottoms by length, dresses and abayas by both, hijabs, shoes, bags and accessories never. A long-sleeved hip-length blouse is Fully covered. UC-F04-04, UC-F05-01. |
+| C1-01 | Fixed | Step 7 asks "For Eid and parties, how much sparkle?"; the rule reads sparkle on Eid, party, wedding guest and barat only, never on everyday or dinner requests. Same words on Your style. UC-F01-17, UC-F11-02. |
+| C11-01 | Fixed | `completeness` counts only the questions she can answer; hijab styles leaves the meter when hijab is Not needed, so 100% is reachable and the chip never appears. UC-F11-08. |
+| C1-02 | Fixed, next render | `coverage-moderate` re-rendered with elbow sleeves and a calf hem. Listed under Onboarding and in Dependencies. |
+| C1-03 | Fixed, next render | Hijab wrapped and pinned close, Shayla long over one shoulder, Al-Amira as the cap and tube. UC-F01-13. |
+| C1-04 | Declined | The meter measures answers given, not which rules read them; dropping a part when the engine does not yet use it would make the meter move with engine releases. Hijab styles stays one part for hijab wearers. |
+| C1-05 | Fixed | Third card shows the western and the desi figure. UC-F01-15. |
+| C1-06 | Fixed | "Hair covered" starts on for Always and Sometimes, off for Not needed. UC-F01-07. |
+| C1-07 | Fixed | The bar counts the steps she will see: "3 of 9" when hijab styles is skipped. `stepsFor(answers)`. UC-F01-13. |
+| C1-08 | Fixed, next render | Skin tone varied across the set. |
+| C2-01 | Fixed | When no photo is preparing the card reads "N ready to add" (and "1 could not finish"), never "N of N ready". `captureProgress.done`. UC-F02-15, UC-F02-23, UC-F04-08. |
+| C2-02 | Fixed | The Closet tab carries a badge with the ready count while pieces wait; nothing on Today. UC-F02-15, UC-F02-23. |
+| C2-03 | Already there | The failed tile in Review has one "Try again" action (UC-F02-05); UC-F02-23 now points to it. |
+| C2-04 | Fixed | The read colour stands unless she changes it; no tap is required before "Add N pieces". UC-F02-22 adds ten tiles with one correction. |
+| B4-02 | Fixed | "Not worn lately" is a chip next to More, before the categories. UC-F04-04. |
+| C4-01 | Fixed | More is ordered Colour, Coverage, Season, Worn, then Availability, Style, Occasion, Put away, Needs details. UC-F04-04. |
+| C4-02 | Fixed | No header menu anywhere. Select has a pinned footer ("Start with these", "New look") and a quiet row under the count ("Link as a set", "Mark as worn" with Today / Yesterday chips in place, "Put away" or "Back in the closet"). Shell rule added. UC-F04-05, UC-F04-10, UC-F04-12. |
+| C4-03 | Fixed | Hijabs ordered by tone inside their section, same order as the Change strip. `groupByCategory`. UC-F04-02. |
+| C5-02 | Fixed | `needsDetails` lists only the facts `pieceCoverage` reads for that category; a hijab or shoes never carry the chip. UC-F05-18. |
+| C6-04 | Fixed, one rule | Both controls are owner decisions (round 1 item 6, round 2 item 7) and are one action with one VoiceOver label: the icon is always on the card, the word sits next to Undo only after Another. The inline modes table row is the one rule; `flows/F06-today.md` is corrected to it in the UX designer's pass. |
+| C6-05 | Fixed | The coverage line names a layer or bottom that does the work and is absent when the main piece meets every need by itself, so an abaya never reads the same sentence daily. `coverageNote`. UC-F06-19. |
+| C6-06 | Fixed | Never worn first, then not worn in 30 days, oldest wear first; wear-more first within each group. `rediscover`. UC-F06-21. |
+| C9-01 | Fixed | Calendar day rows carry the look's occasion word. `wearCalendar`. UC-F09-13. |
+| C9-02 | Fixed | "Variety" opens Closet with "Not worn lately" on. Hand-off rule 7. UC-F09-12. |
+| C11-02 | Fixed | An opened, empty "I'll never wear" or "Trying to wear more of" (`[]`, not `undefined`) and Body "Prefer not to say" count as answered. UC-F11-08. |
+| C11-03 | Fixed | Garments grouped by Closet category in section order. UC-F11-09. |
+| C11-04 | Fixed | A colour under Colours applies to clothes; "Hijab colours" is its own group. `NeverWear` colour entries carry `on: "clothes" \| "hijabs"`. UC-F11-09. |
+| C11-05 | Fixed | Fit has one home, Your style; Your taste keeps the colour lean. UC-F01-16, UC-F11-01, UC-F11-02, UC-F11-03. |
+| C12-01 | Handed to the UX writer | Every revision 1 and 2 string listed in `architecture.md` (greeting, sparkle question, morning and tomorrow notifications, progress card, tab badge, calendar, meter, never wear, Mark what I wear most, Tomorrow's outfit) goes into `copy.md` in EN and NB before build. |
+
+Blocking resolved: 6 of 6. Declined: C1-04. Handed on: C12-01 (copy), the three illustration re-renders, and the flow docs.

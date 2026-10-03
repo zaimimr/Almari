@@ -8,7 +8,7 @@
   --canvas:#FFFFFF;--surface:#FBF9F7;--sunken:#F2EDE7;--ink:#322E28;--muted:#706963;--line:#E6E0DC;--lineField:#948B85;
   --plum:#675469;--plumPressed:#574559;--plumSoft:#F3EEF4;--plumSoftP:#E6DDE7;--onPlum:#FFFFFF;
   --blush:#E2B1A8;--blushStrong:#BE8077;--error:#96354A;--scrim:rgba(50,46,40,.55);--scrimPill:rgba(50,46,40,.70);
-  --ivory:#F4EDE3;--plumGround:#644E64;--sheen:#FAF8F3;--bezel:#2B2724;
+  --ivory:#F4EDE3;--plumGround:#644E64;--sheen:#FAF8F3;--bezel:#2B2724;--paper:#FEF6DE;--blushEdge:#9A5A52;
   --serif:Georgia,"Times New Roman",serif;
   --sys:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Helvetica,Arial,sans-serif;
   --silk:cubic-bezier(.22,.61,.36,1);--fall:cubic-bezier(.16,1,.3,1);--carry:cubic-bezier(.5,0,.2,1);--release:cubic-bezier(.32,0,.67,0);
@@ -114,11 +114,9 @@ section.pg>h2{font:400 32px/1.15 var(--serif);letter-spacing:-.3px;margin:0 0 6p
 .btn.destr{color:var(--error);padding:0 8px}
 .btn.dis{background:var(--sunken);color:var(--muted)}
 .btn.lead{justify-content:flex-start;padding-left:0}
-.chip{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 14px;border-radius:999px;background:var(--sunken);border:2px solid transparent;font:400 15px/20px var(--sys);color:var(--ink);white-space:nowrap;box-sizing:border-box}
-.chip.sel{background:var(--blush);border-color:var(--blushStrong)}
-.chip.ctl{border:1px solid var(--lineField)}
-.exp .chip{border:1px solid var(--lineField)}
-.exp .chip.sel{border:2px solid var(--blushStrong)}
+.chip{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;min-width:44px;flex-shrink:0;padding:0 14px;border-radius:999px;background:var(--sunken);background-clip:padding-box;border:2px solid transparent;box-shadow:inset 0 0 0 1px var(--lineField);font:400 15px/20px var(--sys);color:var(--ink);white-space:nowrap;box-sizing:border-box}
+.chip.sel{background:var(--blush);background-clip:border-box;box-shadow:none}
+.chip.sel,.exp .chip.sel,.fr .chip.sel{border-color:var(--blushEdge)}
 .chip svg{color:var(--muted);margin-right:-4px}
 .chip.sel svg{color:var(--ink)}
 .chip .k{color:var(--muted)}
@@ -137,7 +135,7 @@ section.pg>h2{font:400 32px/1.15 var(--serif);letter-spacing:-.3px;margin:0 0 6p
 .tile .cl{display:flex;align-items:center;gap:8px;min-height:44px;font:400 15px/20px var(--sys)}
 .tile.tstrip{width:112px;flex:none}
 .tile.tstrip .lb{align-items:flex-start;font-size:15px;line-height:20px}
-.disc{position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;background:var(--blush);display:grid;place-items:center;color:var(--ink);z-index:3}
+.disc{position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;background:var(--blush);box-shadow:0 0 0 2px var(--blushStrong);display:grid;place-items:center;color:var(--ink);z-index:3}
 .markc{position:absolute;top:8px;left:8px;background:var(--blush);color:var(--ink);font:600 12px/16px var(--sys);padding:3px 8px;border-radius:999px;z-index:3}
 .raw{position:absolute;inset:0;border-radius:12px;overflow:hidden;background:radial-gradient(120% 90% at 25% 15%,#E8DFD3,#D6C9BA 55%,#C9BBAA)}
 .raw img{position:absolute;filter:drop-shadow(0 4px 6px rgba(50,46,40,.22))}
@@ -194,7 +192,7 @@ section.pg>h2{font:400 32px/1.15 var(--serif);letter-spacing:-.3px;margin:0 0 6p
 .prog::before{content:"";position:absolute;left:0;right:0;top:.5px;height:1px;background:var(--lineField)}
 .prog i{position:absolute;left:0;top:0;height:2px;background:var(--plum);border-radius:2px}
 .empty{position:absolute;left:16px;right:16px;top:236px;display:flex;flex-direction:column;align-items:center;text-align:center;z-index:5}
-.ph.ax3 .empty{top:180px}
+.ph.ax5 .empty{top:180px}
 .bm{width:96px;height:96px;border-radius:22px;overflow:hidden}
 .bm img{width:100%;height:100%;display:block}
 .cam{position:relative;border-radius:20px;overflow:hidden;background:var(--ink)}
@@ -307,40 +305,165 @@ section.pg>h2{font:400 32px/1.15 var(--serif);letter-spacing:-.3px;margin:0 0 6p
   .replay{transition:none}
 }
 
-.ph.ax3{font-size:45px;line-height:63px}
+.ph.ax5{font-size:61px;line-height:72px}
 .ph.w375{width:375px}
 .ph.bold,.ph.bold .row .ti,.ph.bold .fn,.ph.bold .sh,.ph.bold .chip{font-weight:600}
 .ph.bold .btn,.ph.bold .hl{font-weight:700}
 .srch{display:flex;align-items:center;gap:8px;min-height:44px;padding:0 12px;border-radius:999px;background:var(--sunken);color:var(--muted);font:400 17px/22px var(--sys);margin-top:2px;min-width:0}
 .srch span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-.ph.ax3 .srch{font-size:45px;line-height:63px}
-.ph.ax3 .srch svg{width:36px;height:36px;flex:none}
+.ph.ax5 .srch{font-size:61px;line-height:72px}
+.ph.ax5 .srch svg{width:44px;height:44px;flex:none}
 .axrow{display:flex;flex-direction:column;gap:8px;padding:12px 0;border-bottom:1px solid var(--line)}
 .axrow:last-child{border:0}
 .axrow .top{display:flex;align-items:center;justify-content:space-between;color:var(--muted)}
 .ph.md .rows .row{border:0}
 .ph.md .row .tr.ck{color:#fff}
-.ph.ax3 .axrow .ti{font-size:45px;line-height:63px}
-.ph.ax3 .axrow .me{font-size:40px;line-height:53px;color:var(--muted)}
+.ph.ax5 .axrow .ti{font-size:61px;line-height:72px}
+.ph.ax5 .axrow .me{font-size:54px;line-height:64px;color:var(--muted)}
 .wx{display:flex;align-items:center;min-height:44px;margin-top:-8px;font:600 15px/20px var(--sys);color:var(--ink);gap:2px}
-.ph.ax3 .lt{font-size:60px;line-height:72px;margin:0}
-.ph.ax3 .t26{font-size:52px;line-height:64px}
-.ph.ax3 .hl,.ph.ax3 .btn,.ph.ax3 .lbl,.ph.ax3 .sec h4,.ph.ax3 .sec .qa,.ph.ax3 .exph{font-size:45px;line-height:58px}
-.ph.ax3 .row .ti,.ph.ax3 .fld{font-size:45px;line-height:63px}
-.ph.ax3 .sh,.ph.ax3 .chip,.ph.ax3 .row .me,.ph.ax3 .tile .lb,.ph.ax3 .tile .cl,.ph.ax3 .seg span{font-size:40px;line-height:53px}
-.ph.ax3 .fn{font-size:34px;line-height:48px}
-.ph.ax3 .chip,.ph.ax3 .btn{white-space:normal}
-.ph.ax3 .chip{padding:8px 16px;gap:10px}
-.ph.ax3 .chip svg{width:26px;height:26px}
-.ph.ax3 .sw{width:28px;height:28px}
-.ph.ax3 .row .li{width:44px}
-.ph.ax3 .row .li svg,.ph.ax3 .row .tr svg{width:40px;height:40px}
-.ph.ax3 .fld svg{width:36px;height:36px}
+.ph.ax5 .lt{font-size:60px;line-height:72px;margin:0}
+.ph.ax5 .t26{font-size:52px;line-height:64px}
+.ph.ax5 .hl,.ph.ax5 .btn,.ph.ax5 .lbl,.ph.ax5 .sec h4,.ph.ax5 .sec .qa,.ph.ax5 .exph,.ph.ax5 .fr .fl{font-size:61px;line-height:72px}
+.ph.ax5 .row .ti,.ph.ax5 .fld{font-size:61px;line-height:72px}
+.ph.ax5 .sh,.ph.ax5 .chip,.ph.ax5 .row .me,.ph.ax5 .row .tr,.ph.ax5 .tile .lb,.ph.ax5 .tile .cl,.ph.ax5 .seg span,.ph.ax5 .cc .cl{font-size:54px;line-height:64px}
+.ph.ax5 .fn{font-size:46px;line-height:56px}
+.ph.ax5 .chip,.ph.ax5 .btn{white-space:normal}
+.ph.ax5 .chip{padding:8px 16px;gap:10px;flex-shrink:1;min-width:auto}
+.ph.ax5 .chip svg{width:26px;height:26px;flex:none}
+.ph.ax5 .cr{align-items:flex-start}
+.ph.ax5 .facts .chip{display:block;max-width:100%;padding:8px 16px}
+.ph.ax5 .facts .chip .sw{margin-right:14px}
+.ph.ax5 .facts .chip .sw{vertical-align:middle}
+.ph.ax5 .facts .chip svg{display:inline-block;vertical-align:middle}
+.ph.ax5 .cr.sc .chip{flex:none;max-width:300px}
+.ph.ax5 .sw{width:28px;height:28px}
+.ph.ax5 .row .li{width:44px}
+.ph.ax5 .row .li svg,.ph.ax5 .row .tr svg{width:44px;height:44px}
+.ph.ax5 .fld svg{width:44px;height:44px}
+.ph.ax5 .ccg{grid-template-columns:1fr}
+.ph.ax5 .cc .art{aspect-ratio:auto;height:229px}
+.ph.ax5 .cc .art img{object-fit:contain}
+.ph.ax5 .ccg.bust .art img{object-fit:cover;object-position:50% 8%;transform:none}
+.ph.ax5 .cc .disc{width:44px;height:44px}
+.ph.ax5 .cc .disc svg{width:28px;height:28px}
+.ph.ax5 .fp{display:flex;flex-direction:column;padding:8px 16px 8px}
+.ph.ax5 .fr{display:flex;flex-direction:column;align-items:stretch;gap:8px;padding:8px 0}
+.ph.ax5 .fr .fl{align-self:flex-start;min-height:0}
+.ph.ax5 .fr .cr{margin-right:-16px}
+.ph.ax5 .ibs{margin:0 0 0 -16px}
+.ph.ax5 .ib{width:76px;height:76px}
+.ph.ax5 .ib svg{width:44px;height:44px}
+.ph.ax5 .swli{display:flex;flex-direction:column;gap:12px}
+.ph.ax5 .swli div{display:flex;align-items:center;gap:16px;font:400 61px/72px var(--sys)}
+.ph.ax5 .swli span{min-width:0;flex:1}
+.ph.ax5 .swli i{width:88px;height:88px;border-radius:50%;box-shadow:inset 0 0 0 1px var(--lineField);flex:none}
+.ph.ax5 .mline{flex-direction:column;align-items:stretch}
+.ph.ax5 .mline .ar{align-self:flex-end}
+.ph.ax5 .mline .ar span{width:76px;height:76px}
+.ph.ax5 .mline .ar svg{width:40px;height:40px}
+.ph.ax5 .ft .btn{white-space:normal}
+.ph.ax5 .pc .chv svg{width:40px;height:40px}
+.ph.ax5 .guide{font-size:61px;line-height:72px}
+.ph.ax5 .exph{flex-direction:column;align-items:flex-start;padding:8px 0}
+.ph.ax5 .exph .v{font-size:54px;line-height:64px}
+.ph.ax5 .exph .v svg{width:40px;height:40px}
 .ph.xl .lt{font-size:38px;line-height:46px}
 .ph.xl .t26{font-size:29px;line-height:36px}
 .ph.xl .btn,.ph.xl .hl{font-size:19px;line-height:24px}
 .ph.xl .chip,.ph.xl .sh{font-size:17px;line-height:22px}
 .ph.xl .fn{font-size:15px;line-height:20px}
+
+/* revision 1 */
+.splerr{position:absolute;left:16px;right:16px;top:54px;bottom:34px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:32px;z-index:5}
+.ccg{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px}
+.cc{min-width:0}
+.cc .art{position:relative;aspect-ratio:3/4;max-width:100%;border-radius:12px;overflow:hidden;background:var(--paper)}
+.cc .art img{width:100%;height:100%;object-fit:cover;display:block}
+.ccg.bust .art img{object-position:50% 6%;transform:scale(1.8);transform-origin:50% 12%}
+.cc .art.todo::after{content:"";position:absolute;inset:14% 30% 8%;border:1px dashed var(--lineField);border-radius:40% 40% 12px 12px}
+.cc .disc{box-shadow:0 0 0 2px var(--blushEdge)}
+.cc .cl{font:400 15px/20px var(--sys);margin-top:6px}
+.ib{width:44px;height:44px;display:grid;place-items:center;color:var(--muted);flex:none}
+.ib.on{color:var(--ink)}
+.tline{display:flex;align-items:center;gap:4px;margin-top:-4px}
+.tline .t26{flex:1;min-width:0}
+.ibs{display:flex;gap:8px;margin-right:-10px}
+.rsn{margin-top:-12px}
+.uslot{display:flex;justify-content:center;gap:8px;min-height:44px;margin-top:-16px}
+.swapm{position:absolute;width:26px;height:26px;border-radius:50%;background:var(--canvas);color:var(--plum);display:grid;place-items:center;box-shadow:0 1px 4px rgba(50,46,40,.18);z-index:8}
+.pc{background:var(--surface);border-radius:12px;padding:16px;display:flex;gap:12px;align-items:center}
+.pc .bx{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px}
+.pc .chv{color:var(--muted)}
+.pline{position:relative;height:2px}
+.pline::before{content:"";position:absolute;left:0;right:0;top:.5px;height:1px;background:var(--lineField)}
+.pline i{position:absolute;left:0;top:0;width:100%;height:2px;background:var(--plum);border-radius:2px;transform-origin:left center}
+.xf{position:relative;display:block}
+.xf>.later{position:absolute;left:0;top:0;right:0;opacity:0}
+.fp{background:var(--surface);border-radius:12px;padding:8px 0 8px 16px;display:grid;grid-template-columns:max-content minmax(0,1fr);column-gap:10px;overflow:hidden;margin-top:-4px}
+.fr{display:contents}
+.fr .fl{font:600 15px/20px var(--sys);display:flex;align-items:center;min-height:52px}
+.fr .cr{flex-wrap:nowrap;overflow:hidden;min-width:0;align-items:center;min-height:52px}
+.fp .fclr{grid-column:1/-1;margin-left:-8px}
+.facts{display:flex;flex-wrap:wrap;gap:8px}
+.facts .chip{padding:0 12px}
+.fcw{position:relative;width:296px;height:296px;align-self:center;flex:none}
+.fcw .fc{position:absolute;inset:16px;border-radius:50%;overflow:hidden;background:var(--sunken)}
+.fcw .rg{position:absolute;inset:6px;border-radius:50%;border:4px dashed var(--lineField)}
+@property --a{syntax:'<angle>';inherits:false;initial-value:0deg}
+.fcw .arc{position:absolute;inset:0;border-radius:50%;background:conic-gradient(var(--plum) var(--a),transparent 0);-webkit-mask:radial-gradient(circle closest-side,transparent calc(100% - 4.5px),#000 calc(100% - 4px));mask:radial-gradient(circle closest-side,transparent calc(100% - 4.5px),#000 calc(100% - 4px))}
+.fcw .veil{position:absolute;inset:16px;border-radius:50%;background:var(--canvas);opacity:0}
+.fcw .band{position:absolute;inset:16px;border-radius:50%;overflow:hidden;pointer-events:none}
+.fcw .band i{position:absolute;top:-10%;bottom:-10%;width:40%;left:0;opacity:0;background:linear-gradient(90deg,rgba(250,248,243,0),rgba(250,248,243,.35),rgba(250,248,243,0));transform:translateX(-160%) skewX(-20deg)}
+.guide{font:600 17px/22px var(--sys);text-align:center;min-height:44px}
+.swl{display:flex;gap:12px;flex-wrap:wrap}
+.swl i{width:44px;height:44px;border-radius:50%;box-shadow:inset 0 0 0 1px var(--lineField);display:block}
+.mline{display:flex;align-items:center;justify-content:space-between;min-height:44px}
+.mline .ar{display:flex}
+.mline .ar span{width:44px;height:44px;display:grid;place-items:center;color:var(--plum)}
+.mg{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+.mg .wd{font:400 13px/18px var(--sys);color:var(--muted);text-align:center;padding-bottom:6px}
+.mg .d{min-height:72px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.mg .n{width:28px;height:28px;display:grid;place-items:center;font:400 15px/20px var(--sys);border-radius:50%;box-sizing:border-box;color:var(--muted)}
+.mg .n.w{color:var(--ink)}
+.mg .n.today{box-shadow:inset 0 0 0 1.5px var(--ink);font-weight:600;color:var(--ink)}
+.mg .n.sel{background:var(--blush);box-shadow:inset 0 0 0 2px var(--blushStrong);color:var(--ink)}
+.mg .n.sel.today{box-shadow:inset 0 0 0 1.5px var(--ink)}
+.mg .mk{width:40px;height:40px;display:grid;place-items:center;border-radius:8px;background:var(--sunken)}
+.mg .mk img{width:34px;height:34px;object-fit:contain}
+.meter{display:flex;flex-direction:column;gap:12px}
+
+.mo .later{opacity:0}
+.mo.play .tgs{animation:var(--an)}
+.ac .feed{transform:translateX(22px)}
+.mo.play.ac .feed{animation:glide 600ms var(--silk) 300ms both}
+@keyframes glide{0%{transform:translateX(22px)}100%{transform:none}}
+.mo.play.ac .arc{animation:arc 700ms linear 900ms both,fadeOut 160ms var(--release) 3000ms forwards}
+@keyframes arc{0%{--a:0deg}100%{--a:360deg}}
+.mo.play.ac .rg{animation:fadeOut 160ms var(--release) 3000ms forwards}
+.mo.play.ac .veil{animation:veilIn 160ms var(--silk) 1600ms both,veilOut 320ms var(--release) 1760ms forwards}
+@keyframes veilIn{0%{opacity:0}100%{opacity:.5}}
+@keyframes veilOut{0%{opacity:.5}100%{opacity:0}}
+.mo.play.ac .band i{opacity:1;animation:gband 1100ms var(--carry) 1900ms both}
+.mo.play.ac .fa{animation:fadeOut 160ms var(--release) 3000ms forwards}
+.mo.play.ac .fb{animation:stepIn 240ms var(--silk) 3060ms both}
+@keyframes pg0{from{transform:scaleX(.3333)}to{transform:scaleX(.5)}}
+@keyframes pg1{from{transform:scaleX(.5)}to{transform:scaleX(.6667)}}
+@keyframes pg2{from{transform:scaleX(.6667)}to{transform:scaleX(.8333)}}
+@keyframes pg3{from{transform:scaleX(.8333)}to{transform:scaleX(1)}}
+@keyframes stepIn{0%{opacity:0;transform:translateY(4px)}100%{opacity:1;transform:none}}
+.ac .fb{opacity:0}
+.ac .phB{position:absolute;left:0;right:0;top:0;display:flex;flex-direction:column;gap:16px}
+
+@media (prefers-reduced-motion:reduce){
+  .mo.play .tgs{animation:var(--anr)}
+  .ac .feed{transform:none}
+  .mo.play.ac .feed{animation:none}
+  .mo.play.ac .veil{animation:veilIn 240ms var(--silk) 1600ms both,veilOut 240ms var(--silk) 1840ms forwards}
+  .mo.play.ac .band i{transform:translateX(75%) skewX(-20deg);animation:fadeIn 240ms var(--silk) 1900ms both}
+  .mo.play.ac .fa,.mo.play.ac .arc,.mo.play.ac .rg{animation:fadeOut 240ms var(--silk) 3000ms forwards}
+  .mo.play.ac .arc{animation:arc 700ms linear 900ms both,fadeOut 240ms var(--silk) 3000ms forwards}
+  .mo.play.ac .fb{animation:fadeIn 240ms var(--silk) 3000ms both}
+}
 </style>
 
 <div class="wrap">
@@ -348,7 +471,7 @@ section.pg>h2{font:400 32px/1.15 var(--serif);letter-spacing:-.3px;margin:0 0 6p
     <div class="mk"><img src="img/icon.png" alt="Almari"></div>
     <div>
       <h1>Almari redesign</h1>
-      <p class="when">For owner approval · 3 Oct 2026</p>
+      <p class="when">For owner approval · Revision 2 · 3 Oct 2026</p>
     </div>
   </header>
   <nav class="toc" aria-label="Sections">
@@ -391,15 +514,12 @@ section.pg>h2{font:400 32px/1.15 var(--serif);letter-spacing:-.3px;margin:0 0 6p
   </section>
 
   <section class="pg" id="log">
-    <h2>Review log</h2>
+    <h2>To confirm</h2>
     <ul class="log">
-      <li>Another and Not for me both bring a new outfit. Not for me also tells the stylist to skip it. Keep both, or fold Not for me into the Undo line after Another? Your call.</li>
-      <li>The builder's Change strip has no Keep. In a new look every piece is already your own pick (F10, Swap).</li>
-      <li>Closet could not open stays the splash state, not the EmptyState: the 160 tile stays where the splash left it, so nothing jumps (F01 S2).</li>
-      <li>Cut-out keeps Zoom in. Pinch needs two fingers; the button lets one finger and Voice Control reach any part (F05 S3).</li>
-      <li>Piece keeps Edit in the header, like Rename on a look. Header text names the action; the screen it opens is titled Photo and name.</li>
-      <li>First run empty states keep one quiet Try the sample closet under the action. It is the only way to try the app without photos.</li>
-      <li>At the largest text the search placeholder is cut short with an ellipsis. It is the system search bar, which does not wrap.</li>
+      <li>Like, Not for me and Save are muted outlines, filled when on.</li>
+      <li>The small swap mark stays on the hijab in Today's outfit.</li>
+      <li>New pieces join the closet when you tap Add; one card follows the batch until it is ready.</li>
+      
     </ul>
   </section>
 </div>
@@ -411,6 +531,7 @@ const MASK={"taupe-abaya":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKAAAAC
 const P={
   back:'<path d="M15 4.5 7.5 12l7.5 7.5"/>',
   chevR:'<path d="M9 5l7 7-7 7"/>',
+  chevL:'<path d="M15 5l-7 7 7 7"/>',
   chevD:'<path d="M6 9l6 6 6-6"/>',
   chevU:'<path d="M6 15l6-6 6 6"/>',
   person:'<circle cx="12" cy="12" r="9.5"/><circle cx="12" cy="10" r="3.2"/><path d="M6.2 18.4c1.4-2.2 3.4-3.2 5.8-3.2s4.4 1 5.8 3.2"/>',
@@ -441,7 +562,14 @@ const P={
   selc:'<circle cx="12" cy="12" r="9.5"/><path d="M7.8 12.3l2.8 2.8 5.6-5.8"/>',
   pencil:'<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>',
   auto:'<circle cx="12" cy="12" r="9.5"/><path d="M8.5 16.5 12 7.5l3.5 9M9.7 13.5h4.6"/>',
-  hand:'<path d="M8 13V6a1.5 1.5 0 0 1 3 0v5M11 11V4.5a1.5 1.5 0 0 1 3 0V11M14 11V5.5a1.5 1.5 0 0 1 3 0V14a6 6 0 0 1-6 6h-1a5 5 0 0 1-4-2l-2.5-3.5a1.5 1.5 0 0 1 2.3-1.9L8 14"/>'
+  hand:'<path d="M8 13V6a1.5 1.5 0 0 1 3 0v5M11 11V4.5a1.5 1.5 0 0 1 3 0V11M14 11V5.5a1.5 1.5 0 0 1 3 0V14a6 6 0 0 1-6 6h-1a5 5 0 0 1-4-2l-2.5-3.5a1.5 1.5 0 0 1 2.3-1.9L8 14"/>',
+  thumbU:'<path d="M7.5 10.5H4.5v9h3zM7.5 10.5l3.6-6.6c1.3 0 2.3 1.1 2 2.4l-.7 3.4h5.3a2 2 0 0 1 2 2.4l-1.2 6a2 2 0 0 1-2 1.4H7.5"/>',
+  thumbUF:'<path d="M7.5 10.5H4.5v9h3z" fill="currentColor"/><path d="M7.5 10.5l3.6-6.6c1.3 0 2.3 1.1 2 2.4l-.7 3.4h5.3a2 2 0 0 1 2 2.4l-1.2 6a2 2 0 0 1-2 1.4H7.5z" fill="currentColor"/>',
+  thumbD:'<g transform="rotate(180 12 12)"><path d="M7.5 10.5H4.5v9h3zM7.5 10.5l3.6-6.6c1.3 0 2.3 1.1 2 2.4l-.7 3.4h5.3a2 2 0 0 1 2 2.4l-1.2 6a2 2 0 0 1-2 1.4H7.5"/></g>',
+  book:'<path d="M6.5 4h11v16.5l-5.5-4-5.5 4z"/>',
+  bookF:'<path d="M6.5 4h11v16.5l-5.5-4-5.5 4z" fill="currentColor"/>',
+  swap:'<path d="M5 9.5h12.5l-3-3M19 14.5H6.5l3 3"/>',
+  loc:'<path d="M20 4 4 11l7 2 2 7z"/>'
 };
 const ic=(n,s=22,w=1.8)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[n]}</svg>`;
 
@@ -477,7 +605,7 @@ function tile(n,label,o={}){
   return `<div class="tile ${o.strip?'tstrip':''}"><div class="im" ${o.strip?'style="aspect-ratio:4/5"':''}>${img}${o.sheen||''}${o.sel?`<span class="disc">${ic('check',14,2.6)}</span>`:''}${o.plan?`<span class="markc">${o.plan}</span>`:''}</div>${label?`<div class="lb">${o.dot?'<i class="dot"></i>':''}${o.sw?`<i class="sw" style="background:${o.sw}"></i>`:''}<span>${label}</span></div>`:''}${o.meta?`<div class="mt">${o.meta}</div>`:''}${o.col?`<div class="cl"><i class="sw" style="background:${o.col[0]}"></i>Colour: ${o.col[1]}</div>`:''}${o.after||''}</div>`;
 }
 function row(t,o={}){
-  const lead=o.lay?lay(o.lay,72):o.thumb?`<img class="thumb" src="${IMG(o.thumb)}" alt="">`:o.icon?`<span class="li">${ic(o.icon,22,1.8)}</span>`:'';
+  const lead=o.lay?lay(o.lay,o.laySize||72):o.thumb?`<img class="thumb" src="${IMG(o.thumb)}" alt="">`:o.icon?`<span class="li">${ic(o.icon,22,1.8)}</span>`:'';
   const tr=o.tr==='chev'?ic('chevR',16,2.2):o.tr==='down'?ic('chevD',16,2.2):o.tr==='up'?ic('chevU',16,2.2):o.tr==='check'?ic('check',20,2.4):(o.tr||'');
   return `<div class="row">${lead}<div class="tx"><div class="ti" ${o.tc?`style="color:${o.tc}"`:''}>${t}</div>${o.me?`<div class="me">${o.me}</div>`:''}${o.below||''}</div><span class="tr ${o.tr==='check'?'ck':''}">${o.val?`<span>${o.val}</span>`:''}${tr}</span></div>`;
 }
@@ -512,62 +640,106 @@ const sheenStill=`<span style="position:absolute;inset:0;overflow:hidden;border-
 /* ---------- screens ---------- */
 const S={};
 S.splash=()=>phone({body:'',overlay:`<div class="spl"><div class="t160"><div class="mk"><img src="img/icon.png" alt=""></div></div></div>`});
-S.closetError=()=>phone({body:`<div class="empty" style="padding-top:250px"><div class="t160" style="width:160px;height:160px"><div class="mk"><img src="img/icon.png" alt=""></div></div><p class="t26" style="margin-top:24px">Could not open your closet</p><div style="margin-top:24px">${ebtn('Try again')}</div></div>`});
-function onb(step,title,content,foot){
-  return phone({nav:nav({left:'back'}),pre:`<div class="prog"><i style="width:${step/6*100}%"></i></div>`,top:122,body:`<h2 class="t26" style="margin-top:8px">${title}</h2>${content}`,footer:foot||footer([{l:'Next'}])});
+S.closetError=()=>phone({body:'',overlay:`<div class="spl" style="display:block"><div class="splerr"><div class="t160"><div class="mk"><img src="img/icon.png" alt=""></div></div><p class="t26">Could not open your closet</p>${ebtn('Try again')}</div></div>`});
+const ONB=10;
+function onb(step,title,content,o={}){
+  return phone({cls:o.cls,nb:o.nb,nav:nav(step>1?{left:'back'}:{}),pre:`<div class="prog"><i style="width:${step/ONB*100}%"></i></div>`,top:122,gap:o.gap,body:`${title?`<h2 class="t26" style="margin-top:${o.shift||4}px">${title}</h2>`:''}${content}`,footer:o.footer||footer([{l:o.nb?'Neste':'Next'}])});
 }
-S.onb1=()=>onb(1,'Hijab and coverage',`${blk('Hijab',chips([chip('Always',{sel:1}),chip('Sometimes'),chip('Not needed')]))}${blk('Coverage',chips([chip('Full: wrist and ankle',{sel:1}),chip('Moderate: elbow and mid-calf'),chip('My own limit')]))}`);
-S.onb2=()=>onb(2,'Units and city',`${seg(['cm and °C','ft and °F'],0)}${blk('City',fld('Oslo'))}<p class="fn mu" style="margin-top:-4px">Only the city is sent to Apple, for the weather.</p>`);
-const shp=(d,on)=>`<svg viewBox="0 0 60 80" width="56%" height="80%" fill="none" stroke="${on?'var(--ink)':'var(--muted)'}" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
-S.onb3=()=>onb(3,'Body',`${blk('Height (cm)',fld('165'))}${sec('Body shape')}<div class="grid" style="gap:16px 12px">${[['Pear','M22 6h16c1 14-4 22-2 32 2 10 12 18 12 36H12c0-18 10-26 12-36 2-10-3-18-2-32z'],['Hourglass','M16 6h28c0 14-10 20-10 28s14 16 14 40H12c0-24 14-32 14-40S16 20 16 6z',1],['Rectangle','M18 6h24c0 20-2 40 0 68H18c2-28 0-48 0-68z'],['Inverted triangle','M10 6h40c-4 20-14 34-14 68H24c0-34-10-48-14-68z']].map(x=>`<div class="tile"><div class="im" style="aspect-ratio:4/3">${shp(x[1],x[2])}${x[2]?`<span class="disc">${ic('check',14,2.6)}</span>`:''}</div><div class="lb"><span>${x[0]}</span></div></div>`).join('')}</div>`);
-S.onb4=()=>onb(4,'Your taste',`${blk('Fit',chips([chip('Loose'),chip('Structured',{sel:1}),chip('It depends')]))}${blk('Colours',chips([chip('Bold'),chip('Soft',{sel:1}),chip('It depends')]))}`);
-S.onb5=()=>onb(5,'Your colours',`${rows([row('Take a selfie',{icon:'camera',tr:'chev'})])}<div style="height:16px"></div>${blk('Skin tone',chips([chip('Light, cool',{sw:'#EBD3C3'}),chip('Light, warm',{sw:'#E6C7A6'}),chip('Medium, cool',{sw:'#C99E86'}),chip('Medium, warm',{sw:'#C8956B',sel:1}),chip('Tan',{sw:'#A8774F'}),chip('Deep',{sw:'#6F4A33'})]))}${rows([row('Season',{val:'Warm autumn'})])}`);
-const selfie=(h=360,busy)=>`<div class="cam" style="height:${h}px;background:linear-gradient(170deg,#CDBFAF,#AE9C88)"><div style="position:absolute;left:50%;top:44px;width:210px;height:300px;margin-left:-105px;border-radius:105px 105px 70px 70px;background:#8E7484"></div><div style="position:absolute;left:50%;top:96px;width:116px;height:150px;margin-left:-58px;border-radius:58px 58px 52px 52px;background:#C69272"></div><i style="position:absolute;left:170px;top:156px;width:9px;height:5px;border-radius:5px;background:#3a2a22"></i><i style="position:absolute;left:200px;top:156px;width:9px;height:5px;border-radius:5px;background:#3a2a22"></i>${busy?sheenStill.replace('border-radius:12px','border-radius:20px'):`<span style="position:absolute;left:156px;top:144px;width:28px;height:28px;border-radius:50%;border:2px solid var(--blush);box-shadow:0 0 0 1px var(--ink),inset 0 0 0 1px var(--ink)"></span><span style="position:absolute;left:142px;top:196px;width:28px;height:28px;border-radius:50%;border:2px solid var(--blush);box-shadow:0 0 0 1px var(--ink),inset 0 0 0 1px var(--ink)"></span>`}</div>`;
-S.selfie=()=>phone({nav:nav({left:'back'}),body:`${selfie(330)}<h3 class="t26">Warm autumn</h3>${blk('Colours that suit you',`<div style="display:flex;gap:10px">${['#9C4F2E','#6B6B3A','#B98B5E','#2F6F6B','#C99A2E','#5A3A2A'].map(c=>`<i class="sw" style="width:30px;height:30px;background:${c}"></i>`).join('')}</div>`)}<div class="exp"><div class="exph">Adjust ${ic('chevD',16,2.4)}</div></div>`,footer:footer([{l:'Try again',v:'secondary'},{l:'Save colours'}])});
+const ILL=n=>`img/${n}.jpg`;
+const card=(img,label,sel)=>`<div class="cc"><div class="art${img?'':' todo'}">${img?`<img src="${ILL(img)}" alt="">`:''}${sel?`<span class="disc">${ic('check',14,2.6)}</span>`:''}</div><div class="cl">${label}</div></div>`;
+const cards=(a,plain,cls='')=>`<div class="ccg ${cls}">${a.map(x=>card(x[0],x[1],x[2])).join('')}</div>${plain?chips(plain):''}`;
+S.onbName=()=>onb(1,'What is your name?',fld('Sara'));
+S.onbHijab=()=>onb(2,'Do you wear a hijab?',chips([chip('Always',{sel:1}),chip('Sometimes'),chip('No')]));
+const HSTY=[['hijab-hijab','Hijab',1],['hijab-shayla','Shayla',1],['hijab-al-amira','Al-Amira'],['hijab-khimar','Khimar'],['hijab-chador','Chador'],['hijab-niqab','Niqab'],['hijab-burqa','Burqa']];
+S.onbStyles=()=>onb(3,'Which styles do you wear?',cards(HSTY,[chip('None of these')],'bust'),{gap:12});
+S.onbCoverage=()=>onb(4,'How covered do you like your everyday outfits?',cards([['coverage-full','Fully covered'],['coverage-moderate','Modest',1],['coverage-relaxed','Relaxed']],[chip('No preference')]),{gap:12});
+S.onbStylesScrolled=()=>onb(3,'Which styles do you wear?',cards(HSTY,[chip('None of these')],'bust'),{gap:12,shift:-560});
+S.onbCoverageScrolled=()=>onb(4,'How covered do you like your everyday outfits?',cards([['coverage-full','Fully covered'],['coverage-moderate','Modest'],['coverage-relaxed','Relaxed']],[chip('No preference',{sel:1})]),{gap:12,shift:-300});
+S.onbStyle=()=>onb(5,'What do you wear most days?',cards([['style-western','Western modest'],['style-abaya','Abaya or desi'],['style-mix','A mix of both',1]]),{gap:12});
+S.onbFit=()=>onb(6,'How do you like your clothes to sit?',cards([['fit-loose','Loose'],['fit-structured','Structured',1]],[chip('It depends')]),{gap:12});
+S.onbSparkle=()=>onb(7,'For Eid and parties, how much sparkle?',chips([chip('Plain'),chip('A little',{sel:1}),chip('Heavy'),chip('Bridal')]));
+const placeBody=found=>`<div>${btn('Use my location','secondary',{icon:'loc',cls:'reg'})}</div><div class="fld ${found?'':'fph'}">${ic('search',18,2)}<span style="flex:1">${found?'Oslo':'Search for your city'}</span>${found?`<span class="pl">${ic('check',18,2.4)}</span>`:''}</div><p class="fn mu">Rounded to your city, sent only to Apple for the weather.</p>`;
+S.onbPlace=()=>onb(8,'Where are you?',placeBody());
+S.onbPlaceFound=()=>onb(8,'Where are you?',placeBody(1));
+const notifyChips=on=>chips([chip('Off',{sel:on===0}),chip('06:00',{sel:on===1}),chip('07:00',{sel:on===2}),chip('08:00',{sel:on===3}),chip('21:00 the night before',{sel:on===4})]);
+S.onbNotify=()=>onb(9,'When should your outfit come?',notifyChips(0));
+S.onbColours=()=>onb(10,'Which colours suit you?',`<div>${btn('Take a selfie','secondary',{icon:'camera',cls:'reg'})}</div>`);
+const BEST=['#9C4F2E','#6B6B3A','#B98B5E','#2F6F6B','#C99A2E','#5A3A2A'],EASY=['#F2D7E3','#C9B6E4','#A7AEB8','#B9D3EA','#C2408A','#1E1E22'];
+const swl=a=>`<div class="swl">${a.map(c=>`<i style="background:${c}"></i>`).join('')}</div>`;
+const faceArt=`<div class="feed" style="position:absolute;inset:0;background:linear-gradient(170deg,#E3D8CB,#C9B8A5)"><div style="position:absolute;left:37px;top:44px;width:190px;height:250px;border-radius:95px 95px 60px 60px;background:#8E7484"></div><div style="position:absolute;left:80px;top:88px;width:104px;height:136px;border-radius:52px 52px 48px 48px;background:#C69272"></div><i style="position:absolute;left:108px;top:148px;width:10px;height:5px;border-radius:5px;background:#3a2a22"></i><i style="position:absolute;left:146px;top:148px;width:10px;height:5px;border-radius:5px;background:#3a2a22"></i><i style="position:absolute;left:118px;top:194px;width:28px;height:6px;border-radius:6px;background:#A86A5A"></i></div>`;
+const faceCircle=(arc,o={})=>`<div class="fcw"><div class="fc">${faceArt}</div><div class="band"><i></i></div><div class="veil"></div>${o.noRing?'':`<div class="rg"></div><div class="arc" style="--a:${arc}deg"></div>`}</div>`;
+const notMe=open=>`<div style="margin:-8px 0 ${open?'-8px':'0'} -8px">${btn(`These don't look like me ${ic(open?'chevU':'chevD',16,2.4)}`,'quiet')}</div>`;
+const paletteBlock=`<h3 class="t26">Deep autumn</h3>${sec('Best hijab shades')}${swl(BEST)}${sec('Go easy on')}${swl(EASY)}${notMe(0)}`;
+const tipCard=(lines,act)=>`<div class="exp" style="gap:14px">${lines.map(l=>`<p class="hl">${l}</p>`).join('')}${act?`<div>${btn(act,'secondary')}</div>`:''}</div>`;
+S.selfieTips=()=>phone({nav:nav({left:'back',title:'Your colours'}),body:`${tipCard(['Daylight, facing a window','Wipe the lens','No glasses','No bold lipstick'])}<p class="fn mu">The selfie stays on this phone.</p>`,footer:footer([{l:'Open camera'}])});
+S.selfieCam=()=>phone({nav:nav({left:'back',title:'Your colours'}),body:`${faceCircle(250)}<p class="guide">Ready</p><div style="align-self:center;margin-top:-16px">${btn('Choose a recent selfie','quiet')}</div>`});
+S.selfie=()=>phone({nav:nav({left:'back',title:'Your colours'}),body:`${faceCircle(0,{noRing:1})}${paletteBlock}`,footer:footer([{l:'Save colours'}])});
+const segL=(l,a,on)=>blk(l,seg(a,on));
+S.selfieNotMe=()=>phone({nav:nav({left:'back',title:'Your colours'}),body:`${sec('Go easy on')}${swl(EASY)}${notMe(1)}<div class="exp"><div>${btn('Retake','secondary',{icon:'camera'})}</div><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:44px"><span>Wearing a hijab in the photo</span>${tog(1)}</div>${segL('Undertone',['Cool','Neutral','Warm'],2)}${segL('Depth',['Light','Medium','Deep'],2)}${segL('Contrast',['Low','Medium','High'],1)}</div>`,footer:footer([{l:'Save colours'}])});
 S.onbDone=()=>phone({nav:nav({left:'back'}),pre:'<div class="prog"><i style="width:100%"></i></div>',overlay:empty('You are set','Add pieces','Try the sample closet')});
 
 /* Today */
+const GREET='Good morning, Sara';
+const swapMark=out=>{const h=out.find(p=>/hijab/.test(p[0]));return h?`<span class="swapm" style="left:calc(${h[1]+h[3]}% - 22px);top:calc(${h[2]}% + 2px)">${ic('swap',15,2.2)}</span>`:'';};
+const heroS=(out,w=300)=>`<div style="width:${w}px;align-self:center">${lay(out,'hero',swapMark(out))}</div>`;
+const icons=o=>`<div class="ibs"><span class="ib ${o.liked?'on':''}" aria-label="Like">${ic(o.liked?'thumbUF':'thumbU',24,1.8)}</span><span class="ib" aria-label="Not for me">${ic('thumbD',24,1.8)}</span>${o.noSave?'':`<span class="ib ${o.saved?'on':''}" aria-label="${o.saved?'Open look':'Save look'}">${ic(o.saved?'bookF':'book',24,1.8)}</span>`}</div>`;
+const outfitCard=(name,reason,o={})=>`<div class="tline"><h3 class="t26">${name}</h3>${icons(o)}</div><p class="fn mu rsn">${reason}</p><div class="qrow">${o.anotherHtml||btn('Another','quiet')}</div>${o.reasons||''}${o.slot?`<div class="uslot">${o.slot}</div>`:''}`;
+const ctx=(occ='Work',start)=>chips([...(start?[chip(start,{c:'x',kind:'ctl'})]:[]),chip(occ,{c:'right',kind:'ctl'}),chip('Western',{c:'right',kind:'ctl'}),chip('Oslo 4 to 9°',{c:'right',kind:'ctl'})],'sc');
 function todayTop(o={}){
   const out=o.out||OUT.A;
-  const q=o.planning?[btn('Another','quiet'),btn('Not for me','quiet')]:[btn('Another','quiet'),btn(o.saved?'Open look':'Save look','quiet'),btn('Not for me','quiet')];
-  const body=`${o.back?`<div class="ltr"><h2 class="lt">${o.large}</h2>${btn(o.back,'quiet')}</div>`:''}${chips([...(o.start?[chip(o.start,{c:'x',kind:'ctl'})]:[]),chip(o.occ||'Work',{c:'right',kind:'ctl'}),chip('Western',{c:'right',kind:'ctl'}),chip('Oslo 4 to 9°',{c:'right',kind:'ctl'})],'sc')}${hero(out)}${og(o.name||'Ivory work tunic',o.reason||'Picks up the brown in the loafers')}<div class="qrow">${q.join('')}</div>`;
-  return phone({id:o.id,cls:o.cls,nav:nav({right:[[{i:'person'}]]}),large:o.back?'':(o.large||'Today'),body,footer:o.planning?footer([{l:'Save look'}],{tabs:1}):footer([{l:'Wear this'}],{tabs:1}),tab:'today'});
+  const body=`${o.back?`<div class="ltr"><h2 class="lt">${o.large}</h2>${btn(o.back,'quiet')}</div>`:''}${ctx(o.occ,o.start)}${heroS(out)}${outfitCard(o.name||'Ivory work tunic',o.reason||'Picks up the brown in the loafers. Trousers reach the ankle.',{noSave:o.planning})}`;
+  return phone({id:o.id,cls:o.cls,nav:nav({right:[[{i:'person'}]]}),large:o.back?'':(o.large||GREET),body,footer:o.planning?footer([{l:'Save look'}],{tabs:1}):footer([{l:'Wear this'}],{tabs:1}),tab:'today'});
 }
 S.today=()=>todayTop();
-S.todayScrolled=()=>phone({nav:nav({title:'Today',right:[[{i:'person'}]]}),body:`<div style="height:120px;overflow:hidden;margin-top:-10px;position:relative"><div style="position:absolute;bottom:0;left:29px;width:300px">${lay(OUT.A)}</div></div>${og('Ivory work tunic','Picks up the brown in the loafers')}<div class="qrow">${btn('Another','quiet')}${btn('Save look','quiet')}${btn('Not for me','quiet')}</div>${sec('Start with','Show all')}${rows([row('Office navy',{lay:OUT.office,tr:'chev'}),row('Eid lunch',{lay:OUT.eid,tr:'chev'}),row('Start with a piece',{tr:'chev'})])}${chips([chip('Knit',{kind:'act'})])}<div class="wx" role="link">&#xF8FF;Weather</div>`,footer:footer([{l:'Wear this'}],{tabs:1}),tab:'today'});
-S.todayFirst=()=>phone({nav:nav({right:[[{i:'person'}]]}),large:'Today',overlay:empty('No outfit yet','Set your style','Try the sample closet'),tab:'today'});
-S.todayStarted=()=>todayTop({occ:'Everyday',start:'Sage kurta',out:OUT.sagechar,name:'Sage and charcoal',reason:'Picks up the brown in the hijab'});
-S.todayPlanning=()=>todayTop({occ:'Eid',large:'Sat 11 Oct',back:'Back to today',out:OUT.eid,name:'Eid lunch',reason:'Picks up the ivory in the salwar',planning:1});
+const REDIS=[['olive-maxi-dress','Olive maxi dress'],['ivory-trousers','Ivory trousers'],['navy-blazer','Navy blazer'],['taupe-abaya','Taupe abaya']];
+S.todayScrolled=()=>phone({nav:nav({title:GREET,right:[[{i:'person'}]]}),body:`<div class="qrow" style="margin-top:4px">${btn('Another','quiet')}</div>${sec('Start with','Show all')}${rows([row('Office navy',{lay:OUT.office,tr:'chev'})])}${chips([chip('Hijab',{kind:'ctl'}),chip('Knit',{kind:'ctl'}),chip('Start with a piece',{c:'right',kind:'ctl'})],'sc')}${sec('Rediscover')}<div style="display:flex;gap:12px;margin-right:-16px">${REDIS.map(t=>tile(t[0],t[1],{strip:1})).join('')}</div>`,footer:footer([{l:'Wear this'}],{tabs:1}),tab:'today'});
+S.todayAnother=()=>phone({nav:nav({title:GREET,right:[[{i:'person'}]]}),body:`<div style="width:300px;align-self:center;margin-top:-6px">${lay(OUT.B,'hero',swapMark(OUT.B))}</div>${outfitCard('Sage and ivory','Picks up the ivory in the hijab. Shalwar reaches the ankle.',{slot:btn('Undo','quiet')+btn('Not for me','quiet').replace('<span class="btn','<span aria-label="Not for me, previous outfit" class="btn')})}`,footer:footer([{l:'Wear this'}],{tabs:1}),tab:'today'});
+const reasonChips=`<div class="exp" style="margin-top:-8px">${chips(['Too formal','Too plain','Too hot','Too cold','Hijab does not match','Not my style'].map(l=>chip(l)))}</div>`;
+S.todayNotForMe=()=>phone({nav:nav({title:GREET,right:[[{i:'person'}]]}),body:`<div style="height:150px;overflow:hidden;position:relative;margin-top:-6px"><div style="position:absolute;bottom:0;left:29px;width:300px">${lay(OUT.A,'hero',swapMark(OUT.A))}</div></div>${outfitCard('Ivory work tunic','Picks up the brown in the loafers. Trousers reach the ankle.',{reasons:reasonChips})}`,footer:footer([{l:'Wear this'}],{tabs:1}),tab:'today'});
+S.todayFirst=()=>phone({nav:nav({right:[[{i:'person'}]]}),large:GREET,overlay:empty('No outfit yet','Set your style','Try the sample closet'),tab:'today'});
+S.todayStarted=()=>todayTop({occ:'Everyday',start:'Sage kurta',out:OUT.sagechar,name:'Sage and charcoal',reason:'Picks up the brown in the hijab. Trousers reach the ankle.'});
+S.todayPlanning=()=>todayTop({occ:'Eid',large:'Sat 11 Oct',back:'Back to today',out:OUT.eid,name:'Eid lunch',reason:'Picks up the ivory in the salwar. Shalwar reaches the ankle.',planning:1});
 const changeStrip=(title,value,tiles,keep)=>`<div class="hair"></div><div style="display:flex;align-items:center;gap:10px;margin-top:-4px;min-height:44px"><div style="flex:1;min-width:0"><div class="hl">${title}</div>${value?`<div class="sh mu">${value}</div>`:''}</div>${keep?chip('Keep',{kind:'edge'}):''}<span class="mu">${ic('chevU',18,2.4)}</span></div><div style="display:flex;gap:12px;margin-right:-16px;margin-top:-4px">${tiles}</div>`;
 S.todayChange=()=>{
   const strip=[tile('chocolate-hijab','Chocolate jersey hijab',{strip:1,sel:1,sw:'#5A3A2A'}),tile('mauve-hijab','Mauve chiffon hijab',{strip:1,plan:'Fri',sw:'#A88796'}),tile('ivory-hijab','Ivory modal hijab',{strip:1,sw:'#EFE6D8'})].join('');
-  return phone({nav:nav({title:'Today',right:[[{i:'person'}]]}),body:`<div style="width:300px;align-self:center;margin-top:-6px">${lay(OUT.A)}</div>${changeStrip('Change hijab','With the tunic',strip,1)}`,footer:footer([{l:'Wear this'}],{tabs:1}),tab:'today'});
+  return phone({nav:nav({title:GREET,right:[[{i:'person'}]]}),body:`<div style="width:300px;align-self:center;margin-top:-6px">${lay(OUT.A,'hero',swapMark(OUT.A))}</div>${changeStrip('Change hijab','With the tunic',strip,1)}`,footer:footer([{l:'Wear this'}],{tabs:1}),tab:'today'});
 };
-S.todayChanged=()=>phone({nav:nav({title:'Today',right:[[{i:'person'}]]}),body:`<div style="width:300px;align-self:center;margin-top:-6px">${lay(OUT.A.map(p=>p[0]==='chocolate-hijab'?['ivory-hijab',p[1],p[2],p[3],p[4]]:p))}</div>${og('Ivory work tunic','Picks up the ivory in the tunic')}<div class="qrow">${btn('Another','quiet')}${btn('Save look','quiet')}${btn('Not for me','quiet')}</div><div class="undo"><span class="pl">${ic('check',18,2.4)}</span><span>Changed</span>${btn('Undo','quiet')}</div>`,footer:footer([{l:'Wear this'}],{tabs:1}),tab:'today'});
+S.todayChanged=()=>{const out=OUT.A.map(p=>p[0]==='chocolate-hijab'?['ivory-hijab',p[1],p[2],p[3],p[4]]:p);return phone({nav:nav({title:GREET,right:[[{i:'person'}]]}),body:`<div style="width:300px;align-self:center;margin-top:-6px">${lay(out,'hero',swapMark(out))}</div>${outfitCard('Ivory work tunic','Picks up the ivory in the tunic. Trousers reach the ankle.',{slot:btn('Undo','quiet')})}`,footer:footer([{l:'Wear this'}],{tabs:1}),tab:'today'});};
 
 /* Closet */
-const CL=[['mauve-hijab','Mauve chiffon hijab'],['ivory-hijab','Ivory modal hijab',{meta:'In the wash'}],['sage-kurta','Sage kurta'],['ivory-tunic','Ivory work tunic'],['navy-blazer','Navy blazer'],['olive-maxi-dress','Olive maxi dress']];
+const CL=[['mauve-hijab','Mauve chiffon hijab'],['ivory-hijab','Ivory modal hijab',{meta:'In the wash'}],['chocolate-hijab','Chocolate jersey hijab'],['sage-kurta','Sage kurta'],['ivory-tunic','Ivory work tunic',{dot:1}],['navy-blazer','Navy blazer']];
 const search=`<div class="srch">${ic('search',18,2)}<span>Name or colour</span></div>`;
-const closetChips=(more='More',moreC='down')=>chips([chip(more,{c:moreC,kind:'ctl'}),'<i class="vr"></i>',chip('All',{sel:1}),chip('Hijabs'),chip('Tops'),chip('Kurtas'),chip('Bottoms')],'sc');
-S.closet=(o={})=>phone({id:o.id,cls:o.cls,nav:nav({right:[[{i:'plus'}],[{t:'Select'}]]}),large:'Closet',body:o.body||`${search}${o.banner||''}${closetChips()}${sec(o.count||'12 pieces')}<div class="grid">${(o.tiles||CL).map(t=>tile(t[0],t[1],t[2]||{})).join('')}</div>`,tab:'closet'});
-S.closetAdded=()=>S.closet({banner:banner('5 added',['Start with these','Link as a set']),tiles:[['taupe-abaya','Taupe abaya'],['chocolate-loafers','Chocolate loafers'],['mauve-hijab','Mauve chiffon hijab'],['ivory-hijab','Ivory modal hijab']],count:'17 pieces'});
-S.closetMore=()=>S.closet({body:`${search}${closetChips('More: Never worn','up')}<div class="exp" style="margin-top:-4px">${blk('Worn',chips([chip('Not worn lately'),chip('Never worn',{sel:1})]))}${blk('Availability',chips([chip('Unavailable'),chip('Put away')]))}${blk('Style',chips([chip('Desi'),chip('Western')]))}</div>${sec('4 pieces','Clear filters')}<div class="grid">${tile('olive-maxi-dress','Olive maxi dress')}${tile('ivory-trousers','Ivory trousers')}</div>`});
-S.closetSelect=()=>phone({nav:nav({left:'Cancel',right:[[{i:'ell'}]]}),large:'Closet',body:`${closetChips()}${sec('3 selected')}<div class="grid">${tile('mauve-hijab','Mauve chiffon hijab',{sel:1})}${tile('ivory-hijab','Ivory modal hijab')}${tile('sage-kurta','Sage kurta',{sel:1})}${tile('ivory-salwar','Ivory salwar',{sel:1})}</div>`,footer:footer([{l:'New look',v:'secondary'},{l:'Start with these'}],{tabs:1}),tab:'closet'});
+const secT=(t,n)=>`${t} <span class="mu" style="font-weight:400">${n}</span>`;
+const closetChips=(more='More',moreC='down',moreSel)=>chips([chip(more,{c:moreC,kind:'ctl',sel:moreSel}),chip('Needs details',{dot:1}),'<i class="vr"></i>',chip('All',{sel:1}),chip('Hijabs & scarves'),chip('Tops'),chip('Kurtas & tunics'),chip('Trousers & skirts')],'sc');
+const pcard=(text,val,meta)=>`<div class="pc" role="button"><div class="bx"><p>${text}</p><div class="pline"><i style="transform:scaleX(${val})"></i></div><p class="sh mu">${meta}</p></div><span class="chv">${ic('chevR',14,2.4)}</span></div>`;
+const grid=t=>`<div class="grid">${t.map(x=>tile(x[0],x[1],x[2]||{})).join('')}</div>`;
+const closetSections=`${sec(secT('Hijabs & scarves',3))}${grid(CL.slice(0,3))}${sec(secT('Kurtas & tunics',2))}${grid(CL.slice(3,5))}`;
+S.closet=(o={})=>phone({id:o.id,cls:o.cls,nav:nav({right:[[{i:'plus'}],[{t:'Select'}]]}),large:'Closet',body:o.body||`${search}${closetChips()}${o.banner!=null?o.banner:pcard('6 new pieces, 4 of 6 ready',4/6,'Hijabs & scarves 3 · Tops 1')}${o.sections||closetSections}`,tab:'closet'});
+const DONE=['6 new pieces ready',1,'Hijabs & scarves 3 · Tops 2 · Shoes 1'];
+S.closetAdded=()=>S.closet({banner:pcard(...DONE)});
+S.batch=()=>phone({nav:nav({left:'back',title:'6 new pieces'}),body:`${sec(secT('Hijabs & scarves',3))}${grid(CL.slice(0,3))}${sec(secT('Tops',2))}${grid([['navy-blazer','Navy blazer'],['ivory-tunic','Ivory work tunic']])}`,footer:footer([{l:'Link as a set',v:'secondary'},{l:'Start with these'}])});
+const fRow=(l,cs)=>`<div class="fr"><span class="fl">${l}</span>${chips(cs)}</div>`;
+const swc=c=>`<span class="chip" style="padding:0 13px"><i class="sw" style="background:${c}"></i></span>`;
+S.closetMore=()=>S.closet({body:`${search}${closetChips('More','up',1)}<div class="fp">${fRow('Colour',[swc('#9DB39A'),swc('#EFE6D8'),swc('#A88796'),swc('#5A3A2A'),swc('#2F3A55'),swc('#7A7A45')])}${fRow('Coverage',[chip('Fully covered'),chip('Modest',{sel:1}),chip('Needs layering')])}${fRow('Season',[chip('Summer',{sel:1}),chip('Winter'),chip('All year')])}${fRow('Show',[chip('Not worn lately'),chip('Never worn'),chip('Unavailable'),chip('Put away')])}<div class="fclr">${btn('Clear filters','quiet')}</div></div>${sec(secT('Kurtas & tunics',2))}${grid([['sage-kurta','Sage kurta'],['ivory-tunic','Ivory work tunic']])}`});
+const selectFooter=`<div class="ft tb stk"><div style="display:flex;margin:0 -8px">${btn('Mark as worn','quiet')}${btn('Link as a set','quiet')}${btn('Put away','quiet')}</div><div style="display:flex;gap:12px">${btn('New look','secondary',{reg:1})}${btn('Start with these','primary',{reg:1})}</div></div>`;
+S.closetSelect=()=>phone({nav:nav({right:[[{t:'Cancel'}]]}),large:'3 selected',body:`${closetChips()}${sec(secT('Hijabs & scarves',3))}${grid([['mauve-hijab','Mauve chiffon hijab',{sel:1}],['ivory-hijab','Ivory modal hijab'],['chocolate-hijab','Chocolate jersey hijab',{sel:1}],['sage-kurta','Sage kurta',{sel:1}]])}`,footer:selectFooter,tab:'closet'});
 
 /* Piece */
 const swv=(c,l)=>`<i class="sw" style="background:${c};margin-right:6px;vertical-align:-2px"></i>${l}`;
-const colourRow=o=>row('Colour',{val:swv('#9DB39A','Sage'),tr:o?'up':'down'});
-const restFacts=[row('Category',{val:'Kurta',tr:'down'}),row('Style',{val:'Desi',tr:'down'}),row('Fabric',{val:'Lawn',tr:'down'}),row('Length',{val:'Calf',tr:'down'}),row('Sleeves',{val:'Elbow',tr:'down'})];
-const facts=rows([colourRow(),...restFacts])+seg(['Available','In the wash'],0);
-S.piece=()=>phone({nav:nav({left:'back',right:[[{t:'Edit'}]]}),body:`<div class="tile"><div class="im"><img class="co" src="${IMG('sage-kurta')}" alt=""></div></div><div style="display:flex;flex-direction:column;gap:4px;margin-top:-4px"><h3 class="t26">Sage kurta</h3><p class="sh mu">Worn 3 times, last 12 Sep</p></div>${sec('Details')}${facts}`,footer:footer([{l:'Start with this piece'}])});
+const fact=(k,v,o={})=>`<span class="chip ctl">${o.dot?'<i class="dot"></i>':''}${o.sw?`<i class="sw" style="background:${o.sw}"></i>`:''}${k?`<span class="k">${k}</span> `:''}<span>${v}${o.c===0?'':'&nbsp;'+ic(o.c==='up'?'chevU':'chevD',13,2.4)}</span></span>`;
+const factsA=[fact('','Sage',{sw:'#9DB39A'}),fact('','Kurta'),fact('Coverage','Modest'),fact('Sparkle','Plain'),fact('Fabric','Lawn'),fact('Pattern','Solid'),fact('Length','Calf'),fact('Season','Summer',{c:0}),fact('','Available')];
+const facts=`<div class="facts">${factsA.join('')}</div>`;
+const pieceHead=`<div style="display:flex;flex-direction:column;gap:4px;margin-top:-4px"><h3 class="t26">Sage kurta</h3><p class="sh mu">Worn 3 times, last 12 Sep</p></div>`;
+S.piece=()=>phone({nav:nav({left:'back',right:[[{t:'Edit'}]]}),body:`<div style="height:300px;display:grid;place-items:center"><img src="${IMG('sage-kurta')}" alt="" style="height:290px;filter:drop-shadow(0 3px 5px rgba(50,46,40,.12))"></div>${pieceHead}${sec('Details')}${facts}`,footer:footer([{l:'Start with this piece'}])});
 S.pieceScrolled=()=>phone({nav:nav({left:'back',right:[[{t:'Edit'}]]}),body:`${sec('Details')}${facts}${sec('Part of a set')}${rows([row('Ivory salwar',{thumb:'ivory-salwar',tr:'chev'})])}${rows([row('Care label',{me:'95% cotton, 5% elastane',tr:'chev'})])}${sec('In 2 looks')}${rows([row('Eid lunch',{lay:OUT.eid,tr:'chev'}),row('Sage and charcoal',{lay:OUT.sagechar,tr:'chev'})])}<div style="display:flex;flex-direction:column;align-items:flex-start;margin-left:-8px">${btn('Add to a look','quiet',{icon:'plus'})}${btn('Plan a day','quiet',{icon:'cal'})}${btn('Put away','quiet',{icon:'box'})}</div>`,footer:footer([{l:'Start with this piece'}])});
-S.pieceColour=()=>phone({nav:nav({left:'back',right:[[{t:'Edit'}]]}),body:`<div style="height:230px;overflow:hidden;position:relative;margin-top:-6px"><div class="tile" style="position:absolute;bottom:0;left:0;right:0"><div class="im"><img class="co" src="${IMG('sage-kurta')}" alt=""></div></div></div><h3 class="t26" style="margin-top:4px">Sage kurta</h3>${sec('Details')}${rows([colourRow(1)])}<div class="exp" style="margin-top:-8px">${chips([chip('Sage',{sw:'#9DB39A',sel:1}),chip('Olive',{sw:'#7A7A45'}),chip('Mint',{sw:'#BFD8C2'}),chip('Ivory',{sw:'#EFE6D8'}),chip('Beige',{sw:'#D9C6A8'}),chip('Grey',{sw:'#9A9792'})])}<div>${btn('Looks right','secondary')}</div></div>${rows(restFacts.slice(0,2))}`,footer:footer([{l:'Start with this piece'}])});
+S.pieceColour=()=>phone({nav:nav({left:'back',right:[[{t:'Edit'}]]}),body:`${sec('Details')}<div class="facts">${fact('','Sage',{sw:'#9DB39A',c:'up'})}${fact('','Kurta')}</div><div class="exp" style="margin-top:-8px">${chips([chip('Sage',{sw:'#9DB39A',sel:1}),chip('Olive',{sw:'#7A7A45'}),chip('Mint',{sw:'#BFD8C2'}),chip('Ivory',{sw:'#EFE6D8'}),chip('Beige',{sw:'#D9C6A8'}),chip('Grey',{sw:'#9A9792'})])}<div>${btn('Looks right','secondary')}</div></div><div class="facts">${factsA.slice(2,8).join('')}</div>`,footer:footer([{l:'Start with this piece'}])});
+S.pieceNeeds=()=>phone({nav:nav({left:'back',right:[[{t:'Edit'}]]}),body:`${sec('Details')}<div class="facts">${fact('','Olive',{sw:'#7A7A45'})}${fact('','Dress')}${fact('','Western')}${fact('Coverage','Needs details',{dot:1,c:'up'})}</div><div class="exp" style="margin-top:-8px">${blk('Sleeves',chips([chip('Sleeveless'),chip('Short'),chip('Elbow'),chip('Long',{sel:1})]))}${blk('See-through',chips([chip('No',{sel:1}),chip('Yes')]))}${blk('Length',chips([chip('Hip'),chip('Thigh'),chip('Knee'),chip('Calf'),chip('Ankle')]))}<div>${btn('Looks right','secondary')}</div></div><div class="facts">${fact('Fabric','Crepe')}${fact('Season','All year',{c:0})}</div>`,footer:footer([{l:'Start with this piece'}])});
 S.pieceEdit=()=>phone({nav:nav({left:'Cancel',title:'Photo and name'}),body:`<div style="height:300px;display:grid;place-items:center"><img src="${IMG('sage-kurta')}" alt="" style="height:290px;filter:drop-shadow(0 3px 5px rgba(50,46,40,.12))"></div>${chips([chip('Enhanced',{sel:1}),chip('Cut-out'),chip('Original'),chip('Clean background')])}<p class="fn mu" style="margin-top:-8px">Clean background sends this photo to Cloudflare.</p>${blk('Name',fld('Sage kurta'))}`,footer:footer([{l:'Save changes',dis:1}])});
 
 /* Add pieces */
 const groupRaw=`${rawPhoto('sage-kurta','left:2%;top:6%;width:56%')}${rawPhoto('ivory-salwar','left:44%;top:34%;width:50%')}${rawPhoto('ivory-hijab','left:46%;top:2%;width:40%')}`;
-S.add=()=>phone({nav:nav({left:'back',title:'Add pieces',right:[[{i:'bulb'}],[{t:'Select'}]]}),body:`${rows([row('Take photos',{icon:'camera'}),row('Choose photos',{icon:'photo'}),row('Scan',{icon:'scan',tr:'chev'}),row('Add by hand',{icon:'pencil',tr:'chev'})])}${sec('5 ready')}<div class="grid">${tile('','3 pieces in one photo',{raw:groupRaw,after:''}).replace('<span>3 pieces in one photo</span>','<span>3 pieces in one photo</span>'+ic('chevR',14,2.4))}${tile('sage-kurta','Sage kurta')}${tile('mauve-hijab','Mauve chiffon hijab')}${tile('','',{raw:rawPhoto('navy-blazer'),sheen:sheenStill})}</div>`,footer:footer([{l:'Add 5 pieces'}])});
-S.addTips=()=>phone({nav:nav({left:'back',title:'Add pieces',right:[[{i:'bulb'}],[{t:'Select'}]]}),body:`<div class="exp" style="gap:14px"><div><p class="hl">Daylight shows true colour</p><p class="sh mu">Near a window, lamps off</p></div><div><p class="hl">One piece, plain background</p><p class="sh mu">A pair of shoes is one piece</p></div><p class="hl">Every edge in view</p><div>${btn('Got it','secondary')}</div></div>${rows([row('Take photos',{icon:'camera'}),row('Choose photos',{icon:'photo'}),row('Scan',{icon:'scan',tr:'chev'}),row('Add by hand',{icon:'pencil',tr:'chev'})])}`});
+S.add=()=>phone({nav:nav({left:'back',title:'Add pieces',right:[[{i:'bulb'}],[{t:'Select'}]]}),body:`${rows([row('Take photos',{icon:'camera'}),row('Choose photos',{icon:'photo'}),row('Scan',{icon:'scan',tr:'chev'}),row('Add by hand',{icon:'pencil',tr:'chev'})])}<div class="grid">${tile('','3 pieces in one photo',{raw:groupRaw,after:''}).replace('<span>3 pieces in one photo</span>','<span>3 pieces in one photo</span>'+ic('chevR',14,2.4))}</div>${sec(secT('Hijabs & scarves',1))}${grid([['mauve-hijab','Mauve chiffon hijab']])}${sec(secT('Kurtas & tunics',1))}${grid([['sage-kurta','Sage kurta']])}${sec(secT('Tops',1))}${grid([['navy-blazer','Navy blazer']])}`,footer:footer([{l:'Add 6 pieces'}])});
+S.addTips=()=>phone({nav:nav({left:'back',title:'Add pieces',right:[[{i:'bulb'}],[{t:'Select'}]]}),body:`${tipCard(['Daylight, facing a window','One piece, plain background','Every edge in view'],'Got it')}${rows([row('Take photos',{icon:'camera'}),row('Choose photos',{icon:'photo'}),row('Scan',{icon:'scan',tr:'chev'}),row('Add by hand',{icon:'pencil',tr:'chev'})])}`});
 S.confirm=()=>phone({nav:nav({left:'Cancel',title:'New piece, 2 of 3'}),body:`<div style="height:300px;display:grid;place-items:center"><img src="${IMG('olive-maxi-dress')}" alt="" style="height:290px;filter:drop-shadow(0 3px 5px rgba(50,46,40,.12))"></div><div style="margin:-8px 0 -8px -8px">${btn('Adjust cut-out','quiet',{icon:'scissors'})}</div>${blk('Dress or abaya?',chips([chip('Dress'),chip('Abaya'),chip('Something else')]))}${rows([row('Photo',{val:'Enhanced',tr:'down'}),row('Colour',{val:swv('#7A7A45','Olive'),tr:'down'}),row('Style',{val:'Western',tr:'down'})])}<div style="margin:-8px 0 0 -8px">${btn('Remove photo','destr')}</div>`,footer:footer([{l:'Looks right'}])});
 const review=(photo)=>phone({nav:nav({left:'Cancel',title:'Pieces found'}),body:`${photo?`<div style="position:relative;height:300px">${`<div class="raw">${groupRaw}</div>`}<div class="box still" style="left:12px;top:22px;width:186px;height:196px"></div><span class="num" style="left:18px;top:28px">1</span><div class="box still" style="left:160px;top:112px;width:180px;height:170px"></div><span class="num" style="left:166px;top:118px">2</span><div class="box still" style="left:172px;top:10px;width:140px;height:110px"></div><span class="num" style="left:178px;top:16px">3</span></div>`:''}${rows([row(`${photo?'1 ':''}Sage kurta`,{thumb:'sage-kurta',tr:'check'}),row(`${photo?'2 ':''}Ivory salwar`,{thumb:'ivory-salwar',tr:'check'}),row(`${photo?'3 ':''}Ivory dupatta`,{thumb:'ivory-hijab',me:photo?'':'Partly visible',tr:'check'})])}<div style="display:flex;justify-content:space-between;align-items:center;margin-top:-8px"><span>Link as a set</span>${tog(1)}</div>`,footer:footer([{l:'Done'}])});
 S.byHand=()=>phone({nav:nav({left:'Cancel',title:'Add by hand'}),body:`<div style="height:220px;border:1px dashed var(--lineField);border-radius:12px"></div><div style="display:flex;gap:8px;margin:-6px 0 0 -8px">${btn('Take photo','quiet',{icon:'camera'})}${btn('Choose photo','quiet',{icon:'photo'})}</div>${blk('Category',chips([chip('Hijabs'),chip('Tops'),chip('Kurtas'),chip('Bottoms'),chip('Shoes')]))}${blk('Style',seg(['Desi','Western'],-1))}${blk('Name',fld('Mauve chiffon hijab',1))}`,footer:footer([{l:'Add to closet',dis:1}])});
@@ -587,10 +759,10 @@ S.adjust=()=>phone({nav:nav({left:'Cancel',title:'Adjust'}),body:`${blk('Occasio
 S.pieces=()=>phone({nav:nav({left:'back',title:'Start with a piece'}),body:`<div style="width:260px;margin:0 auto">${lay([['mauve-hijab',0,4,32,2],['sage-kurta',27,1,46,3],['slot',31,46,38],['slot',67,63,30]])}</div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:-8px"><span class="hl">2 selected</span>${btn('Clear','quiet')}</div>${chips([chip('All',{sel:1}),chip('Hijabs'),chip('Tops'),chip('Kurtas'),chip('Bottoms')],'sc')}<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">${tile('mauve-hijab','Mauve chiffon hijab',{sel:1})}${tile('sage-kurta','Sage kurta',{sel:1})}${tile('ivory-tunic','Ivory work tunic')}</div>`,footer:footer([{l:'Start with these'}])});
 
 /* Looks */
-S.looks=()=>phone({nav:nav({right:[[{i:'plus'}]]}),large:'Looks',body:`${rows([row('Eid lunch',{lay:OUT.eid,me:'Eid · Planned for Sat 11 Oct',tr:'chev'}),row('Ivory work tunic',{lay:OUT.A,me:'Work · Last worn 12 Sep',tr:'chev'}),row('Weekend olive',{lay:OUT.weekend,me:'Everyday · 1 piece missing',tr:'chev'}),row('Office navy',{lay:OUT.office,me:'Work · Last worn 28 Aug',tr:'chev'})])}${sec('Worn')}${rows([row('Sage and charcoal',{lay:OUT.sagechar,me:'Everyday · 2 Oct',tr:'chev'})])}`,tab:'looks'});
-S.looksEmpty=()=>phone({nav:nav({right:[[{i:'plus'}]]}),large:'Looks',overlay:empty('No looks yet','New look'),tab:'looks'});
+S.looks=()=>phone({nav:nav({right:[[{i:'plus'}],[{i:'cal'}]]}),large:'Looks',body:`${rows([row('Eid lunch',{lay:OUT.eid,me:'Eid · Planned for Sat 11 Oct',tr:'chev'}),row('Ivory work tunic',{lay:OUT.A,me:'Work · Last worn 12 Sep',tr:'chev'}),row('Weekend olive',{lay:OUT.weekend,me:'Everyday · 1 piece missing',tr:'chev'}),row('Office navy',{lay:OUT.office,me:'Work · Last worn 28 Aug',tr:'chev'})])}${sec('Worn')}${rows([row('Sage and charcoal',{lay:OUT.sagechar,me:'Everyday · 2 Oct',tr:'chev'})])}`,tab:'looks'});
+S.looksEmpty=()=>phone({nav:nav({right:[[{i:'plus'}],[{i:'cal'}]]}),large:'Looks',overlay:empty('No looks yet','New look'),tab:'looks'});
 const lookHead=(worn)=>`<div style="display:flex;flex-direction:column;gap:4px;margin-top:-4px"><h3 class="t26">Eid lunch</h3><p class="sh mu">${worn?'Eid · Worn yesterday':'Eid · Planned for Sat 11 Oct'}</p></div>`;
-const lookActs=(worn)=>`<div style="display:flex;flex-direction:column;align-items:stretch;margin-left:-8px">${worn?`<div class="undo" style="margin:0 0 0 8px"><span class="pl">${ic('check',18,2.4)}</span><span>Worn yesterday</span>${btn('Undo','quiet')}</div>`:`<div>${btn('Mark as worn','quiet',{icon:'check'})}</div>`}<div>${btn('Plan a day','quiet',{icon:'cal'})}</div></div>`;
+const lookActs=(worn)=>`<div style="display:flex;flex-direction:column;align-items:stretch;margin-left:-8px">${worn?`<div class="undo" style="margin:0 0 0 8px"><span class="pl">${ic('check',18,2.4)}</span><span>Worn yesterday</span>${btn('Undo','quiet')}</div>`:`<div>${btn('Worn','quiet',{icon:'check'})}</div>`}<div>${btn('Plan a day','quiet',{icon:'cal'})}</div></div>`;
 S.look=()=>phone({nav:nav({left:'back',right:[[{t:'Rename'}]]}),body:`${lay(OUT.eid)}${lookHead()}${sec('5 pieces','Change')}${rows([row('Mauve chiffon hijab',{thumb:'mauve-hijab',tr:'chev'}),row('Sage kurta',{thumb:'sage-kurta',tr:'chev'})])}${lookActs()}`,footer:footer([{l:'Show on Today'}])});
 S.lookWorn=()=>phone({nav:nav({left:'back',right:[[{t:'Rename'}]]}),body:`<div style="height:120px;overflow:hidden;position:relative;margin-top:-6px"><div style="position:absolute;bottom:0;left:0;right:0">${lay(OUT.eid)}</div></div>${lookHead(1)}${sec('5 pieces','Change')}${rows([row('Mauve chiffon hijab',{thumb:'mauve-hijab',tr:'chev'}),row('Sage kurta',{thumb:'sage-kurta',tr:'chev'}),row('Ivory salwar',{thumb:'ivory-salwar',tr:'chev'})])}${lookActs(1)}`,footer:footer([{l:'Show on Today'}])});
 
@@ -600,25 +772,39 @@ const buildTitle=`<div style="display:flex;align-items:center;justify-content:sp
 S.build=()=>phone({nav:nav({left:'Cancel',title:'New look'}),body:`<div style="width:300px;margin:0 auto">${lay(OUT.build)}</div>${buildTitle}<div class="hair"></div><div style="margin:-12px 0 -12px -8px">${btn('Fill the rest','quiet')}</div><div class="cr sc">${chip('All',{sel:1})}${chip('Hijabs')}${chip('Kurtas')}</div><div style="display:flex;gap:12px;margin-right:-16px">${buildStrip}</div>`,footer:footer([{l:'Save look'}])});
 S.buildSwap=()=>phone({nav:nav({left:'Cancel',title:'New look'}),body:`<div style="width:300px;margin:0 auto">${lay(OUT.build)}</div>${buildTitle}${changeStrip('Change hijab','',[tile('mauve-hijab','Mauve chiffon hijab',{strip:1,sel:1,sw:'#A88796'}),tile('ivory-hijab','Ivory modal hijab',{strip:1,sw:'#EFE6D8'}),tile('chocolate-hijab','Chocolate jersey hijab',{strip:1,sw:'#5A3A2A'})].join(''))}`,footer:footer([{l:'Save look'}])});
 
+/* Calendar */
+function mgrid(first,days,worn,today,sel){
+  const cells=[];for(let i=0;i<42;i++){const d=i-first+1;if(d<1||d>days){cells.push('<div class="d"></div>');continue;}const w=worn[d];const cls=['n',w?'w':'',d===today?'today':'',d===sel?'sel':''].join(' ');cells.push(`<div class="d"><span class="${cls}">${d}</span>${w?`<span class="mk"><img src="${IMG(w)}" alt=""></span>`:''}</div>`);}
+  return `<div class="mg">${['M','T','W','T','F','S','S'].map(x=>`<span class="wd">${x}</span>`).join('')}${cells.join('')}</div>`;
+}
+const mline=(t,prev,next)=>`<div class="mline"><span class="hl">${t}</span><span class="ar"><span>${prev?ic('chevL',20,2.2):''}</span><span>${next?ic('chevR',20,2.2):''}</span></span></div>`;
+const SEPW={};[[1,'ivory-tunic'],[2,'sage-kurta'],[4,'olive-maxi-dress'],[7,'ivory-tunic'],[8,'ivory-tunic'],[9,'sage-kurta'],[11,'olive-maxi-dress'],[12,'ivory-tunic'],[14,'ivory-tunic'],[15,'sage-kurta'],[16,'ivory-tunic'],[18,'olive-maxi-dress'],[21,'ivory-tunic'],[22,'sage-kurta'],[23,'ivory-tunic'],[25,'sage-kurta'],[28,'ivory-tunic'],[29,'olive-maxi-dress'],[30,'sage-kurta']].forEach(x=>SEPW[x[0]]=x[1]);
+S.calendar=()=>phone({nav:nav({left:'back',title:'Calendar'}),gap:12,body:`${mline('October 2026',1,0)}${mgrid(3,31,{1:'ivory-tunic',2:'sage-kurta',3:'ivory-tunic'},3,3)}${sec('Sat 3 Oct')}${rows([row('Ivory work tunic',{lay:OUT.A,laySize:56,me:'Work',tr:'chev'})])}${rows([row('Variety',{me:'38% of your closet in 30 days',tr:'chev'})])}`});
+S.calendarSep=()=>phone({nav:nav({left:'back',title:'Calendar'}),gap:12,body:`${mline('September 2026',1,1)}${mgrid(1,30,SEPW,0,12)}${sec('Sat 12 Sep')}${rows([row('Ivory work tunic',{lay:OUT.A,laySize:56,me:'Work',tr:'chev'})])}${sec('Most worn')}${rows([row('Chocolate loafers',{thumb:'chocolate-loafers',me:'12 times',tr:'chev'})])}`});
+
 /* Profile */
-S.profile=()=>phone({nav:nav({left:'back',title:'Profile'}),bottom:34,body:`${rows([row('Your style',{me:'Everyday · Desi and Western',tr:'chev'})])}${sec('Your answers')}${rows([row('Units and city',{me:'cm and °C · Oslo',tr:'chev'}),row('Body',{me:'165 cm · Hourglass',tr:'chev'}),row('Your taste',{me:'Structured · Soft',tr:'chev'}),row('Colours',{me:'Warm autumn',tr:'chev'})])}${sec('Language')}${rows([row('Follow phone',{tr:'check'}),row('English'),row('Norsk bokmål')])}${sec('Advanced')}${rows([row('Stylist',{val:'Rules',tr:'chev'})])}`});
-S.style=()=>phone({nav:nav({left:'Cancel',title:'Your style'}),body:`${blk('Occasion',chips([chip('Everyday',{sel:1}),chip('Work'),chip('Dinner or dawat'),chip('Eid')]))}${blk('Style',seg(['Desi','Western','Both'],2))}${blk('Hijab',chips([chip('Always',{sel:1}),chip('Sometimes'),chip('Not needed')]))}${blk('Your day',seg(['Mostly indoors','Time outside'],0))}<div class="exp"><div class="exph">Style rules <span class="v">2 set ${ic('chevD',16,2.4)}</span></div></div>`,footer:footer([{l:'Save'}])});
-S.stylist=()=>phone({nav:nav({left:'back',title:'Stylist'}),body:`${rows([row('Rules',{tr:'check'}),row('Model'),row('Compare')])}${sec('Desi')}${rows([row('Rules'),row('Model',{me:'No feedback yet'})])}`});
-S.answer=()=>phone({nav:nav({left:'Cancel',title:'Your taste'}),body:`${blk('Fit',chips([chip('Loose'),chip('Structured',{sel:1}),chip('It depends')]))}${blk('Colours',chips([chip('Bold'),chip('Soft',{sel:1}),chip('It depends')]))}`,footer:footer([{l:'Save'}])});
+const expC=(t,v)=>`<div class="exp" style="padding:4px 16px"><div class="exph">${t}<span class="v">${v} ${ic('chevD',16,2.4)}</span></div></div>`;
+S.profile=()=>phone({nav:nav({left:'back',title:'Profile'}),bottom:34,body:`<div class="meter" style="margin-top:8px"><p class="hl">The stylist knows 77% of your style</p><div class="pline"><i style="transform:scaleX(.77)"></i></div>${chips([chip('Add height',{c:'right',kind:'ctl'}),chip('Choose pieces to wear more',{c:'right',kind:'ctl'})])}</div>${rows([row('Your style',{me:'A mix of both',tr:'chev'}),row("I'll never wear",{me:'3 things',tr:'chev'}),row('Trying to wear more of',{me:'None',tr:'chev'})])}${sec('Your answers')}${rows([row('Name',{me:'Sara',tr:'chev'}),row('Location',{me:'Oslo',tr:'chev'}),row('Body',{me:'Not answered',tr:'chev'}),row('Colours',{me:'Deep autumn',tr:'chev'})])}`});
+S.profileSettings=()=>phone({nav:nav({left:'back',title:'Profile'}),bottom:34,body:`${sec('Closet stats')}${rows([row('Never worn',{me:'4 pieces',tr:'chev'}),row('Most worn',{me:'Chocolate loafers, 12 times',tr:'chev'})])}${sec('Settings')}<div class="exp"><div class="exph">Morning outfit<span class="v">07:00 ${ic('chevU',16,2.4)}</span></div>${notifyChips(2)}</div>${expC('Language','Follow phone')}${expC('Outfit card','With reasons')}${sec('Advanced')}${rows([row('Stylist',{me:'Rules',tr:'chev'})])}`});
+S.never=()=>phone({nav:nav({left:'back',title:"I'll never wear"}),bottom:34,body:`${sec('Tops')}${chips([chip('Crop top',{sel:1}),chip('Blouse'),chip('Shirt'),chip('Sweater')])}${sec('Trousers & skirts')}${chips([chip('Jeans'),chip('Skirt'),chip('Shorts')])}${sec('Colours')}${chips([chip('Black',{sw:'#1E1E22',sel:1}),chip('Red',{sw:'#B5322F'}),chip('Orange',{sw:'#D9782B'}),chip('Yellow',{sw:'#E3C44B'})])}${sec('Hijab colours')}${chips([chip('Black',{sw:'#1E1E22'}),chip('White',{sw:'#FFFFFF'}),chip('Red',{sw:'#B5322F'})])}${sec('Patterns')}${chips([chip('Animal print',{sel:1}),chip('Checks'),chip('Stripes'),chip('Floral')])}`});
+S.style=()=>phone({nav:nav({left:'Cancel',title:'Your style'}),gap:12,body:`${expC('Occasion','Everyday')}<div class="exp"><div class="exph">Do you wear a hijab?<span class="v">Always ${ic('chevU',16,2.4)}</span></div>${chips([chip('Always',{sel:1}),chip('Sometimes'),chip('No')])}</div>${expC('Hijab styles','Hijab, Shayla')}${expC('Coverage','Modest')}${expC('Everyday style','A mix of both')}${expC('Fit','Structured')}${expC('Sparkle for events','A little')}`,footer:footer([{l:'Save'}])});
+S.wearMore=()=>phone({nav:nav({left:'back',title:'Trying to wear more of'}),bottom:34,body:`<p class="sh" style="margin-top:4px">2 selected</p>${chips([chip('All',{sel:1}),chip('Hijabs & scarves'),chip('Tops'),chip('Kurtas & tunics'),chip('Trousers & skirts')],'sc')}${grid([['sage-kurta','Sage kurta',{sel:1}],['navy-blazer','Navy blazer'],['olive-maxi-dress','Olive maxi dress',{sel:1}],['ivory-tunic','Ivory work tunic']])}`});
+S.stylist=()=>phone({nav:nav({left:'back',title:'Stylist'}),body:`${sec('Western')}${rows([row('Rules',{tr:'check'}),row('Model'),row('Compare')])}${sec('Desi')}${rows([row('Rules'),row('Model',{me:'No feedback yet'})])}`});
+S.answer=()=>phone({nav:nav({left:'Cancel',title:'Location'}),body:placeBody(1),footer:footer([{l:'Save'}])});
 
 /* ---------- flows ---------- */
 const FL=[
- ['F01','Start','Add pieces → F02 · Try the sample closet → F06',[['Splash',S.splash,'mid'],['Closet could not open',S.closetError,'mid'],['Hijab and coverage',S.onb1],['Units and city',S.onb2],['Body',S.onb3],['Your taste',S.onb4],['Your colours',S.onb5],['Selfie result',S.selfie],['You are set',S.onbDone]]],
- ['F02','Add pieces','Add 5 pieces → Closet with 5 added',[['Add pieces',S.add,'full'],['Tips, first run',S.addTips,'mid'],['New piece',S.confirm,'full'],['Pieces found',S.group],['Cut-out',S.cutout],['Care label',S.label,'mid'],['Add by hand',S.byHand,'mid'],['Closet, 5 added',S.closetAdded]]],
+ ['F01','Start','Add pieces → F02 · Try the sample closet → F06',[['Splash',S.splash,'mid'],['Closet could not open',S.closetError,'mid'],['Name',S.onbName],['Hijab',S.onbHijab],['Hijab styles',S.onbStyles],['Hijab styles, scrolled',S.onbStylesScrolled],['Coverage',S.onbCoverage],['Coverage, No preference',S.onbCoverageScrolled],['Everyday style, placeholder art',S.onbStyle],['Fit',S.onbFit],['Sparkle',S.onbSparkle],['Location',S.onbPlace],['Location, found',S.onbPlaceFound],['Morning outfit',S.onbNotify],['Colours',S.onbColours],['Selfie tips',S.selfieTips],['Face circle',S.selfieCam],['Palette',S.selfie],["These don't look like me",S.selfieNotMe],['You are set',S.onbDone]]],
+ ['F02','Add pieces','Add 6 pieces → Closet → 6 new pieces',[['Add pieces',S.add,'full'],['Tips, first run',S.addTips,'mid'],['New piece',S.confirm,'full'],['Pieces found',S.group],['Cut-out',S.cutout],['Care label',S.label,'mid'],['Add by hand',S.byHand,'mid'],['Closet, 6 ready',S.closetAdded],['6 new pieces',S.batch]]],
  ['F03','Scan','Done → Pieces found → Closet',[['Scan',S.scan,'full'],['Pieces found',S.scanned]]],
- ['F04','Closet','Start with these → Today · New look → F10',[['Closet',S.closet,'full'],['More',S.closetMore],['Select',S.closetSelect]]],
- ['F05','Piece','Start with this piece → Today',[['Piece',S.piece,'full'],['Piece, scrolled',S.pieceScrolled,'full'],['Colour',S.pieceColour],['Photo and name',S.pieceEdit,'mid']]],
- ['F06','Today','Save look → Looks · Tap a piece → F08',[['Today',S.today,'full'],['Today, scrolled',S.todayScrolled,'full'],['Started with a piece',S.todayStarted],['First run',S.todayFirst,'mid']]],
+ ['F04','Closet','Start with these → Today · New look → F10',[['Closet',S.closet,'full'],['More',S.closetMore],['Select',S.closetSelect],['6 ready',S.closetAdded],['6 new pieces',S.batch]]],
+ ['F05','Piece','Start with this piece → Today',[['Piece',S.piece,'full'],['Piece, scrolled',S.pieceScrolled,'full'],['Colour',S.pieceColour],['Needs details',S.pieceNeeds],['Photo and name',S.pieceEdit,'mid']]],
+ ['F06','Today','Save look → Looks · Tap a piece → F08 · Rediscover → Started with a piece',[['Today',S.today,'full'],['Not for me',S.todayNotForMe],['After Another',S.todayAnother,'full'],['Today, scrolled',S.todayScrolled,'full'],['Started with a piece',S.todayStarted],['First run',S.todayFirst,'mid']]],
  ['F07','Adjust today','Show outfit → Today',[['Adjust',S.adjust],['Start with a piece',S.pieces],['Planning',S.todayPlanning]]],
  ['F08','Change a piece','Pick → Changed, Undo',[['Change hijab',S.todayChange],['Changed',S.todayChanged]]],
- ['F09','Looks','Show on Today → Today',[['Looks',S.looks,'full'],['Look',S.look,'full'],['Worn',S.lookWorn],['No looks yet',S.looksEmpty,'mid']]],
+ ['F09','Looks','Show on Today → Today · Variety → Closet, Not worn lately',[['Looks',S.looks,'full'],['Look',S.look,'full'],['Worn',S.lookWorn],['Calendar',S.calendar,'full'],['Calendar, September',S.calendarSep],['No looks yet',S.looksEmpty,'mid']]],
  ['F10','Build a look','Save look → Looks',[['New look',S.build,'full'],['Change hijab',S.buildSwap]]],
- ['F11','Profile and style','Save → Today',[['Profile',S.profile,'full'],['Your style',S.style],['Your taste',S.answer,'mid'],['Stylist',S.stylist,'mid']]]
+ ['F11','Profile and style','Save → Today',[['Profile',S.profile,'full'],['Profile, scrolled',S.profileSettings],["I'll never wear",S.never],['Trying to wear more of',S.wearMore],['Your style',S.style],['Location',S.answer,'mid'],['Stylist',S.stylist,'mid']]]
 ];
 const shot=(cap,html,fid,extra='',lang='')=>`<div class="shot"><div class="cap"><span${lang?` lang="${lang}"`:''}>${cap}</span>${extra}</div>${html.replace('<div class="dev">',`<div class="dev" role="img" aria-label="${cap}"${lang?` lang="${lang}"`:''}>`)}</div>`;
 document.getElementById('flowlist').innerHTML=FL.map(f=>`<div class="flow" id="${f[0].toLowerCase()}"><h3><code>${f[0]}</code>${f[1]}</h3><p class="ho">${f[2]}</p><div class="strip">${f[3].map(s=>shot(s[0],s[1](),s[2])).join('')}</div></div>`).join('');
@@ -626,25 +812,46 @@ document.getElementById('flowlist').innerHTML=FL.map(f=>`<div class="flow" id="$
 const AX={};
 const axCtx=()=>chips([chip('Jobb',{c:'right',kind:'ctl'}),chip('Vestlig',{c:'right',kind:'ctl'}),chip('Oslo 4 til 9°',{c:'right',kind:'ctl'})]);
 const xIc=ic('xmark',22,2.2);
-const qStack=a=>`<div class="qrow stk">${a.map(l=>btn(l,'quiet')).join('')}</div>`;
-AX.xl=()=>phone({cls:'xl',nb:1,nav:nav({right:[[{i:'person'}]]}),large:'I dag',body:`${chips([chip('Jobb',{c:'right',kind:'ctl'}),chip('Vestlig',{c:'right',kind:'ctl'}),chip('Oslo 4 til 9°',{c:'right',kind:'ctl'})],'sc')}${hero(OUT.A,250)}${og('Tunika til jobb','Tar opp brunt fra loaferne')}${qStack(['Et annet','Lagre look','Passer ikke'])}`,footer:footer([{l:'Bruk i dag'}],{tabs:1}),tab:'today'});
-AX.today=()=>phone({cls:'ax3',nb:1,nav:nav({right:[[{i:'person'}]]}),large:'I dag',body:`${axCtx()}${hero(OUT.A)}`,footer:footer([{l:'Bruk i dag'}],{tabs:1}),tab:'today'});
-AX.todayScrolled=()=>phone({cls:'ax3',nb:1,nav:nav({title:'I dag',right:[[{i:'person'}]]}),body:`<div style="height:104px;overflow:hidden;position:relative;margin-top:-6px"><div style="position:absolute;bottom:0;left:29px;width:300px">${lay(OUT.A)}</div></div><h3 class="t26">Tunika til jobb</h3><p class="fn mu">Tar opp brunt fra loaferne</p>${qStack(['Et annet','Lagre look','Passer ikke'])}`,footer:footer([{l:'Bruk i dag'}],{tabs:1}),tab:'today'});
-AX.change=()=>phone({cls:'ax3',nb:1,nav:nav({title:'I dag',right:[[{i:'person'}]]}),body:`<div class="hair" style="margin-top:4px"></div><div style="display:flex;align-items:flex-start;gap:10px"><div style="flex:1;min-width:0"><div class="hl">Bytt hijab</div><div class="sh mu">Med tunikaen</div></div><span class="mu" style="padding-top:12px">${ic('chevU',36,2.4)}</span></div><div>${chip('Behold',{kind:'edge'})}</div>${rows([row('Sjokolade&shy;brun jersey&shy;hijab',{thumb:'chocolate-hijab',tr:'check'}),row('Lilla chiffon&shy;hijab',{thumb:'mauve-hijab',me:'fre.'}),row('Elfenbens&shy;hijab',{thumb:'ivory-hijab'})])}`,footer:footer([{l:'Bruk i dag'}],{tabs:1}),tab:'today'});
-AX.closet=()=>phone({cls:'ax3',nb:1,nav:nav({right:[[{i:'plus'}],[{i:'selc'}]]}),large:'Garderobe',body:`<div class="srch">${ic('search',36,2)}<span>Navn eller farge</span></div>${chips([chip('Mer',{c:'down',kind:'ctl'}),chip('Alle',{sel:1}),chip('Hijaber'),chip('Topper'),chip('Kurtaer')])}${sec('12 plagg')}${tile('mauve-hijab','Lilla chiffon&shy;hijab')}`,tab:'closet'});
-AX.piece=()=>phone({cls:'ax3',nb:1,nav:nav({left:'back',right:[[{i:'pencil'}]]}),body:`<div style="height:120px;overflow:hidden;position:relative;margin-top:-6px"><div class="tile" style="position:absolute;bottom:0;left:0;right:0"><div class="im"><img class="co" src="${IMG('sage-kurta')}" alt=""></div></div></div><h3 class="t26">Salvie kurta</h3><p class="sh mu" style="margin-top:-8px">Brukt 3 ganger, sist 12. sep.</p>${sec('Detaljer')}${rows([row('Farge',{me:swv('#9DB39A',' Salvie'),tr:'down'}),row('Kategori',{me:'Kurta',tr:'down'}),row('Tilgjengelig',{tr:'check'}),row('Til vask')])}`,footer:footer([{l:'Start med dette plagget'}])});
-AX.adjust=()=>phone({cls:'ax3',nb:1,nav:nav({left:xIc,title:'Juster'}),body:`${blk('Anledning',chips([chip('Hverdag'),chip('Jobb'),chip('Eid',{sel:1}),chip('Middag eller dawat'),chip('Bryllup eller nikah')]))}${blk('Når',chips([chip('I dag'),chip('I morgen'),chip('Lør. 11. okt.',{sel:1,c:'down'})]))}`,footer:footer([{l:'Vis antrekk'}])});
-AX.add=()=>phone({cls:'ax3',nb:1,nav:nav({left:'back',title:'Legg til plagg',right:[[{i:'bulb'}],[{i:'selc'}]]}),body:`${rows([row('Ta bilder',{icon:'camera'}),row('Velg bilder',{icon:'photo'}),row('Skann',{icon:'scan',tr:'chev'}),row('Legg til manuelt',{icon:'pencil',tr:'chev'})])}${sec('2 klare')}${tile('sage-kurta','Salvie kurta')}`,footer:footer([{l:'Legg til 2 plagg'}])});
-AX.scan=()=>phone({cls:'ax3',nb:1,md:1,nav:nav({left:'back',title:'Skann',right:[[{i:'flip'}]]}),body:`<div class="cam full" style="height:255px;${room}"><img src="${IMG('sage-kurta')}" alt="" style="position:absolute;left:125px;top:40px;width:140px"><div class="box solid" style="left:130px;top:44px;width:130px;height:138px"></div></div><p class="sh" style="text-align:center">Hold stille</p><div class="shutter"><i></i></div><div class="tray">${['ivory-salwar','mauve-hijab'].map(n=>`<span><img src="${IMG(n)}" alt=""></span>`).join('')}</div>${rows([row('Auto',{tr:'check'}),row('Manuell')])}`,footer:footer([{l:'Ferdig'}])});
-AX.style=()=>phone({cls:'ax3',nb:1,nav:nav({left:xIc,title:'Din stil'}),body:`${blk('Anledning',chips([chip('Hverdag',{sel:1}),chip('Jobb'),chip('Middag eller dawat'),chip('Eid')]))}${blk('Stil',rows([row('Desi'),row('Vestlig'),row('Begge',{tr:'check'})]))}`,footer:footer([{l:'Lagre'}])});
-AX.bold=()=>phone({cls:'w375 bold',nb:1,nav:nav({title:'I dag',right:[[{i:'person'}]]}),body:`<div style="height:150px;overflow:hidden;position:relative;margin-top:-6px"><div style="position:absolute;bottom:0;left:22px;width:300px">${lay(OUT.A)}</div></div>${og('Tunika til jobb','Tar opp brunt fra loaferne')}${qStack(['Et annet','Lagre look','Passer ikke'])}`,footer:footer([{l:'Bruk i dag'}],{tabs:1}),tab:'today'});
+const qStack=a=>`<div class="qrow stk">${a.map(l=>Array.isArray(l)?btn(l[0],'quiet').replace('<span class="btn',`<span aria-label="${l[1]}" class="btn`):btn(l,'quiet')).join('')}</div>`;
+const axIcons=`<div class="ibs">${[['thumbU','Liker'],['thumbD','Passer ikke'],['book','Lagre look']].map(n=>`<span class="ib" aria-label="${n[1]}">${ic(n[0],22,1.8)}</span>`).join('')}</div>`;
+const axCard=(n,r,slot)=>`<h3 class="t26">${n}</h3><p class="fn mu">${r}</p>${axIcons}${qStack(['Et annet'])}${slot?qStack(slot):''}`;
+AX.xl=()=>phone({cls:'xl',nb:1,nav:nav({right:[[{i:'person'}]]}),large:'God morgen, Sara',body:`${chips([chip('Jobb',{c:'right',kind:'ctl'}),chip('Vestlig',{c:'right',kind:'ctl'}),chip('Oslo 4 til 9°',{c:'right',kind:'ctl'})],'sc')}${heroS(OUT.A,250)}${outfitCard('Tunika til jobb','Tar opp brunt fra loaferne. Buksen når til ankelen.',{anotherHtml:btn('Et annet','quiet')})}`,footer:footer([{l:'Bruk i dag'}],{tabs:1}),tab:'today'});
+AX.today=()=>phone({cls:'ax5',nb:1,nav:nav({right:[[{i:'person'}]]}),large:'Hei, Sara',body:`${axCtx()}${hero(OUT.A)}`,footer:footer([{l:'Bruk i dag'}],{tabs:1}),tab:'today'});
+AX.todayScrolled=()=>phone({cls:'ax5',nb:1,nav:nav({title:'Hei, Sara',right:[[{i:'person'}]]}),body:`<div style="height:104px;overflow:hidden;position:relative;margin-top:-6px"><div style="position:absolute;bottom:0;left:29px;width:300px">${lay(OUT.A)}</div></div>${axCard('Tunika til jobb','Tar opp brunt fra loaferne. Buksen når til ankelen.')}`,footer:footer([{l:'Bruk i dag'}],{tabs:1}),tab:'today'});
+AX.change=()=>phone({cls:'ax5',nb:1,nav:nav({title:'Hei, Sara',right:[[{i:'person'}]]}),body:`<div class="hair" style="margin-top:4px"></div><div style="display:flex;align-items:flex-start;gap:10px"><div style="flex:1;min-width:0"><div class="hl">Bytt hijab</div><div class="sh mu">Med tunikaen</div></div><span class="mu" style="padding-top:12px">${ic('chevU',36,2.4)}</span></div><div>${chip('Behold',{kind:'edge'})}</div>${rows([row('Sjokolade&shy;brun jersey&shy;hijab',{thumb:'chocolate-hijab',tr:'check'}),row('Gammelrosa chiffon&shy;hijab',{thumb:'mauve-hijab',me:'fre.'}),row('Elfenbens&shy;hijab',{thumb:'ivory-hijab'})])}`,footer:footer([{l:'Bruk i dag'}],{tabs:1}),tab:'today'});
+const axCloChips=(up,sel)=>chips([chip('Mer',{c:up?'up':'down',kind:'ctl',sel}),chip('Mangler detaljer',{dot:1}),'<i class="vr"></i>',chip('Alle',{sel:1}),chip('Hijaber og skjerf'),chip('Topper'),chip('Kurtaer og tunikaer')],'sc');
+const axSrch=`<div class="srch">${ic('search',44,2)}<span>Navn eller farge</span></div>`;
+AX.closet=()=>phone({cls:'ax5',nb:1,nav:nav({right:[[{i:'plus'}],[{i:'selc'}]]}),large:'Garderobe',body:`${axSrch}${axCloChips()}${sec(secT('Hijaber og skjerf',3))}${tile('mauve-hijab','Gammelrosa chiffon&shy;hijab')}`,tab:'closet'});
+const swn=(c,n,sel)=>chip(n,{sw:c,sel});
+AX.closetMore=()=>phone({cls:'ax5',nb:1,nav:nav({right:[[{i:'plus'}],[{i:'selc'}]]}),large:'Garderobe',body:`${axSrch}${axCloChips(1,1)}<div class="fp">${fRow('Farge',[swn('#9DB39A','Salvie'),swn('#EFE6D8','Elfenben'),swn('#7A7A45','Oliven')])}${fRow('Dekning',[chip('Helt dekket'),chip('Moderat',{sel:1}),chip('Trenger et lag')])}${fRow('Sesong',[chip('Sommer',{sel:1}),chip('Vinter'),chip('Hele året')])}${fRow('Vis',[chip('Ikke brukt nylig'),chip('Aldri brukt'),chip('Utilgjengelig'),chip('Lagt bort')])}</div>`,tab:'closet'});
+AX.piece=()=>phone({cls:'ax5',nb:1,nav:nav({left:'back',right:[[{i:'pencil'}]]}),body:`${sec('Detaljer')}<div class="facts">${[fact('','Salvie',{sw:'#9DB39A'}),fact('','Kurta'),fact('Dekning','Moderat'),fact('Pynt','Enkel'),fact('Stoff','Lawn'),fact('Mønster','Ensfarget'),fact('Lengde','Legg'),fact('Sesong','Sommer',{c:0}),fact('','Tilgjengelig')].join('')}</div>`,footer:footer([{l:'Start med dette plagget'}])});
+AX.adjust=()=>phone({cls:'ax5',nb:1,nav:nav({left:xIc,title:'Juster'}),body:`${blk('Anledning',chips([chip('Hverdag'),chip('Jobb'),chip('Eid',{sel:1}),chip('Middag eller dawat'),chip('Bryllup eller nikah')]))}${blk('Når',chips([chip('I dag'),chip('I morgen'),chip('Lør. 11. okt.',{sel:1,c:'down'})]))}`,footer:footer([{l:'Vis antrekk'}])});
+AX.add=()=>phone({cls:'ax5',nb:1,nav:nav({left:'back',title:'Legg til plagg',right:[[{i:'bulb'}],[{i:'selc'}]]}),body:`${rows([row('Ta bilder',{icon:'camera'}),row('Velg bilder',{icon:'photo'}),row('Skann',{icon:'scan',tr:'chev'}),row('Legg til manuelt',{icon:'pencil',tr:'chev'})])}${sec(secT('Kurtaer og tunikaer',2))}${tile('sage-kurta','Salvie&shy;kurta')}`,footer:footer([{l:'Legg til 2 plagg'}])});
+AX.scan=()=>phone({cls:'ax5',nb:1,md:1,nav:nav({left:'back',title:'Skann',right:[[{i:'flip'}]]}),body:`<div class="cam full" style="height:255px;${room}"><img src="${IMG('sage-kurta')}" alt="" style="position:absolute;left:125px;top:40px;width:140px"><div class="box solid" style="left:130px;top:44px;width:130px;height:138px"></div></div><p class="sh" style="text-align:center">Hold stille</p><div class="shutter"><i></i></div><div class="tray">${['ivory-salwar','mauve-hijab'].map(n=>`<span><img src="${IMG(n)}" alt=""></span>`).join('')}</div>${rows([row('Auto',{tr:'check'}),row('Manuell')])}`,footer:footer([{l:'Ferdig'}])});
+AX.style=()=>phone({cls:'ax5',nb:1,nav:nav({left:xIc,title:'Din stil'}),gap:12,body:`${expC('Anledning','Hverdag')}${expC('Bruker du hijab?','Alltid')}${expC('Hverdagsstil','En blanding')}`,footer:footer([{l:'Lagre'}])});
+AX.bold=()=>phone({cls:'w375 bold',nb:1,nav:nav({title:'God morgen, Sara',right:[[{i:'person'}]]}),body:`<div style="height:150px;overflow:hidden;position:relative;margin-top:-6px"><div style="position:absolute;bottom:0;left:22px;width:300px">${lay(OUT.A)}</div></div>${outfitCard('Tunika til jobb','Tar opp brunt fra loaferne. Buksen når til ankelen.',{anotherHtml:btn('Et annet','quiet')})}`,footer:footer([{l:'Bruk i dag'}],{tabs:1}),tab:'today'});
 const axLook=(o,n,m)=>`<div class="axrow"><div class="top">${lay(o,72)}${ic('chevR',40,2.2)}</div><div class="ti">${n}</div><div class="me">${m}</div></div>`;
-AX.looks=()=>phone({cls:'ax3',nb:1,nav:nav({right:[[{i:'plus'}]]}),large:'Samling',body:`<div>${axLook(OUT.eid,'Eid-lunsj','Eid · Planlagt lør. 11. okt.')}${axLook(OUT.A,'Tunika til jobb','Jobb · Sist brukt 12. sep.')}</div>`,tab:'looks'});
-AX.onb=()=>phone({cls:'ax3',nb:1,nav:nav({left:'back'}),pre:'<div class="prog"><i style="width:16.7%"></i></div>',top:122,body:`<h2 class="t26" style="margin-top:8px">Hijab og dekning</h2>${blk('Hijab',chips([chip('Alltid',{sel:1}),chip('Noen ganger'),chip('Trengs ikke')]))}${blk('Dekning',chips([chip('Full: håndledd og ankel',{sel:1}),chip('Moderat: albue og midt på leggen'),chip('Egen grense')]))}`,footer:footer([{l:'Neste'}])});
-AX.cutout=()=>phone({cls:'ax3',nb:1,md:1,nav:nav({left:xIc,title:'Utklipp'}),body:`${cutCanvas(`${editorRaw}<div style="position:absolute;inset:0;background:var(--scrim)"></div><img src="${IMG('navy-blazer')}" alt="" style="position:absolute;left:10%;top:6%;width:80%">`,300).replace('Hold on a piece to select it','Hold på et plagg for å velge det')}<div class="seg"><span>${ic('brush',30,2)}</span><span class="on">${ic('eraser',30,2)}</span></div><div class="seg"><span>${ic('d1',30,2)}</span><span class="on">${ic('d2',30,2)}</span><span>${ic('d3',30,2)}</span></div><div style="display:flex;flex-wrap:wrap;margin:-8px 0 0 -8px">${btn('Angre','quiet')}${btn('Tilbake&shy;still','quiet')}${btn('Zoom inn','quiet')}</div>`,footer:footer([{l:'Ferdig'}])});
-AX.build=()=>phone({cls:'ax3',nb:1,nav:nav({left:xIc,title:'Ny look'}),body:`<div style="height:110px;overflow:hidden;position:relative;margin-top:-6px"><div style="position:absolute;bottom:0;left:0;right:0">${lay(OUT.build)}</div></div><h3 class="t26">Eid i salvie</h3>${chips([chip('Eid',{c:'down',kind:'ctl'}),chip('Alle',{sel:1}),chip('Hijaber'),chip('Kurtaer')])}${rows([row('Lilla chiffon&shy;hijab',{thumb:'mauve-hijab',tr:'check'}),row('Elfenbens&shy;hijab',{thumb:'ivory-hijab'})])}`,footer:footer([{l:'Lagre look'}])});
-AX.profile=()=>phone({cls:'ax3',nb:1,nav:nav({left:'back',title:'Profil'}),bottom:34,body:`${rows([row('Din stil',{me:'Hverdag · Desi og vestlig',tr:'chev'})])}${sec('Dine svar')}${rows([row('Enheter og by',{me:'cm og °C · Oslo',tr:'chev'}),row('Kropp',{me:'165 cm · Timeglass',tr:'chev'})])}`});
-document.getElementById('largestrip').innerHTML=[['I dag, standard, fet tekst, 375',AX.bold],['I dag, xLarge',AX.xl],['I dag, AX3',AX.today],['I dag, AX3, scrolled',AX.todayScrolled],['Bytt hijab, AX3',AX.change],['Garderobe, AX3',AX.closet],['Plagg, AX3',AX.piece],['Juster, AX3',AX.adjust],['Legg til plagg, AX3',AX.add],['Skann, AX3',AX.scan],['Din stil, AX3',AX.style],['Samling, AX3',AX.looks],['Hijab og dekning, AX3',AX.onb],['Utklipp, AX3',AX.cutout],['Ny look, AX3',AX.build],['Profil, AX3',AX.profile]].map(x=>shot(x[0],x[1](),'','','nb')).join('');
+AX.looks=()=>phone({cls:'ax5',nb:1,nav:nav({right:[[{i:'plus'}]]}),large:'Samling',body:`<div>${axLook(OUT.eid,'Eid-lunsj','Eid · Planlagt lør. 11. okt.')}${axLook(OUT.A,'Tunika til jobb','Jobb · Sist brukt 12. sep.')}</div>`,tab:'looks'});
+AX.onb=()=>phone({cls:'ax5',nb:1,nav:nav({left:'back'}),pre:'<div class="prog"><i style="width:20%"></i></div>',top:122,body:`<h2 class="t26" style="margin-top:8px">Bruker du hijab?</h2>${chips([chip('Alltid',{sel:1}),chip('Noen ganger'),chip('Nei')])}`,footer:footer([{l:'Neste'}])});
+AX.cutout=()=>phone({cls:'ax5',nb:1,md:1,nav:nav({left:xIc,title:'Utklipp'}),body:`${cutCanvas(`${editorRaw}<div style="position:absolute;inset:0;background:var(--scrim)"></div><img src="${IMG('navy-blazer')}" alt="" style="position:absolute;left:10%;top:6%;width:80%">`,300).replace('Hold on a piece to select it','Hold på et plagg for å velge det')}<div class="seg"><span>${ic('brush',30,2)}</span><span class="on">${ic('eraser',30,2)}</span></div><div class="seg"><span>${ic('d1',30,2)}</span><span class="on">${ic('d2',30,2)}</span><span>${ic('d3',30,2)}</span></div><div style="display:flex;flex-wrap:wrap;margin:-8px 0 0 -8px">${btn('Angre','quiet')}${btn('Tilbake&shy;still','quiet')}${btn('Zoom inn','quiet')}</div>`,footer:footer([{l:'Ferdig'}])});
+AX.build=()=>phone({cls:'ax5',nb:1,nav:nav({left:xIc,title:'Ny look'}),body:`<div style="height:110px;overflow:hidden;position:relative;margin-top:-6px"><div style="position:absolute;bottom:0;left:0;right:0">${lay(OUT.build)}</div></div><h3 class="t26">Eid i salvie</h3>${chips([chip('Eid',{c:'down',kind:'ctl'}),chip('Alle',{sel:1}),chip('Hijaber'),chip('Kurtaer')])}${rows([row('Gammelrosa chiffon&shy;hijab',{thumb:'mauve-hijab',tr:'check'}),row('Elfenbens&shy;hijab',{thumb:'ivory-hijab'})])}`,footer:footer([{l:'Lagre look'}])});
+AX.profile=()=>phone({cls:'ax5',nb:1,nav:nav({left:'back',title:'Profil'}),bottom:34,body:`<div class="meter" style="margin-top:8px"><p class="hl">Stilisten kjenner 77 % av stilen din</p><div class="pline"><i style="transform:scaleX(.77)"></i></div>${chips([chip('Legg til høyde',{c:'right',kind:'ctl'}),chip('Velg plagg du vil bruke mer',{c:'right',kind:'ctl'})])}</div>${sec('Svarene dine')}${rows([row('Sted',{me:'Oslo',tr:'chev'}),row('Kropp',{me:'Ikke besvart',tr:'chev'})])}`});
+AX.hijabStyles=()=>onb(3,'Hvilke hijabstiler bruker du?',cards([['hijab-hijab','Hijab',1],['hijab-shayla','Shayla',1],['hijab-al-amira','Al-Amira'],['hijab-khimar','Khimar'],['hijab-chador','Chador'],['hijab-niqab','Niqab'],['hijab-burqa','Burka']],[chip('Ingen av disse')],'bust'),{gap:12,cls:'ax5',nb:1});
+AX.hijabStylesEnd=()=>onb(3,'',`<div style="margin-top:-330px;display:flex;flex-direction:column;gap:12px">${cards([['hijab-niqab','Niqab'],['hijab-burqa','Burka']],[chip('Ingen av disse')],'bust')}</div>`,{gap:12,cls:'ax5',nb:1});
+AX.coverage=()=>onb(4,'Hvor dekket vil du være til hverdags?',cards([['coverage-full','Helt dekket'],['coverage-moderate','Moderat',1],['coverage-relaxed','Mindre dekket']],[chip('Spiller ingen rolle')]),{gap:12,cls:'ax5',nb:1});
+AX.everyday=()=>onb(5,'Hva bruker du til vanlig?',cards([['style-western','Dekkende vestlig'],['style-abaya','Abaya eller desi'],['style-mix','En blanding',1]]),{gap:12,cls:'ax5',nb:1});
+AX.fit=()=>onb(6,'Hvordan vil du at klærne skal sitte?',cards([['fit-loose','Løs'],['fit-structured','Strukturert',1]],[chip('Det varierer')]),{gap:12,cls:'ax5',nb:1});
+AX.place=()=>onb(8,'Hvor holder du til?',`<div>${btn('Finn posisjonen min','secondary',{icon:'loc',cls:'reg'})}</div><div class="fld fph">${ic('search',44,2)}<span style="flex:1;min-width:0">Søk etter byen din</span></div>`,{cls:'ax5',nb:1});
+AX.notify=()=>onb(9,'Når vil du ha antrekket?',chips([chip('06:00'),chip('07:00',{sel:1}),chip('08:00'),chip('21:00 kvelden før')]),{cls:'ax5',nb:1});
+AX.face=()=>phone({cls:'ax5',nb:1,nav:nav({left:'back',title:'Dine farger'}),body:`${faceCircle(250)}<p class="guide">Sentrer ansiktet</p><div style="align-self:center;margin-top:-16px">${btn('Velg en nylig selfie','quiet')}</div>`});
+AX.rediscover=()=>phone({cls:'ax5',nb:1,nav:nav({title:'Hei, Sara',right:[[{i:'person'}]]}),body:`${sec('Gjenoppdag')}${rows([row('Oliven&shy;grønn maksi&shy;kjole',{thumb:'olive-maxi-dress',tr:'chev'}),row('Marineblå blazer',{thumb:'navy-blazer',tr:'chev'}),row('Elfenbens&shy;hvit bukse',{thumb:'ivory-trousers',tr:'chev'})])}`,footer:footer([{l:'Bruk i dag'}],{tabs:1}),tab:'today'});
+AX.closetCard=()=>phone({cls:'ax5',nb:1,nav:nav({title:'Garderobe',right:[[{i:'plus'}],[{i:'selc'}]]}),body:`<div style="margin-top:4px">${axCloChips()}</div>${pcard('6 nye plagg, 4 av 6 klare',4/6,'Hijaber og skjerf 3<br>Topper 1')}`,tab:'closet'});
+const swli=a=>`<div class="swli">${a.map(x=>`<div><i style="background:${x[0]}"></i><span>${x[1]}</span></div>`).join('')}</div>`;
+AX.palette=()=>phone({cls:'ax5',nb:1,nav:nav({left:'back',title:'Dine farger'}),body:`<div style="margin-top:-360px;display:flex;flex-direction:column;gap:16px"><h3 class="t26">Dyp høst</h3>${sec('Beste hijab&shy;farger')}${swli([['#9C4F2E','Rust'],['#6B6B3A','Oliven'],['#B98B5E','Kamel'],['#2F6F6B','Petrol'],['#C99A2E','Sennep'],['#5A3A2A','Sjoko&shy;lade&shy;brun']])}${sec('Med måte')}${swli([['#F2D7E3','Pudder&shy;rosa'],['#C9B6E4','Lavendel']])}</div>`,footer:footer([{l:'Lagre fargene'}])});
+AX.calendar=()=>phone({cls:'ax5',nb:1,nav:nav({left:'back',title:'Kalender'}),gap:12,body:`${mline('oktober 2026',1,0)}${rows([row('tor. 1. okt.',{tr:'down'}),row('fre. 2. okt.',{tr:'down'}),row('lør. 3. okt.',{tr:'up'})])}${rows([row('Tunika til jobb',{lay:OUT.A,laySize:56,me:'Jobb',tr:'chev'})])}${rows([row('Variasjon',{me:'38 % av garderoben siste 30 dager',tr:'chev'})])}`});
+AX.todayAnother=()=>phone({cls:'ax5',nb:1,nav:nav({title:'Hei, Sara',right:[[{i:'person'}]]}),body:`<div style="margin-top:-150px;display:flex;flex-direction:column;gap:16px">${axCard('Salvie og elfenben','Tar opp elfenben fra hijaben. Shalwaren når til ankelen.',['Angre',['Passer ikke','Passer ikke, forrige antrekk']])}</div>`,footer:footer([{l:'Bruk i dag'}],{tabs:1}),tab:'today'});
+document.getElementById('largestrip').innerHTML=[['I dag, standard, fet tekst, 375',AX.bold],['I dag, xLarge',AX.xl],['Hijabstiler, AX5',AX.hijabStyles],['Hijabstiler, AX5, scrolled',AX.hijabStylesEnd],['Dekning, AX5',AX.coverage],['Hverdagsstil, AX5',AX.everyday],['Passform, AX5',AX.fit],['Sted, AX5',AX.place],['Morgenantrekk, AX5',AX.notify],['Ansiktssirkel, AX5',AX.face],['Palett, AX5, scrolled',AX.palette],['I dag, AX5',AX.today],['I dag, AX5, scrolled',AX.todayScrolled],['Gjenoppdag, AX5, scrolled',AX.rediscover],['Etter Et annet, AX5, scrolled',AX.todayAnother],['Bytt hijab, AX5',AX.change],['Garderobe, AX5',AX.closet],['Garderobe, framdrift, AX5, scrolled',AX.closetCard],['Garderobe, Mer, AX5',AX.closetMore],['Plagg, AX5, scrolled',AX.piece],['Juster, AX5',AX.adjust],['Legg til plagg, AX5',AX.add],['Skann, AX5',AX.scan],['Din stil, AX5',AX.style],['Samling, AX5',AX.looks],['Kalender, AX5',AX.calendar],['Hijab, AX5',AX.onb],['Utklipp, AX5',AX.cutout],['Ny look, AX5',AX.build],['Profil, AX5',AX.profile]].map(x=>shot(x[0],x[1](),'','','nb')).join('');
+document.querySelectorAll('.ph.ax5 .chip').forEach(c=>{if(c.offsetHeight>100)c.style.borderRadius='12px';});
 
 /* ---------- design system ---------- */
 const sw=(n,h,u)=>`<div class="swc"><b style="background:${h}"></b><span>${n}</span><em>${h}</em>${u?`<small>${u}</small>`:''}</div>`;
@@ -652,7 +859,7 @@ document.getElementById('ds').innerHTML=`
 <div class="panel wide"><h3>Colour</h3><div class="swg">
 ${sw('canvas','#FFFFFF','Screens, cut-outs')}${sw('surface','#FBF9F7','Grouped content')}${sw('sunken','#F2EDE7','Chips, placeholders')}${sw('line','#E6E0DC','Hairlines')}${sw('ink','#322E28','Bark. All text')}${sw('inkMuted','#706963','Meta')}
 ${sw('plum','#675469','Do something')}${sw('plumPressed','#574559','Pressed')}${sw('plumSoft','#F3EEF4','Secondary fill')}${sw('blush','#E2B1A8','This one')}${sw('blushStrong','#BE8077','Blush edge')}${sw('error','#96354A','Errors')}
-${sw('ivory','#F4EDE3','Brand: scarf')}${sw('plumGround','#644E64','Brand: tile')}${sw('sheen','#FAF8F3','Brand: band')}
+${sw('paper','#FEF6DE','Choice card art')}${sw('ivory','#F4EDE3','Brand: scarf')}${sw('plumGround','#644E64','Brand: tile')}${sw('sheen','#FAF8F3','Brand: band')}
 </div></div>
 <div class="panel"><h3>Type</h3><div class="ty app">
 <div><code>display 34</code><span style="font:400 34px/41px var(--serif);letter-spacing:-.4px">Today</span></div>
@@ -669,13 +876,20 @@ ${chips([chip('Everyday'),chip('Eid',{sel:1}),chip('Work',{c:'right',kind:'ctl'}
 ${seg(['Desi','Western','Both'],1)}
 </div></div>
 <div class="panel app"><h3>Tile, flat lay, row</h3><div class="spec">
-<div style="display:flex;gap:12px">${tile('mauve-hijab','Mauve chiffon hijab',{strip:1,sel:1})}${tile('ivory-hijab','Ivory modal hijab',{strip:1,plan:'Fri'})}${tile('','',{strip:1,raw:rawPhoto('navy-blazer'),sheen:sheenStill})}</div>
+<div style="display:flex;gap:12px;overflow-x:auto">${tile('mauve-hijab','Mauve chiffon hijab',{strip:1,sel:1})}${tile('ivory-hijab','Ivory modal hijab',{strip:1,plan:'Fri'})}${tile('','',{strip:1,raw:rawPhoto('navy-blazer'),sheen:sheenStill})}</div>
 ${rows([row('Eid lunch',{lay:OUT.eid,me:'Eid · Planned for Sat 11 Oct',tr:'chev'})])}
 </div></div>
 <div class="panel app"><h3>Start chip, expander, result</h3><div class="spec">
 ${chips([chip('Sage kurta',{c:'x',kind:'ctl'})])}
 <div class="exp"><div class="exph"><span style="display:flex;gap:8px;align-items:center"><i class="dot"></i>Check Sage kurta</span>${ic('chevD',16,2.4)}</div></div>
 <div class="undo" style="margin:0"><span class="pl">${ic('check',18,2.4)}</span><span>Worn today</span>${btn('Undo','quiet')}</div>
+</div></div>
+<div class="panel app"><h3>Choice card, outfit icons, progress</h3><div class="spec">
+<div class="ccg" style="max-width:300px">${card('coverage-full','Fully covered')}${card('coverage-moderate','Modest',1)}</div>
+<div class="tline" style="margin:0"><span class="hl" style="flex:1">Ivory work tunic</span>${icons({liked:1})}</div>
+
+${pcard('6 new pieces, 4 of 6 ready',4/6,'Hijabs & scarves 3 · Tops 1')}
+${mline('October 2026',1,0)}
 </div></div>
 <div class="panel app"><h3>Silk, empty state</h3><div class="spec">
 <div style="display:flex;gap:12px;align-items:center"><div style="width:96px;height:120px;border-radius:12px;background:var(--sunken);position:relative;overflow:hidden">${sheenStill.replace('.5)','.7)')}</div><div style="flex:1;display:flex;flex-direction:column;gap:8px"><i style="height:14px;border-radius:7px;background:var(--sunken);width:80%"></i><i style="height:14px;border-radius:7px;background:var(--sunken);width:55%"></i><div style="height:2px;background:var(--line);position:relative;margin-top:10px"><i style="position:absolute;left:0;top:0;height:2px;width:60%;background:var(--plum)"></i></div></div></div>
@@ -690,20 +904,20 @@ ${chips([chip('Sage kurta',{c:'x',kind:'ctl'})])}
   const G=(d)=>`<path d="${d}" fill="none" stroke="var(--lineField)" stroke-width="1.2" marker-end="url(#ag)"/>`;
   const cap=(x,y,t)=>`<text x="${x}" y="${y}" font-size="12" fill="var(--muted)" stroke="var(--surface)" stroke-width="5" paint-order="stroke">${t}</text>`;
   const kids=(tx,x,ys,names,ws,top=184)=>L(`M${tx} ${top}V${ys[ys.length-1]+17}`)+ys.map((y,i)=>L(`M${tx} ${y+17}H${x}`)+N(x,y,ws[i],names[i])).join('');
-  let s=`<svg viewBox="0 0 1160 580" role="img" aria-label="Almari screen map" font-family="-apple-system,BlinkMacSystemFont,Helvetica Neue,Arial,sans-serif"><defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--plum)"/></marker><marker id="ag" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--lineField)"/></marker></defs>`;
-  s+=N(30,20,100,'Splash','launch')+N(170,20,120,'Onboarding','launch')+N(330,20,100,'Selfie','launch');
-  s+=G('M130 37H166')+G('M290 37H326')+G('M80 54V136')+G('M230 54V136');
+  let s=`<svg viewBox="0 0 1160 610" role="img" aria-label="Almari screen map" font-family="-apple-system,BlinkMacSystemFont,Helvetica Neue,Arial,sans-serif"><defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--plum)"/></marker><marker id="ag" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--lineField)"/></marker></defs>`;
+  s+=N(30,20,100,'Splash','launch')+N(170,20,160,'Onboarding, 10 steps','launch')+N(370,20,100,'Colours','launch');
+  s+=G('M130 37H166')+G('M330 37H366')+G('M80 54V136')+G('M240 54V136');
   s+=A('M282 140C282 100 1010 100 1010 136','Save look',646,112)+A('M1070 140C1070 70 262 70 262 136','Show on Today',666,84);
   s+=N(30,140,260,'Today','tab')+N(440,140,330,'Closet','tab')+N(890,140,250,'Looks','tab');
-  s+=cap(30,204,'Change strip · Check · Not for me')+cap(440,204,'Select · More · 5 added')+cap(890,204,'Rename · Worn · Plan');
+  s+=cap(30,204,'Change strip · Check · Rediscover')+cap(440,204,'Sections · More · Progress card · Select')+cap(890,204,'Rename · Worn · Plan');
   s+=kids(50,70,[220,268,316],['Adjust','Start with a piece','Profile'],[110,150,100]);
-  s+=kids(90,110,[364,412,460],['Your style','Change an answer','Stylist'],[110,150,100],350);
+  s+=kids(90,110,[364,412,460,508,556],['Your style','Change an answer',"I'll never wear",'Trying to wear more of','Stylist'],[110,150,130,180,100],350);
   s+=kids(460,480,[220],['Piece'],[100]);
   s+=kids(500,520,[268,316,364],['Photo and name','Cut-out','Care label'],[110,100,110],254);
   s+=L('M640 184V220')+N(620,220,130,'Add pieces');
   s+=kids(660,680,[268,316,364,412,460,508],['New piece','Pieces found','Scan','Add by hand','Cut-out','Care label'],[110,160,80,120,90,110],254);
-  s+=kids(910,930,[220,268],['Look','New look'],[100,110]);
-  s+=A('M750 237C800 237 806 196 760 187','Add 5 pieces',812,252,'start');
+  s+=kids(910,930,[220,268,316],['Look','New look','Calendar'],[100,110,110]);
+  s+=A('M750 237C800 237 806 196 760 187','Add 6 pieces',812,252,'start');
   s+=A('M480 237C380 237 396 176 294 172','Start with this piece',366,236);
   s+=A('M440 158H294','Start with these',366,150);
   s+=A('M1040 285C1080 285 1084 210 1070 188','Save look',1080,250,'start');
@@ -722,14 +936,14 @@ function genToday(){
   const mask=`-webkit-mask-image:${mi};mask-image:${mi};-webkit-mask-position:${mp};mask-position:${mp};-webkit-mask-size:${ms};mask-size:${ms};-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat`;
   const heroEl=`<div class="lay hero" style="width:${W}px;align-self:center">${imgs}<div class="gsheen" style="${mask}"><span class="gb"></span></div></div>`;
   const name=`<span style="position:relative;display:block"><span class="xo" style="position:absolute;inset:0">Ivory work tunic</span><span class="xn">Sage and ivory</span></span>`;
-  const reason=`<span style="position:relative;display:block"><span class="xo" style="position:absolute;inset:0">Picks up the brown in the loafers</span><span class="xn">Picks up the ivory in the hijab</span></span>`;
-  return phone({cls:'mo gen',id:'m-gen',nav:nav({right:[[{i:'person'}]]}),large:'Today',body:`${chips([chip('Work',{c:'right',kind:'ctl'}),chip('Western',{c:'right',kind:'ctl'}),chip('Oslo 4 to 9°',{c:'right',kind:'ctl'})],'sc')}${heroEl}${og(name,reason)}<div class="qrow"><span class="btn quiet press">Another</span>${btn('Save look','quiet')}${btn('Not for me','quiet')}</div>`,footer:footer([{l:'Wear this'}],{tabs:1}),tab:'today'});
+  const reason=`<span style="position:relative;display:block"><span class="xo" style="position:absolute;inset:0">Picks up the brown in the loafers. Trousers reach the ankle.</span><span class="xn">Picks up the ivory in the hijab. Shalwar reaches the ankle.</span></span>`;
+  return phone({cls:'mo gen',id:'m-gen',nav:nav({right:[[{i:'person'}]]}),large:GREET,body:`${ctx()}${heroEl}${outfitCard(name,reason,{anotherHtml:'<span class="btn quiet press">Another</span>'})}`,footer:footer([{l:'Wear this'}],{tabs:1}),tab:'today'});
 }
 function loadCloset(){
-  const t=CL.slice(0,4);
+  const t=CL.slice(0,3);
   const real=`<div class="grid real">${t.map(x=>tile(x[0],x[1],x[2]||{})).join('')}</div>`;
   const ph=`<div class="phold"><div class="grid">${t.map((x,i)=>`<div><div style="aspect-ratio:4/5;border-radius:12px;background:var(--sunken);position:relative;overflow:hidden"></div><i style="display:block;height:14px;margin-top:11px;border-radius:7px;background:var(--sunken);width:${[70,60,50,75][i]}%"></i>${x[2]&&x[2].meta?'<i style="display:block;height:14px;margin-top:6px;border-radius:7px;background:var(--sunken);width:45%"></i>':''}</div>`).join('')}</div></div>`;
-  return phone({cls:'mo ld',id:'m-load',nav:nav({right:[[{i:'plus'}],[{t:'Select'}]]}),large:'Closet',body:`${search}${closetChips()}${sec('12 pieces')}<div style="position:relative">${real}${ph}</div>`,tab:'closet'});
+  return phone({cls:'mo ld',id:'m-load',nav:nav({right:[[{i:'plus'}],[{t:'Select'}]]}),large:'Closet',body:`${search}${closetChips()}${sec(secT('Hijabs & scarves',3))}<div style="position:relative">${real}${ph}</div>`,tab:'closet'});
 }
 function selCut(){
   const g='left:10%;top:6%;width:80%';
@@ -738,8 +952,19 @@ function selCut(){
 function found(){
   return phone({md:1,cls:'mo fnd',id:'m-fnd',nav:nav({left:'back',title:'Scan',right:[[{i:'flip'}]]}),body:`<div class="cam full" style="height:410px;${room}"><div class="grp" style="left:86px;top:110px;width:220px;height:230px"><img src="${IMG('sage-kurta')}" alt="" style="position:absolute;left:0;top:0;width:220px"><div class="box dash" style="left:10px;top:6px;width:200px;height:212px"></div><div class="box solid" style="left:10px;top:6px;width:200px;height:212px"></div><img class="sticker" src="${IMG('sage-kurta')}" alt="" style="position:absolute;left:0;top:0;width:220px"></div><span class="pill" style="bottom:18px;min-width:150px;text-align:center"><span class="p1" style="position:absolute;inset:8px 0">Hold up a piece</span><span class="p2" style="position:absolute;inset:8px 0">Hold still</span><span class="p3">Taken</span></span></div><div class="shutter"><i></i></div><div class="tray">${['ivory-salwar','mauve-hijab'].map(n=>`<span><img src="${IMG(n)}" alt=""></span>`).join('')}<span class="slotnew"><img src="${IMG('sage-kurta')}" alt=""></span></div>${seg(['Auto','Manual'],0)}`,footer:footer([{l:'Done'}])});
 }
+function autoCapture(){
+  return phone({cls:'mo ac',id:'m-ac',nav:nav({left:'back',title:'Your colours'}),body:`${faceCircle(0)}<div style="position:relative"><div class="fa" style="display:flex;flex-direction:column;align-items:center;gap:0"><p class="guide xf" style="align-self:stretch"><span>Centre your face</span><span class="later tgs" style="--an:fadeIn 240ms var(--silk) 960ms both,fadeOut 160ms var(--release) 1700ms forwards;--anr:fadeIn 240ms var(--silk) 960ms both,fadeOut 240ms var(--silk) 1700ms forwards">Ready</span><span class="later tgs" style="--an:fadeIn 240ms var(--silk) 1760ms both;--anr:fadeIn 240ms var(--silk) 1760ms both">Measuring your colours</span></p>${btn('Choose a recent selfie','quiet')}</div><div class="phB fb">${paletteBlock}</div></div>`.replace('<span>Centre your face</span>','<span class="tgs" style="--an:fadeOut 160ms var(--release) 900ms forwards;--anr:fadeOut 240ms var(--silk) 900ms forwards">Centre your face</span>'),footer:footer([{l:'Save colours'}]).replace('class="ft ','class="ft fb ')});
+}
+function tagging(){
+  const T=[600,1400,2200,3000];
+  const xf=(states,cls='')=>`<span class="xf ${cls}">${states.map((t,i)=>{const on=i?`fadeIn 240ms var(--silk) ${T[i-1]}ms both`:'';const off=i<states.length-1?`fadeOut 160ms var(--release) ${T[i]}ms forwards`:'';const offR=i<states.length-1?`fadeOut 240ms var(--silk) ${T[i]}ms forwards`:'';const an=[on,off].filter(Boolean).join(',');const anr=[on,offR].filter(Boolean).join(',');return `<span class="tgs ${i?'later':''}" style="--an:${an};--anr:${anr}">${t}</span>`;}).join('')}</span>`;
+  const vals=[2/6,3/6,4/6,5/6,1];
+  const line=`<div class="pline"><i class="tgs" style="transform:scaleX(${vals[0]});--an:${T.map((t,i)=>`pg${i} 240ms var(--silk) ${t}ms forwards`).join(',')};--anr:${T.map((t,i)=>`pg${i} 1ms linear ${t}ms forwards`).join(',')}"></i></div>`;
+  const card=`<div class="pc"><div class="bx"><p>${xf(['6 new pieces, 2 of 6 ready','6 new pieces, 3 of 6 ready','6 new pieces, 4 of 6 ready','6 new pieces, 5 of 6 ready','6 new pieces ready'])}</p>${line}<p class="sh mu">${xf(['Hijabs & scarves 2','Hijabs & scarves 3','Hijabs & scarves 3 · Tops 1','Hijabs & scarves 3 · Tops 2','Hijabs & scarves 3 · Tops 2 · Shoes 1'])}</p></div><span class="chv">${ic('chevR',14,2.4)}</span></div>`;
+  return phone({cls:'mo tg',id:'m-tg',nav:nav({right:[[{i:'plus'}],[{t:'Select'}]]}),large:'Closet',body:`${search}${closetChips()}${card}${closetSections}`,tab:'closet'});
+}
 function splashDemo(){
-  return phone({cls:'mo sp',id:'m-splash',nav:nav({right:[[{i:'person'}]]}),large:'Today',body:`${chips([chip('Work',{c:'right',kind:'ctl'}),chip('Western',{c:'right',kind:'ctl'}),chip('Oslo 4 to 9°',{c:'right',kind:'ctl'})],'sc')}${hero(OUT.A)}${og('Ivory work tunic','Picks up the brown in the loafers')}`,footer:footer([{l:'Wear this'}],{tabs:1}),tab:'today',overlay:`<div class="spl"><div class="t160"><div class="mk"><img src="img/icon.png" alt=""></div></div></div>`});
+  return phone({cls:'mo sp',id:'m-splash',nav:nav({right:[[{i:'person'}]]}),large:GREET,body:`${ctx()}${heroS(OUT.A)}${outfitCard('Ivory work tunic','Picks up the brown in the loafers. Trousers reach the ankle.')}`,footer:footer([{l:'Wear this'}],{tabs:1}),tab:'today',overlay:`<div class="spl"><div class="t160"><div class="mk"><img src="img/icon.png" alt=""></div></div></div>`});
 }
 const RP=(id,n)=>`<button class="replay" type="button" data-play="${id}" aria-label="Replay ${n}">Replay</button>`;
 document.getElementById('momentstrip').innerHTML=[
@@ -747,7 +972,9 @@ document.getElementById('momentstrip').innerHTML=[
   shot('Loading',loadCloset(),'',RP('m-load','Loading')),
   shot('Generating',genToday(),'',RP('m-gen','Generating')),
   shot('Selecting a piece',selCut(),'',RP('m-sel','Selecting a piece')),
-  shot('Found in video',found(),'',RP('m-fnd','Found in video'))
+  shot('Found in video',found(),'',RP('m-fnd','Found in video')),
+  shot('Auto capture',autoCapture(),'',RP('m-ac','Auto capture')),
+  shot('Background tagging',tagging(),'',RP('m-tg','Background tagging'))
 ].join('');
 function play(el){if(!el)return;el.classList.remove('play');void el.offsetWidth;el.classList.add('play');}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-play]');if(b)play(document.getElementById(b.dataset.play));});
@@ -759,3 +986,5 @@ const before=(n,name)=>`<div class="dev" role="img" aria-label="Before: ${name}"
 document.getElementById('balist').innerHTML=[['Today','tab-today',S.today],['Closet','tab-closet',S.closet],['Piece','piece-detail',S.piece],['Add pieces','capture-index-prepared',S.add]].map(x=>`<div class="flow"><h3>${x[0]}</h3><div class="pair">${shot('Before',before(x[1],x[0]))}${shot('After',x[2]().replace('<div class="dev">',`<div class="dev" role="img" aria-label="After: ${x[0]}">`))}</div></div>`).join('');
 })();
 </script>
+
+</body></html>

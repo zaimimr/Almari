@@ -38,3 +38,13 @@ Taken:
 Not taken: occasions picker in onboarding, "what we heard" summary, occasion grid, batch library scan, step progress card, closet "what happens next" steps, italic accent headlines, overline labels, wore today on piece, wear memory, lifestyle chips, share, sign-in, age, gender, ethnicity, shopping questions, social features, gamification.
 
 Today action change from round 1 stays: only "Another" in the action row, "Not for me" next to Undo.
+
+## Approval (2026-10-03)
+
+Owner: "Its good i like it. Start making. It i approve"
+
+- The approved design is the artifact version published at 19:12 on 2026-10-03 (https://claude.ai/artifact/VfoMSnYRQPBRihKGwvxaHG), plus the "A mix of both" card now using `style-mix`. `docs/redesign/mockups/index.html` holds that version.
+- Illustrations are approved as they are: version 1 figures on warm ivory paper with blush and plum scarves, `assets/illustrations/*.jpg`, 16 files including `style-mix`. Do not re-render them, do not strip the blush or the paper background.
+- The like, not for me and save icons, and the swap mark on the hijab, are approved.
+- Some docs were edited by a review pass after 19:12 (design-system.md, motion.md, copy.md, architecture.md, use-cases.md, signoff.md and flows F01, F06). Where those edits contradict the approved mockup (for example removing `paper`, changing `blushStrong`, or re-rendering illustrations without blush), the mockup wins.
+- Build starts now without further owner questions.

@@ -50,3 +50,15 @@ Date: 2026-10-03. Architect. Checked: `flows/F01` to `F12`, `mockups/index.html`
 6. `design-system.md` keeps notes from `copy.md` as asks (blushInk on blushSoft never-list, `lineField` on `sunken` contrast, Button and Chip `minHeight`). `minHeight` is in; the other two are not yet written into the tokens.
 7. Hyphenation in bokmål at AX5 depends on the `hyphen/nb-no` patterns being bundled; the expected breaks in `copy.md` need a unit test.
 8. Domain touches are approved but untested; each row needs its unit test before the screen that uses it (owner decision 5).
+
+## Open across files
+
+From `design-system.md` review round 4. Each file's owner edits.
+
+- `owner-feedback.md`: the version 1 illustrations are still waiting for owner review. `illustrations-v1.png` now holds all 16 files, `style-mix` included.
+- `architecture.md` line 313: 16 files, not 15, and no placeholder (no blush, no `paper`). Line 150, re-render list: every figure on a transparent background, garments and scarves in neutral tones with no blush and no plum, and owner approval before Lane 1. Lines 143 and 150 keep `style-abaya-desi` as the target; until it lands the card uses `style-abaya`.
+- `architecture.md` row 99, `copy.md` lines 1056 and 1313: the progress card meta is joined with ", ", not " · ".
+- `copy.md` line 1028: `colours.paletteLabel` stays as written; `design-system.md` 19 now matches it.
+- `flows/F01-start.md` lines 77, 548 and 559, `flows/F11-profile-and-style.md` lines 262 and 618, `flows/F12-app-wide-checks.md` lines 139 and 352: `blushStrong` is `#9A5A52` at every setting and is no longer swapped under Increase Contrast; `paper` is gone (cards are cut-outs on `canvas`).
+- `flows/F01-start.md` lines 332 and 344: the face circle has one stroke; the dashed ring gives way to the `plum` arc in the same lane, with no lane outside it.
+- `flows/F11-profile-and-style.md` line 605: done in `design-system.md` (Profile recipe and Silk > `progress`).
