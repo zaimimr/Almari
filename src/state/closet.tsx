@@ -18,6 +18,7 @@ import {
 } from "../domain/samples";
 import { locale, setLanguage } from "../i18n";
 import { closetStorage } from "../storage/local";
+import { fixtures, loadFixtures } from "../testing/fixtures";
 import { useAttributeRefresh, useImportRunner } from "./imports";
 
 type ClosetStatus = {
@@ -49,8 +50,8 @@ export function ClosetProvider({
 
   useEffect(() => {
     let active = true;
-    repository
-      .load()
+    loadFixtures()
+      .then(() => repository.load())
       .then(async () => {
         if (repository.getSnapshot().sampleCatalog < sampleCatalogVersion) {
           await repository.update(addSampleWardrobe);
@@ -59,6 +60,12 @@ export function ClosetProvider({
           proposeWeatherTraits(withSampleAttributes(closet));
         const snapshot = repository.getSnapshot();
         if (prepare(snapshot) !== snapshot) await repository.update(prepare);
+        const language = fixtures.language;
+        if (language)
+          await repository.update((closet) => ({
+            ...closet,
+            styling: { ...closet.styling, language },
+          }));
       })
       .then(() => {
         if (active) setStatus("ready");

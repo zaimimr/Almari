@@ -1,0 +1,17 @@
+appId: com.zaimimran.almari
+---
+- runFlow: skip-onboarding.yaml
+- scrollUntilVisible:
+    element: "Start with the sample closet"
+    direction: DOWN
+    timeout: 60000
+- tapOn: "Start with the sample closet"
+- scrollUntilVisible:
+    element: "Try a sample style"
+    centerElement: true
+    timeout: 60000
+- tapOn: "Try a sample style"
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
+    timeout: 60000

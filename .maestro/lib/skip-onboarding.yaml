@@ -1,0 +1,17 @@
+appId: com.zaimimran.almari
+---
+- launchApp:
+    clearState: true
+    permissions:
+      all: allow
+- repeat:
+    times: 11
+    while:
+      notVisible: "You are set"
+    commands:
+      - scrollUntilVisible:
+          element: "Skip"
+          direction: DOWN
+          timeout: 60000
+      - tapOn: "Skip"
+- assertVisible: "You are set"

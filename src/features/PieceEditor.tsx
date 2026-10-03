@@ -50,6 +50,7 @@ import { theme } from "../ui/theme";
 import { confirmAction } from "../ui/confirm";
 import { useDiscardChanges } from "../navigation/useDiscardChanges";
 import { AttributeEditor } from "./AttributeEditor";
+import { now } from "../state/clock";
 
 export function PieceEditor({ piece }: { piece?: Piece }) {
   const { closet, update } = useCloset();
@@ -168,7 +169,7 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
         name,
         category,
         photo,
-        createdAt: piece?.createdAt ?? new Date().toISOString(),
+        createdAt: piece?.createdAt ?? now().toISOString(),
         source: piece?.source ?? "owned",
         ...(kind ? { kind } : {}),
         ...(chosenStyles?.length ? { styles: chosenStyles } : {}),

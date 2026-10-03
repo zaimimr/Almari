@@ -3,14 +3,26 @@ import { Directory, File, Paths } from "expo-file-system";
 import { randomUUID } from "expo-crypto";
 import { keyedStorage, type ClosetStorage } from "../domain/repository";
 import { isSamplePhoto } from "../domain/samples";
+import { fixtures } from "../testing/fixtures";
 
 const photos = new Directory(Paths.document, "closet-photos");
 
-export const closetStorage: ClosetStorage = keyedStorage(
+const stored = keyedStorage(
   (key) => Storage.getItem(key),
   (key, value) => Storage.setItem(key, value),
   (key) => Storage.removeItem(key),
 );
+
+export const closetStorage: ClosetStorage = {
+  ...stored,
+  async write(value) {
+    if (fixtures.failWrite) {
+      fixtures.failWrite = false;
+      throw new Error("fixture");
+    }
+    return stored.write(value);
+  },
+};
 
 export async function keepPhoto(uri: string): Promise<string> {
   photos.create({ intermediates: true, idempotent: true });

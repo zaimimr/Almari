@@ -31,6 +31,7 @@ import {
   FormScreen,
 } from "../../src/ui/legacy";
 import { theme } from "../../src/ui/theme";
+import { now } from "../../src/state/clock";
 
 type Phase =
   | { kind: "intro" }
@@ -120,7 +121,7 @@ export default function Colours() {
             colour: adjustColours(profile, {}),
             colourLean: current.styling.profile.colourLean,
           },
-          clockFor(new Date()),
+          clockFor(now()),
         ),
       );
       discard();

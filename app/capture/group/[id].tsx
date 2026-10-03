@@ -28,6 +28,7 @@ import {
   Screen,
 } from "../../../src/ui/legacy";
 import { theme } from "../../../src/ui/theme";
+import { now } from "../../../src/state/clock";
 
 const startBox: Frame = { x: 0.25, y: 0.25, width: 0.5, height: 0.5 };
 const step = 0.05;
@@ -118,13 +119,7 @@ export default function CapturePieces() {
       await changeImports(update, (current) =>
         job
           ? cropCapture(current, job, box, `${job}-${randomUUID()}`)
-          : addToCapture(
-              current,
-              id,
-              randomUUID(),
-              box,
-              new Date().toISOString(),
-            ),
+          : addToCapture(current, id, randomUUID(), box, now().toISOString()),
       );
       setDrawing(null);
     } catch {

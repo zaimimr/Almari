@@ -36,6 +36,7 @@ import {
   PiecePhoto,
 } from "../../src/ui/legacy";
 import { theme } from "../../src/ui/theme";
+import { now } from "../../src/state/clock";
 
 export default function PieceDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -98,7 +99,7 @@ export default function PieceDetail() {
 
   const styleThis = () => {
     void change((current) =>
-      stylePiece(current, pieceId, clockFor(new Date())),
+      stylePiece(current, pieceId, clockFor(now())),
     ).then((saved) => {
       if (saved) router.navigate("/today");
     });

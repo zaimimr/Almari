@@ -39,6 +39,7 @@ import {
 } from "../../src/ui/legacy";
 import { theme } from "../../src/ui/theme";
 import { locale, t } from "../../src/i18n";
+import { now } from "../../src/state/clock";
 
 export default function BuildLook() {
   const { width, fontScale } = useWindowDimensions();
@@ -71,7 +72,7 @@ export default function BuildLook() {
   const [swapping, setSwapping] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const occasion = source?.occasion ?? startingOccasion;
-  const localDate = clockFor(new Date()).localDate;
+  const localDate = clockFor(now()).localDate;
   const request = useMemo(
     () => builderRequest(closet, selected, occasion),
     [closet, selected, occasion],
@@ -151,11 +152,11 @@ export default function BuildLook() {
             id,
             name,
             pieceIds: selected,
-            createdAt: source?.createdAt ?? new Date().toISOString(),
+            createdAt: source?.createdAt ?? now().toISOString(),
             ...(occasion ? { occasion } : {}),
           }),
           selected,
-          new Date().toISOString(),
+          now().toISOString(),
           randomUUID(),
         ),
       );

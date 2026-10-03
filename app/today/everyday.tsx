@@ -24,6 +24,7 @@ import {
   ErrorMessage,
   FormScreen,
 } from "../../src/ui/legacy";
+import { now } from "../../src/state/clock";
 
 const levelHelp = {
   full: "coverage.helpFull",
@@ -79,7 +80,7 @@ export default function EverydayStyle() {
                 coverageLevel: level,
               }),
           { occasion, style, hijab, sample: false, coverage: { sleeve, hem } },
-          clockFor(new Date()),
+          clockFor(now()),
           restyleToday,
         ),
       );

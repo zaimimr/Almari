@@ -66,6 +66,7 @@ import { theme } from "../../../src/ui/theme";
 import { HeaderItem } from "../../../src/ui/HeaderItem";
 import { useLargeText } from "../../../src/ui/useLargeText";
 import { largeTitleOptions } from "../../../src/navigation/options";
+import { now } from "../../../src/state/clock";
 
 const shortcuts: GarmentKind[] = ["blazer", "dress", "kurta", "trousers"];
 
@@ -154,14 +155,14 @@ function TodayContent() {
                 onPress={() => {
                   void run((current) =>
                     saveEverydayStyle(
-                      setWardrobe(current, "sample", clockFor(new Date())),
+                      setWardrobe(current, "sample", clockFor(now())),
                       {
                         occasion: "work",
                         style: "western",
                         hijab: "always",
                         sample: true,
                       },
-                      clockFor(new Date()),
+                      clockFor(now()),
                       true,
                     ),
                   );
@@ -208,7 +209,7 @@ function TodayContent() {
         return router.push(addPiecesRoute);
       case "use-samples":
         return run((current) =>
-          setWardrobe(current, "sample", clockFor(new Date())),
+          setWardrobe(current, "sample", clockFor(now())),
         );
       case "check-piece":
         return router.push({
@@ -334,7 +335,7 @@ function TodayContent() {
           onChange={(wardrobe) => {
             if (wardrobe !== request.wardrobe)
               void run((current) =>
-                setWardrobe(current, wardrobe, clockFor(new Date())),
+                setWardrobe(current, wardrobe, clockFor(now())),
               );
           }}
         />
@@ -389,7 +390,7 @@ function TodayContent() {
                         woreThis(
                           current,
                           revision,
-                          new Date().toISOString(),
+                          now().toISOString(),
                           randomUUID(),
                         ),
                       );
@@ -432,7 +433,7 @@ function TodayContent() {
                             current,
                             chip.id,
                             revision,
-                            new Date().toISOString(),
+                            now().toISOString(),
                             randomUUID(),
                           ),
                         ).then((saved) => {

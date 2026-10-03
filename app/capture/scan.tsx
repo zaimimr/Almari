@@ -44,6 +44,7 @@ import {
   Screen,
 } from "../../src/ui/legacy";
 import { theme } from "../../src/ui/theme";
+import { now } from "../../src/state/clock";
 
 const statusKeys = {
   find: "scan.status.find",
@@ -124,7 +125,7 @@ export default function Scan() {
         addScanCapture(current, scanId, {
           id,
           source: shot.photo,
-          createdAt: new Date().toISOString(),
+          createdAt: now().toISOString(),
           ...(shot.region ? { region: shot.region } : { crop: shot.box }),
         }),
       );

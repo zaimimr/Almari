@@ -1,8 +1,0 @@
-appId: com.zaimimran.almari
----
-- launchApp
-- tapOn: "Closet"
-- assertVisible: "Alle"
-- assertVisible: "Hijaber og skjerf"
-- assertVisible: "Vestlig"
-- takeScreenshot: planning/build/labels/closet-nb

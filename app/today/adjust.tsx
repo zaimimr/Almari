@@ -28,6 +28,7 @@ import {
   Message,
   Screen,
 } from "../../src/ui/legacy";
+import { now } from "../../src/state/clock";
 
 const garmentOptions = [
   {
@@ -201,7 +202,7 @@ export default function AdjustToday() {
                   sample: false,
                   coverage: preset.coverage,
                 },
-                clockFor(new Date()),
+                clockFor(now()),
                 false,
               )
             : current;

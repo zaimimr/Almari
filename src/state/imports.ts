@@ -21,6 +21,7 @@ import {
   startImport,
 } from "../domain/importing";
 import { discardPhoto, photoUri } from "../storage/local";
+import { fixtures } from "../testing/fixtures";
 
 export const canPrepareOnDevice = ClosetVision.isAvailable();
 export const addPiecesRoute = canPrepareOnDevice ? "/capture" : "/piece/new";
@@ -96,11 +97,16 @@ export function useImportRunner(repository: ClosetRepository, ready: boolean) {
       running = true;
       try {
         await repository.update((closet) => startImport(closet, job.id));
+        if (fixtures.slowPrepare) await wait(fixtures.slowPrepare);
         if (!job.captureId) {
           await parseCapture(repository, job);
           return;
         }
         try {
+          if (fixtures.failPrepare) {
+            fixtures.failPrepare -= 1;
+            throw new Error("fixture");
+          }
           const result = await ClosetVision.prepare(
             photoUri(job.source),
             jobStem(job),

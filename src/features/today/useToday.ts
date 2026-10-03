@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppState } from "react-native";
-import ClosetVision from "../../../modules/closet-vision/src";
 import type {
   Closet,
   OutfitRequest,
@@ -18,6 +17,8 @@ import {
 import { forecastFor, forecastWeather } from "../../domain/weather";
 import { occasionName, styleName, t } from "../../i18n";
 import { useCloset } from "../../state/closet";
+import { now } from "../../state/clock";
+import { fetchForecast } from "../../state/forecast";
 
 export function useToday() {
   const { closet, update } = useCloset();
@@ -66,9 +67,9 @@ export function useToday() {
 
   useEffect(() => {
     const refresh = () => {
-      void update((current) =>
-        ensureToday(current, clockFor(new Date())),
-      ).catch(() => undefined);
+      void update((current) => ensureToday(current, clockFor(now()))).catch(
+        () => undefined,
+      );
     };
     refresh();
     const subscription = AppState.addEventListener("change", (state) => {
@@ -85,17 +86,17 @@ export function useToday() {
   const localDate = today?.localDate;
 
   useEffect(() => {
-    const clock = clockFor(new Date());
+    const clock = clockFor(now());
     if (!place || forecastWeather(stored, clock.localDate, clock.timeZone))
       return;
     let active = true;
-    ClosetVision.forecast(place.latitude, place.longitude)
+    fetchForecast(place.latitude, place.longitude)
       .then((result) => {
         const fresh = result
           ? forecastFor(
               result,
               clock.localDate,
-              new Date().toISOString(),
+              now().toISOString(),
               clock.timeZone,
             )
           : null;

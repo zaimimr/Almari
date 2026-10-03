@@ -43,6 +43,7 @@ import {
   useRetake,
   type CaptureProblem,
 } from "../../src/features/Retake";
+import { now } from "../../src/state/clock";
 
 const tips = [
   { title: "capture.tip1Title", body: "capture.tip1Body" },
@@ -120,7 +121,7 @@ export default function AddPieces() {
           queueImport(current, {
             id,
             source: stored,
-            createdAt: new Date().toISOString(),
+            createdAt: now().toISOString(),
           }),
         );
       } catch {

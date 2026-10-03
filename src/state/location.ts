@@ -5,10 +5,12 @@ import {
   reverseGeocodeAsync,
 } from "expo-location";
 import { getNetworkStateAsync } from "expo-network";
+import { fixtures } from "../testing/fixtures";
 
 export type Located = { name: string; latitude: number; longitude: number };
 
 async function isOffline() {
+  if (fixtures.offline) return true;
   try {
     return (await getNetworkStateAsync()).isConnected === false;
   } catch {
@@ -23,6 +25,7 @@ export async function locatePhone(): Promise<
   const { granted } = await requestForegroundPermissionsAsync();
   if (!granted) return { ok: false, reason: "denied" };
   try {
+    if (fixtures.offline) throw new Error("fixture");
     const { coords } = await getCurrentPositionAsync({
       accuracy: Accuracy.Low,
     });

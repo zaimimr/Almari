@@ -33,6 +33,7 @@ import {
   FormScreen,
 } from "../../src/ui/legacy";
 import { theme } from "../../src/ui/theme";
+import { now } from "../../src/state/clock";
 
 const steps = ["hijab", "place", "body", "taste", "colours", "done"] as const;
 
@@ -111,7 +112,7 @@ export default function Onboarding() {
         return void findCity();
       if (!city.trim()) place = { place: null };
     }
-    const clock = clockFor(new Date());
+    const clock = clockFor(now());
     const transforms = {
       hijab: (current: Closet) =>
         applyAnswer(
@@ -174,7 +175,7 @@ export default function Onboarding() {
             colour: seasonFromSwatch(swatch),
             colourLean: current.styling.profile.colourLean,
           },
-          clockFor(new Date()),
+          clockFor(now()),
         ),
       () => undefined,
     );

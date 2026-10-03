@@ -20,6 +20,7 @@ import {
 } from "../../src/ui/legacy";
 import { theme } from "../../src/ui/theme";
 import { t } from "../../src/i18n";
+import { now } from "../../src/state/clock";
 
 export default function ReplacePiece() {
   const { width, fontScale } = useWindowDimensions();
@@ -186,7 +187,7 @@ export default function ReplacePiece() {
                       target.id,
                       chosen.piece.id,
                       session.revision,
-                      new Date().toISOString(),
+                      now().toISOString(),
                       randomUUID(),
                     ),
                   t("piece.error.save"),
