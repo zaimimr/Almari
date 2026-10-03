@@ -204,9 +204,11 @@ export function applyAnswer<S extends AnswerStep>(
   if (step === "style") {
     const { styleLean } = answer as Answers["style"];
     const saved = withProfile(closet, { styleLean });
-    return styleLean === "desi" || styleLean === "western"
-      ? withPreset(saved, { style: styleLean }, clock)
-      : saved;
+    const style =
+      styleLean === "both"
+        ? (closet.styling.everyday?.style ?? "western")
+        : styleLean;
+    return style === null ? saved : withPreset(saved, { style }, clock);
   }
   if (step === "place") {
     const { place } = answer as Answers["place"];

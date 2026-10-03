@@ -17,7 +17,7 @@ import {
   stepsFor,
   type OnboardingStep,
 } from "./onboarding";
-import { greeting } from "./greeting";
+import { greeting, greetingShort } from "./greeting";
 import { at } from "./test-helpers";
 import { addSampleWardrobe } from "./samples";
 import { saveEverydayStyle } from "./today";
@@ -227,6 +227,14 @@ test("style Desi sets the everyday style, and Both keeps it", () => {
   );
   assert.equal(both.styling.everyday?.style, "western");
   assert.equal(both.styling.profile.styleLean, "both");
+  assert.equal(
+    applyAnswer(desi, "style", { styleLean: "both" }, clock).styling.everyday
+      ?.style,
+    "desi",
+  );
+  const first = applyAnswer(fresh(), "style", { styleLean: "both" }, clock);
+  assert.equal(first.styling.everyday?.style, "western");
+  assert.equal(first.styling.profile.styleLean, "both");
 });
 
 test("the colour answer is stored on the profile", () => {
@@ -397,4 +405,5 @@ test("the name is trimmed and the greeting follows the hour", () => {
   assert.equal(greeting("Sara", 20, "nb"), "God kveld, Sara");
   assert.equal(greeting(null, 9, "en"), "Good morning");
   assert.equal(greeting("Sara", 15, "nb"), "Hei, Sara");
+  assert.equal(greetingShort("Sara", "en"), "Hi, Sara");
 });
