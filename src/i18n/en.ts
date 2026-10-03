@@ -163,6 +163,7 @@ export const en = {
   "value.embellishment.none": "None",
   "value.embellishment.light": "Light",
   "value.embellishment.heavy": "Heavy",
+  "value.embellishment.bridal": "Bridal",
   "value.formality.1": "Casual",
   "value.formality.2": "Smart",
   "value.formality.3": "Dressy",

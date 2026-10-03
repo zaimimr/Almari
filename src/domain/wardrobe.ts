@@ -8,6 +8,7 @@ import {
   type Piece,
   type Traits,
 } from "./closet";
+import { isNeverWear } from "./preferences";
 import { evaluateOutfit, roleOf, type Problem } from "./styling";
 
 export function setArchived(
@@ -111,7 +112,8 @@ export function hijabAlternatives(
       (piece) =>
         roleOf(piece) === "hijab" &&
         piece.id !== current.id &&
-        !request.excludedIds.includes(piece.id),
+        !request.excludedIds.includes(piece.id) &&
+        !isNeverWear(closet.styling.profile, piece),
     )
     .map(option)
     .filter(({ problems }) =>

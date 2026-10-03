@@ -60,6 +60,7 @@ export const embellishments = [
   { id: "none", label: "None" },
   { id: "light", label: "Light" },
   { id: "heavy", label: "Heavy" },
+  { id: "bridal", label: "Bridal" },
 ] as const;
 
 export const formalities = [
@@ -194,6 +195,7 @@ const embellishmentSteps: Record<Embellishment, number> = {
   none: 0,
   light: 1,
   heavy: 2,
+  bridal: 3,
 };
 
 export function formalityFor(piece: {

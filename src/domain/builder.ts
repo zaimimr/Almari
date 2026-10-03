@@ -6,6 +6,7 @@ import {
   type Piece,
   type Style,
 } from "./closet";
+import { allowedPieces } from "./preferences";
 import { engineFor, scorerFor } from "./scoring/engine";
 import { scoreContext } from "./scoring/taste";
 import { evaluateOutfit, roleOf, type Problem } from "./styling";
@@ -108,7 +109,7 @@ export function rankPieces(
   const outfit = pieceIds.flatMap((id) =>
     closet.pieces.filter((piece) => piece.id === id),
   );
-  const ranked = candidates
+  const ranked = allowedPieces(closet, candidates)
     .filter((piece) => !pieceIds.includes(piece.id))
     .map((piece) => ({ piece, ...fit([...outfit, piece]) }))
     .sort(byFit)
@@ -130,7 +131,7 @@ export function swapOptions(
   if (!target) return [];
   const fit = judge(closet, request, localDate);
   const current = fit(outfit).coverage;
-  return closet.pieces
+  return allowedPieces(closet, closet.pieces)
     .filter(
       (piece) =>
         roleOf(piece) === roleOf(target) && !pieceIds.includes(piece.id),

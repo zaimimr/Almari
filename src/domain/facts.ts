@@ -6,6 +6,7 @@ import {
   optionsFor,
   type AttributeKey,
   type AttributeValue,
+  type Embellishment,
   type Fabric,
 } from "./attributes";
 import {
@@ -16,6 +17,7 @@ import {
   type Piece,
   type Source,
   type SourceKey,
+  type Sparkle,
   type Warmth,
 } from "./closet";
 import { colorName } from "./color";
@@ -99,6 +101,38 @@ const fabricSeasons: Partial<Record<Fabric, WearSeason>> = {
   khaddar: "winter",
   karandi: "winter",
 };
+
+const sparkleLevels: Record<Embellishment, Sparkle> = {
+  none: "plain",
+  light: "little",
+  heavy: "heavy",
+  bridal: "bridal",
+};
+
+const embellishmentFor: Record<Sparkle, Embellishment> = {
+  plain: "none",
+  little: "light",
+  heavy: "heavy",
+  bridal: "bridal",
+};
+
+export function sparkleOf(piece: Piece): Sparkle | null {
+  const embellishment = piece.attributes?.embellishment;
+  return embellishment ? sparkleLevels[embellishment] : null;
+}
+
+export function setSparkle(
+  closet: Closet,
+  pieceId: string,
+  sparkle: Sparkle,
+): Closet {
+  const piece = closet.pieces.find((item) => item.id === pieceId);
+  if (!piece) return closet;
+  return savePiece(
+    closet,
+    confirmAttribute(piece, "embellishment", embellishmentFor[sparkle]),
+  );
+}
 
 const sourceOf = (piece: Piece, key: SourceKey): Source =>
   piece.sources?.[key] ?? "confirmed";

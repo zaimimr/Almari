@@ -1,7 +1,12 @@
-import type { OutfitRequest, Piece, StyleProfile } from "../closet";
+import {
+  sparkles,
+  type OutfitRequest,
+  type Piece,
+  type StyleProfile,
+} from "../closet";
 import { t } from "../../i18n";
 import { ruleBook, type RuleBook } from "./rulebook";
-import { baseWeight, reasonFor, ruleHits } from "./rules";
+import { baseWeight, factsFor, reasonFor, ruleHits } from "./rules";
 import { pairAffinity, wearBoost, weightOf, type Features } from "./taste";
 import type { Scorer } from "./types";
 
@@ -20,6 +25,27 @@ export function features(
   return Object.fromEntries(
     ruleHits(book, pieces, request, profile).map((hit) => [hit.rule.id, 1]),
   );
+}
+
+const sparkleOccasions = ["eid", "party", "wedding", "barat"];
+
+function sparklePenalty(
+  book: RuleBook,
+  outfit: Piece[],
+  request: OutfitRequest,
+  profile: StyleProfile,
+) {
+  const level = profile.sparkle;
+  if (!level || !sparkleOccasions.includes(request.occasion)) return 0;
+  const wanted = sparkles.indexOf(level);
+  const floor = wanted >= sparkles.indexOf("heavy") ? 1 : 0;
+  return factsFor(outfit, book.thresholds).reduce((total, facts) => {
+    if (!facts.sparkle || !facts.piece.styles?.includes("desi")) return total;
+    const rank = sparkles.indexOf(facts.sparkle);
+    if (rank > wanted) return total - 0.6;
+    if (rank < floor) return total - 0.3;
+    return total;
+  }, 0);
 }
 
 function lower(piece: Piece) {
@@ -44,7 +70,10 @@ export function rulesScorerFor(book: RuleBook): Scorer {
       }
       const ids = outfit.map((piece) => piece.id);
       const affinity = pairAffinity(ids, context.taste);
-      score += affinity.value + wearBoost(ids, context.wear);
+      score +=
+        affinity.value +
+        wearBoost(ids, context.wear) +
+        sparklePenalty(book, outfit, request, context.profile);
       const often = outfit.filter((piece) =>
         affinity.often?.includes(piece.id),
       );

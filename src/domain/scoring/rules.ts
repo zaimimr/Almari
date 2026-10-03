@@ -4,9 +4,11 @@ import {
   type OutfitRequest,
   type Piece,
   type SourceKey,
+  type Sparkle,
   type StyleProfile,
 } from "../closet";
 import { formalityFor } from "../attributes";
+import { sparkleOf } from "../facts";
 import { deltaE, type Lab } from "../color";
 import { bestColours } from "../colourAnalysis";
 import { t, type Key } from "../../i18n";
@@ -35,6 +37,7 @@ export type Facts = {
   print: boolean;
   formality: number;
   color: ColorFacts;
+  sparkle: Sparkle | null;
 };
 
 export type Hit = { rule: Rule; bound: Facts[]; certain: boolean };
@@ -98,6 +101,7 @@ export function factsFor(pieces: Piece[], thresholds: Thresholds): Facts[] {
           embellishment: attributes.embellishment,
         }),
       color: colorFacts(piece, thresholds),
+      sparkle: sparkleOf(piece),
     };
     known.set(piece, facts);
     return facts;

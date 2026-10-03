@@ -165,6 +165,7 @@ export const nb: Record<Key, string> = {
   "value.embellishment.none": "Ingen",
   "value.embellishment.light": "Lett",
   "value.embellishment.heavy": "Rikt pyntet",
+  "value.embellishment.bridal": "Brudestas",
   "value.formality.1": "Hverdagslig",
   "value.formality.2": "Pent",
   "value.formality.3": "Fint",

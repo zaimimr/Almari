@@ -10,6 +10,7 @@ import {
 import type { ScoreContext, Scorer } from "./scoring/types";
 import { coverageProblems } from "./coverage";
 import { confirmedWeather, unconfirmedWeather } from "./pieceWeather";
+import { isNeverWear } from "./preferences";
 
 export type Role =
   | "main"
@@ -452,7 +453,10 @@ export function styleOutfits(
   const keptIds = new Set(request.keptIds);
   const excluded = new Set(request.excludedIds);
   const available = pool.filter(
-    (piece) => !keptIds.has(piece.id) && !excluded.has(piece.id),
+    (piece) =>
+      !keptIds.has(piece.id) &&
+      !excluded.has(piece.id) &&
+      !isNeverWear(context.profile, piece),
   );
   const eligible = available.filter((piece) => fitsStyle(piece, request.style));
   const keptRole = (role: Role) =>
@@ -703,7 +707,8 @@ export function replacementsFor(
       (piece) =>
         roleOf(piece) === role &&
         !currentIds.includes(piece.id) &&
-        !request.excludedIds.includes(piece.id),
+        !request.excludedIds.includes(piece.id) &&
+        !isNeverWear(context.profile, piece),
     )
     .map((piece) => {
       const outfit = currentIds.map((id) =>
