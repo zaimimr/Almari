@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, type Ref } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import Animated, {
   FadeIn,
@@ -57,6 +57,7 @@ export type TileProps = {
   testID?: string;
   onRetry?: () => void;
   onUndoRemove?: () => void;
+  ref?: Ref<View>;
 };
 
 const discSize = 22;
@@ -101,6 +102,7 @@ export function Tile({
   testID,
   onRetry,
   onUndoRemove,
+  ref,
 }: TileProps) {
   const colors = useColors();
   const { large, ax, fontScale, symbolScale } = useLargeText();
@@ -324,6 +326,7 @@ export function Tile({
           </>
         ) : (
           <Pressable
+            ref={ref}
             onPress={onPress}
             onLongPress={onLongPress}
             onPressIn={() => {

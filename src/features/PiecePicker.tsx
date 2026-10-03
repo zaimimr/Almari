@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { AccessibilityInfo, StyleSheet, View } from "react-native";
 import Animated, {
   FadeIn,
   FadeOut,
@@ -71,6 +71,7 @@ export function PiecePicker({
   const { large, ax } = useLargeText();
   const reduce = useReduceMotion();
   const [category, setCategory] = useState<Category | "all">("all");
+  const first = useRef<View>(null);
   const chosen = selectedIds.flatMap((id) => {
     const piece = pieces.find((item) => item.id === id);
     return piece ? [piece] : [];
@@ -128,7 +129,14 @@ export function PiecePicker({
             variant="quiet"
             size="small"
             label={t("pieces.clear")}
-            onPress={onClear}
+            onPress={() => {
+              onClear();
+              if (first.current)
+                AccessibilityInfo.sendAccessibilityEvent(
+                  first.current,
+                  "focus",
+                );
+            }}
           />
         ) : null}
       </Animated.View>
@@ -145,7 +153,7 @@ export function PiecePicker({
       />
       {visible.length ? (
         <Animated.View
-          key="grid"
+          key={category}
           entering={crossfade.entering}
           exiting={crossfade.exiting}
           style={styles.grid}
@@ -157,6 +165,7 @@ export function PiecePicker({
                 return piece ? (
                   <Tile
                     key={piece.id}
+                    ref={piece === visible[0] ? first : undefined}
                     image={piece}
                     label={piece.name}
                     size="grid"
