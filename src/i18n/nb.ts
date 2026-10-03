@@ -1337,4 +1337,12 @@ export const nb: Record<Key, string> = {
 
   "choice.clearedOne": "1 valg fjernet",
   "choice.clearedMany": "{count} valg fjernet",
+
+  "common.selectedOne": "1 valgt",
+  "common.selectedMany": "{count} valgt",
+  "pieces.clear": "Fjern alle",
+  "pieces.none": "Ingen plagg ennå",
+  "closet.addPieces": "Legg til plagg",
+  "common.showAll": "Vis alle",
+  "tile.label": "{name}, {colour}, {marks}",
 };

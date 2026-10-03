@@ -1316,6 +1316,14 @@ export const en = {
 
   "choice.clearedOne": "1 choice cleared",
   "choice.clearedMany": "{count} choices cleared",
+
+  "common.selectedOne": "1 selected",
+  "common.selectedMany": "{count} selected",
+  "pieces.clear": "Clear",
+  "pieces.none": "No pieces yet",
+  "closet.addPieces": "Add pieces",
+  "common.showAll": "Show all",
+  "tile.label": "{name}, {colour}, {marks}",
 };
 
 export type Key = keyof typeof en;
