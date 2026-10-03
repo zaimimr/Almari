@@ -196,6 +196,21 @@ test("the calendar holds outfit wears only and variety plus not worn lately is t
   );
 });
 
+test("a calendar wear leaves once all its pieces have left the closet", () => {
+  const { closet, ids } = sample();
+  const worn = woreLook(closet, "eid", "2026-10-02T18:00:00Z", "w-eid");
+  const without = (gone: string[]) => ({
+    ...worn,
+    pieces: worn.pieces.filter((piece) => !gone.includes(piece.id)),
+  });
+  assert.deepEqual(
+    Object.keys(wearCalendar(without(ids.slice(1)), "2026-10", "en")),
+    ["2026-10-02"],
+  );
+  assert.deepEqual(wearCalendar(without(ids), "2026-10", "en"), {});
+  assert.equal(firstWearMonth(without(ids)), null);
+});
+
 test("wearing a saved look moves it to the top", () => {
   const { closet, ids } = sample();
   const two = {

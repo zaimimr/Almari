@@ -204,13 +204,19 @@ function markOf(pieces: Piece[]): Piece | null {
   );
 }
 
+function calendarWears(closet: Closet): FeedbackEvent[] {
+  return outfitWears(closet).filter(
+    (event) => piecesOf(closet, event.pieceIds).length,
+  );
+}
+
 export function wearCalendar(
   closet: Closet,
   month: string,
   locale: NameLocale,
 ): Record<string, CalendarDay> {
   const days: Record<string, CalendarDay> = {};
-  for (const event of outfitWears(closet)) {
+  for (const event of calendarWears(closet)) {
     const date = wearDate(closet, event.at);
     if (!date.startsWith(`${month}-`)) continue;
     const look = lookForPieces(closet, event.pieceIds);
@@ -233,7 +239,7 @@ export function wearCalendar(
 }
 
 export function firstWearMonth(closet: Closet): string | null {
-  const months = outfitWears(closet).map((event) =>
+  const months = calendarWears(closet).map((event) =>
     wearDate(closet, event.at).slice(0, 7),
   );
   return months.length ? months.sort()[0]! : null;
