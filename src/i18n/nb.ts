@@ -988,7 +988,7 @@ export const nb: Record<Key, string> = {
   "common.pieceCountOne": "1 plagg",
   "filters.all": "Alle plagg",
   "nav.closet": "Garderobe",
-  "nav.looks": "Antrekk",
+  "nav.looks": "Samling",
   "nav.today": "I dag",
   "tile.selected": "Valgt",
   "title.addPieces": "Legg til plagg",

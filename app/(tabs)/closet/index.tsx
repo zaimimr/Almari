@@ -25,6 +25,8 @@ import {
 } from "../../../src/ui/legacy";
 import { addPiecesRoute } from "../../../src/state/imports";
 import { theme } from "../../../src/ui/theme";
+import { useLargeText } from "../../../src/ui/useLargeText";
+import { largeTitleOptions } from "../../../src/navigation/options";
 
 type FilterOption = {
   key: string;
@@ -35,6 +37,7 @@ type FilterOption = {
 
 export default function ClosetScreen() {
   const { closet, update } = useCloset();
+  const { fontScale, bold } = useLargeText();
   const [selecting, setSelecting] = useState(false);
   const [chosen, setChosen] = useState<string[]>([]);
   const [linked, setLinked] = useState(false);
@@ -103,6 +106,8 @@ export default function ClosetScreen() {
     <View style={styles.screen}>
       <Stack.Screen
         options={{
+          ...largeTitleOptions(fontScale, bold),
+          title: t("title.yourCloset"),
           headerLeft:
             closet.pieces.length > 1
               ? () => (

@@ -12,14 +12,19 @@ import {
 } from "../../../src/ui/legacy";
 import { addPiecesRoute } from "../../../src/state/imports";
 import { theme } from "../../../src/ui/theme";
+import { useLargeText } from "../../../src/ui/useLargeText";
+import { largeTitleOptions } from "../../../src/navigation/options";
 
 export default function LooksScreen() {
   const { closet } = useCloset();
+  const { fontScale, bold } = useLargeText();
   const entries = lookEntries(closet, locale);
   return (
     <View style={styles.screen}>
       <Stack.Screen
         options={{
+          ...largeTitleOptions(fontScale, bold),
+          title: t("title.yourLooks"),
           headerRight: () => (
             <HeaderAction
               label={t("title.buildLook")}

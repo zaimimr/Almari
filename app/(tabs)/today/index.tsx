@@ -63,6 +63,9 @@ import { addPiecesRoute } from "../../../src/state/imports";
 import { ForecastNote } from "../../../src/features/today/ForecastNote";
 import { SavedLooks } from "../../../src/features/today/SavedLooks";
 import { theme } from "../../../src/ui/theme";
+import { HeaderItem } from "../../../src/ui/HeaderItem";
+import { useLargeText } from "../../../src/ui/useLargeText";
+import { largeTitleOptions } from "../../../src/navigation/options";
 
 const shortcuts: GarmentKind[] = ["blazer", "dress", "kurta", "trousers"];
 
@@ -82,6 +85,7 @@ const wardrobeOptions = [
 ] as const;
 
 export default function TodayScreen() {
+  const { fontScale, bold } = useLargeText();
   return (
     <View style={styles.screen}>
       <ScrollView
@@ -90,11 +94,20 @@ export default function TodayScreen() {
       >
         <Stack.Screen
           options={{
+            ...largeTitleOptions(fontScale, bold),
+            title: t("nav.today"),
             headerRight: () => (
-              <HeaderAction
-                label={t("title.everyday")}
-                onPress={() => router.push("/today/everyday")}
-              />
+              <View style={styles.headerItems}>
+                <HeaderAction
+                  label={t("title.everyday")}
+                  onPress={() => router.push("/today/everyday")}
+                />
+                <HeaderItem
+                  label={t("nav.profile")}
+                  icon="person.crop.circle"
+                  onPress={() => router.push("/profile")}
+                />
+              </View>
             ),
           }}
         />
@@ -750,6 +763,7 @@ function PieceRow({
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: theme.colors.canvas },
+  headerItems: { flexDirection: "row", alignItems: "center" },
   content: {
     padding: 24,
     paddingBottom: 120,

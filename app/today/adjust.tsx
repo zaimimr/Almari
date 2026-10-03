@@ -25,7 +25,6 @@ import {
   ChoiceGroup,
   ErrorMessage,
   FormScreen,
-  HeaderAction,
   Message,
   Screen,
 } from "../../src/ui/legacy";
@@ -233,12 +232,6 @@ export default function AdjustToday() {
             newOccasion || today.active === "occasion"
               ? t("today.forOccasion")
               : t("title.adjustToday"),
-          headerLeft: () => (
-            <HeaderAction
-              label={t("common.cancel")}
-              onPress={() => router.back()}
-            />
-          ),
         }}
       />
       <AppText muted>

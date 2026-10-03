@@ -110,6 +110,7 @@ export default function AdjustCutout() {
       <Stack.Screen
         options={{
           title: source.cutout ? t("cutout.adjust") : t("cutout.byHand"),
+          gestureEnabled: false,
           headerLeft: () => (
             <HeaderAction
               label={t("common.cancel")}

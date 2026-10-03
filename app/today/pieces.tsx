@@ -91,12 +91,6 @@ export default function ChoosePieces() {
     <View style={styles.screen}>
       <Stack.Screen
         options={{
-          headerLeft: () => (
-            <HeaderAction
-              label={t("common.cancel")}
-              onPress={() => router.back()}
-            />
-          ),
           headerRight: () =>
             selected.length ? (
               <HeaderAction

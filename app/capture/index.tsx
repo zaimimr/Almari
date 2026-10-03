@@ -246,12 +246,6 @@ export default function AddPieces() {
       <Stack.Screen
         options={{
           title: t("title.addPieces"),
-          headerLeft: () => (
-            <HeaderAction
-              label={t("common.close")}
-              onPress={() => router.back()}
-            />
-          ),
           headerRight: () => (
             <HeaderAction label={t("capture.tips")} onPress={() => setTip(0)} />
           ),

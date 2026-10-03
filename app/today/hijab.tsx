@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { FlatList, StyleSheet, View, useWindowDimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Stack, router } from "expo-router";
+import { router } from "expo-router";
 import { scorerFor } from "../../src/domain/scoring/engine";
 import { scoreContext } from "../../src/domain/scoring/taste";
 import { activeSession, replacePiece } from "../../src/domain/today";
@@ -12,7 +12,6 @@ import {
   AppText,
   Button,
   ErrorMessage,
-  HeaderAction,
   Message,
   OutfitCollage,
   PieceTile,
@@ -85,16 +84,6 @@ export default function CompareHijabs() {
 
   return (
     <View style={styles.screen}>
-      <Stack.Screen
-        options={{
-          headerLeft: () => (
-            <HeaderAction
-              label={t("common.cancel")}
-              onPress={() => router.back()}
-            />
-          ),
-        }}
-      />
       <View style={[styles.workspace, wide && styles.workspaceWide]}>
         <View style={styles.preview}>
           <OutfitCollage pieces={pieces} fill testID="hijab-preview" />

@@ -1,19 +1,19 @@
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 import Constants from "expo-constants";
-import { router } from "expo-router";
-import type { Language } from "../../../src/domain/closet";
+import { Stack, router } from "expo-router";
+import type { Language } from "../../src/domain/closet";
 import {
   answersFrom,
   replayOnboarding,
   resetCloset,
-} from "../../../src/domain/onboarding";
-import { closetStats } from "../../../src/domain/profileStats";
-import { formatHeight } from "../../../src/domain/units";
-import { seasonLabel } from "../../../src/features/colourText";
-import { t } from "../../../src/i18n";
-import { useCloset } from "../../../src/state/closet";
-import { discardAllPhotos } from "../../../src/storage/local";
+} from "../../src/domain/onboarding";
+import { closetStats } from "../../src/domain/profileStats";
+import { formatHeight } from "../../src/domain/units";
+import { seasonLabel } from "../../src/features/colourText";
+import { t } from "../../src/i18n";
+import { useCloset } from "../../src/state/closet";
+import { discardAllPhotos } from "../../src/storage/local";
 import {
   AppText,
   Button,
@@ -21,9 +21,9 @@ import {
   ChoiceGroup,
   ErrorMessage,
   FormScreen,
-} from "../../../src/ui/legacy";
-import { confirmAction } from "../../../src/ui/confirm";
-import { theme } from "../../../src/ui/theme";
+} from "../../src/ui/legacy";
+import { confirmAction } from "../../src/ui/confirm";
+import { theme } from "../../src/ui/theme";
 
 const languages = ["system", "en", "nb"] as const;
 
@@ -122,6 +122,7 @@ export default function Profile() {
 
   return (
     <FormScreen>
+      <Stack.Screen options={{ title: t("profile.title") }} />
       <AppText variant="title">{t("settings.answers")}</AppText>
       {rows.map((row) => (
         <View key={row.step} style={styles.row} testID={`answer-${row.step}`}>

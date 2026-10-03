@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
-import { Stack, router } from "expo-router";
+import { router } from "expo-router";
 import type { CardLayout, StyleProfile } from "../../src/domain/closet";
 import { saveProfile } from "../../src/domain/feedback";
 import {
@@ -19,7 +19,6 @@ import {
   ChoiceGroup,
   ErrorMessage,
   FormScreen,
-  HeaderAction,
 } from "../../src/ui/legacy";
 
 type Choice<T> = { id: string; label: string; value: T };
@@ -202,16 +201,6 @@ export default function StyleSettings() {
 
   return (
     <FormScreen>
-      <Stack.Screen
-        options={{
-          headerLeft: () => (
-            <HeaderAction
-              label={t("style.cancel")}
-              onPress={() => router.back()}
-            />
-          ),
-        }}
-      />
       <AppText muted>{t("style.intro")}</AppText>
       <ChoiceGroup
         label={t("style.layout")}

@@ -11,7 +11,7 @@ export default function ClosetTabs() {
       <NativeTabs.Trigger name="today">
         <NativeTabs.Trigger.Label>{t("nav.today")}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
-          sf={{ default: "sparkles", selected: "sparkles" }}
+          sf={{ default: "sun.horizon", selected: "sun.horizon.fill" }}
         />
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="closet">
@@ -21,12 +21,8 @@ export default function ClosetTabs() {
       <NativeTabs.Trigger name="looks">
         <NativeTabs.Trigger.Label>{t("nav.looks")}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon
-          sf={{ default: "square.grid.2x2", selected: "square.grid.2x2.fill" }}
+          sf={{ default: "rectangle.stack", selected: "rectangle.stack.fill" }}
         />
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="profile">
-        <NativeTabs.Trigger.Label>{t("nav.profile")}</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="person.crop.circle" />
       </NativeTabs.Trigger>
     </NativeTabs>
   );

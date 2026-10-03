@@ -196,7 +196,9 @@ export default function Onboarding() {
 
   return (
     <View style={styles.screen}>
-      <Stack.Screen options={{ gestureEnabled: Boolean(single) }} />
+      <Stack.Screen
+        options={{ headerShown: false, gestureEnabled: Boolean(single) }}
+      />
       <OnboardingBar
         action={
           single

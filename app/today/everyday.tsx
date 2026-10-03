@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Stack, router } from "expo-router";
+import { router } from "expo-router";
 import {
   hemNeeds,
   occasionOptions,
@@ -23,7 +23,6 @@ import {
   ChoiceGroup,
   ErrorMessage,
   FormScreen,
-  HeaderAction,
 } from "../../src/ui/legacy";
 
 const levelHelp = {
@@ -95,16 +94,6 @@ export default function EverydayStyle() {
 
   return (
     <FormScreen>
-      <Stack.Screen
-        options={{
-          headerLeft: () => (
-            <HeaderAction
-              label={t("common.cancel")}
-              onPress={() => router.back()}
-            />
-          ),
-        }}
-      />
       <AppText muted>{t("everyday.intro")}</AppText>
       {preset?.sample ? (
         <AppText variant="footnote" muted>

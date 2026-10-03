@@ -28,7 +28,7 @@ function Screens() {
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen
         name="piece/new"
-        options={{ title: t("capture.addPiece"), presentation: "modal" }}
+        options={{ title: t("capture.addPiece") }}
       />
       <Stack.Screen name="piece/[id]" options={{ title: t("piece.title") }} />
       <Stack.Screen
@@ -37,12 +37,12 @@ function Screens() {
       />
       <Stack.Screen
         name="look/build"
-        options={{ title: t("title.buildLook"), presentation: "modal" }}
+        options={{ title: t("title.buildLook") }}
       />
       <Stack.Screen name="look/[id]" options={{ title: t("title.yourLook") }} />
       <Stack.Screen
         name="capture/index"
-        options={{ title: t("title.addPieces"), presentation: "modal" }}
+        options={{ title: t("title.addPieces") }}
       />
       <Stack.Screen
         name="capture/[id]"
@@ -50,7 +50,7 @@ function Screens() {
       />
       <Stack.Screen
         name="cutout/[id]"
-        options={{ title: t("cutout.adjust"), gestureEnabled: false }}
+        options={{ title: t("cutout.adjust") }}
       />
       <Stack.Screen name="capture/scan" options={{ title: t("scan.title") }} />
       <Stack.Screen
@@ -63,40 +63,26 @@ function Screens() {
       />
       <Stack.Screen
         name="today/adjust"
-        options={{ title: t("title.adjustToday"), presentation: "modal" }}
+        options={{ title: t("title.adjustToday") }}
       />
       <Stack.Screen
         name="today/everyday"
-        options={{ title: t("title.everyday"), presentation: "modal" }}
+        options={{ title: t("title.everyday") }}
       />
       <Stack.Screen
         name="today/pieces"
-        options={{ title: t("title.choosePieces"), presentation: "modal" }}
+        options={{ title: t("title.choosePieces") }}
       />
       <Stack.Screen
         name="today/replace"
-        options={{ title: t("title.changePiece"), presentation: "modal" }}
+        options={{ title: t("title.changePiece") }}
       />
-      <Stack.Screen
-        name="today/check"
-        options={{ title: t("check.title"), presentation: "modal" }}
-      />
-      <Stack.Screen
-        name="today/hijab"
-        options={{ title: t("hijabs.title"), presentation: "modal" }}
-      />
-      <Stack.Screen
-        name="today/style"
-        options={{ title: t("style.title"), presentation: "modal" }}
-      />
+      <Stack.Screen name="today/check" options={{ title: t("check.title") }} />
+      <Stack.Screen name="today/hijab" options={{ title: t("hijabs.title") }} />
+      <Stack.Screen name="today/style" options={{ title: t("style.title") }} />
       <Stack.Screen
         name="today/stylist-results"
-        options={{ title: t("stylist.results"), presentation: "modal" }}
-      />
-      <Stack.Screen name="onboarding/index" options={{ headerShown: false }} />
-      <Stack.Screen
-        name="onboarding/colours"
-        options={{ headerShown: false }}
+        options={{ title: t("stylist.results") }}
       />
     </Stack>
   );

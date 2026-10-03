@@ -177,12 +177,6 @@ export default function BuildLook() {
             : initialSelection.length
               ? t("build.save")
               : t("title.buildLook"),
-          headerLeft: () => (
-            <HeaderAction
-              label={t("common.cancel")}
-              onPress={() => router.back()}
-            />
-          ),
         }}
       />
       <View style={[styles.workspace, wide && styles.workspaceWide]}>

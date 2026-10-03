@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
-import { Stack, router, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import {
   coverageQuestion,
   lengthChoices,
@@ -19,7 +19,6 @@ import {
   ChoiceGroup,
   ErrorMessage,
   FormScreen,
-  HeaderAction,
   Message,
   PiecePhoto,
   Screen,
@@ -100,16 +99,6 @@ export default function CheckPiece() {
 
   return (
     <FormScreen>
-      <Stack.Screen
-        options={{
-          headerLeft: () => (
-            <HeaderAction
-              label={t("check.notNow")}
-              onPress={() => router.back()}
-            />
-          ),
-        }}
-      />
       <View style={styles.photo}>
         <PiecePhoto piece={piece} />
       </View>

@@ -45,15 +45,6 @@ export default function ClosetTabs() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: t("nav.profile"),
-          tabBarIcon: ({ color, size }) => (
-            <Feather name="user" color={color} size={size} />
-          ),
-        }}
-      />
     </Tabs>
   );
 }

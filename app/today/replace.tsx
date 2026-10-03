@@ -13,7 +13,6 @@ import {
   AppText,
   Button,
   ErrorMessage,
-  HeaderAction,
   Message,
   OutfitCollage,
   PieceTile,
@@ -85,12 +84,6 @@ export default function ReplacePiece() {
       <Stack.Screen
         options={{
           title: t("replace.title", { name: target.name.toLowerCase() }),
-          headerLeft: () => (
-            <HeaderAction
-              label={t("common.cancel")}
-              onPress={() => router.back()}
-            />
-          ),
         }}
       />
       <View style={[styles.workspace, wide && styles.workspaceWide]}>

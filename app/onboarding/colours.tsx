@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type PropsWithChildren } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
-import { router } from "expo-router";
+import { Stack, router } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import ClosetVision, {
   type SelfieReading,
@@ -290,6 +290,7 @@ function Shell({
 }: PropsWithChildren<{ scrollEnabled?: boolean }>) {
   return (
     <View style={styles.screen}>
+      <Stack.Screen options={{ headerShown: false }} />
       <OnboardingBar
         action={{
           label: t("common.back"),

@@ -1,13 +1,10 @@
 import { Stack } from "expo-router";
-import { largeTitleOptions } from "../../../src/navigation/options";
-import { t } from "../../../src/i18n";
-import { useLargeText } from "../../../src/ui/useLargeText";
+import { stackOptions } from "../../../src/navigation/options";
 
 export default function TodayLayout() {
-  const { fontScale, bold } = useLargeText();
   return (
-    <Stack screenOptions={largeTitleOptions(fontScale, bold)}>
-      <Stack.Screen name="index" options={{ title: t("nav.today") }} />
+    <Stack screenOptions={stackOptions}>
+      <Stack.Screen name="index" />
     </Stack>
   );
 }
