@@ -1019,12 +1019,7 @@ export const en = {
   "common.saveChanges": "Save changes",
   "common.saveLook": "Save look",
   "common.showAllPieces": "Show all pieces",
-  "closet.opening": "Opening your closet",
-  "closet.openingBody": "Your pieces will be here in a moment.",
-  "closet.openFailed": "Your closet could not open",
-  "closet.openFailedBody":
-    "Your saved data has been kept. Try opening it again.",
-  "closet.tryAgain": "Try again",
+  "start.error.title": "Could not open your closet",
   "error.closetOpening": "Your closet is still opening. Try again in a moment.",
   "error.listedOption": "Choose one of the listed options.",
   "error.setTooSmall": "Choose at least two pieces for a set.",

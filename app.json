@@ -11,7 +11,8 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.zaimimran.almari",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "CADisableMinimumFrameDurationOnPhone": true
       },
       "entitlements": {
         "com.apple.developer.weatherkit": true
@@ -46,9 +47,9 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/brand/splash.png",
-          "imageWidth": 220,
-          "backgroundColor": "#FDFBF7"
+          "image": "./assets/brand/tile.png",
+          "imageWidth": 160,
+          "backgroundColor": "#FFFFFF"
         }
       ],
       "expo-localization"

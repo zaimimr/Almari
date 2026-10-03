@@ -6,6 +6,7 @@ import {
   useState,
   useSyncExternalStore,
   type PropsWithChildren,
+  type ReactNode,
 } from "react";
 import type { Closet } from "../domain/closet";
 import { proposeWeatherTraits } from "../domain/pieceWeather";
@@ -15,14 +16,25 @@ import {
   sampleCatalogVersion,
   withSampleAttributes,
 } from "../domain/samples";
-import { locale, setLanguage, t } from "../i18n";
+import { locale, setLanguage } from "../i18n";
 import { closetStorage } from "../storage/local";
 import { useAttributeRefresh, useImportRunner } from "./imports";
-import { Button, Message, Screen } from "../ui/legacy";
+
+type ClosetStatus = {
+  status: "loading" | "ready" | "error";
+  retry: () => void;
+};
 
 const Context = createContext<ClosetRepository | null>(null);
+const ClosetStatusContext = createContext<ClosetStatus>({
+  status: "loading",
+  retry: () => undefined,
+});
 
-export function ClosetProvider({ children }: PropsWithChildren) {
+export function ClosetProvider({
+  children,
+  overlay,
+}: PropsWithChildren<{ overlay?: ReactNode }>) {
   const [repository] = useState(() => new ClosetRepository(closetStorage));
   const [status, setStatus] = useState<"loading" | "ready" | "error">(
     "loading",
@@ -59,38 +71,26 @@ export function ClosetProvider({ children }: PropsWithChildren) {
     };
   }, [repository, attempt]);
 
-  if (status !== "ready") {
-    return (
-      <Screen centered>
-        <Message
-          title={
-            status === "loading" ? t("closet.opening") : t("closet.openFailed")
-          }
-          description={
-            status === "loading"
-              ? t("closet.openingBody")
-              : t("closet.openFailedBody")
-          }
-        />
-        {status === "error" ? (
-          <Button
-            label={t("closet.tryAgain")}
-            onPress={() => {
-              setStatus("loading");
-              setAttempt((value) => value + 1);
-            }}
-          />
-        ) : null}
-      </Screen>
-    );
-  }
+  const retry = () => {
+    setStatus("loading");
+    setAttempt((value) => value + 1);
+  };
 
-  setLanguage(language);
+  if (status === "ready") setLanguage(language);
   return (
-    <Context.Provider value={repository}>
-      <Fragment key={locale}>{children}</Fragment>
-    </Context.Provider>
+    <ClosetStatusContext.Provider value={{ status, retry }}>
+      {status === "ready" ? (
+        <Context.Provider value={repository}>
+          <Fragment key={locale}>{children}</Fragment>
+        </Context.Provider>
+      ) : null}
+      {overlay}
+    </ClosetStatusContext.Provider>
   );
+}
+
+export function useClosetStatus(): ClosetStatus {
+  return useContext(ClosetStatusContext);
 }
 
 export function useCloset() {

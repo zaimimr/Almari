@@ -1035,12 +1035,7 @@ export const nb: Record<Key, string> = {
   "common.saveChanges": "Lagre endringene",
   "common.saveLook": "Lagre antrekket",
   "common.showAllPieces": "Vis alle plagg",
-  "closet.opening": "Åpner garderoben din",
-  "closet.openingBody": "Plaggene dine er her om et øyeblikk.",
-  "closet.openFailed": "Garderoben din kunne ikke åpnes",
-  "closet.openFailedBody":
-    "De lagrede dataene dine er i behold. Prøv å åpne den igjen.",
-  "closet.tryAgain": "Prøv igjen",
+  "start.error.title": "Kunne ikke åpne garderoben",
   "error.closetOpening":
     "Garderoben din åpnes fortsatt. Prøv igjen om et øyeblikk.",
   "error.listedOption": "Velg ett av alternativene i listen.",
