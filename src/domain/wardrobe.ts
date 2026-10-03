@@ -9,7 +9,9 @@ import {
   type Traits,
 } from "./closet";
 import { filterPieces, lastWorn, noFilter } from "./closetFilters";
+import { toLab, toLch } from "./color";
 import { hasAnyWear } from "./feedback";
+import { confirmedWeather } from "./pieceWeather";
 import { isNeverWear, wearMoreIds } from "./preferences";
 import { evaluateOutfit, roleOf, type Problem } from "./styling";
 import { activeSession, type Clock } from "./today";
@@ -81,11 +83,23 @@ function reasonFor(piece: Piece, reasons: string[]) {
   );
 }
 
+export function hijabHue(piece: Piece): number | null {
+  const colour = piece.colors?.[0];
+  return colour ? toLch(toLab(colour.rgb))[2] : null;
+}
+
+const hueDistance = (from: number | null, to: number | null) => {
+  if (from === null || to === null) return Number.POSITIVE_INFINITY;
+  const gap = Math.abs(from - to) % 360;
+  return gap > 180 ? 360 - gap : gap;
+};
+
 export function hijabAlternatives(
   closet: Closet,
   request: OutfitRequest,
   currentIds: string[],
   score: (outfit: Piece[]) => { score: number; reasons: string[] },
+  options: { all?: boolean } = {},
 ): HijabComparison | null {
   const pool = closet.pieces.filter(
     (piece) => piece.source === request.wardrobe && isAvailable(piece),
@@ -106,11 +120,18 @@ export function hijabAlternatives(
       piece,
       ids: pieces.map((item) => item.id),
       score: result.score,
-      reason: reasonFor(piece, result.reasons),
+      reason: options.all ? null : reasonFor(piece, result.reasons),
       problems: evaluateOutfit(pieces, request, pool),
     };
   };
-  const options = pool
+  const { weather } = request;
+  const cold =
+    weather.source !== "unknown" &&
+    (weather.warmth === "cold" || weather.precipitation === "snow");
+  const warm = (piece: Piece) =>
+    cold && confirmedWeather(piece, "warmth") === "warm" ? 0 : 1;
+  const hue = hijabHue(current);
+  const found = pool
     .filter(
       (piece) =>
         roleOf(piece) === "hijab" &&
@@ -119,14 +140,22 @@ export function hijabAlternatives(
         !isNeverWear(closet.styling.profile, piece),
     )
     .map(option)
-    .filter(({ problems }) =>
-      problems.every((problem) => problem.severity === "review"),
+    .filter(
+      ({ problems }) =>
+        options.all ||
+        problems.every((problem) => problem.severity === "review"),
     )
     .sort(
-      (a, b) => b.score - a.score || a.piece.name.localeCompare(b.piece.name),
-    )
-    .slice(0, 3);
-  return { current: option(current), options };
+      (a, b) =>
+        warm(a.piece) - warm(b.piece) ||
+        hueDistance(hue, hijabHue(a.piece)) -
+          hueDistance(hue, hijabHue(b.piece)) ||
+        a.piece.name.localeCompare(b.piece.name),
+    );
+  return {
+    current: option(current),
+    options: options.all ? found : found.slice(0, 3),
+  };
 }
 
 export type LookMatch = { look: Look; pieces: Piece[]; problems: Problem[] };

@@ -25,7 +25,9 @@ import {
   undoChange,
 } from "./today";
 import {
+  confirmPiece,
   hijabAlternatives,
+  hijabHue,
   matchingLooks,
   rediscover,
   setArchived,
@@ -170,9 +172,14 @@ const outfit = [
   "sample-mauve-hijab",
   "sample-chocolate-loafers",
 ];
-const hijab = (id: string, name: string): Piece => ({
+const hijab = (
+  id: string,
+  name: string,
+  rgb: [number, number, number],
+): Piece => ({
   id,
   name,
+  colors: [{ rgb, share: 1 }],
   category: "hijab",
   kind: "hijab",
   styles: ["western", "desi"],
@@ -181,8 +188,8 @@ const hijab = (id: string, name: string): Piece => ({
   source: "sample",
 });
 const hijabs = [
-  hijab("sample-rose-hijab", "Rose hijab"),
-  hijab("sample-sky-hijab", "Sky hijab"),
+  hijab("sample-rose-hijab", "Rose hijab", [214, 140, 160]),
+  hijab("sample-sky-hijab", "Sky hijab", [140, 180, 220]),
 ].reduce(savePiece, samples);
 const preference = [
   "sample-sky-hijab",
@@ -201,7 +208,7 @@ const byPreference = (pieces: Piece[]) => {
   };
 };
 
-test("R03 the comparison shows three alternatives ranked by the scorer, each keeping every other piece", () => {
+test("R03 the comparison shows the three closest in tone, each keeping every other piece", () => {
   const comparison = hijabAlternatives(
     hijabs,
     request(),
@@ -212,7 +219,7 @@ test("R03 the comparison shows three alternatives ranked by the scorer, each kee
   assert.deepEqual(comparison.current.ids, outfit);
   assert.deepEqual(
     comparison.options.map((option) => option.piece.id),
-    ["sample-sky-hijab", "sample-chocolate-hijab", "sample-rose-hijab"],
+    ["sample-rose-hijab", "sample-chocolate-hijab", "sample-ivory-hijab"],
   );
   for (const option of comparison.options) {
     assert.deepEqual(
@@ -455,4 +462,91 @@ test("rediscover waits for a wear, then never worn first, then not worn lately, 
     rediscover(withMore, clock).map((p) => p.id),
     ["never-b", "never-a", "march"],
   );
+});
+
+test("hijab options follow the current hue, warm first when it is cold", () => {
+  const base = styledSample();
+  const session = activeSession(base.styling.today!);
+  const score = () => ({ score: 1, reasons: [] });
+  const mild = hijabAlternatives(
+    base,
+    session.request,
+    session.pieceIds,
+    score,
+  )!;
+  const current = hijabHue(mild.current.piece)!;
+  const gaps = mild.options.map((o) =>
+    Math.abs((((hijabHue(o.piece) ?? current) - current + 540) % 360) - 180),
+  );
+  assert.deepEqual(
+    gaps,
+    [...gaps].sort((a, b) => a - b),
+  );
+  const cold = hijabAlternatives(
+    base,
+    {
+      ...session.request,
+      weather: {
+        source: "manual",
+        warmth: "cold",
+        precipitation: "snow",
+        exposure: null,
+      },
+    },
+    session.pieceIds,
+    score,
+  )!;
+  const warmFirst = cold.options.findIndex(
+    (o) => o.piece.traits?.warmth !== "warm",
+  );
+  assert.ok(
+    warmFirst !== 0 ||
+      cold.options.every((o) => o.piece.traits?.warmth !== "warm"),
+  );
+  const all = hijabAlternatives(
+    base,
+    session.request,
+    session.pieceIds,
+    score,
+    { all: true },
+  )!;
+  assert.ok(all.options.length >= mild.options.length);
+});
+
+test("a confirmed warm hijab leads under snow, Show all lists every hijab without a reason", () => {
+  const base = styledSample();
+  const session = activeSession(base.styling.today!);
+  const score = () => ({ score: 1, reasons: ["Picks up the plum"] });
+  const options = (closet: Closet, warmth: "mild" | "cold") =>
+    hijabAlternatives(
+      closet,
+      {
+        ...session.request,
+        weather: {
+          source: "manual",
+          warmth,
+          precipitation: warmth === "cold" ? "snow" : "dry",
+          exposure: null,
+        },
+      },
+      session.pieceIds,
+      score,
+    )!.options.map((o) => o.piece.id);
+  const mild = options(base, "mild");
+  const last = mild[mild.length - 1]!;
+  const warm = confirmPiece(base, last, { traits: { warmth: "warm" } });
+  assert.equal(options(warm, "cold")[0], last);
+  assert.deepEqual(options(warm, "mild"), mild);
+  const all = hijabAlternatives(
+    base,
+    session.request,
+    session.pieceIds,
+    score,
+    { all: true },
+  )!;
+  const hijabs = base.pieces.filter(
+    (p) => p.category === "hijab" && !session.pieceIds.includes(p.id),
+  );
+  assert.equal(all.options.length, hijabs.length);
+  assert.ok(all.options.every((o) => o.reason === null));
 });

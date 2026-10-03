@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { emptyCloset, setAway, type Closet } from "./closet";
+import { emptyCloset, saveLook, setAway, type Closet } from "./closet";
 import {
   builderRequest,
   fillOutfit,
@@ -180,5 +180,21 @@ test("the name follows the pieces until she types her own", () => {
   assert.equal(
     followName("My Eid look", "Sage kurta", "Ivory tunic"),
     "My Eid look",
+  );
+});
+
+test("a look built for an occasion keeps it when saved", () => {
+  const request = builderRequest(styled, [], "eid");
+  assert.equal(request.occasion, "eid");
+  const saved = saveLook(styled, {
+    id: "eid-look",
+    name: "Eid",
+    pieceIds: ["sample-sage-kurta"],
+    createdAt: "2026-10-01T08:00:00.000Z",
+    occasion: request.occasion,
+  });
+  assert.equal(
+    saved.looks.find((look) => look.id === "eid-look")!.occasion,
+    "eid",
   );
 });
