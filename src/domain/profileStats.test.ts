@@ -1,16 +1,22 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { emptyCloset, type Closet, type FeedbackEvent } from "./closet";
-import { closetStats } from "./profileStats";
+import { filterPieces, lastWorn, noFilter } from "./closetFilters";
+import { closetStats, monthWearStats } from "./profileStats";
 import { addSampleWardrobe } from "./samples";
+import { at } from "./test-helpers";
 import { setArchived } from "./wardrobe";
 
 const samples = addSampleWardrobe(emptyCloset);
 
-function wore(pieceIds: string[], undone = false): FeedbackEvent {
+function wore(
+  pieceIds: string[],
+  undone = false,
+  when = "2026-10-01T08:00:00.000Z",
+): FeedbackEvent {
   return {
-    id: pieceIds.join(),
-    at: "2026-10-01T08:00:00.000Z",
+    id: pieceIds.join() + when,
+    at: when,
     kind: "wore",
     pieceIds,
     request: {
@@ -79,4 +85,42 @@ test("wears of removed pieces are not listed", () => {
   const stats = closetStats(withWear(samples, [wore(["gone"])]));
   assert.deepEqual(stats.mostWorn, []);
   assert.equal(stats.neverWorn, samples.pieces.length);
+});
+
+test("month stats list pieces worn twice in the month's outfits and variety is the share worn lately", () => {
+  const closet = withWear(samples, [
+    wore(["sample-ivory-tunic", "sample-ivory-trousers"]),
+    wore(["sample-ivory-tunic"], false, "2026-10-02T08:00:00.000Z"),
+    wore(["sample-ivory-tunic"], false, "2026-09-10T08:00:00.000Z"),
+    { ...wore(["sample-navy-blazer"]), scope: "piece" },
+    {
+      ...wore(["sample-navy-blazer"], false, "2026-10-03T08:00:00.000Z"),
+      scope: "piece",
+    },
+  ]);
+  const stats = monthWearStats(
+    closet,
+    "2026-10",
+    at("2026-10-14T08:00:00+02:00"),
+  );
+  assert.deepEqual(
+    stats.mostWorn.map(({ piece, count }) => [piece.id, count]),
+    [["sample-ivory-tunic", 2]],
+  );
+  for (const day of ["2026-10-02", "2026-10-14"]) {
+    const { variety } = monthWearStats(
+      closet,
+      "2026-10",
+      at(`${day}T08:00:00+02:00`),
+    );
+    const notLately = filterPieces(
+      samples.pieces,
+      { ...noFilter, wear: "not-worn-lately" },
+      { lastWorn: lastWorn(closet), today: day },
+    ).length;
+    assert.equal(
+      Math.round(variety! * samples.pieces.length) + notLately,
+      samples.pieces.length,
+    );
+  }
 });

@@ -1,10 +1,21 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { emptyCloset, saveLook, setAway, type Closet } from "./closet";
-import { undoFeedback, woreThis } from "./feedback";
-import { lookEntries } from "./looks";
+import { undoFeedback, woreLately, woreLook, woreThis } from "./feedback";
+import {
+  firstWearMonth,
+  lookEntries,
+  lookForPieces,
+  plannedPieces,
+  plannedToday,
+  removeLook,
+  setPlannedFor,
+  wearCalendar,
+} from "./looks";
+import { monthWearStats } from "./profileStats";
 import { addSampleWardrobe } from "./samples";
 import { activeSession, saveEverydayStyle, stylePiece } from "./today";
+import { at, styledSample } from "./test-helpers";
 
 const clock = { localDate: "2026-10-01", timeZone: "Europe/Oslo" };
 
@@ -41,7 +52,12 @@ test("saved looks and worn outfits are one list with names and occasions", () =>
       entry.saved,
     ]),
     [
-      ["worn-w1", "Ivory work tunic", "work", false],
+      [
+        `set-${[...session.pieceIds].sort().join(",")}`,
+        "Ivory work tunic",
+        "work",
+        false,
+      ],
       ["look-1", "Eid at home", "eid", true],
     ],
   );
@@ -90,4 +106,112 @@ test("Style this piece leaves an away piece, an unknown piece and a closet witho
   assert.equal(stylePiece(closet, "nope", clock), closet);
   const fresh = addSampleWardrobe(emptyCloset);
   assert.equal(stylePiece(fresh, "sample-sage-kurta", clock), fresh);
+});
+
+const sample = () => {
+  const base = styledSample();
+  const ids = activeSession(base.styling.today!).pieceIds;
+  const look = {
+    id: "eid",
+    name: "Eid lunch",
+    pieceIds: ids,
+    createdAt: "2026-09-20T00:00:00Z",
+    occasion: "eid" as const,
+  };
+  return { closet: { ...base, looks: [look] }, ids, look };
+};
+
+test("piece wears add no Looks row and removing a worn look keeps its name and id", () => {
+  const { closet, ids, look } = sample();
+  const marked = woreLately(
+    closet,
+    ids.slice(0, 2),
+    "2026-10-01T12:00:00Z",
+    (id) => `w-${id}`,
+  );
+  assert.equal(lookEntries(marked, "en").filter((e) => !e.saved).length, 0);
+  const worn = woreLook(marked, "eid", "2026-10-01T18:00:00Z", "w-look");
+  const before = lookEntries(worn, "en").find((e) => e.lookId === "eid")!;
+  const removed = removeLook(worn, "eid");
+  const after = lookEntries(removed, "en").find((e) => e.name === "Eid lunch")!;
+  assert.equal(after.saved, false);
+  assert.equal(after.id, `set-${[...look.pieceIds].sort().join(",")}`);
+  assert.equal(before.name, after.name);
+});
+
+test("planned looks come first and surface on their day", () => {
+  const { closet, ids } = sample();
+  const planned = setPlannedFor(
+    {
+      ...closet,
+      looks: [
+        ...closet.looks,
+        {
+          id: "office",
+          name: "Office",
+          pieceIds: ids.slice(0, 3),
+          createdAt: "2026-10-01T00:00:00Z",
+        },
+      ],
+    },
+    "eid",
+    "2026-10-11",
+  );
+  assert.equal(lookEntries(planned, "en")[0]?.lookId, "eid");
+  assert.deepEqual(
+    plannedToday(planned, at("2026-10-11T08:00:00+02:00")).map((l) => l.id),
+    ["eid"],
+  );
+  assert.deepEqual(plannedToday(planned, at("2026-10-12T08:00:00+02:00")), []);
+  assert.deepEqual(
+    Object.values(
+      plannedPieces(planned, at("2026-10-05T08:00:00+02:00")),
+    ).every((d) => d === "2026-10-11"),
+    true,
+  );
+  assert.deepEqual(plannedPieces(planned, at("2026-10-03T08:00:00+02:00")), {});
+  assert.equal(lookForPieces(planned, [...ids].reverse())?.id, "eid");
+  assert.equal(lookForPieces(planned, ids.slice(1)), null);
+});
+
+test("the calendar holds outfit wears only and variety plus not worn lately is the whole closet", () => {
+  const { closet, ids } = sample();
+  let worn = woreLately(closet, ids, "2026-10-01T12:00:00Z", (id) => `w-${id}`);
+  worn = woreLook(worn, "eid", "2026-10-02T18:00:00Z", "w-eid");
+  const month = wearCalendar(worn, "2026-10", "en");
+  assert.deepEqual(Object.keys(month), ["2026-10-02"]);
+  assert.equal(month["2026-10-02"]!.wears[0]!.name, "Eid lunch");
+  assert.equal(month["2026-10-02"]!.wears[0]!.occasion, "eid");
+  assert.notEqual(month["2026-10-02"]!.mark?.category, "hijab");
+  assert.equal(firstWearMonth(worn), "2026-10");
+  const stats = monthWearStats(
+    { ...worn, styling: { ...worn.styling, wardrobe: "sample" } },
+    "2026-10",
+    at("2026-10-14T08:00:00+02:00"),
+  );
+  assert.ok(stats.variety !== null && stats.variety > 0 && stats.variety <= 1);
+  assert.equal(
+    monthWearStats(worn, "2026-09", at("2026-10-14T08:00:00+02:00")).variety,
+    null,
+  );
+});
+
+test("wearing a saved look moves it to the top", () => {
+  const { closet, ids } = sample();
+  const two = {
+    ...closet,
+    looks: [
+      ...closet.looks,
+      {
+        id: "office",
+        name: "Office",
+        pieceIds: ids.slice(0, 2),
+        createdAt: "2026-10-01T00:00:00Z",
+      },
+    ],
+  };
+  assert.equal(lookEntries(two, "en")[0]?.lookId, "office");
+  const worn = woreLook(two, "eid", "2026-10-02T09:00:00Z", "w-eid");
+  assert.equal(lookEntries(worn, "en")[0]?.lookId, "eid");
+  assert.equal(lookEntries(worn, "en")[0]?.lastWorn, "2026-10-02T09:00:00Z");
 });
