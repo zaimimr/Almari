@@ -107,7 +107,7 @@ export default function EverydayStyle() {
       />
       <AppText muted>{t("everyday.intro")}</AppText>
       {preset?.sample ? (
-        <AppText variant="caption" muted>
+        <AppText variant="footnote" muted>
           {t("everyday.sampleNote")}
         </AppText>
       ) : null}
@@ -157,7 +157,7 @@ export default function EverydayStyle() {
           />
         </>
       ) : null}
-      <AppText variant="caption" muted>
+      <AppText variant="footnote" muted>
         {t(
           level && level !== "relaxed"
             ? levelHelp[level]

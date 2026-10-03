@@ -217,11 +217,11 @@ export default function AddPieces() {
             headerRight: () => null,
           }}
         />
-        <AppText variant="caption" muted>
+        <AppText variant="footnote" muted>
           {t("capture.tipStep", { step: tip + 1, total: tips.length })}
         </AppText>
         <TipDrawing tip={tip} />
-        <AppText variant="title">{t(card.title)}</AppText>
+        <AppText variant="display">{t(card.title)}</AppText>
         <AppText>{t(card.body)}</AppText>
         <Button
           label={last ? t("capture.startAdding") : t("capture.nextTip")}
@@ -444,7 +444,7 @@ function JobTile({
           ]}
         >
           <AppText
-            variant="caption"
+            variant="footnote"
             style={
               job.state === "ready" ? styles.badgeTextReady : styles.badgeText
             }
@@ -457,13 +457,13 @@ function JobTile({
         {job.name ?? " "}
       </AppText>
       {job.advice ? (
-        <AppText variant="caption" muted>
+        <AppText variant="footnote" muted>
           {t("capture.photoTip")}
         </AppText>
       ) : null}
       {job.state === "failed" ? (
         <View style={styles.tileActions}>
-          <AppText variant="caption" muted>
+          <AppText variant="footnote" muted>
             {failureMessage(job.error)}
           </AppText>
           <Button
@@ -491,14 +491,14 @@ function JobTile({
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: theme.colors.background },
+  screen: { flex: 1, backgroundColor: theme.colors.canvas },
   actions: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
   action: { flexGrow: 1, flexBasis: 140 },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
   capture: {
     gap: 8,
     padding: 12,
-    borderRadius: theme.radius,
+    borderRadius: theme.radius.md,
     borderCurve: "continuous",
     borderWidth: 1,
     borderColor: theme.colors.line,
@@ -509,16 +509,16 @@ const styles = StyleSheet.create({
   tileWide: { width: "100%" },
   tilePhoto: {
     aspectRatio: 1,
-    borderRadius: theme.radius,
+    borderRadius: theme.radius.md,
     borderCurve: "continuous",
     borderWidth: 1,
     borderColor: theme.colors.line,
     overflow: "hidden",
     padding: 6,
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.canvas,
   },
   tilePhotoWide: { aspectRatio: 4 / 3 },
-  review: { borderColor: theme.colors.accent, borderWidth: 2, padding: 5 },
+  review: { borderColor: theme.colors.plum, borderWidth: 2, padding: 5 },
   image: { width: "100%", height: "100%" },
   badge: {
     position: "absolute",
@@ -532,16 +532,16 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.line,
   },
   badgeReady: {
-    backgroundColor: theme.colors.accent,
-    borderColor: theme.colors.accent,
+    backgroundColor: theme.colors.plum,
+    borderColor: theme.colors.plum,
   },
   badgeFailed: { borderColor: theme.colors.error },
   badgeText: { color: theme.colors.ink, fontWeight: "600" },
-  badgeTextReady: { color: theme.colors.accentText, fontWeight: "600" },
+  badgeTextReady: { color: theme.colors.onPlum, fontWeight: "600" },
   name: { fontSize: 13, lineHeight: 18, fontWeight: "500" },
   tileActions: { gap: 6 },
   footer: {
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.canvas,
     borderTopWidth: 1,
     borderColor: theme.colors.line,
   },

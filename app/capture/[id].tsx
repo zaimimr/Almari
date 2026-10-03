@@ -159,7 +159,7 @@ export default function CheckPiece() {
             ),
           }}
         />
-        <AppText variant="heading">{t("careLabel.offerTitle")}</AppText>
+        <AppText variant="title">{t("careLabel.offerTitle")}</AppText>
         <AppText>{t("careLabel.offerBody")}</AppText>
         {job.label
           ? labelLines(job.label).map((line) => (
@@ -520,7 +520,7 @@ export default function CheckPiece() {
             ))}
           </View>
           {attributeSuggested !== undefined ? (
-            <AppText variant="caption" muted>
+            <AppText variant="footnote" muted>
               {t("fact.suggested", {
                 value: t(attributeValueKey(attributeAsked, attributeSuggested)),
               })}

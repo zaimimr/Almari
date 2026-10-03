@@ -8,10 +8,10 @@ export default function ClosetTabs() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: theme.colors.accent,
-        tabBarInactiveTintColor: theme.colors.muted,
+        tabBarActiveTintColor: theme.colors.plum,
+        tabBarInactiveTintColor: theme.colors.inkMuted,
         tabBarStyle: {
-          backgroundColor: theme.colors.background,
+          backgroundColor: theme.colors.canvas,
           borderTopColor: theme.colors.line,
           height: 72,
         },

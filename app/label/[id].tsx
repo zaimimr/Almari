@@ -308,12 +308,12 @@ export default function CareLabelScreen() {
 const styles = StyleSheet.create({
   photo: {
     height: 220,
-    borderRadius: theme.radius,
+    borderRadius: theme.radius.md,
     borderCurve: "continuous",
     borderWidth: 1,
     borderColor: theme.colors.line,
     overflow: "hidden",
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.canvas,
   },
   image: { width: "100%", height: "100%" },
   actions: { flexDirection: "row", flexWrap: "wrap", gap: 12 },

@@ -299,12 +299,12 @@ export default function Scan() {
           accessibilityLiveRegion="polite"
           onLongPress={() => setShowSpeed((shown) => !shown)}
         >
-          <AppText variant="heading">
+          <AppText variant="title">
             {camera === "ready" ? t(statusKeys[status]) : t("scan.starting")}
           </AppText>
         </Pressable>
         {showSpeed && speed ? (
-          <AppText variant="caption" muted>
+          <AppText variant="footnote" muted>
             {t("scan.speed", speed)}
           </AppText>
         ) : null}
@@ -382,14 +382,14 @@ export default function Scan() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: theme.colors.background },
+  screen: { flex: 1, backgroundColor: theme.colors.canvas },
   camera: { flex: 1, backgroundColor: theme.colors.ink },
   panel: {
     gap: theme.space.sm,
     paddingHorizontal: theme.space.xl,
     paddingTop: theme.space.md,
     paddingBottom: theme.space.md,
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.canvas,
     borderTopWidth: 1,
     borderColor: theme.colors.line,
   },
@@ -401,7 +401,7 @@ const styles = StyleSheet.create({
     height: 76,
     borderRadius: 38,
     borderWidth: 4,
-    borderColor: theme.colors.accentText,
+    borderColor: theme.colors.onPlum,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -409,7 +409,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: theme.colors.accentText,
+    backgroundColor: theme.colors.onPlum,
   },
   pressed: { opacity: 0.6 },
   stripBox: { height: 64, flexGrow: 0 },
@@ -417,7 +417,7 @@ const styles = StyleSheet.create({
   thumb: {
     width: 64,
     height: 64,
-    borderRadius: theme.radius,
+    borderRadius: theme.radius.md,
     borderCurve: "continuous",
     borderWidth: 1,
     borderColor: theme.colors.line,

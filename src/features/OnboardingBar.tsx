@@ -27,7 +27,7 @@ export function OnboardingBar({
               <Feather
                 name="chevron-left"
                 size={24}
-                color={theme.colors.accent}
+                color={theme.colors.plum}
               />
             ) : null}
             <AppText style={styles.link} maxFontSizeMultiplier={1.3}>
@@ -37,7 +37,7 @@ export function OnboardingBar({
         ) : null}
         {progress ? (
           <View style={styles.progress}>
-            <AppText variant="caption" muted maxFontSizeMultiplier={1.4}>
+            <AppText variant="footnote" muted maxFontSizeMultiplier={1.4}>
               {t("onboarding.progress", progress)}
             </AppText>
             <View style={styles.track}>
@@ -56,7 +56,7 @@ export function OnboardingBar({
 }
 
 const styles = StyleSheet.create({
-  bar: { backgroundColor: theme.colors.background },
+  bar: { backgroundColor: theme.colors.canvas },
   row: {
     width: "100%",
     maxWidth: 720,
@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 2,
   },
-  link: { color: theme.colors.accent, fontWeight: "600" },
+  link: { color: theme.colors.plum, fontWeight: "600" },
   pressed: { opacity: 0.7 },
   progress: { flex: 1, gap: 6, paddingRight: 8 },
   track: {
@@ -82,5 +82,5 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.line,
     overflow: "hidden",
   },
-  fill: { height: 6, backgroundColor: theme.colors.accent },
+  fill: { height: 6, backgroundColor: theme.colors.plum },
 });

@@ -110,7 +110,7 @@ export default function ChoosePieces() {
         <View style={styles.preview}>
           <OutfitCollage pieces={pieces} fill testID="kept-preview" />
           <AppText
-            variant="caption"
+            variant="footnote"
             muted
             style={styles.summary}
             accessibilityLiveRegion="polite"
@@ -205,7 +205,7 @@ export default function ChoosePieces() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: theme.colors.background },
+  screen: { flex: 1, backgroundColor: theme.colors.canvas },
   workspace: {
     flex: 1,
     minHeight: 0,
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
   cell: { width: "48%" },
   empty: { gap: 12 },
   footer: {
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.canvas,
     borderTopWidth: 1,
     borderColor: theme.colors.line,
   },

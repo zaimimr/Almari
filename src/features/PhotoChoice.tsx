@@ -118,14 +118,14 @@ const styles = StyleSheet.create({
   photo: {
     width: "100%",
     aspectRatio: 0.8,
-    borderRadius: theme.radius,
+    borderRadius: theme.radius.md,
     borderCurve: "continuous",
     borderWidth: 1,
     borderColor: theme.colors.line,
     overflow: "hidden",
     padding: 6,
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.canvas,
   },
-  selected: { borderColor: theme.colors.accent, borderWidth: 2, padding: 5 },
+  selected: { borderColor: theme.colors.plum, borderWidth: 2, padding: 5 },
   image: { width: "100%", height: "100%" },
 });

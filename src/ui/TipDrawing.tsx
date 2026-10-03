@@ -43,12 +43,12 @@ export function TipDrawing({ tip }: { tip: number }) {
               <View key={ray} style={drawing.ray} />
             ))}
           </View>
-          <Garment color={theme.colors.accent} />
+          <Garment color={theme.colors.plum} />
         </>
       ) : tip === 1 ? (
         <View style={drawing.sheet}>
           <View style={[StyleSheet.absoluteFill, drawing.sheetTone]} />
-          <Garment color={theme.colors.background} outline />
+          <Garment color={theme.colors.canvas} outline />
         </View>
       ) : (
         <View style={drawing.phone}>
@@ -56,7 +56,7 @@ export function TipDrawing({ tip }: { tip: number }) {
           <View style={[drawing.corner, drawing.topRight]} />
           <View style={[drawing.corner, drawing.bottomLeft]} />
           <View style={[drawing.corner, drawing.bottomRight]} />
-          <Garment color={theme.colors.accent} />
+          <Garment color={theme.colors.plum} />
         </View>
       )}
     </View>
@@ -70,7 +70,7 @@ const drawing = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 20,
-    borderRadius: theme.radius,
+    borderRadius: theme.radius.md,
     borderCurve: "continuous",
     backgroundColor: theme.colors.surface,
   },
@@ -99,7 +99,7 @@ const drawing = StyleSheet.create({
     borderWidth: 3,
     borderColor: theme.colors.line,
     borderRadius: 6,
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.canvas,
   },
   barVertical: {
     position: "absolute",
@@ -122,7 +122,7 @@ const drawing = StyleSheet.create({
     width: 34,
     height: 4,
     borderRadius: 2,
-    backgroundColor: theme.colors.accent,
+    backgroundColor: theme.colors.plum,
     opacity: 0.25,
   },
   sheet: {
@@ -133,7 +133,7 @@ const drawing = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  sheetTone: { backgroundColor: theme.colors.muted, opacity: 0.45 },
+  sheetTone: { backgroundColor: theme.colors.inkMuted, opacity: 0.45 },
   phone: {
     width: 112,
     height: 168,
@@ -147,7 +147,7 @@ const drawing = StyleSheet.create({
     position: "absolute",
     width: 14,
     height: 14,
-    borderColor: theme.colors.accent,
+    borderColor: theme.colors.plum,
   },
   topLeft: { top: 16, left: 12, borderTopWidth: 2, borderLeftWidth: 2 },
   topRight: { top: 16, right: 12, borderTopWidth: 2, borderRightWidth: 2 },

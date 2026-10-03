@@ -279,7 +279,7 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
           />
         ) : (
           <View style={styles.photoHint}>
-            <AppText variant="heading">{t("editor.startTitle")}</AppText>
+            <AppText variant="title">{t("editor.startTitle")}</AppText>
             <AppText muted style={styles.hint}>
               {t("editor.startBody")}
             </AppText>
@@ -393,7 +393,7 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
               ]}
             >
               <AppText
-                variant="caption"
+                variant="footnote"
                 style={category === option.id ? styles.selectedText : undefined}
               >
                 {categoryName(option.id)}
@@ -426,7 +426,7 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
             ))}
           </View>
           {kindMissing ? (
-            <AppText variant="caption" muted>
+            <AppText variant="footnote" muted>
               {t("piece.kindRequired")}
             </AppText>
           ) : null}
@@ -460,7 +460,7 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
                 );
               })}
             </View>
-            <AppText variant="caption" muted>
+            <AppText variant="footnote" muted>
               {t("piece.styleHint")}
             </AppText>
           </>
@@ -491,7 +491,7 @@ export function PieceEditor({ piece }: { piece?: Piece }) {
           Boolean(piece && !dirty)
         }
       />
-      <AppText variant="caption" muted>
+      <AppText variant="footnote" muted>
         {piece?.source === "sample"
           ? t("editor.sampleNote")
           : t("editor.savedNote")}
@@ -516,10 +516,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderWidth: 1,
     borderColor: theme.colors.line,
-    borderRadius: theme.radius,
+    borderRadius: theme.radius.md,
     borderCurve: "continuous",
     overflow: "hidden",
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.canvas,
   },
   photoWithImage: { height: 280 },
   image: { width: "100%", height: "100%" },
@@ -542,7 +542,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
-  selectedCategory: { backgroundColor: theme.colors.accent },
-  selectedText: { color: theme.colors.accentText },
+  selectedCategory: { backgroundColor: theme.colors.plum },
+  selectedText: { color: theme.colors.onPlum },
   label: { fontWeight: "600" },
 });

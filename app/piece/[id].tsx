@@ -124,7 +124,7 @@ export default function PieceDetail() {
       />
       <PiecePhoto piece={piece} style={styles.photo} />
       <View style={styles.intro}>
-        <AppText variant="heading">{piece.name}</AppText>
+        <AppText variant="title">{piece.name}</AppText>
         <AppText muted testID="piece-used-in">
           {uses === 0
             ? t("piece.usedIn.none")
@@ -157,12 +157,12 @@ export default function PieceDetail() {
             ))}
           </View>
         ) : (
-          <AppText variant="caption" muted>
+          <AppText variant="footnote" muted>
             {t("piece.facts.none")}
           </AppText>
         )}
         {facts.some((fact) => fact.source === "proposed") ? (
-          <AppText variant="caption" muted>
+          <AppText variant="footnote" muted>
             {t("piece.facts.hint")}
           </AppText>
         ) : null}
@@ -170,7 +170,7 @@ export default function PieceDetail() {
           <View style={styles.question} testID="fact-question">
             <AppText style={styles.label}>{t(choice.label)}</AppText>
             {suggested ? (
-              <AppText variant="caption" muted>
+              <AppText variant="footnote" muted>
                 {t("fact.suggested", { value: t(suggested.label) })}
               </AppText>
             ) : null}
@@ -220,7 +220,7 @@ export default function PieceDetail() {
               <AppText key={line}>{line}</AppText>
             ))
           ) : (
-            <AppText variant="caption" muted>
+            <AppText variant="footnote" muted>
               {piece.label
                 ? t("careLabel.pieceEmpty")
                 : t("careLabel.pieceHint")}
@@ -258,7 +258,7 @@ export default function PieceDetail() {
       {piece.status !== "archived" ? (
         <View style={styles.section} testID="piece-availability">
           <AppText style={styles.label}>{t("piece.away.title")}</AppText>
-          <AppText variant="caption" muted>
+          <AppText variant="footnote" muted>
             {piece.away
               ? t("piece.away.status", {
                   reason: t(`piece.away.${piece.away}`),
@@ -309,8 +309,8 @@ function FactChip({
   const label = t(fact.label);
   const value = t(fact.value);
   const content = (
-    <AppText variant="caption">
-      <AppText variant="caption" muted>
+    <AppText variant="footnote">
+      <AppText variant="footnote" muted>
         {`${label} `}
       </AppText>
       {guess ? `${value} ?` : value}
@@ -354,7 +354,7 @@ function FactChip({
 const styles = StyleSheet.create({
   photo: {
     height: 280,
-    borderRadius: theme.radius,
+    borderRadius: theme.radius.md,
     borderCurve: "continuous",
     overflow: "hidden",
     backgroundColor: theme.colors.surface,
@@ -375,17 +375,17 @@ const styles = StyleSheet.create({
   },
   guess: {
     borderStyle: "dashed",
-    borderColor: theme.colors.accent,
-    backgroundColor: theme.colors.background,
+    borderColor: theme.colors.plum,
+    backgroundColor: theme.colors.canvas,
   },
-  guessOpen: { backgroundColor: theme.colors.accentSoft },
+  guessOpen: { backgroundColor: theme.colors.plumSoft },
   pressed: { opacity: 0.7 },
   question: {
     gap: theme.space.md,
     padding: theme.space.lg,
-    borderRadius: theme.radius,
+    borderRadius: theme.radius.md,
     borderCurve: "continuous",
-    backgroundColor: theme.colors.accentSoft,
+    backgroundColor: theme.colors.plumSoft,
   },
   actions: { flexDirection: "row", flexWrap: "wrap", gap: theme.space.md },
   action: { flexGrow: 1, minWidth: 130 },

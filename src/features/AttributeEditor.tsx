@@ -28,7 +28,7 @@ export function AttributeEditor({
     <View style={styles.section}>
       <View style={styles.intro}>
         <AppText style={styles.label}>{t("editor.details")}</AppText>
-        <AppText variant="caption" muted>
+        <AppText variant="footnote" muted>
           {t("editor.detailsHint")}
         </AppText>
       </View>
@@ -42,7 +42,7 @@ export function AttributeEditor({
             <View>
               <AppText style={styles.label}>{name}</AppText>
               <AppText
-                variant="caption"
+                variant="footnote"
                 muted
                 testID={`attribute-${key}-source`}
               >

@@ -227,7 +227,7 @@ export default function StyleSettings() {
         disabled={busy}
         onChange={setEngineChoice}
       />
-      <AppText variant="caption" muted>
+      <AppText variant="footnote" muted>
         {t("stylist.help")}
       </AppText>
       <Button

@@ -158,7 +158,7 @@ export default function ClosetScreen() {
             ) : null}
             {sampleCount > 0 ? (
               <View style={styles.starter}>
-                <AppText variant="caption" muted>
+                <AppText variant="footnote" muted>
                   {t("closet.samplesIncluded", { count: sampleCount })}
                 </AppText>
                 <Button
@@ -230,7 +230,7 @@ export default function ClosetScreen() {
           closet.pieces.length === 0 ? (
             <View style={styles.empty}>
               <View style={styles.firstPiece}>
-                <AppText variant="title" style={styles.emptyNumber}>
+                <AppText variant="display" style={styles.emptyNumber}>
                   {t("closet.firstTitle")}
                 </AppText>
                 <AppText muted style={styles.emptyCopy}>
@@ -241,7 +241,7 @@ export default function ClosetScreen() {
                 label={t("closet.addFirst")}
                 onPress={() => router.push(addPiecesRoute)}
               />
-              <AppText variant="caption" muted style={styles.note}>
+              <AppText variant="footnote" muted style={styles.note}>
                 {t("closet.savedOnDevice")}
               </AppText>
             </View>
@@ -289,7 +289,7 @@ export default function ClosetScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: theme.colors.background },
+  screen: { flex: 1, backgroundColor: theme.colors.canvas },
   content: {
     padding: 24,
     paddingBottom: 110,
@@ -312,7 +312,7 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.line,
     paddingVertical: 40,
   },
-  emptyNumber: { color: theme.colors.accent },
+  emptyNumber: { color: theme.colors.plum },
   emptyCopy: { lineHeight: 28 },
   note: { textAlign: "center" },
 });

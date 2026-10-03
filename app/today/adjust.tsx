@@ -307,7 +307,7 @@ export default function AdjustToday() {
             />
           </>
         ) : null}
-        <AppText variant="caption" muted>
+        <AppText variant="footnote" muted>
           {t("adjust.notForecast")}
         </AppText>
       </View>

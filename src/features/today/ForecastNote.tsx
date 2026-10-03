@@ -20,14 +20,14 @@ export function ForecastNote({
   if (!place) return null;
   if (request.weather.source === "manual")
     return (
-      <AppText testID="forecast-note" variant="caption" muted>
+      <AppText testID="forecast-note" variant="footnote" muted>
         {t("forecast.manual")}
       </AppText>
     );
   if (request.weather.source === "forecast" && forecast)
     return (
       <View testID="forecast-note" style={styles.note}>
-        <AppText variant="caption" muted>
+        <AppText variant="footnote" muted>
           {t("forecast.label", {
             city: place.name,
             low: formatTemperature(forecast.low, units),
@@ -48,7 +48,7 @@ export function ForecastNote({
               void Linking.openURL(forecast.attribution.url);
             }}
           >
-            <AppText variant="caption" style={styles.link}>
+            <AppText variant="footnote" style={styles.link}>
               {t("forecast.sources")}
             </AppText>
           </Pressable>
@@ -56,7 +56,7 @@ export function ForecastNote({
       </View>
     );
   return failed ? (
-    <AppText testID="forecast-note" variant="caption" muted>
+    <AppText testID="forecast-note" variant="footnote" muted>
       {t("forecast.unavailable")}
     </AppText>
   ) : null;
@@ -71,5 +71,5 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   mark: { width: 96, height: 14 },
-  link: { color: theme.colors.accent, fontWeight: "600" },
+  link: { color: theme.colors.plum, fontWeight: "600" },
 });

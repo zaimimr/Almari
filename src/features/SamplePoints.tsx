@@ -74,7 +74,11 @@ function Dot({
           colour ? { backgroundColor: colour } : styles.empty,
         ]}
       />
-      <AppText variant="caption" style={styles.tag} maxFontSizeMultiplier={1.3}>
+      <AppText
+        variant="footnote"
+        style={styles.tag}
+        maxFontSizeMultiplier={1.3}
+      >
         {t(`colours.${part}`)}
       </AppText>
     </View>
@@ -155,7 +159,7 @@ export function SamplePoints({
 const styles = StyleSheet.create({
   photo: {
     width: "100%",
-    borderRadius: theme.radius,
+    borderRadius: theme.radius.md,
     borderCurve: "continuous",
     overflow: "hidden",
     backgroundColor: theme.colors.surface,
@@ -172,7 +176,7 @@ const styles = StyleSheet.create({
     height: 26,
     borderRadius: 13,
     borderWidth: 3,
-    borderColor: theme.colors.accentText,
+    borderColor: theme.colors.onPlum,
     boxShadow: "0 1px 4px rgba(0,0,0,0.45)",
   },
   empty: { backgroundColor: "transparent" },
@@ -181,7 +185,7 @@ const styles = StyleSheet.create({
     top: 40,
     width: 80,
     textAlign: "center",
-    color: theme.colors.accentText,
+    color: theme.colors.onPlum,
     fontWeight: "600",
     textShadowColor: "rgba(0,0,0,0.6)",
     textShadowRadius: 3,

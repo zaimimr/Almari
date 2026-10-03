@@ -133,7 +133,7 @@ export default function AdjustCutout() {
         />
         {state === "loading" || busy ? (
           <View style={styles.loading} pointerEvents="none">
-            <ActivityIndicator color={theme.colors.accentText} />
+            <ActivityIndicator color={theme.colors.onPlum} />
           </View>
         ) : null}
       </View>
@@ -153,7 +153,7 @@ export default function AdjustCutout() {
           />
         </View>
         <View style={styles.row}>
-          <AppText variant="caption" muted>
+          <AppText variant="footnote" muted>
             {t("cutout.brush")}
           </AppText>
           {brushes.map((size) => (
@@ -167,7 +167,7 @@ export default function AdjustCutout() {
           ))}
         </View>
         <AppText
-          variant="caption"
+          variant="footnote"
           muted
           style={held ? styles.hidden : undefined}
           accessibilityElementsHidden={held}
@@ -207,7 +207,7 @@ export default function AdjustCutout() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: theme.colors.background },
+  screen: { flex: 1, backgroundColor: theme.colors.canvas },
   canvas: { flex: 1, backgroundColor: theme.colors.ink },
   loading: {
     ...StyleSheet.absoluteFill,
@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.space.xl,
     paddingTop: theme.space.md,
     paddingBottom: theme.space.md,
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.canvas,
     borderTopWidth: 1,
     borderColor: theme.colors.line,
   },

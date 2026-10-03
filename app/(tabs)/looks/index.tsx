@@ -98,9 +98,9 @@ export default function LooksScreen() {
               }
             >
               <OutfitCollage pieces={pieces} />
-              <AppText variant="heading">{item.name}</AppText>
+              <AppText variant="title">{item.name}</AppText>
               {about ? <AppText muted>{about}</AppText> : null}
-              <AppText variant="caption" muted>
+              <AppText variant="footnote" muted>
                 {missing
                   ? missing === 1
                     ? t("looksTab.missingOne")
@@ -118,7 +118,7 @@ export default function LooksScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: theme.colors.background },
+  screen: { flex: 1, backgroundColor: theme.colors.canvas },
   content: {
     padding: 24,
     paddingBottom: 110,

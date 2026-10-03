@@ -33,13 +33,13 @@ export function AppText({
   muted,
   style,
   ...props
-}: TextProps & { variant?: keyof typeof theme.typography; muted?: boolean }) {
+}: TextProps & { variant?: keyof typeof theme.type; muted?: boolean }) {
   return (
     <Text
       {...props}
       style={[
-        { color: muted ? theme.colors.muted : theme.colors.ink },
-        theme.typography[variant],
+        { color: muted ? theme.colors.inkMuted : theme.colors.ink },
+        theme.type[variant],
         style,
       ]}
     />
@@ -101,8 +101,8 @@ export function Button({
   const color = danger
     ? theme.colors.error
     : secondary
-      ? theme.colors.accent
-      : theme.colors.accentText;
+      ? theme.colors.plum
+      : theme.colors.onPlum;
   return (
     <Pressable
       accessibilityRole="button"
@@ -158,8 +158,8 @@ export function Field({ label, ...props }: TextInputProps & { label: string }) {
       <TextInput
         {...props}
         accessibilityLabel={label}
-        selectionColor={theme.colors.accent}
-        placeholderTextColor={theme.colors.muted}
+        selectionColor={theme.colors.plum}
+        placeholderTextColor={theme.colors.inkMuted}
         style={[styles.input, props.style]}
       />
     </View>
@@ -185,7 +185,7 @@ export function Message({
 }) {
   return (
     <View style={styles.message}>
-      <AppText variant="heading">{title}</AppText>
+      <AppText variant="title">{title}</AppText>
       <AppText muted>{description}</AppText>
       {action}
     </View>
@@ -247,7 +247,7 @@ export function Filters({
           style={[styles.chip, category.id === value && styles.chipSelected]}
         >
           <AppText
-            variant="caption"
+            variant="footnote"
             style={[
               styles.chipLabel,
               category.id === value && styles.chipLabelSelected,
@@ -289,7 +289,7 @@ export function Chip({
       ]}
     >
       <AppText
-        variant="caption"
+        variant="footnote"
         style={[styles.chipLabel, selected && styles.chipLabelSelected]}
       >
         {label}
@@ -387,7 +387,7 @@ export function PieceTile({
         {selected ? (
           <View style={styles.selectedBadge}>
             <AppText
-              variant="caption"
+              variant="footnote"
               style={styles.selectedLabel}
               maxFontSizeMultiplier={1.4}
             >
@@ -403,7 +403,7 @@ export function PieceTile({
         {piece.name}
       </AppText>
       {!compact ? (
-        <AppText variant="caption" muted>
+        <AppText variant="footnote" muted>
           {summary}
           {piece.source === "sample" ? ` · ${t("closet.sample")}` : ""}
           {piece.status === "archived" ? ` · ${t("archive.tag")}` : ""}
@@ -414,7 +414,7 @@ export function PieceTile({
 }
 
 export const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: theme.colors.background },
+  safe: { flex: 1, backgroundColor: theme.colors.canvas },
   content: {
     width: "100%",
     maxWidth: 720,
@@ -434,9 +434,9 @@ export const styles = StyleSheet.create({
   },
   button: {
     minHeight: 52,
-    borderRadius: theme.radius,
+    borderRadius: theme.radius.md,
     borderCurve: "continuous",
-    backgroundColor: theme.colors.accent,
+    backgroundColor: theme.colors.plum,
     justifyContent: "center",
     alignItems: "center",
     flexDirection: "row",
@@ -445,7 +445,7 @@ export const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   compactButton: { minHeight: 44, paddingVertical: 8, paddingHorizontal: 14 },
-  secondaryButton: { backgroundColor: theme.colors.accentSoft },
+  secondaryButton: { backgroundColor: theme.colors.plumSoft },
   disabled: { opacity: 0.45 },
   pressed: { opacity: 0.7 },
   headerAction: {
@@ -454,20 +454,20 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 8,
   },
-  link: { color: theme.colors.accent, fontWeight: "600" },
+  link: { color: theme.colors.plum, fontWeight: "600" },
   field: { gap: theme.space.sm },
   label: { fontWeight: "600" },
   input: {
     minHeight: 52,
     padding: 14,
     backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius,
+    borderRadius: theme.radius.md,
     borderCurve: "continuous",
     borderWidth: 1,
     borderColor: theme.colors.line,
     color: theme.colors.ink,
     fontSize: 17,
-    ...Platform.select({ web: { outlineColor: theme.colors.accent } }),
+    ...Platform.select({ web: { outlineColor: theme.colors.plum } }),
   },
   error: { color: theme.colors.error },
   message: {
@@ -479,7 +479,7 @@ export const styles = StyleSheet.create({
   notice: {
     gap: theme.space.md,
     padding: theme.space.lg,
-    borderRadius: theme.radius,
+    borderRadius: theme.radius.md,
     borderCurve: "continuous",
     borderWidth: 1,
     borderColor: theme.colors.line,
@@ -494,13 +494,13 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: theme.colors.surface,
   },
-  chipSelected: { backgroundColor: theme.colors.accent },
+  chipSelected: { backgroundColor: theme.colors.plum },
   choiceGroup: { gap: 12 },
   choices: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   chipLabel: { color: theme.colors.ink, fontWeight: "500" },
-  chipLabelSelected: { color: theme.colors.accentText },
+  chipLabelSelected: { color: theme.colors.onPlum },
   photo: {
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.canvas,
     flex: 1,
     overflow: "hidden",
   },
@@ -509,14 +509,14 @@ export const styles = StyleSheet.create({
   tilePhoto: {
     aspectRatio: 0.82,
     padding: 8,
-    borderRadius: theme.radius,
+    borderRadius: theme.radius.md,
     borderCurve: "continuous",
     borderWidth: 1,
     borderColor: theme.colors.line,
     overflow: "hidden",
   },
   selectedPhoto: {
-    borderColor: theme.colors.accent,
+    borderColor: theme.colors.plum,
     borderWidth: 2,
     padding: 7,
   },
@@ -527,9 +527,9 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
-    backgroundColor: theme.colors.accent,
+    backgroundColor: theme.colors.plum,
   },
-  selectedLabel: { color: theme.colors.accentText, fontWeight: "600" },
+  selectedLabel: { color: theme.colors.onPlum, fontWeight: "600" },
   pieceName: { marginTop: 6, fontWeight: "500", fontSize: 15, lineHeight: 21 },
   compactPhoto: { aspectRatio: 1 },
   compactName: { fontSize: 13, lineHeight: 18 },

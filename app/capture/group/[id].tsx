@@ -211,7 +211,7 @@ export default function CapturePieces() {
                   place(frame),
                 ]}
               >
-                <AppText variant="caption" style={styles.number}>
+                <AppText variant="footnote" style={styles.number}>
                   {index + 1}
                 </AppText>
               </View>
@@ -313,7 +313,7 @@ export default function CapturePieces() {
                   style={styles.label}
                 >{`${index + 1}. ${title}`}</AppText>
                 {job.region?.partial ? (
-                  <AppText variant="caption" muted>
+                  <AppText variant="footnote" muted>
                     {t("capture.partial")}
                   </AppText>
                 ) : null}
@@ -370,17 +370,17 @@ export default function CapturePieces() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: theme.colors.background },
+  screen: { flex: 1, backgroundColor: theme.colors.canvas },
   drawing: {
     flex: 1,
     gap: theme.space.md,
     padding: theme.space.xl,
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.canvas,
   },
   stage: { flex: 1, alignItems: "center", justifyContent: "center" },
   photo: {
     width: "100%",
-    borderRadius: theme.radius,
+    borderRadius: theme.radius.md,
     borderCurve: "continuous",
     overflow: "hidden",
     backgroundColor: theme.colors.surface,
@@ -389,11 +389,11 @@ const styles = StyleSheet.create({
     position: "absolute",
     borderWidth: 2,
     borderRadius: 4,
-    borderColor: theme.colors.accent,
+    borderColor: theme.colors.plum,
   },
   drawn: {
     borderStyle: "dashed",
-    backgroundColor: `${theme.colors.accentSoft}66`,
+    backgroundColor: `${theme.colors.plumSoft}66`,
   },
   droppedBox: { borderColor: theme.colors.line },
   number: {
@@ -402,8 +402,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     borderRadius: 8,
     overflow: "hidden",
-    color: theme.colors.accentText,
-    backgroundColor: theme.colors.accent,
+    color: theme.colors.onPlum,
+    backgroundColor: theme.colors.plum,
     fontWeight: "600",
   },
   proposal: { flexDirection: "row", gap: 12, alignItems: "flex-start" },
@@ -411,20 +411,20 @@ const styles = StyleSheet.create({
   thumb: {
     width: 88,
     aspectRatio: 1,
-    borderRadius: theme.radius,
+    borderRadius: theme.radius.md,
     borderCurve: "continuous",
     borderWidth: 1,
     borderColor: theme.colors.line,
     overflow: "hidden",
     padding: 4,
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.canvas,
   },
   image: { width: "100%", height: "100%" },
   details: { flex: 1, gap: 8 },
   label: { fontWeight: "600" },
   row: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   footer: {
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.canvas,
     borderTopWidth: 1,
     borderColor: theme.colors.line,
   },

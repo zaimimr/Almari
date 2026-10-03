@@ -113,7 +113,7 @@ export default function CheckPiece() {
       <View style={styles.photo}>
         <PiecePhoto piece={piece} />
       </View>
-      <AppText variant="heading" testID="check-question">
+      <AppText variant="title" testID="check-question">
         {questionText(piece, question)}
       </AppText>
       <AppText muted>
@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
     padding: 8,
     borderWidth: 1,
     borderColor: theme.colors.line,
-    borderRadius: theme.radius,
+    borderRadius: theme.radius.md,
     borderCurve: "continuous",
     overflow: "hidden",
   },

@@ -5,8 +5,8 @@ import { t } from "../i18n";
 export default function ClosetTabs() {
   return (
     <NativeTabs
-      tintColor={theme.colors.accent}
-      backgroundColor={theme.colors.background}
+      tintColor={theme.colors.plum}
+      backgroundColor={theme.colors.canvas}
     >
       <NativeTabs.Trigger name="today">
         <NativeTabs.Trigger.Label>{t("nav.today")}</NativeTabs.Trigger.Label>

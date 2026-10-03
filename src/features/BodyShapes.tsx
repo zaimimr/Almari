@@ -47,10 +47,10 @@ export function BodyShapes({
                 source={drawings[shape]}
                 style={styles.drawing}
                 contentFit="contain"
-                tintColor={selected ? theme.colors.accent : theme.colors.muted}
+                tintColor={selected ? theme.colors.plum : theme.colors.inkMuted}
               />
               <AppText
-                variant="caption"
+                variant="footnote"
                 style={[styles.name, selected && styles.selectedName]}
               >
                 {t(`shape.${shape}`)}
@@ -82,20 +82,20 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: 12,
     paddingHorizontal: 4,
-    borderRadius: theme.radius,
+    borderRadius: theme.radius.md,
     borderCurve: "continuous",
     borderWidth: 1,
     borderColor: theme.colors.line,
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.canvas,
   },
   selected: {
-    borderColor: theme.colors.accent,
+    borderColor: theme.colors.plum,
     borderWidth: 2,
-    backgroundColor: theme.colors.accentSoft,
+    backgroundColor: theme.colors.plumSoft,
   },
   pressed: { opacity: 0.7 },
   drawing: { width: 54, height: 90 },
   name: { textAlign: "center", fontWeight: "500" },
-  selectedName: { color: theme.colors.accent, fontWeight: "600" },
+  selectedName: { color: theme.colors.plum, fontWeight: "600" },
   none: { flexDirection: "row" },
 });

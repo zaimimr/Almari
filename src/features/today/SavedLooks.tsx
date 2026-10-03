@@ -38,7 +38,7 @@ export function SavedLooks({
             <Thumbs pieces={pieces} />
             <View style={styles.text}>
               <AppText>{look.name}</AppText>
-              <AppText variant="caption" muted>
+              <AppText variant="footnote" muted>
                 {problems[0]
                   ? t("looks.checkFirst", { message: problems[0].message })
                   : t("looks.fits")}
@@ -59,7 +59,7 @@ export function SavedLooks({
         );
       })}
       {shownVariants.length ? (
-        <AppText variant="caption" muted>
+        <AppText variant="footnote" muted>
           {t("looks.needChange")}
         </AppText>
       ) : null}
@@ -74,7 +74,7 @@ export function SavedLooks({
             <AppText>
               {t("looks.variantOf", { name: variant.look.name })}
             </AppText>
-            <AppText variant="caption" muted>
+            <AppText variant="footnote" muted>
               {gapText(variant)}
             </AppText>
           </View>
@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
     padding: 12,
-    borderRadius: theme.radius,
+    borderRadius: theme.radius.md,
     borderCurve: "continuous",
     backgroundColor: theme.colors.surface,
   },

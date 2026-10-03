@@ -26,7 +26,7 @@ export default function StylistResults() {
       <AppText muted>{t("stylist.intro")}</AppText>
       {(["western", "desi"] as const).map((style) => (
         <View key={style} style={styles.section}>
-          <AppText variant="heading" maxFontSizeMultiplier={2}>
+          <AppText variant="title" maxFontSizeMultiplier={2}>
             {styleName(style)}
           </AppText>
           {rows
@@ -50,7 +50,7 @@ export default function StylistResults() {
         </View>
       ))}
       {unread ? (
-        <AppText variant="caption" muted>
+        <AppText variant="footnote" muted>
           {unread === 1
             ? t("stylist.unreadOne")
             : t("stylist.unreadMany", { count: unread })}
@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
   card: {
     gap: theme.space.xs,
     padding: theme.space.lg,
-    borderRadius: theme.radius,
+    borderRadius: theme.radius.md,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: theme.colors.line,
     backgroundColor: theme.colors.surface,

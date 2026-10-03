@@ -65,7 +65,7 @@ export default function LookDetail() {
 
   return (
     <FormScreen>
-      <AppText variant="title">{look.name}</AppText>
+      <AppText variant="display">{look.name}</AppText>
       {look.occasion ? (
         <AppText muted>{occasionName(look.occasion)}</AppText>
       ) : null}

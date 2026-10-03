@@ -1,9 +1,9 @@
 import { theme } from "../ui/theme";
 
 export const stackOptions = {
-  headerTintColor: theme.colors.accent,
-  headerStyle: { backgroundColor: theme.colors.background },
-  contentStyle: { backgroundColor: theme.colors.background },
+  headerTintColor: theme.colors.plum,
+  headerStyle: { backgroundColor: theme.colors.canvas },
+  contentStyle: { backgroundColor: theme.colors.canvas },
   headerShadowVisible: false,
   headerBackButtonDisplayMode: "minimal" as const,
 };

@@ -122,7 +122,7 @@ export default function Profile() {
 
   return (
     <FormScreen>
-      <AppText variant="heading">{t("settings.answers")}</AppText>
+      <AppText variant="title">{t("settings.answers")}</AppText>
       {rows.map((row) => (
         <View key={row.step} style={styles.row} testID={`answer-${row.step}`}>
           <View style={styles.text}>
@@ -141,13 +141,13 @@ export default function Profile() {
           />
         </View>
       ))}
-      <AppText variant="heading">{t("style.title")}</AppText>
+      <AppText variant="title">{t("style.title")}</AppText>
       <Button
         label={t("profile.style")}
         secondary
         onPress={() => router.push("/today/style")}
       />
-      <AppText variant="heading">{t("stats.title")}</AppText>
+      <AppText variant="title">{t("stats.title")}</AppText>
       <View style={styles.stats} testID="closet-stats">
         <Stat label={t("stats.pieces")} value={String(stats.pieces)} />
         <Stat label={t("stats.neverWorn")} value={String(stats.neverWorn)} />
@@ -167,7 +167,7 @@ export default function Profile() {
           <AppText muted>{t("stats.nothingWorn")}</AppText>
         )}
       </View>
-      <AppText variant="heading">{t("settings.app")}</AppText>
+      <AppText variant="title">{t("settings.app")}</AppText>
       <ChoiceGroup
         label={t("settings.language")}
         options={languages.map((id) => ({
@@ -193,10 +193,10 @@ export default function Profile() {
         }}
       />
       <ErrorMessage message={error} />
-      <AppText variant="caption" muted>
+      <AppText variant="footnote" muted>
         {t("settings.privacy")}
       </AppText>
-      <AppText variant="caption" muted testID="app-version">
+      <AppText variant="footnote" muted testID="app-version">
         {t("settings.version", {
           version: Constants.expoConfig?.version ?? "",
         })}
@@ -208,7 +208,7 @@ export default function Profile() {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <View style={styles.stat}>
-      <AppText variant="heading">{value}</AppText>
+      <AppText variant="title">{value}</AppText>
       <AppText muted>{label}</AppText>
     </View>
   );
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
     flexBasis: 140,
     padding: 16,
     gap: 2,
-    borderRadius: theme.radius,
+    borderRadius: theme.radius.md,
     borderCurve: "continuous",
     backgroundColor: theme.colors.surface,
   },

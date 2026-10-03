@@ -33,7 +33,7 @@ export function ArchiveSection({ piece }: { piece: Piece }) {
   return (
     <View style={styles.section} testID="piece-archive">
       <AppText style={styles.label}>{t("archive.title")}</AppText>
-      <AppText variant="caption" muted testID="archive-state">
+      <AppText variant="footnote" muted testID="archive-state">
         {archived ? t("archive.archived") : t("archive.help")}
       </AppText>
       <Button
@@ -109,7 +109,7 @@ export function WeatherSection({ piece }: { piece: Piece }) {
           onChange={(warmth) => confirm({ warmth })}
         />
       )}
-      <AppText variant="caption" muted>
+      <AppText variant="footnote" muted>
         {anySuggested
           ? t("pieceWeather.helpSuggested")
           : t("pieceWeather.help")}

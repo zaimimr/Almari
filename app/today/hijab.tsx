@@ -99,7 +99,7 @@ export default function CompareHijabs() {
         <View style={styles.preview}>
           <OutfitCollage pieces={pieces} fill testID="hijab-preview" />
           <AppText
-            variant="caption"
+            variant="footnote"
             muted
             style={styles.summary}
             accessibilityLiveRegion="polite"
@@ -162,7 +162,7 @@ export default function CompareHijabs() {
                   />
                   {index === 0 ? (
                     <AppText
-                      variant="caption"
+                      variant="footnote"
                       style={styles.current}
                       numberOfLines={1}
                       maxFontSizeMultiplier={1.5}
@@ -172,7 +172,7 @@ export default function CompareHijabs() {
                   ) : null}
                   {item.reason ? (
                     <AppText
-                      variant="caption"
+                      variant="footnote"
                       muted
                       numberOfLines={fontScale > 1.3 ? 2 : 3}
                       maxFontSizeMultiplier={1.5}
@@ -201,7 +201,7 @@ export default function CompareHijabs() {
               if (chosen) void use(chosen);
             }}
           />
-          <AppText variant="caption" muted style={styles.center}>
+          <AppText variant="footnote" muted style={styles.center}>
             {t("hijabs.undoHint")}
           </AppText>
         </View>
@@ -211,7 +211,7 @@ export default function CompareHijabs() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: theme.colors.background },
+  screen: { flex: 1, backgroundColor: theme.colors.canvas },
   workspace: {
     flex: 1,
     minHeight: 0,
@@ -233,10 +233,10 @@ const styles = StyleSheet.create({
   grid: { paddingHorizontal: 24, paddingBottom: 24 },
   row: { gap: 12 },
   cell: { width: "48%", gap: 4 },
-  current: { color: theme.colors.accent, fontWeight: "600" },
+  current: { color: theme.colors.plum, fontWeight: "600" },
   none: { paddingHorizontal: 24, gap: 12 },
   footer: {
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.canvas,
     borderTopWidth: 1,
     borderColor: theme.colors.line,
   },

@@ -154,7 +154,7 @@ function TodayContent() {
                   );
                 }}
               />
-              <AppText variant="caption" muted>
+              <AppText variant="footnote" muted>
                 {t("today.sampleNote")}
               </AppText>
               <ErrorMessage message={error} />
@@ -278,7 +278,7 @@ function TodayContent() {
 
   return (
     <>
-      <AppText variant="heading">
+      <AppText variant="title">
         {today.active === "occasion"
           ? t("today.styledFor", {
               occasion: occasionPhrase(request.occasion),
@@ -300,7 +300,7 @@ function TodayContent() {
       <ForecastNote closet={closet} request={request} failed={forecastFailed} />
       {today.active === "occasion" ? (
         <View style={styles.banner}>
-          <AppText variant="caption">{t("today.justForNow")}</AppText>
+          <AppText variant="footnote">{t("today.justForNow")}</AppText>
           <Button
             label={t("today.backToLook")}
             secondary
@@ -326,7 +326,7 @@ function TodayContent() {
           }}
         />
       ) : (
-        <AppText variant="caption" muted>
+        <AppText variant="footnote" muted>
           {t("today.sampleOnly")}
         </AppText>
       )}
@@ -433,7 +433,11 @@ function TodayContent() {
               </View>
             ) : null}
             {noted === revision ? (
-              <AppText variant="caption" muted accessibilityLiveRegion="polite">
+              <AppText
+                variant="footnote"
+                muted
+                accessibilityLiveRegion="polite"
+              >
                 {t("outfit.thanks")}
               </AppText>
             ) : null}
@@ -447,7 +451,7 @@ function TodayContent() {
               onPress={() => router.push("/today/hijab")}
             />
           ) : null}
-          <AppText variant="caption" muted accessibilityLiveRegion="polite">
+          <AppText variant="footnote" muted accessibilityLiveRegion="polite">
             {t("today.countFrom", { pieces: pieceCount(pieces), source })}
             {kept.length ? t("today.keptSuffix", { count: kept.length }) : ""}
           </AppText>
@@ -526,11 +530,11 @@ function TodayContent() {
             />
           ) : null}
           {result.outfits.length === 1 ? (
-            <AppText variant="caption" muted>
+            <AppText variant="footnote" muted>
               {t("today.onlyCombination")}
             </AppText>
           ) : last ? (
-            <AppText variant="caption" muted>
+            <AppText variant="footnote" muted>
               {t("today.lastCombination")}
             </AppText>
           ) : null}
@@ -648,12 +652,12 @@ function TodayContent() {
       />
       <View style={styles.notes}>
         {request.hijab === null ? (
-          <AppText variant="caption" muted>
+          <AppText variant="footnote" muted>
             {t("today.hijabUnset")}
           </AppText>
         ) : null}
         {closet.styling.layout !== "full" ? (
-          <AppText variant="caption" muted testID="coverage-note">
+          <AppText variant="footnote" muted testID="coverage-note">
             {coverageText(request)} {t("today.layoutNote")}
           </AppText>
         ) : null}
@@ -716,7 +720,7 @@ function PieceRow({
       <View style={styles.pieceText}>
         <AppText>{piece.name}</AppText>
         {kept ? (
-          <AppText variant="caption" style={styles.keptText}>
+          <AppText variant="footnote" style={styles.keptText}>
             {t("today.keptEverywhere")}
           </AppText>
         ) : null}
@@ -745,7 +749,7 @@ function PieceRow({
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: theme.colors.background },
+  screen: { flex: 1, backgroundColor: theme.colors.canvas },
   content: {
     padding: 24,
     paddingBottom: 120,
@@ -765,16 +769,16 @@ const styles = StyleSheet.create({
   banner: {
     gap: 8,
     padding: 12,
-    borderRadius: theme.radius,
+    borderRadius: theme.radius.md,
     borderCurve: "continuous",
-    backgroundColor: theme.colors.accentSoft,
+    backgroundColor: theme.colors.plumSoft,
   },
   outfit: { gap: 12 },
   check: { gap: 8 },
   review: {
     gap: 6,
     padding: 12,
-    borderRadius: theme.radius,
+    borderRadius: theme.radius.md,
     borderCurve: "continuous",
     borderWidth: 1,
     borderColor: theme.colors.line,
@@ -787,7 +791,7 @@ const styles = StyleSheet.create({
   problem: {
     gap: 12,
     padding: 16,
-    borderRadius: theme.radius,
+    borderRadius: theme.radius.md,
     borderCurve: "continuous",
     backgroundColor: theme.colors.surface,
   },
@@ -801,7 +805,7 @@ const styles = StyleSheet.create({
   pieceThumb: {
     width: 64,
     height: 64,
-    borderRadius: theme.radius,
+    borderRadius: theme.radius.md,
     borderCurve: "continuous",
     borderWidth: 1,
     borderColor: theme.colors.line,
@@ -809,7 +813,7 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   pieceText: { flex: 1, minWidth: 96, gap: 2 },
-  keptText: { color: theme.colors.accent, fontWeight: "600" },
+  keptText: { color: theme.colors.plum, fontWeight: "600" },
   pieceActions: { flexDirection: "row", gap: 8 },
   notes: { gap: 8 },
 });

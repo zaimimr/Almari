@@ -197,7 +197,7 @@ export default function BuildLook() {
           />
           {pieces.length ? (
             <AppText
-              variant="caption"
+              variant="footnote"
               muted
               style={styles.summary}
               accessibilityLiveRegion="polite"
@@ -373,7 +373,7 @@ export default function BuildLook() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: theme.colors.background },
+  screen: { flex: 1, backgroundColor: theme.colors.canvas },
   workspace: {
     flex: 1,
     minHeight: 0,
@@ -408,7 +408,7 @@ const styles = StyleSheet.create({
   saveRow: { flexDirection: "row", gap: 12, alignItems: "flex-end" },
   nameField: { flex: 1 },
   footer: {
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.canvas,
     borderTopWidth: 1,
     borderColor: theme.colors.line,
   },

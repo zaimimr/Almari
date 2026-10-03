@@ -135,7 +135,7 @@ export default function Colours() {
   if (phase.kind === "measuring")
     return (
       <Shell>
-        <ActivityIndicator color={theme.colors.accent} />
+        <ActivityIndicator color={theme.colors.plum} />
         <AppText muted accessibilityLiveRegion="polite">
           {t("colours.busy")}
         </AppText>
@@ -178,7 +178,7 @@ export default function Colours() {
                 />
                 <AppText>{t(`colours.${part}`)}</AppText>
                 {lab ? null : (
-                  <AppText variant="caption" muted>
+                  <AppText variant="footnote" muted>
                     {t("colours.unknown")}
                   </AppText>
                 )}
@@ -186,7 +186,7 @@ export default function Colours() {
             );
           })}
         </View>
-        <AppText variant="heading" testID="season">
+        <AppText variant="title" testID="season">
           {t("colours.result", { season: seasonLabel(profile.season) })}
         </AppText>
         <AppText muted>{t("colours.adjust")}</AppText>
@@ -269,7 +269,7 @@ export default function Colours() {
       {camera === "denied" ? <AppText>{t("colours.cameraOff")}</AppText> : null}
       <AppText>{t("colours.tips")}</AppText>
       <AppText muted>{t("colours.hijab")}</AppText>
-      <AppText variant="caption" muted>
+      <AppText variant="footnote" muted>
         {t("colours.deleted")}
       </AppText>
       <ErrorMessage message={error} />
@@ -298,7 +298,7 @@ function Shell({
         }}
       />
       <FormScreen scrollEnabled={scrollEnabled}>
-        <AppText variant="title" accessibilityRole="header">
+        <AppText variant="display" accessibilityRole="header">
           {t("colours.title")}
         </AppText>
         {children}
@@ -308,7 +308,7 @@ function Shell({
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: theme.colors.background },
+  screen: { flex: 1, backgroundColor: theme.colors.canvas },
   label: { fontWeight: "600" },
   measured: { flexDirection: "row", flexWrap: "wrap", gap: 16 },
   part: { alignItems: "center", gap: 4, minWidth: 88 },
@@ -323,8 +323,8 @@ const styles = StyleSheet.create({
   palette: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
   notice: {
     padding: 16,
-    borderRadius: theme.radius,
+    borderRadius: theme.radius.md,
     borderCurve: "continuous",
-    backgroundColor: theme.colors.accentSoft,
+    backgroundColor: theme.colors.plumSoft,
   },
 });

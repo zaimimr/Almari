@@ -215,7 +215,7 @@ export default function Onboarding() {
         progress={single ? undefined : { step: position, total: steps.length }}
       />
       <FormScreen key={step}>
-        <AppText variant="title" accessibilityRole="header">
+        <AppText variant="display" accessibilityRole="header">
           {t(`onboarding.${step}.title`)}
         </AppText>
         {step === "hijab" ? (
@@ -284,7 +284,7 @@ export default function Onboarding() {
                 {t("onboarding.city.found", { name: answers.place.place.name })}
               </AppText>
             ) : null}
-            <AppText variant="caption" muted>
+            <AppText variant="footnote" muted>
               {t("onboarding.city.privacy")}
             </AppText>
           </>
@@ -411,7 +411,7 @@ export default function Onboarding() {
                       { backgroundColor: labHex(swatch.lab) },
                     ]}
                   />
-                  <AppText variant="caption">{swatchLabel(swatch)}</AppText>
+                  <AppText variant="footnote">{swatchLabel(swatch)}</AppText>
                 </Pressable>
               ))}
             </View>
@@ -460,7 +460,7 @@ export default function Onboarding() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: theme.colors.background },
+  screen: { flex: 1, backgroundColor: theme.colors.canvas },
   label: { fontWeight: "600" },
   row: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
   grow: { flexGrow: 1, flexBasis: 120 },
