@@ -54,14 +54,20 @@ function Swap({
   text,
   role,
   tone = "ink",
+  reduce,
 }: {
   text: string;
   role: TextRole;
   tone?: TextTone;
+  reduce: boolean;
 }) {
   return (
     <LayoutAnimationConfig skipEntering>
-      <Animated.View key={text} entering={fadeIn} exiting={fadeOut}>
+      <Animated.View
+        key={text}
+        entering={fadeIn}
+        exiting={reduce ? fadeOutReduced : fadeOut}
+      >
         <Text role={role} tone={tone}>
           {text}
         </Text>
@@ -153,7 +159,7 @@ export function Banner({
         >
           <Animated.View style={[styles.banner, styles.card, fill]}>
             <View style={styles.progress}>
-              <Swap text={text} role="body" />
+              <Swap text={text} role="body" reduce={reduce} />
               <Silk
                 kind="progress"
                 value={done ? 1 : (progress?.value ?? 0)}
@@ -166,7 +172,12 @@ export function Banner({
                 }}
               >
                 {progress?.meta ? (
-                  <Swap text={progress.meta} role="subhead" tone="muted" />
+                  <Swap
+                    text={progress.meta}
+                    role="subhead"
+                    tone="muted"
+                    reduce={reduce}
+                  />
                 ) : null}
               </View>
             </View>
@@ -209,7 +220,7 @@ export function Banner({
         </View>
       ) : null}
       <View style={styles.body}>
-        <Swap text={text} role="body" />
+        <Swap text={text} role="body" reduce={reduce} />
         <ActionRow actions={actions} />
         {children}
       </View>

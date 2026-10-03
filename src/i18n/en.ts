@@ -1065,6 +1065,7 @@ export const en = {
   "capture.nextTip": "Next tip",
   "capture.readyCount": "{count} ready",
   "capture.startAdding": "Start adding pieces",
+  "capture.stateConfirm": "Needs an answer",
   "capture.stateFailed": "Could not finish",
   "capture.statePreparing": "Preparing",
   "capture.stateQueued": "Waiting",
@@ -1308,7 +1309,6 @@ export const en = {
   "role.one.hijab": "hijab",
   "role.one.bag": "bag",
   "role.one.accessory": "accessory",
-  "capture.stateConfirm": "Needs an answer",
 };
 
 export type Key = keyof typeof en;

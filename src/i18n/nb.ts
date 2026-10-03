@@ -1083,6 +1083,7 @@ export const nb: Record<Key, string> = {
   "capture.nextTip": "Neste tips",
   "capture.readyCount": "{count} klare",
   "capture.startAdding": "Begynn å legge til plagg",
+  "capture.stateConfirm": "Trenger svar",
   "capture.stateFailed": "Ble ikke ferdig",
   "capture.statePreparing": "Gjøres klar",
   "capture.stateQueued": "Venter",
@@ -1329,5 +1330,4 @@ export const nb: Record<Key, string> = {
   "role.one.hijab": "hijab",
   "role.one.bag": "veske",
   "role.one.accessory": "tilbehør",
-  "capture.stateConfirm": "Trenger svar",
 };
