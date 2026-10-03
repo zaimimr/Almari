@@ -11,3 +11,5 @@ Not approved yet. Changes requested:
 5. Your colours: run colour analysis from the selfie and auto take the photo when the face is right. Remove the manual skin tone chips.
 6. Today: fold "Not for me" into the Undo line. Only "Another" stays in the action row; after Another, "Not for me" appears next to Undo.
 7. Next: the owner uploads competitor screenshots. We go through them together, keep what we like and list features worth adding, before the design is approved.
+
+Illustrations: owner chose to generate our own set. Version 1 made with Workers AI `@cf/black-forest-labs/flux-2-dev` through `scripts/illustrate.sh` (seed 7, burqa seed 11), saved to `assets/illustrations/` (600 x 800 JPEG). Contact sheet: `docs/redesign/illustrations-v1.png`. Waiting for owner review.
