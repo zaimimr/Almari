@@ -1,4 +1,7 @@
 import {
+  createContext,
+  useContext,
+  useImperativeHandle,
   useRef,
   useState,
   type PropsWithChildren,
@@ -13,9 +16,17 @@ import {
   type NativeScrollEvent,
 } from "react-native";
 import Animated, {
+  measure,
+  scrollTo,
   useAnimatedKeyboard,
+  useAnimatedReaction,
+  useAnimatedRef,
   useAnimatedStyle,
+  useScrollOffset,
+  useSharedValue,
+  type AnimatedRef,
 } from "react-native-reanimated";
+import { scheduleOnUI } from "react-native-worklets";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Stack, router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -23,6 +34,7 @@ import { t } from "../i18n";
 import { largeTitleOptions } from "../navigation/options";
 import { Button } from "./Button";
 import { HeaderItem, HeaderMedia } from "./HeaderItem";
+import { timing, useReduceMotion } from "./motion";
 import { SheenClockProvider } from "./SheenClock";
 import { Silk } from "./Silk";
 import { Text } from "./Text";
@@ -48,6 +60,56 @@ export type ScreenProps = PropsWithChildren<{
   maintainVisibleContentPosition?: boolean;
   keyboardFooter?: "ride" | "stay";
 }>;
+
+type ShowPart = (part: AnimatedRef<Animated.View>, height: number) => void;
+
+const ScrollIntoView = createContext<ShowPart>(() => {});
+
+export function useScrollIntoView(): ShowPart {
+  return useContext(ScrollIntoView);
+}
+
+function useShowPart(
+  scrollRef: AnimatedRef<Animated.ScrollView>,
+  topInset: number,
+  bottomInset: number,
+): ShowPart {
+  const reduce = useReduceMotion();
+  const offset = useScrollOffset(scrollRef);
+  const scrollY = useSharedValue(0);
+  const driving = useSharedValue(false);
+  const seenTop = useSharedValue(0);
+
+  useAnimatedReaction(
+    () => scrollY.get(),
+    (y) => {
+      if (driving.get()) scrollTo(scrollRef, 0, y, false);
+    },
+  );
+
+  return (part, height) =>
+    scheduleOnUI(() => {
+      "worklet";
+      const box = measure(part);
+      const frame = measure(scrollRef);
+      if (!box || !frame) return;
+      seenTop.set(Math.max(seenTop.get(), -offset.get()));
+      const top = frame.pageY + Math.max(topInset, seenTop.get());
+      const bottom = frame.pageY + frame.height - bottomInset;
+      const end = box.pageY + height;
+      if (end <= bottom) return;
+      const delta = height <= bottom - top ? end - bottom : box.pageY - top;
+      if (delta <= 0) return;
+      const to = offset.get() + delta;
+      if (reduce) {
+        scrollTo(scrollRef, 0, to, false);
+        return;
+      }
+      driving.set(true);
+      scrollY.set(offset.get());
+      scrollY.set(timing(to, "settle", "silk", () => driving.set(false)));
+    });
+}
 
 function useKeyboardSpace(ride: boolean, resting: number) {
   const keyboard = useAnimatedKeyboard();
@@ -86,6 +148,13 @@ export function Screen({
     showFooter && keyboardFooter === "ride",
     Math.max(insets.bottom, theme.space.md),
   );
+  const scrollRef = useAnimatedRef<Animated.ScrollView>();
+  const showPart = useShowPart(
+    scrollRef,
+    insets.top,
+    showFooter ? 0 : insets.bottom,
+  );
+  useImperativeHandle(contentRef, () => scrollRef.current as ScrollView);
   const [under, setUnder] = useState(false);
   const frame = useRef({ offset: 0, viewport: 0, content: 0 });
 
@@ -177,8 +246,8 @@ export function Screen({
           />
         ) : null}
         {scroll ? (
-          <ScrollView
-            ref={contentRef}
+          <Animated.ScrollView
+            ref={scrollRef}
             style={styles.screen}
             contentInsetAdjustmentBehavior="automatic"
             keyboardShouldPersistTaps="handled"
@@ -211,8 +280,8 @@ export function Screen({
               paddingBottom: theme.space.footerInset,
             }}
           >
-            {content}
-          </ScrollView>
+            <ScrollIntoView value={showPart}>{content}</ScrollIntoView>
+          </Animated.ScrollView>
         ) : (
           <View style={[styles.screen, { paddingHorizontal: gutter }]}>
             {content}

@@ -1329,4 +1329,5 @@ export const nb: Record<Key, string> = {
   "role.one.hijab": "hijab",
   "role.one.bag": "veske",
   "role.one.accessory": "tilbehør",
+  "capture.stateConfirm": "Trenger svar",
 };

@@ -1308,6 +1308,7 @@ export const en = {
   "role.one.hijab": "hijab",
   "role.one.bag": "bag",
   "role.one.accessory": "accessory",
+  "capture.stateConfirm": "Needs an answer",
 };
 
 export type Key = keyof typeof en;
