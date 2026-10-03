@@ -1,5 +1,4 @@
 import {
-  useEffect,
   useRef,
   useState,
   type PropsWithChildren,
@@ -7,7 +6,6 @@ import {
   type Ref,
 } from "react";
 import {
-  Keyboard,
   ScrollView,
   StyleSheet,
   View,
@@ -15,8 +13,8 @@ import {
   type NativeScrollEvent,
 } from "react-native";
 import Animated, {
+  useAnimatedKeyboard,
   useAnimatedStyle,
-  useSharedValue,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Stack, router } from "expo-router";
@@ -25,7 +23,6 @@ import { t } from "../i18n";
 import { largeTitleOptions } from "../navigation/options";
 import { Button } from "./Button";
 import { HeaderItem, HeaderMedia } from "./HeaderItem";
-import { timing } from "./motion";
 import { SheenClockProvider } from "./SheenClock";
 import { Silk } from "./Silk";
 import { Text } from "./Text";
@@ -53,29 +50,11 @@ export type ScreenProps = PropsWithChildren<{
 }>;
 
 function useKeyboardSpace(ride: boolean, resting: number) {
-  const space = useSharedValue(0);
-
-  useEffect(() => {
-    if (!ride) return;
-    const show = Keyboard.addListener("keyboardWillShow", (event) =>
-      space.set(
-        timing(
-          Math.max(0, event.endCoordinates.height + theme.space.md - resting),
-          "base",
-          "silk",
-        ),
-      ),
-    );
-    const hide = Keyboard.addListener("keyboardWillHide", () =>
-      space.set(timing(0, "base", "silk")),
-    );
-    return () => {
-      show.remove();
-      hide.remove();
-    };
-  }, [ride, resting, space]);
-
-  return useAnimatedStyle(() => ({ height: space.get() }));
+  const keyboard = useAnimatedKeyboard();
+  const lift = theme.space.md - resting;
+  return useAnimatedStyle(() => ({
+    height: ride ? Math.max(0, keyboard.height.get() + lift) : 0,
+  }));
 }
 
 export function Screen({

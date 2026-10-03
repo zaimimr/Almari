@@ -17,7 +17,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { announce } from "./announce";
 import { Button, type ButtonProps } from "./Button";
 import { useMeasuredMax } from "./measure";
-import { motion, timing } from "./motion";
+import { motion, timing, useReduceMotion } from "./motion";
 import { Text } from "./Text";
 import { gutterFor, theme } from "./theme";
 import { useColors } from "./useColors";
@@ -45,6 +45,9 @@ const fadeIn = FadeIn.duration(motion.duration.base)
 const fadeOut = FadeOut.duration(motion.duration.quick)
   .easing(motion.easing.release)
   .reduceMotion(ReduceMotion.Never);
+const fadeOutReduced = FadeOut.duration(motion.duration.base).reduceMotion(
+  ReduceMotion.Never,
+);
 
 export function Footer({
   primary,
@@ -57,6 +60,8 @@ export function Footer({
   media = false,
 }: FooterProps) {
   const colors = useColors();
+  const reduce = useReduceMotion();
+  const exiting = reduce ? fadeOutReduced : fadeOut;
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
   const { large, ax, fontScale } = useLargeText();
@@ -107,6 +112,19 @@ export function Footer({
   }, [waiting, primaryLabel, shown]);
   const reveal = useAnimatedStyle(() => ({ opacity: shown.get() }));
 
+  const shownError = useRef(error);
+  useEffect(() => {
+    if (error && error !== shownError.current) announce(error);
+    shownError.current = error;
+  }, [error]);
+  const errorText = error ? (
+    <Text role="footnote" tone="error">
+      {error}
+    </Text>
+  ) : null;
+  const row = Boolean(rowActions || actionsContent);
+  const rowContent = actionsContent ?? errorText;
+
   const button = (props: ButtonProps) => (
     <Button size="regular" media={media} {...props} />
   );
@@ -125,14 +143,18 @@ export function Footer({
       <LayoutAnimationConfig skipEntering>
         {pairLayer}
         {actionLayer}
-        {rowActions || actionsContent ? (
+        {row ? (
           <View style={{ minHeight: rowHeight }}>
-            {actionsContent ? (
-              <Animated.View key="content" entering={fadeIn} exiting={fadeOut}>
-                {actionsContent}
+            {rowContent ? (
+              <Animated.View
+                key={actionsContent ? "content" : "error"}
+                entering={fadeIn}
+                exiting={exiting}
+              >
+                {rowContent}
               </Animated.View>
             ) : (
-              <Animated.View key="actions" entering={fadeIn} exiting={fadeOut}>
+              <Animated.View key="actions" entering={fadeIn} exiting={exiting}>
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
@@ -151,21 +173,18 @@ export function Footer({
               </Animated.View>
             )}
           </View>
-        ) : null}
-        {error ? (
-          <Text role="footnote" tone="error" announce>
-            {error}
-          </Text>
-        ) : null}
+        ) : (
+          errorText
+        )}
         {children ? (
-          <Animated.View key="result" entering={fadeIn} exiting={fadeOut}>
+          <Animated.View key="result" entering={fadeIn} exiting={exiting}>
             {children}
           </Animated.View>
         ) : primary ? (
           <Animated.View
             key="buttons"
             entering={fadeIn}
-            exiting={fadeOut}
+            exiting={exiting}
             style={[
               stacked ? styles.stack : styles.pair,
               measuring && styles.measuring,
