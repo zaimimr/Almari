@@ -1,0 +1,27 @@
+appId: com.zaimimran.almari
+# UC-F11-02
+---
+- runFlow: ../lib/sample-closet.yaml
+- tapOn:
+    id: "header-profile"
+- assertVisible:
+    id: "profile"
+- tapOn: "Your style"
+- assertVisible:
+    id: "your-style"
+- tapOn:
+    id: "style-occasion"
+- tapOn:
+    id: "style-occasion"
+- tapOn:
+    id: "style-coverage"
+- tapOn: "My own"
+- assertVisible: "Sleeves.*"
+- assertVisible: "Hem.*"
+- takeScreenshot: docs/redesign/screens/after/profile/style
+- tapOn: "Cancel"
+- assertVisible: "Discard.*"
+- tapOn: "Keep editing"
+- tapOn: "Save and update today"
+- assertVisible:
+    id: "today-outfit"

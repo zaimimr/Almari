@@ -1,0 +1,17 @@
+appId: com.zaimimran.almari
+# UC-F11-04
+---
+- runFlow: ../lib/sample-closet.yaml
+- tapOn:
+    id: "header-profile"
+- assertVisible:
+    id: "profile"
+- scrollUntilVisible:
+    element: "Language"
+- tapOn: "Language"
+- tapOn: "Norsk bokmål"
+- assertVisible: "Profil"
+- assertVisible:
+    id: "profile"
+- tapOn: "Språk"
+- tapOn: "Følg telefonen"

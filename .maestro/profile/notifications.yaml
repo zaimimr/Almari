@@ -1,0 +1,20 @@
+appId: com.zaimimran.almari
+# UC-F11-11
+---
+- runFlow: ../lib/sample-closet.yaml
+- tapOn:
+    id: "header-profile"
+- assertVisible:
+    id: "profile"
+- scrollUntilVisible:
+    element:
+      id: "profile-morning"
+- tapOn:
+    id: "profile-morning"
+- tapOn: "08:00.*"
+- tapOn:
+    id: "profile-morning"
+- assertVisible: "08:00"
+- tapOn:
+    id: "profile-morning"
+- tapOn: "Off.*"

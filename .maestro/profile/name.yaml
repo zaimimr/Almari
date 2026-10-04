@@ -1,0 +1,19 @@
+appId: com.zaimimran.almari
+# UC-F11-12
+# seed: sample with name
+---
+- runFlow: ../lib/sample-closet.yaml
+- tapOn:
+    id: "header-profile"
+- assertVisible:
+    id: "profile"
+- tapOn:
+    id: "answer-name"
+- eraseText: 20
+- tapOn: "Save"
+- tapOn:
+    id: "answer-name"
+- inputText: "Sara A"
+- tapOn: "Save"
+- back
+- assertVisible: "Good morning, Sara A|Good afternoon, Sara A|Good evening, Sara A|Hi, Sara A"

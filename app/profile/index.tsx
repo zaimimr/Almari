@@ -221,7 +221,7 @@ export default function Profile() {
               testID="settings-reset"
             />
           </Rows>
-          <Text role="footnote" tone="muted">
+          <Text role="footnote" tone="muted" testID="app-privacy">
             {t("settings.privacy")}
           </Text>
           <Text role="footnote" tone="muted" testID="app-version">

@@ -1,0 +1,23 @@
+appId: com.zaimimran.almari
+# UC-F11-10
+# seed: seed-owned.sh
+---
+- runFlow: ../lib/sample-closet.yaml
+- tapOn:
+    id: "header-profile"
+- assertVisible:
+    id: "profile"
+- tapOn: "Trying to wear more of"
+- tapOn:
+    id: "wear-more-picker"
+    index: 0
+- tapOn:
+    id: "wear-more-picker"
+    index: 1
+- tapOn:
+    id: "wear-more-picker"
+    index: 2
+- assertVisible: "3 selected"
+- takeScreenshot: docs/redesign/screens/after/profile/wear-more
+- tapOn: "Back"
+- assertVisible: "3 pieces"

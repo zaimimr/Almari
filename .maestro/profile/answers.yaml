@@ -1,0 +1,30 @@
+appId: com.zaimimran.almari
+# UC-F11-03
+---
+- runFlow: ../lib/sample-closet.yaml
+- tapOn:
+    id: "header-profile"
+- assertVisible:
+    id: "profile"
+- scrollUntilVisible:
+    element:
+      id: "answer-place"
+- tapOn:
+    id: "answer-place"
+- tapOn: "Search for your city"
+- inputText: "Oslo"
+- pressKey: Enter
+- tapOn: "Oslo.*"
+- tapOn: "Save"
+- tapOn:
+    id: "answer-body"
+- tapOn: "Feet and °F"
+- tapOn: "Save"
+- tapOn:
+    id: "answer-colours"
+- tapOn: "Bold"
+- tapOn:
+    id: "answer-name"
+- inputText: "x"
+- tapOn: "Cancel"
+- takeScreenshot: docs/redesign/screens/after/profile/answer

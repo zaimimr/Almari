@@ -1,0 +1,23 @@
+appId: com.zaimimran.almari
+# UC-F11-05
+---
+- runFlow: ../lib/sample-closet.yaml
+- tapOn:
+    id: "header-profile"
+- assertVisible:
+    id: "profile"
+- scrollUntilVisible:
+    element: "Show intro again"
+- tapOn: "Show intro again"
+- tapOn: "Show intro again"
+- assertVisible:
+    id: "onboarding-next"
+- runFlow: ../lib/sample-closet.yaml
+- tapOn:
+    id: "header-profile"
+- scrollUntilVisible:
+    element: "Delete all data"
+- tapOn: "Delete all data"
+- tapOn: "Delete all data"
+- assertVisible:
+    id: "onboarding-next"

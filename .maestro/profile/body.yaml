@@ -1,0 +1,23 @@
+appId: com.zaimimran.almari
+# UC-F01-05
+---
+- runFlow: ../lib/sample-closet.yaml
+- tapOn:
+    id: "header-profile"
+- assertVisible:
+    id: "profile"
+- scrollUntilVisible:
+    element:
+      id: "answer-body"
+- tapOn:
+    id: "answer-body"
+- tapOn:
+    id: "answer-height"
+- inputText: "1.65"
+- assertVisible: "Enter a height between 120 and 220 cm."
+- eraseText: 10
+- inputText: "165"
+- tapOn: "Hourglass"
+- tapOn: "Save"
+- assertVisible:
+    id: "profile"
