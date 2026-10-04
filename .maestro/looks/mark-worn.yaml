@@ -18,8 +18,16 @@ appId: com.zaimimran.almari
 - extendedWaitUntil:
     visible: "Show on Today"
     timeout: 10000
+- scrollUntilVisible:
+    element:
+      id: "look-worn"
+    centerElement: true
 - tapOn:
     id: "look-worn"
+- scrollUntilVisible:
+    element:
+      text: "Worn yesterday"
+    centerElement: true
 - tapOn: "Worn yesterday"
 - extendedWaitUntil:
     visible: "Worn yesterday"

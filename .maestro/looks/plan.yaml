@@ -14,15 +14,31 @@ appId: com.zaimimran.almari
 - extendedWaitUntil:
     visible: "Show on Today"
     timeout: 10000
+- scrollUntilVisible:
+    element:
+      id: "look-plan"
+    centerElement: true
 - tapOn:
     id: "look-plan"
+- scrollUntilVisible:
+    element:
+      id: "pick-2026-10-11"
+    centerElement: true
 - tapOn:
     id: "pick-2026-10-11"
 - extendedWaitUntil:
     visible: "Work, Planned for Sunday 11 October"
     timeout: 10000
+- scrollUntilVisible:
+    element:
+      id: "look-plan"
+    centerElement: true
 - tapOn:
     id: "look-plan"
+- scrollUntilVisible:
+    element:
+      text: "Clear date"
+    centerElement: true
 - tapOn: "Clear date"
 - extendedWaitUntil:
     notVisible: ".*Planned for.*"

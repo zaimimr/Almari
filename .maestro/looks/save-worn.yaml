@@ -19,8 +19,10 @@ appId: com.zaimimran.almari
 - extendedWaitUntil:
     visible: "Show on Today"
     timeout: 10000
-- assertVisible:
-    id: "look-worn"
+- scrollUntilVisible:
+    element:
+      id: "look-worn"
+    centerElement: true
 - swipe:
     start: 1%, 50%
     end: 80%, 50%

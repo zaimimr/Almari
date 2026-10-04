@@ -18,6 +18,9 @@ appId: com.zaimimran.almari
     visible: "1 piece is no longer in your closet"
     timeout: 10000
 - openLink: almari://look/nope
+- waitForAnimationToEnd
+- tapOn:
+    point: "68%,54%"
 - extendedWaitUntil:
     visible: "This look is no longer here"
     timeout: 10000

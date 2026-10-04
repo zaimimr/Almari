@@ -21,6 +21,7 @@ appId: com.zaimimran.almari
 - scrollUntilVisible:
     element:
       id: "look-remove"
+    centerElement: true
 - tapOn:
     id: "look-remove"
 - assertVisible: "The pieces and the days you wore it stay."
@@ -33,6 +34,7 @@ appId: com.zaimimran.almari
 - scrollUntilVisible:
     element:
       id: "look-remove"
+    centerElement: true
 - tapOn:
     id: "look-remove"
 - assertVisible: "The pieces stay in your closet."

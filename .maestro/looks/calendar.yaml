@@ -12,7 +12,7 @@ appId: com.zaimimran.almari
 - tapOn:
     id: "header-calendar"
 - extendedWaitUntil:
-    visible: "October 2026"
+    visible: "October 2026.*"
     timeout: 10000
 - assertVisible:
     id: "day-2026-10-02"
@@ -20,9 +20,9 @@ appId: com.zaimimran.almari
     id: "day-2026-10-01"
 - assertNotVisible:
     id: "calendar-next"
-- assertVisible: "Variety"
+- assertVisible: "Variety.*"
 - takeScreenshot: docs/redesign/screens/after/looks/calendar
-- tapOn: "Variety"
+- tapOn: "Variety.*"
 - extendedWaitUntil:
     visible: "Not worn lately"
     timeout: 10000
@@ -32,11 +32,11 @@ appId: com.zaimimran.almari
 - tapOn:
     id: "calendar-previous"
 - extendedWaitUntil:
-    visible: "September 2026"
+    visible: "September 2026.*"
     timeout: 10000
 - assertVisible: "Most worn"
 - assertVisible: "Black boots, 2 times"
-- assertNotVisible: "Variety"
+- assertNotVisible: "Variety.*"
 - tapOn:
     id: "day-2026-09-12"
 - assertVisible: "Sat 12 Sep"
@@ -44,7 +44,7 @@ appId: com.zaimimran.almari
 - tapOn:
     id: "calendar-previous"
 - extendedWaitUntil:
-    visible: "August 2026"
+    visible: "August 2026.*"
     timeout: 10000
 - assertVisible: "No looks worn in August"
 - assertNotVisible: "Most worn"

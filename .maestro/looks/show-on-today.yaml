@@ -20,6 +20,10 @@ appId: com.zaimimran.almari
     timeout: 10000
 - tapOn: "Show on Today"
 - extendedWaitUntil:
-    visible: "Wear this"
+    visible: "Today"
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      text: "Wear this"
     timeout: 20000
 - assertNotVisible: "Show on Today"
