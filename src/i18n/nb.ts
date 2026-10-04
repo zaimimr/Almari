@@ -1059,6 +1059,7 @@ export const nb: Record<Key, string> = {
   "adjust.conditions": "Føre",
   "adjust.day": "Når",
   "adjust.dry": "Tørt",
+  "adjust.pieces": "Plagg",
   "adjust.find": "Vis antrekk",
   "adjust.indoors": "Mest inne",
   "adjust.keepingMany": "Beholder {count} plagg",

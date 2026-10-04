@@ -1045,6 +1045,7 @@ export const en = {
   "adjust.conditions": "Conditions",
   "adjust.day": "When",
   "adjust.dry": "Dry",
+  "adjust.pieces": "Pieces",
   "adjust.find": "Show outfit",
   "adjust.indoors": "Mostly indoors",
   "adjust.keepingMany": "Keeping {count} pieces",
