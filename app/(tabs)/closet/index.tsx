@@ -156,6 +156,7 @@ export default function ClosetScreen() {
           />
         ) : undefined
       }
+      scroll={empty}
       testID="closet-screen"
     >
       {empty ? (
@@ -174,45 +175,37 @@ export default function ClosetScreen() {
           )}
         </View>
       ) : (
-        <View style={styles.content}>
-          <FilterRow
-            filter={filter}
-            offered={screen.offered}
-            open={screen.panelOpen}
-            onToggle={() => screen.setPanelOpen(!screen.panelOpen)}
-            onChange={screen.change}
-          />
-          <Expander
-            id="closet-more"
-            headless
-            open={screen.panelOpen}
-            onToggle={() => screen.setPanelOpen(!screen.panelOpen)}
-          >
-            <FilterPanel
-              filter={filter}
-              pieces={closet.pieces}
-              filtered={screen.filtered}
-              onChange={screen.change}
-              onClear={screen.clear}
-            />
-          </Expander>
-          {banner}
-          {screen.sections.length ? (
-            <ClosetGrid
-              sections={screen.sections}
-              selecting={selecting}
-              selected={selected}
-              onPress={(piece) =>
-                selecting
-                  ? screen.toggle(piece.id)
-                  : router.push(`/piece/${piece.id}`)
-              }
-              onLongPress={(piece) => {
-                if (!selecting) screen.startSelect();
-                screen.toggle(piece.id);
-              }}
-            />
-          ) : (
+        <ClosetGrid
+          sections={screen.sections}
+          selecting={selecting}
+          selected={selected}
+          header={
+            <>
+              <FilterRow
+                filter={filter}
+                offered={screen.offered}
+                open={screen.panelOpen}
+                onToggle={() => screen.setPanelOpen(!screen.panelOpen)}
+                onChange={screen.change}
+              />
+              <Expander
+                id="closet-more"
+                headless
+                open={screen.panelOpen}
+                onToggle={() => screen.setPanelOpen(!screen.panelOpen)}
+              >
+                <FilterPanel
+                  filter={filter}
+                  pieces={closet.pieces}
+                  filtered={screen.filtered}
+                  onChange={screen.change}
+                  onClear={screen.clear}
+                />
+              </Expander>
+              {banner}
+            </>
+          }
+          empty={
             <EmptyState
               title={t("closet.noneFoundTitle")}
               secondary={
@@ -222,8 +215,17 @@ export default function ClosetScreen() {
               }
               testID="closet-none"
             />
-          )}
-        </View>
+          }
+          onPress={(piece) =>
+            selecting
+              ? screen.toggle(piece.id)
+              : router.push(`/piece/${piece.id}`)
+          }
+          onLongPress={(piece) => {
+            if (!selecting) screen.startSelect();
+            screen.toggle(piece.id);
+          }}
+        />
       )}
     </Screen>
   );

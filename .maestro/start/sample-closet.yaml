@@ -23,6 +23,6 @@ appId: com.zaimimran.almari
 - tapOn: "Closet"
 - scrollUntilVisible:
     element:
-      id: "section-samples"
+      id: "tile-sample-mauve-hijab"
     direction: DOWN
     visibilityPercentage: 1

@@ -10,7 +10,7 @@ appId: com.zaimimran.almari
 - assertVisible:
     id: "chip-needs-details"
 - assertNotVisible:
-    id: "section-samples"
+    id: "tile-sample-mauve-hijab"
 - takeScreenshot: docs/redesign/screens/after/closet/closet
 - repeat:
     times: 4
@@ -24,10 +24,10 @@ appId: com.zaimimran.almari
 - tapOn:
     id: "category-layer"
 - assertVisible:
-    id: "section-layer"
+    id: "tile-seed-blazer"
 - assertVisible: "Navy blazer.*"
 - assertNotVisible:
-    id: "section-tunic"
+    id: "tile-seed-tunic"
 - repeat:
     times: 4
     while:

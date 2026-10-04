@@ -8,7 +8,7 @@ appId: com.zaimimran.almari
       id: "closet-grid"
     timeout: 10000
 - assertVisible:
-    id: "section-hijab"
+    id: "tile-seed-chiffon-hijab"
 - assertVisible: "Chiffon hijab, Blush"
 - assertNotVisible:
     id: "closet-loading"
@@ -24,9 +24,9 @@ appId: com.zaimimran.almari
 - tapOn:
     id: "category-top"
 - assertVisible:
-    id: "section-top"
+    id: "tile-seed-blouse"
 - assertNotVisible:
-    id: "section-hijab"
+    id: "tile-seed-chiffon-hijab"
 - assertVisible:
     id: "chip-more"
 - repeat:
@@ -41,7 +41,7 @@ appId: com.zaimimran.almari
 - tapOn:
     id: "category-all"
 - assertVisible:
-    id: "section-hijab"
+    id: "tile-seed-chiffon-hijab"
 - scrollUntilVisible:
     element:
       id: "tile-seed-tunic"
@@ -49,7 +49,7 @@ appId: com.zaimimran.almari
 - assertVisible: "Rose tunic, Pink, Needs details"
 - scrollUntilVisible:
     element:
-      id: "section-samples"
+      id: "tile-sample-mauve-hijab"
     direction: DOWN
     visibilityPercentage: 1
 - takeScreenshot: docs/redesign/screens/after/closet/samples

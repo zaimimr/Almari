@@ -35,7 +35,7 @@ export type TileProps = {
   image: Piece | ImageSource;
   label?: string;
   meta?: string;
-  size: "hero" | "grid" | "strip" | "thumb";
+  size: "hero" | "grid" | "cell" | "strip" | "thumb";
   selected?: boolean;
   planned?: { short: string; spoken: string };
   colour?: {
@@ -124,6 +124,7 @@ export function Tile({
   const shown = useAnimatedStyle(() => ({ opacity: on.get() }));
 
   const thumb = size === "thumb";
+  const cell = size === "cell";
   const waiting = state === "queued" || state === "preparing";
   const pressable = Boolean(onPress || onLongPress) && state !== "removed";
   const mark = planned && !selected ? planned : undefined;
@@ -153,7 +154,10 @@ export function Tile({
           style={[StyleSheet.absoluteFill, styles.frame]}
         />
       ) : (
-        <View style={styles.cut} shouldRasterizeIOS={size === "grid"}>
+        <View
+          style={[styles.cut, cell && styles.inset]}
+          shouldRasterizeIOS={size === "grid"}
+        >
           <Image
             source={source}
             contentFit="contain"
@@ -169,7 +173,11 @@ export function Tile({
   const box = (
     <View
       accessibilityIgnoresInvertColors
-      style={[styles.box, thumb ? styles.thumb : styles.portrait]}
+      style={[
+        styles.box,
+        thumb ? styles.thumb : cell ? styles.square : styles.portrait,
+        cell && { backgroundColor: colors.surface },
+      ]}
     >
       <Animated.View style={[StyleSheet.absoluteFill, styles.frame, fill]} />
       {state === "removed" ? null : state === "queued" ? (
@@ -197,6 +205,20 @@ export function Tile({
             <Text role="mark">{mark.short}</Text>
           </View>
         </View>
+      ) : null}
+      {cell && marker ? (
+        <View
+          style={[
+            styles.corner,
+            {
+              width: dotSize * symbolScale,
+              height: dotSize * symbolScale,
+              borderRadius: dotSize * symbolScale,
+              backgroundColor: colors.plum,
+            },
+          ]}
+          {...hidden}
+        />
       ) : null}
       {thumb ? null : (
         <Animated.View
@@ -244,55 +266,56 @@ export function Tile({
     />
   );
 
-  const words = thumb ? null : waiting ? (
-    <View style={{ minHeight: lineHeight + theme.size.controlSmall }}>
-      <Silk kind="placeholder" shape="text" label={spoken} />
-    </View>
-  ) : state === "removed" ? null : (
-    <>
-      {label ? (
-        <View style={[styles.line, mark && ax && styles.wrap]}>
-          {mark && ax ? (
-            <View
-              style={[styles.capsule, { backgroundColor: colors.blush }]}
-              {...hidden}
+  const words =
+    thumb || cell ? null : waiting ? (
+      <View style={{ minHeight: lineHeight + theme.size.controlSmall }}>
+        <Silk kind="placeholder" shape="text" label={spoken} />
+      </View>
+    ) : state === "removed" ? null : (
+      <>
+        {label ? (
+          <View style={[styles.line, mark && ax && styles.wrap]}>
+            {mark && ax ? (
+              <View
+                style={[styles.capsule, { backgroundColor: colors.blush }]}
+                {...hidden}
+              >
+                <Text role="subhead">{mark.short}</Text>
+              </View>
+            ) : null}
+            {marker ? (
+              <View
+                style={[
+                  lead(dotSize * symbolScale),
+                  { backgroundColor: colors.plum },
+                ]}
+                {...hidden}
+              />
+            ) : colour && !colour.onPress ? (
+              swatch(colour.hex, true)
+            ) : null}
+            <Text
+              role="subhead"
+              numberOfLines={large ? undefined : 2}
+              style={styles.label}
             >
-              <Text role="subhead">{mark.short}</Text>
-            </View>
-          ) : null}
-          {marker ? (
-            <View
-              style={[
-                lead(dotSize * symbolScale),
-                { backgroundColor: colors.plum },
-              ]}
-              {...hidden}
-            />
-          ) : colour && !colour.onPress ? (
-            swatch(colour.hex, true)
-          ) : null}
-          <Text
-            role="subhead"
-            numberOfLines={large ? undefined : 2}
-            style={styles.label}
-          >
-            {label}
-          </Text>
-        </View>
-      ) : null}
-      {meta ? (
-        state === "failed" ? (
-          <Text role="footnote" tone="error">
-            {meta}
-          </Text>
-        ) : (
-          <Text role="subhead" tone="muted">
-            {meta}
-          </Text>
-        )
-      ) : null}
-    </>
-  );
+              {label}
+            </Text>
+          </View>
+        ) : null}
+        {meta ? (
+          state === "failed" ? (
+            <Text role="footnote" tone="error">
+              {meta}
+            </Text>
+          ) : (
+            <Text role="subhead" tone="muted">
+              {meta}
+            </Text>
+          )
+        ) : null}
+      </>
+    );
 
   return (
     <LayoutAnimationConfig skipEntering>
@@ -409,6 +432,7 @@ const styles = StyleSheet.create({
   },
   box: { borderCurve: "continuous" },
   portrait: { width: "100%", aspectRatio: 4 / 5 },
+  square: { width: "100%", aspectRatio: 1, overflow: "hidden" },
   frame: {
     borderRadius: theme.radius.print,
     borderCurve: "continuous",
@@ -420,6 +444,12 @@ const styles = StyleSheet.create({
     left: "3%",
     right: "3%",
     bottom: "3%",
+  },
+  inset: { top: "8%", left: "8%", right: "8%", bottom: "8%" },
+  corner: {
+    position: "absolute",
+    top: theme.space.sm,
+    left: theme.space.sm,
   },
   markSlot: {
     position: "absolute",
