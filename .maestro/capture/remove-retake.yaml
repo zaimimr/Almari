@@ -5,10 +5,6 @@ appId: com.zaimimran.almari
 - runFlow: ../lib/open-add.yaml
 - tapOn:
     id: "job-ready-1"
-- scrollUntilVisible:
-    element:
-      id: "confirm-remove"
-    centerElement: true
 - tapOn:
     id: "confirm-remove"
 - assertVisible: "Removed"

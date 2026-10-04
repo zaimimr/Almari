@@ -1445,6 +1445,7 @@ export const nb: Record<Key, string> = {
   "confirm.step": "{n} av {total}",
   "confirm.previous": "Forrige",
   "confirm.next": "Neste",
+  "confirm.switchCategory": "Bytt kategori",
   "fact.photo": "Bilde",
   "capture.partialShort": "Delvis synlig",
   "advice.merged":

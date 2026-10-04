@@ -18,7 +18,6 @@ import {
 } from "../../domain/attributes";
 import {
   correctImport,
-  dismissAdvice,
   importStudioSource,
   keepDuplicate,
   nameFor,
@@ -27,16 +26,8 @@ import {
 import { importCutout } from "../../domain/cutout";
 import { attributeLabelKey, attributeValueKey } from "../../domain/facts";
 import { rankCategories, rankKinds } from "../../domain/recognition";
-import {
-  categoryName,
-  kindName,
-  styleName,
-  stylesName,
-  t,
-  type Key,
-} from "../../i18n";
+import { categoryName, kindName, styleName, t, type Key } from "../../i18n";
 import { useDiscardChanges } from "../../navigation/useDiscardChanges";
-import { labelLines } from "../../state/careLabel";
 import { useCloset } from "../../state/closet";
 import { canPrepareOnDevice } from "../../state/imports";
 import { studioOffered, useStudioMaker } from "../../state/studio";
@@ -45,38 +36,27 @@ import {
   Banner,
   Button,
   ChipRow,
-  Expander,
   Field,
   Footer,
-  Row,
-  Rows,
+  HeaderItem,
   Screen,
   Segmented,
   Text,
   Tile,
 } from "../../ui";
 import { theme } from "../../ui/theme";
-import { ColourChips, colourLabel } from "../ColourChips";
+import { ColourChips } from "../ColourChips";
 import { useRetake, type CaptureProblem } from "../Retake";
 import { jobColour, jobPhoto, jobPiece } from "./jobs";
 import { PhotoToolbar, type PhotoView } from "./PhotoToolbar";
 import { removeWithUndo } from "./removed";
 
 type StyleChoice = Style | "both";
-type Open = "colour" | "garment" | "style" | null;
 
 const attributeQuestions: Partial<Record<AttributeKey, Key>> = {
   length: "question.length",
   sleeve: "question.sleeve",
 };
-
-const adviceKeys = {
-  merged: "advice.merged",
-  clipped: "advice.clipped",
-  blur: "advice.blur",
-  dark: "advice.dark.title",
-  "mixed-light": "advice.mixed-light.title",
-} as const;
 
 const problemKeys: Record<CaptureProblem, Key> = {
   "camera-off": "common.cameraOff",
@@ -86,6 +66,7 @@ const problemKeys: Record<CaptureProblem, Key> = {
 };
 
 const somethingElse = "something-else";
+const switchCategory = "switch-category";
 
 export const styleChoices = (): { id: StyleChoice; label: string }[] => [
   { id: "desi", label: styleName("desi") },
@@ -197,8 +178,7 @@ function ConfirmForm({
     initial.answer,
   );
   const [showAll, setShowAll] = useState(false);
-  const [open, setOpen] = useState<Open>(null);
-  const [setAside, setSetAside] = useState(false);
+  const [pickCategory, setPickCategory] = useState(false);
   const [problem, setProblem] = useState<CaptureProblem | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -289,15 +269,6 @@ function ConfirmForm({
       })())
     : null;
   const checks = job.checks ?? [];
-  const adviceText = setAside
-    ? null
-    : checks.includes("partial")
-      ? t("capture.partial")
-      : checks.includes("several")
-        ? t("capture.several")
-        : job.advice
-          ? t(adviceKeys[job.advice])
-          : null;
 
   const banner = problem ? (
     <Banner
@@ -356,61 +327,28 @@ function ConfirmForm({
       ]}
       testID="confirm-duplicate"
     />
-  ) : adviceText && !failed ? (
-    <Banner
-      tone="notice"
-      text={adviceText}
-      actions={[
-        {
-          label: t("capture.retake"),
-          variant: "secondary",
-          onPress: () => void retakeFrom("camera"),
-        },
-        {
-          label: t("advice.useAnyway"),
-          variant: "quiet",
-          onPress: () => {
-            setSetAside(true);
-            if (job.advice)
-              void act(() =>
-                update((current) => dismissAdvice(current, job.id)).then(
-                  () => undefined,
-                ),
-              );
-          },
-        },
-      ]}
-      testID="confirm-advice"
-    />
   ) : null;
-  const bannerRetakes = Boolean(banner) && !problem && !job.duplicateOf;
 
-  const actionsRow = (
-    <View style={styles.actions}>
+  const retakeRow = (
+    <View style={styles.bleed}>
       <Button
-        label={t("capture.remove")}
-        variant="destructive"
+        label={t("capture.retake")}
+        variant="quiet"
         disabled={busy}
-        onPress={() => void remove()}
-        testID="confirm-remove"
+        onPress={() => void retakeFrom("camera")}
+        testID="confirm-retake"
       />
-      <View
-        style={bannerRetakes ? styles.held : undefined}
-        pointerEvents={bannerRetakes ? "none" : "auto"}
-        accessibilityElementsHidden={bannerRetakes}
-        importantForAccessibility={
-          bannerRetakes ? "no-hide-descendants" : "auto"
-        }
-      >
-        <Button
-          label={t("capture.retake")}
-          variant="quiet"
-          disabled={busy}
-          onPress={() => void retakeFrom("camera")}
-          testID="confirm-retake"
-        />
-      </View>
     </View>
+  );
+
+  const trash = (
+    <HeaderItem
+      label={t("capture.remove")}
+      icon="trash"
+      disabled={busy}
+      onPress={() => void remove()}
+      testID="confirm-remove"
+    />
   );
 
   if (failed || !prepared || !kind)
@@ -420,6 +358,7 @@ function ConfirmForm({
         headerTitleVisible
         leading="cancel"
         onCancel={() => router.back()}
+        actions={trash}
         testID="confirm-screen"
       >
         <View style={styles.content}>
@@ -440,7 +379,7 @@ function ConfirmForm({
               adjust={adjust}
             />
           ) : null}
-          {actionsRow}
+          {retakeRow}
         </View>
       </Screen>
     );
@@ -563,18 +502,12 @@ function ConfirmForm({
     }
   }
 
-  const toggle = (part: Exclude<Open, null>) =>
-    setOpen((current) => (current === part ? null : part));
-
   const styleSegmented = (label?: string) => (
     <Segmented
       label={label}
       options={styleChoices()}
       value={choiceOf(chosenStyles) ?? "western"}
-      onChange={(choice) => {
-        setStyles(stylesOf(choice));
-        setOpen(null);
-      }}
+      onChange={(choice) => setStyles(stylesOf(choice))}
     />
   );
 
@@ -599,25 +532,26 @@ function ConfirmForm({
     />
   );
 
-  const kindChips = (label: string) => (
+  const kindChips = (label: string, switcher = false) => (
     <ChipRow
       label={label}
-      options={kindChoices.map((option) => ({
-        id: option as string,
-        label: kindName(option),
-      }))}
+      options={[
+        ...kindChoices.map((option) => ({
+          id: option as string,
+          label: kindName(option),
+        })),
+        ...(switcher
+          ? [{ id: switchCategory, label: t("confirm.switchCategory") }]
+          : []),
+      ]}
       value={kind}
       onChange={(next) => {
-        if (typeof next === "string") {
-          chooseKind(next as GarmentKind);
-          if (open === "garment") setOpen(null);
-        }
+        if (next === switchCategory) setPickCategory(true);
+        else if (typeof next === "string") chooseKind(next as GarmentKind);
       }}
       testID="confirm-kind"
     />
   );
-
-  const label = job.label ? labelLines(job.label) : [];
 
   return (
     <Screen
@@ -625,6 +559,7 @@ function ConfirmForm({
       headerTitleVisible
       leading="cancel"
       onCancel={() => router.back()}
+      actions={trash}
       footer={
         <Footer
           error={error}
@@ -703,9 +638,15 @@ function ConfirmForm({
           </View>
         ) : question === "subcategory" ? (
           kindChips(asked ?? t("piece.kind"))
-        ) : question === "style" && !fixed ? (
-          styleSegmented(asked ?? t("piece.style"))
-        ) : null}
+        ) : (
+          <View style={styles.block}>
+            {pickCategory ? categoryChips(t("piece.category")) : null}
+            {kindChips(t("piece.kind"), !pickCategory)}
+          </View>
+        )}
+        {question === "style" && !fixed
+          ? styleSegmented(asked ?? t("piece.style"))
+          : null}
         {attributeAsked ? (
           <ChipRow
             label={t(
@@ -726,68 +667,14 @@ function ConfirmForm({
             testID="confirm-attribute"
           />
         ) : null}
-        <View style={styles.rows}>
-          {colour ? (
-            <Expander
-              id="colour"
-              title={t("fact.colour")}
-              value={colourLabel(colour)}
-              open={open === "colour"}
-              onToggle={() => toggle("colour")}
-              testID="confirm-colour"
-            >
-              <ColourChips
-                value={colour}
-                onPick={(next) => {
-                  setColour(next);
-                  setOpen(null);
-                }}
-                inSurface
-              />
-            </Expander>
-          ) : null}
-          {question === "category" || question === "subcategory" ? null : (
-            <Expander
-              id="garment"
-              title={t("piece.kind")}
-              value={kindName(kind)}
-              open={open === "garment"}
-              onToggle={() => toggle("garment")}
-              testID="confirm-garment"
-            >
-              <View style={styles.block}>
-                {categoryChips(t("piece.category"))}
-                {kindChips(t("piece.kind"))}
-              </View>
-            </Expander>
-          )}
-          {fixed ? (
-            <Rows>
-              <Row
-                title={t("piece.style")}
-                trailing={{ value: stylesName(fixed) }}
-                last
-              />
-            </Rows>
-          ) : question === "style" ? null : (
-            <Expander
-              id="style"
-              title={t("piece.style")}
-              value={
-                choiceOf(chosenStyles)
-                  ? styleChoices().find(
-                      (item) => item.id === choiceOf(chosenStyles),
-                    )!.label
-                  : undefined
-              }
-              open={open === "style"}
-              onToggle={() => toggle("style")}
-              testID="confirm-style"
-            >
-              {styleSegmented()}
-            </Expander>
-          )}
-        </View>
+        {colour ? (
+          <ColourChips
+            label={t("fact.colour")}
+            value={colour}
+            onPick={setColour}
+            testID="confirm-colour"
+          />
+        ) : null}
         <Field
           label={t("piece.name")}
           testID="check-name"
@@ -796,25 +683,7 @@ function ConfirmForm({
           maxLength={80}
           returnKeyType="done"
         />
-        <Rows>
-          <Row
-            title={t("careLabel.title")}
-            meta={label.length ? label.join(", ") : undefined}
-            trailing={{ value: job.label ? t("common.edit") : t("common.add") }}
-            accessibilityLabel={
-              job.label ? t("careLabel.editLabel") : t("careLabel.addLabel")
-            }
-            onPress={() =>
-              router.push({
-                pathname: "/label/[id]",
-                params: { id: job.id, target: "import" },
-              })
-            }
-            last
-            testID="confirm-label"
-          />
-        </Rows>
-        {actionsRow}
+        {retakeRow}
       </View>
     </Screen>
   );
@@ -830,14 +699,6 @@ function openCutout(id: string) {
 const styles = StyleSheet.create({
   content: { gap: theme.space.lg },
   block: { gap: theme.space.md },
-  rows: { gap: theme.space.sm },
   hero: { width: 240, alignSelf: "center" },
   bleed: { marginLeft: -theme.space.sm, alignSelf: "flex-start" },
-  actions: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    marginLeft: -theme.space.sm,
-    gap: theme.space.sm,
-  },
-  held: { opacity: 0 },
 });

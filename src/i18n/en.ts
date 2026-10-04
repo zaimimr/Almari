@@ -1429,6 +1429,7 @@ export const en = {
   "confirm.step": "{n} of {total}",
   "confirm.previous": "Previous",
   "confirm.next": "Next",
+  "confirm.switchCategory": "Change category",
   "fact.photo": "Photo",
   "capture.partialShort": "Partly visible",
   "advice.merged": "Background blends in. Use a plain, contrasting one.",

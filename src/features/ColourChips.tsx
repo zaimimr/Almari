@@ -14,13 +14,18 @@ export function ColourChips({
   value,
   onPick,
   inSurface,
+  label,
+  testID,
 }: {
   value: string | null;
   onPick: (name: string) => void;
   inSurface?: boolean;
+  label?: string;
+  testID?: string;
 }) {
   return (
     <ChipRow
+      label={label}
       options={colourNames.map((name) => ({
         id: name,
         label: colourLabel(name),
@@ -31,6 +36,7 @@ export function ColourChips({
         if (typeof next === "string") onPick(next);
       }}
       inSurface={inSurface}
+      testID={testID}
     />
   );
 }

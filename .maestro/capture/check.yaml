@@ -9,11 +9,8 @@ appId: com.zaimimran.almari
 - takeScreenshot: docs/redesign/screens/after/capture/confirm
 - tapOn: "Tops"
 - scrollUntilVisible:
-    element:
-      id: "confirm-colour"
+    element: "Blush"
     centerElement: true
-- tapOn:
-    id: "confirm-colour"
 - tapOn: "Blush"
 - tapOn: "Looks right"
 - assertVisible: "New piece, 2 of 2"
