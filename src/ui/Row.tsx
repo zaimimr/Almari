@@ -215,7 +215,9 @@ export function Row({
   ) : action ? (
     <Button variant="quiet" size="small" media={media} {...action} />
   ) : value !== undefined && !large ? (
-    <Text tone={quiet}>{value}</Text>
+    <Text role="subhead" tone={quiet}>
+      {value}
+    </Text>
   ) : null;
 
   const text = (
@@ -233,7 +235,11 @@ export function Row({
           {meta}
         </Text>
       ) : null}
-      {value !== undefined && large ? <Text tone={quiet}>{value}</Text> : null}
+      {value !== undefined && large ? (
+        <Text role="subhead" tone={quiet}>
+          {value}
+        </Text>
+      ) : null}
     </View>
   );
 
@@ -335,7 +341,7 @@ export function Rows({ children }: { children: ReactNode }) {
 
 const styles = StyleSheet.create({
   row: {
-    minHeight: theme.size.controlRegular,
+    minHeight: 56,
     justifyContent: "center",
     paddingVertical: theme.space.sm,
   },

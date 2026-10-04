@@ -9,7 +9,7 @@ test("tokens follow the approved mockup", () => {
   assert.equal(theme.colors.plum, "#675469");
   assert.equal(theme.radius.full, 999);
   assert.equal(theme.space.footerInset, 48);
-  assert.equal(gutterFor(390), 16);
-  assert.equal(gutterFor(428), 20);
+  assert.equal(gutterFor(390), 20);
+  assert.equal(gutterFor(428), 24);
   assert.equal(theme.type.title.maxFontSizeMultiplier, 2);
 });

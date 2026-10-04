@@ -76,9 +76,8 @@ export function skipStep(
 ): OnboardingStep {
   const steps = stepsFor(answers);
   return (
-    flow
-      .slice(flow.indexOf(step) + 1)
-      .find((next) => steps.includes(next)) ?? "done"
+    flow.slice(flow.indexOf(step) + 1).find((next) => steps.includes(next)) ??
+    "done"
   );
 }
 

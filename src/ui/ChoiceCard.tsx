@@ -237,7 +237,7 @@ const styles = StyleSheet.create({
   grid: { gap: theme.space.md },
   row: { flexDirection: "row", alignItems: "flex-start", gap: theme.space.lg },
   card: { flex: 1, minWidth: 0 },
-  frame: { borderRadius: theme.radius.md, borderCurve: "continuous" },
+  frame: { borderRadius: theme.radius.print, borderCurve: "continuous" },
   art: { overflow: "hidden" },
   portrait: { aspectRatio: 3 / 4 },
   bust: { transform: [{ scale: 1.8 }], transformOrigin: "50% 12%" },

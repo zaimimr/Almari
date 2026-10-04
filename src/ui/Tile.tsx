@@ -153,10 +153,7 @@ export function Tile({
           style={[StyleSheet.absoluteFill, styles.frame]}
         />
       ) : (
-        <View
-          style={[styles.cut, !thumb && theme.elevation.rest]}
-          shouldRasterizeIOS={size === "grid"}
-        >
+        <View style={styles.cut} shouldRasterizeIOS={size === "grid"}>
           <Image
             source={source}
             contentFit="contain"
@@ -413,7 +410,7 @@ const styles = StyleSheet.create({
   box: { borderCurve: "continuous" },
   portrait: { width: "100%", aspectRatio: 4 / 5 },
   frame: {
-    borderRadius: theme.radius.md,
+    borderRadius: theme.radius.print,
     borderCurve: "continuous",
     overflow: "hidden",
   },

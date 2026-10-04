@@ -8,10 +8,7 @@ import {
 } from "react-native";
 import Animated, { LayoutAnimationConfig } from "react-native-reanimated";
 import { Stack, router, useLocalSearchParams } from "expo-router";
-import {
-  answerSteps,
-  type OnboardingStep,
-} from "../../src/domain/onboarding";
+import { answerSteps, type OnboardingStep } from "../../src/domain/onboarding";
 import { StepColours } from "../../src/features/onboarding/StepColours";
 import { StepCoverage } from "../../src/features/onboarding/StepCoverage";
 import { StepDone } from "../../src/features/onboarding/StepDone";

@@ -232,7 +232,7 @@ function LaidPiece({
   const slopY = Math.max(0, (theme.size.touch - box.height) / 2);
   const scale = Math.min(symbolScale, markCap);
   const disc = markDisc * scale;
-  const { rest, lift: raised } = theme.elevation;
+  const raised = theme.elevation.lift;
 
   useEffect(() => {
     if (phase === "still") return;
@@ -272,23 +272,11 @@ function LaidPiece({
   }));
 
   const shadow = useAnimatedStyle(() => ({
-    shadowOpacity: interpolate(
-      lift.get(),
-      [0, 1],
-      [rest.shadowOpacity, raised.shadowOpacity],
-    ),
-    shadowRadius: interpolate(
-      lift.get(),
-      [0, 1],
-      [rest.shadowRadius, raised.shadowRadius],
-    ),
+    shadowOpacity: interpolate(lift.get(), [0, 1], [0, raised.shadowOpacity]),
+    shadowRadius: interpolate(lift.get(), [0, 1], [0, raised.shadowRadius]),
     shadowOffset: {
       width: 0,
-      height: interpolate(
-        lift.get(),
-        [0, 1],
-        [rest.shadowOffset.height, raised.shadowOffset.height],
-      ),
+      height: interpolate(lift.get(), [0, 1], [0, raised.shadowOffset.height]),
     },
   }));
 
@@ -315,7 +303,7 @@ function LaidPiece({
         <Animated.View
           style={[
             StyleSheet.absoluteFill,
-            elevated && rest,
+            elevated && { shadowColor: raised.shadowColor },
             elevated && onPress && shadow,
           ]}
         >
@@ -632,7 +620,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     borderWidth: 1,
     borderStyle: "dashed",
-    borderRadius: theme.radius.md,
+    borderRadius: theme.radius.print,
     borderCurve: "continuous",
   },
   mark: {

@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
     left: 2,
     paddingHorizontal: 6,
     paddingVertical: 1,
-    borderRadius: 8,
+    borderRadius: theme.radius.print,
     backgroundColor: theme.colors.plum,
   },
   keptLabel: {

@@ -44,13 +44,11 @@ export function Section({
               accessibilityLabel={spoken}
               style={styles.title}
             >
-              <Text role="headline" style={styles.name}>
+              <Text role="eyebrow" style={styles.name}>
                 {title}
               </Text>
               {count !== undefined ? (
-                <Text role="headline" tone="muted">
-                  {String(count)}
-                </Text>
+                <Text role="eyebrow">{String(count)}</Text>
               ) : null}
             </View>
           ) : null}

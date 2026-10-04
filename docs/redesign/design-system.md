@@ -62,16 +62,17 @@ Rules:
 
 ### Type
 
-Georgia is for names you would say out loud: tab titles, outfit names, look names, piece names, empty-state titles. Everything else uses the system font (SF Pro). Seven roles cover the app. `display` is native-bar only and is not a `Text` role.
+Georgia is for names you would say out loud: tab titles, outfit names, look names, piece names, empty-state titles. Everything else uses the system font (SF Pro). Eight roles cover the app.
 
 | Token | Font | Size / line | Weight | Tracking | iOS text style (Dynamic Type) | `maxFontSizeMultiplier` | Use |
 |---|---|---|---|---|---|---|---|
-| `display` | Georgia | 34 / 41 | 400 | -0.4 | Large Title | 2.0 (set by hand, see below) | Native large title on tab roots only |
-| `title` | Georgia | 26 / 32 | 400 | -0.2 | Title 1 | 2.0 | Outfit name, look name, piece name, empty-state title |
-| `headline` | System | 17 / 22 | 600 | 0 | Headline | none | Section title, button label, visible field label |
+| `display` | Georgia | 40 / 44 | 400 | -0.8 | Large Title | 2.0 | Profile name. The native large title stays 34 (see below) |
+| `title` | Georgia | 28 / 34 | 400 | -0.4 | Title 1 | 2.0 | Outfit name, look name, piece name, empty-state title |
+| `headline` | System | 17 / 22 | 600 | 0 | Headline | none | Button label, visible field label |
 | `body` | System | 17 / 24 | 400 | 0 | Body | none | Row title, values, sentences that must stay |
 | `subhead` | System | 15 / 20 | 400 | 0 | Subheadline | none | Chip label, meta line under a row title, tile name |
 | `footnote` | System | 13 / 18 | 400 | 0 | Footnote | none | Inline errors, the one-line reason under an outfit |
+| `eyebrow` | System | 12 / 16 | 600 | 1.4, uppercase | Caption 1 | 1.6 | Section title, question label on a style card. `inkMuted` by default |
 | `mark` | System | 12 / 16 | 600 | 0 | Caption 1 | 1.4 | Labels on photos below `ax`: planned day, guide pill, readout |
 
 System roles use tracking 0: SF Pro already applies optical tracking per size.
@@ -101,8 +102,9 @@ The 4 pt scale keeps the current names, so `theme.space.*` call sites survive. `
 | `space.lg` | 16 | Block to block inside a section, card padding, button side padding |
 | `space.xl` | 24 | Hero to the content under it |
 | `space.xxl` | 32 | Section to section |
+| `space.xxxl` | 48 | Block to block on Profile |
 | `space.footerInset` | 48 | Breathing room after the last content block. The ScrollView bottom inset is the measured Footer height plus this |
-| `gutter` | 16 (20 when window width >= 428) | Screen side inset. Matches the native large title, back chevron and tab bar margins |
+| `gutter` | 20 (24 when window width >= 428) | Screen side inset. Matches the native large title, back chevron and tab bar margins |
 
 Rule: every screen uses `gutter` left and right, `space.xxl` between sections, `space.lg` inside them. No other horizontal paddings and no content max width (the app is iPhone only).
 
@@ -110,6 +112,7 @@ Rule: every screen uses `gutter` left and right, `space.xxl` between sections, `
 
 | Token | Value | Use |
 |---|---|---|
+| `radius.print` | 4 | Drawn and photographed art: choice cards, tile frames, outfit collages, flat lays |
 | `radius.sm` | 8 | Thumbs (40 pt) |
 | `radius.md` | 12 | Raw photo frames, tile pressed fill, banner, expander, field |
 | `radius.lg` | 20 | Camera frame, cut-out canvas, selfie frame |
@@ -124,7 +127,7 @@ Chrome has no shadows. The native header and tab bar bring their own glass. Shad
 | Token | Shadow (iOS) | Use |
 |---|---|---|
 | `elevation.flat` | none | Everything that is not a cut-out, and every cut-out smaller than 72 pt (thumbs, tray thumbs, mini flat lays), where a shadow turns into a grey smudge |
-| `elevation.rest` | colour `ink`, opacity 0.10, radius 6, offset 0 / 3 | Cut-outs at rest at 72 pt and larger: grid and strip tiles, row and hero flat lays |
+| `elevation.rest` | none | Cut-outs at rest lie flat. Only a lifted piece casts a shadow |
 | `elevation.lift` | colour `ink`, opacity 0.14, radius 12, offset 0 / 6 | One use: a flat-lay piece under a finger |
 
 `lift` is never a resting state. A piece settles back to `rest` on release. `rest` and `lift` are the two ends of one animated value (see `motion.md`, lift). Grid Tiles and static flat lays set `shouldRasterizeIOS`, so a Closet grid and a Looks list scroll without offscreen shadow passes.

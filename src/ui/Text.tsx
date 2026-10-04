@@ -9,7 +9,14 @@ import { useColors } from "./useColors";
 import { useLargeText } from "./useLargeText";
 
 export type TextRole =
-  "title" | "headline" | "body" | "subhead" | "footnote" | "mark";
+  | "display"
+  | "title"
+  | "headline"
+  | "body"
+  | "subhead"
+  | "footnote"
+  | "eyebrow"
+  | "mark";
 export type TextTone =
   | "ink"
   | "muted"
@@ -33,7 +40,7 @@ export const toneColor: Record<TextTone, keyof Colors> = {
 
 export function Text({
   role = "body",
-  tone = "ink",
+  tone = role === "eyebrow" ? "muted" : "ink",
   announce = false,
   user = false,
   style,
@@ -66,7 +73,8 @@ export function Text({
       style={[
         type,
         { color: colors[toneColor[tone]] },
-        role === "title" && bold && { fontFamily: "Georgia-Bold" },
+        (role === "title" || role === "display") &&
+          bold && { fontFamily: "Georgia-Bold" },
         style,
       ]}
     >

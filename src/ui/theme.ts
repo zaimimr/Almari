@@ -26,27 +26,44 @@ export const theme = {
   },
   colorsIncreasedContrast: { inkMuted: "#322E28", line: "#948B85" },
   brand: { ivory: "#F4EDE3", plumGround: "#644E64", sheen: "#FAF8F3" },
-  space: { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32, footerInset: 48 },
-  radius: { sm: 8, md: 12, lg: 20, full: 999 },
+  space: {
+    xs: 4,
+    sm: 8,
+    md: 12,
+    lg: 16,
+    xl: 24,
+    xxl: 32,
+    xxxl: 48,
+    footerInset: 48,
+  },
+  radius: { print: 4, sm: 8, md: 12, lg: 20, full: 999 },
   type: {
     display: {
       fontFamily: "Georgia",
-      fontSize: 34,
-      lineHeight: 41,
-      letterSpacing: -0.4,
+      fontSize: 40,
+      lineHeight: 44,
+      letterSpacing: -0.8,
       maxFontSizeMultiplier: 2,
     },
     title: {
       fontFamily: "Georgia",
-      fontSize: 26,
-      lineHeight: 32,
-      letterSpacing: -0.2,
+      fontSize: 28,
+      lineHeight: 34,
+      letterSpacing: -0.4,
       maxFontSizeMultiplier: 2,
     },
     headline: { fontSize: 17, lineHeight: 22, fontWeight: "600" },
     body: { fontSize: 17, lineHeight: 24 },
     subhead: { fontSize: 15, lineHeight: 20 },
     footnote: { fontSize: 13, lineHeight: 18 },
+    eyebrow: {
+      fontSize: 12,
+      lineHeight: 16,
+      fontWeight: "600",
+      letterSpacing: 1.4,
+      textTransform: "uppercase",
+      maxFontSizeMultiplier: 1.6,
+    },
     mark: {
       fontSize: 12,
       lineHeight: 16,
@@ -56,12 +73,7 @@ export const theme = {
   },
   elevation: {
     flat: {},
-    rest: {
-      shadowColor: "#322E28",
-      shadowOpacity: 0.1,
-      shadowRadius: 6,
-      shadowOffset: { width: 0, height: 3 },
-    },
+    rest: {},
     lift: {
       shadowColor: "#322E28",
       shadowOpacity: 0.14,
@@ -85,6 +97,6 @@ export const theme = {
 
 export type Colors = Record<keyof typeof theme.colors, string>;
 
-export function gutterFor(windowWidth: number): 16 | 20 {
-  return windowWidth >= 428 ? 20 : 16;
+export function gutterFor(windowWidth: number): 20 | 24 {
+  return windowWidth >= 428 ? 24 : 20;
 }

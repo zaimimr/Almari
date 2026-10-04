@@ -133,12 +133,7 @@ export function Expander({
         reveal.current = false;
         showPart(part, event.nativeEvent.layout.height);
       }}
-      style={[
-        styles.expander,
-        !card && { backgroundColor: colors.surface },
-        !card && styles.padded,
-        headless && bodyStyle,
-      ]}
+      style={[card && styles.card, headless && bodyStyle]}
     >
       {headless ? null : (
         <Pressable
@@ -152,7 +147,13 @@ export function Expander({
           onPressOut={() => press.set(timing(0, "quick", "silk"))}
         >
           <Animated.View
-            style={[styles.header, !card && styles.headerBleed, fill]}
+            style={[
+              styles.header,
+              card
+                ? styles.headerCard
+                : [styles.headerFlat, { borderBottomColor: colors.line }],
+              fill,
+            ]}
           >
             <View style={[styles.words, large && styles.wordsLarge]}>
               <View style={styles.title}>
@@ -167,7 +168,7 @@ export function Expander({
                     {...hidden}
                   />
                 ) : null}
-                <Text role="headline" style={styles.shrink}>
+                <Text role={card ? "headline" : "body"} style={styles.shrink}>
                   {title}
                 </Text>
               </View>
@@ -216,23 +217,27 @@ export function Expander({
 }
 
 const styles = StyleSheet.create({
-  expander: {
+  card: {
     borderRadius: theme.radius.md,
     borderCurve: "continuous",
     overflow: "hidden",
   },
-  padded: { paddingHorizontal: theme.space.lg },
   header: {
     flexDirection: "row",
     alignItems: "center",
     gap: theme.space.sm,
-    minHeight: theme.size.controlSmall,
     paddingVertical: theme.space.xs,
+  },
+  headerCard: {
+    minHeight: theme.size.controlSmall,
     paddingHorizontal: theme.space.lg,
     borderRadius: theme.radius.md,
     borderCurve: "continuous",
   },
-  headerBleed: { marginHorizontal: -theme.space.lg },
+  headerFlat: {
+    minHeight: 56,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
   words: {
     flex: 1,
     flexDirection: "row",
