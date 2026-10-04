@@ -8,7 +8,8 @@ appId: com.zaimimran.almari
 - tapOn:
     id: "confirm-cutout"
 - assertVisible: "Adjust cut-out"
-- assertVisible: "Restore"
+- assertVisible:
+    id: "cutout-restore"
 - tapOn: "Done"
 - assertVisible:
     id: "confirm-screen"

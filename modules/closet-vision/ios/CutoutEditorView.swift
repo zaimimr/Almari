@@ -330,6 +330,7 @@ final class CutoutEditorView: ExpoView, UIScrollViewDelegate {
     selector = CutoutSelector(photo: prepared.photo, picture: prepared.picture)
     let image = UIImage(cgImage: prepared.picture)
     faded.image = image
+    faded.alpha = initial.contains { $0 > 0 } ? 0.35 : 0.75
     kept.image = image
     apply(initial)
     fitted = .zero
