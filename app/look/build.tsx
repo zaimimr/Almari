@@ -1,418 +1,338 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
+import { ScrollView, StyleSheet, View } from "react-native";
+import { router, useLocalSearchParams } from "expo-router";
+import type { Piece } from "../../src/domain/closet";
+import { roleOf } from "../../src/domain/styling";
+import { categories, occasions } from "../../src/domain/taxonomy";
+import { ChangeStrip, tileLabel } from "../../src/features/ChangeStrip";
+import { useBuilder } from "../../src/features/builder/useBuilder";
+import { t, type Key } from "../../src/i18n";
 import {
-  FlatList,
-  Keyboard,
-  StyleSheet,
-  View,
-  useWindowDimensions,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Stack, router, useLocalSearchParams } from "expo-router";
-import { randomUUID } from "expo-crypto";
-import { useCloset } from "../../src/state/closet";
-import {
-  type Category,
-  type Occasion,
-  type Piece,
-  saveLook,
-} from "../../src/domain/closet";
-import {
-  builderRequest,
-  fillOutfit,
-  followName,
-  rankPieces,
-  swapOptions,
-} from "../../src/domain/builder";
-import { recordSaved } from "../../src/domain/feedback";
-import { outfitName } from "../../src/domain/outfitName";
-import { clockFor } from "../../src/domain/today";
-import { useDiscardChanges } from "../../src/navigation/useDiscardChanges";
-import {
-  AppText,
   Button,
-  ErrorMessage,
-  Field,
-  Filters,
-  HeaderAction,
-  OutfitCollage,
-  PieceTile,
-} from "../../src/ui/legacy";
+  Chip,
+  ChipRow,
+  FlatLay,
+  Footer,
+  Row,
+  Rows,
+  Screen,
+  Text,
+  Tile,
+} from "../../src/ui";
 import { theme } from "../../src/ui/theme";
-import { locale, t } from "../../src/i18n";
-import { now } from "../../src/state/clock";
+import { useColors } from "../../src/ui/useColors";
+import { useLargeText } from "../../src/ui/useLargeText";
 
 export default function BuildLook() {
-  const { width, fontScale } = useWindowDimensions();
-  const wide = width >= 900;
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
-  const keyboardVisible = keyboardHeight > 0;
-  const {
-    id: sourceId,
-    pieces: startingPieces,
-    name: startingName,
-    occasion: startingOccasion,
-  } = useLocalSearchParams<{
-    id?: string;
-    pieces?: string;
-    name?: string;
-    occasion?: Occasion;
-  }>();
-  const { closet, update } = useCloset();
-  const [source] = useState(() =>
-    closet.looks.find((look) => look.id === sourceId),
-  );
-  const [id] = useState(() => source?.id ?? randomUUID());
-  const [initialSelection] = useState(() =>
-    (source?.pieceIds ?? startingPieces?.split(",") ?? []).filter((pieceId) =>
-      closet.pieces.some((piece) => piece.id === pieceId),
-    ),
-  );
-  const [selected, setSelected] = useState(initialSelection);
-  const list = useRef<FlatList<Piece>>(null);
-  const [swapping, setSwapping] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
-  const occasion = source?.occasion ?? startingOccasion;
-  const localDate = clockFor(now()).localDate;
-  const request = useMemo(
-    () => builderRequest(closet, selected, occasion),
-    [closet, selected, occasion],
-  );
-  const pieces = selected.flatMap((pieceId) => {
-    const piece = closet.pieces.find((item) => item.id === pieceId);
-    return piece ? [piece] : [];
-  });
-  const suggested = outfitName(pieces, request.occasion, locale);
-  const [named, setNamed] = useState(suggested);
-  const [name, setName] = useState(source?.name ?? startingName ?? suggested);
-  if (named !== suggested) {
-    setNamed(suggested);
-    setName(followName(name, named, suggested));
-  }
-  const [category, setCategory] = useState<Category | "all">("all");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const dirty =
-    name !== (source?.name ?? startingName ?? suggested) ||
-    JSON.stringify(selected) !==
-      JSON.stringify(source?.pieceIds ?? initialSelection);
-  const allowClose = useDiscardChanges(dirty, busy);
-  const options = useMemo(
-    () =>
-      rankPieces(
-        closet,
-        request,
-        selected,
-        closet.pieces.filter(
-          (piece) => category === "all" || piece.category === category,
-        ),
-        localDate,
-      ),
-    [closet, request, selected, category, localDate],
-  );
-  const swapTarget = pieces.find((piece) => piece.id === swapping) ?? null;
-  const alternatives = swapTarget
-    ? swapOptions(closet, request, selected, swapTarget.id, localDate)
-    : [];
+  const params = useLocalSearchParams<{ id?: string; pieces?: string }>();
+  const builder = useBuilder(params);
+  const colors = useColors();
+  const { ax } = useLargeText();
+  const title = builder.editing ? t("build.edit") : t("looks.new");
 
-  function choose(next: string[]) {
-    list.current?.scrollToOffset({ offset: 0, animated: false });
-    setNotice(null);
-    setSwapping(null);
-    setSelected(next);
-  }
+  if (builder.gone)
+    return <Screen title={title} gone={{ title: t("look.goneTitle") }} />;
 
-  function fill() {
-    const filled = fillOutfit(closet, request, localDate);
-    if ("ids" in filled) choose(filled.ids);
-    else setNotice(filled.problems[0]?.message ?? t("styling.incomplete"));
-  }
+  const occasionLabel = t(`occasion.${builder.occasion}` as Key);
+  const hasPieces = builder.closet.pieces.length > 0;
+  const shown = new Set(builder.closet.pieces.map((piece) => piece.category));
+  const swapPiece =
+    builder.mode.kind === "swap"
+      ? builder.pieces.find(
+          (piece) =>
+            builder.mode.kind === "swap" && piece.id === builder.mode.pieceId,
+        )
+      : undefined;
 
-  useEffect(() => {
-    const show = Keyboard.addListener("keyboardWillShow", (event) =>
-      setKeyboardHeight(event.endCoordinates.height),
-    );
-    const hide = Keyboard.addListener("keyboardWillHide", () =>
-      setKeyboardHeight(0),
-    );
-    return () => {
-      show.remove();
-      hide.remove();
-    };
-  }, []);
+  const occasionChip = hasPieces ? (
+    <Chip
+      kind="control"
+      opens="expander"
+      label={occasionLabel}
+      expanded={builder.mode.kind === "occasion"}
+      accessibilityLabel={t("adjust.chipLabel", {
+        adjust: t("adjust.occasion"),
+        value: occasionLabel,
+      })}
+      onPress={() =>
+        builder.setMode(
+          builder.mode.kind === "occasion"
+            ? { kind: "picker" }
+            : { kind: "occasion" },
+        )
+      }
+      testID="build-occasion"
+    />
+  ) : null;
 
-  async function save() {
-    if (busy || !selected.length || !name.trim()) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const occasion = source?.occasion ?? startingOccasion;
-      await update((current) =>
-        recordSaved(
-          saveLook(current, {
-            id,
-            name,
-            pieceIds: selected,
-            createdAt: source?.createdAt ?? now().toISOString(),
-            ...(occasion ? { occasion } : {}),
-          }),
-          selected,
-          now().toISOString(),
-          randomUUID(),
-        ),
-      );
-      allowClose();
-      router.back();
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : t("error.lookSave"));
-    } finally {
-      setBusy(false);
-    }
-  }
+  const pick = (piece: Piece) => {
+    if (!builder.filling) builder.toggle(piece);
+  };
+
+  const picker = (
+    <View style={styles.region}>
+      <ChipRow
+        layout={ax ? "wrap" : "scroll"}
+        options={[
+          { id: "all", label: t("closet.all") },
+          ...categories
+            .filter((category) => shown.has(category.id))
+            .map((category) => ({ id: category.id, label: category.label })),
+        ]}
+        value={builder.category}
+        onChange={(next) => {
+          if (typeof next === "string") builder.setCategory(next);
+        }}
+        testID="build-categories"
+      />
+      {ax ? (
+        <Rows>
+          {builder.strip.map((piece, index) => (
+            <Row
+              key={piece.id}
+              title={piece.name}
+              leading={{ thumb: piece }}
+              trailing={
+                builder.selected.includes(piece.id) ? "selected" : undefined
+              }
+              checked={builder.selected.includes(piece.id)}
+              onPress={() => pick(piece)}
+              last={index === builder.strip.length - 1}
+              testID={`build-piece-${piece.id}`}
+            />
+          ))}
+        </Rows>
+      ) : (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.scroller}
+          contentContainerStyle={styles.tiles}
+          testID="outfit-piece-picker"
+        >
+          {builder.strip.map((piece) => (
+            <View key={piece.id} style={styles.tile}>
+              <Tile
+                image={piece}
+                size="strip"
+                label={piece.name}
+                selected={builder.selected.includes(piece.id)}
+                accessibilityLabel={tileLabel(piece)}
+                selectedLabel={t("tile.selected")}
+                onPress={() => pick(piece)}
+                testID={`build-piece-${piece.id}`}
+              />
+            </View>
+          ))}
+        </ScrollView>
+      )}
+    </View>
+  );
+
+  const occasionBody = (
+    <View
+      style={[
+        styles.region,
+        styles.surface,
+        { backgroundColor: colors.surface },
+      ]}
+    >
+      <ChipRow
+        label={t("adjust.occasion")}
+        layout="wrap"
+        inSurface
+        options={occasions.map((item) => ({
+          id: item.id,
+          label: t(`occasion.${item.id}` as Key),
+        }))}
+        value={builder.occasion}
+        onChange={(next) => {
+          if (typeof next === "string")
+            builder.chooseOccasion(next as typeof builder.occasion);
+        }}
+        testID="build-occasions"
+      />
+    </View>
+  );
+
+  const swapBody = swapPiece ? (
+    <ChangeStrip
+      role={roleOf(swapPiece)}
+      pieceId={swapPiece.id}
+      currentId={swapPiece.id}
+      alternatives={builder.alternatives(swapPiece.id)}
+      open
+      onClose={() => builder.setMode({ kind: "picker" })}
+      onPick={(piece) => builder.swapTo(swapPiece.id, piece)}
+      testID="build-change-strip"
+    >
+      {builder.undo ? (
+        <View style={styles.undo}>
+          <Button
+            label={t("common.undo")}
+            variant="quiet"
+            size="small"
+            onPress={builder.undoSwap}
+          />
+        </View>
+      ) : null}
+    </ChangeStrip>
+  ) : null;
+
+  const region: ReactNode = !hasPieces ? (
+    <View style={styles.region}>
+      <View style={styles.start}>
+        <Button
+          label={t("closet.addPieces")}
+          variant="secondary"
+          size="small"
+          onPress={() => router.push("/capture")}
+        />
+      </View>
+    </View>
+  ) : builder.mode.kind === "occasion" ? (
+    occasionBody
+  ) : swapBody ? (
+    swapBody
+  ) : (
+    picker
+  );
+
+  const status = (
+    <View style={styles.status}>
+      {hasPieces && builder.empty.length ? (
+        <Button
+          label={t("build.fill")}
+          variant="quiet"
+          size="small"
+          busy={builder.filling}
+          busyLabel={t("build.filling")}
+          disabled={builder.saving}
+          onPress={builder.fill}
+          testID="build-fill"
+        />
+      ) : null}
+      {builder.line ? (
+        <Text
+          role="footnote"
+          tone={builder.line.error ? "error" : "ink"}
+          style={styles.line}
+          testID="build-line"
+        >
+          {builder.line.text}
+        </Text>
+      ) : null}
+    </View>
+  );
+
+  const collage = (
+    <View style={styles.upper}>
+      <FlatLay
+        pieces={builder.pieces}
+        size="hero"
+        emptyRoles={builder.empty}
+        state={builder.filling ? "arranging" : undefined}
+        openId={swapPiece?.id ?? null}
+        onPiecePress={(piece) =>
+          builder.setMode(
+            swapPiece?.id === piece.id
+              ? { kind: "picker" }
+              : { kind: "swap", pieceId: piece.id },
+          )
+        }
+        testID="build-collage"
+      />
+      <View style={styles.titleLine}>
+        <Text
+          role="title"
+          accessibilityRole="header"
+          style={styles.name}
+          numberOfLines={2}
+          accessibilityElementsHidden={!builder.name}
+          testID="build-name"
+        >
+          {builder.name}
+        </Text>
+        {occasionChip}
+      </View>
+    </View>
+  );
 
   return (
-    <View style={[styles.screen, { paddingBottom: keyboardHeight }]}>
-      <Stack.Screen
-        options={{
-          title: source
-            ? t("build.edit")
-            : initialSelection.length
-              ? t("build.save")
-              : t("title.buildLook"),
-        }}
-      />
-      <View style={[styles.workspace, wide && styles.workspaceWide]}>
-        <View style={styles.preview}>
-          <OutfitCollage
-            pieces={pieces}
-            fill
-            testID="live-outfit-preview"
-            onPiecePress={(piece) =>
-              setSwapping((current) => (current === piece.id ? null : piece.id))
-            }
-          />
-          {pieces.length ? (
-            <AppText
-              variant="footnote"
-              muted
-              style={styles.summary}
-              accessibilityLiveRegion="polite"
-            >
-              {pieces.length === 1
-                ? t("build.countOne")
-                : t("build.countMany", { count: pieces.length })}
-            </AppText>
-          ) : null}
-          {notice ? (
-            <AppText
-              muted
-              style={styles.summary}
-              accessibilityLiveRegion="polite"
-            >
-              {notice}
-            </AppText>
-          ) : null}
-          {closet.pieces.length ? (
-            <View style={styles.fill}>
-              <Button
-                label={t("build.fill")}
-                secondary
-                compact
-                disabled={busy}
-                onPress={fill}
-              />
-            </View>
-          ) : null}
-        </View>
-        <View
-          style={[
-            styles.wardrobe,
-            wide
-              ? styles.wardrobeWide
-              : { height: 256 + Math.max(0, fontScale - 1) * 68 },
-            keyboardVisible && styles.hidden,
-          ]}
+    <Screen
+      title={title}
+      leading="cancel"
+      onCancel={() => router.back()}
+      scroll={false}
+      testID="build-look"
+      footer={
+        <Footer
+          primary={{
+            label: builder.editing
+              ? t("common.saveChanges")
+              : t("common.saveLook"),
+            onPress: () => void builder.save(),
+            disabled:
+              !builder.selected.length ||
+              builder.filling ||
+              (builder.editing && !builder.dirty),
+            busy: builder.saving,
+            testID: "build-save",
+          }}
+        />
+      }
+    >
+      {ax ? (
+        <ScrollView
+          style={styles.fill}
+          contentContainerStyle={styles.column}
+          keyboardShouldPersistTaps="handled"
         >
-          {swapTarget ? (
-            <View style={styles.swap} testID="swap-options">
-              <View style={styles.swapHeader}>
-                <AppText style={styles.swapTitle} numberOfLines={2}>
-                  {t("build.swapTitle", { name: swapTarget.name })}
-                </AppText>
-                <HeaderAction
-                  label={t("build.swapDone")}
-                  onPress={() => setSwapping(null)}
-                />
-              </View>
-              {alternatives.length ? (
-                <View style={styles.swapRow}>
-                  {alternatives.map((piece) => (
-                    <View key={piece.id} style={styles.swapCell}>
-                      <PieceTile
-                        piece={piece}
-                        compact
-                        onPress={() =>
-                          choose(
-                            selected.map((pieceId) =>
-                              pieceId === swapTarget.id ? piece.id : pieceId,
-                            ),
-                          )
-                        }
-                      />
-                    </View>
-                  ))}
-                </View>
-              ) : (
-                <AppText muted>{t("build.swapNone")}</AppText>
-              )}
-            </View>
-          ) : (
-            <>
-              <View style={styles.filters}>
-                <Filters value={category} onChange={setCategory} />
-              </View>
-              <FlatList
-                ref={list}
-                key={wide ? "grid" : "strip"}
-                testID="outfit-piece-picker"
-                data={options}
-                horizontal={!wide}
-                numColumns={wide ? 2 : 1}
-                keyExtractor={(piece) => piece.id}
-                contentInsetAdjustmentBehavior="never"
-                keyboardShouldPersistTaps="handled"
-                keyboardDismissMode="on-drag"
-                style={styles.picker}
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={wide ? styles.grid : styles.strip}
-                columnWrapperStyle={wide ? styles.row : undefined}
-                ListEmptyComponent={
-                  <View style={[styles.empty, !wide && { width: width - 48 }]}>
-                    <AppText muted>
-                      {closet.pieces.length
-                        ? t("common.noPiecesInCategory")
-                        : t("build.empty")}
-                    </AppText>
-                    <Button
-                      label={
-                        closet.pieces.length
-                          ? t("common.showAllPieces")
-                          : t("piece.missing.action")
-                      }
-                      secondary
-                      onPress={() =>
-                        closet.pieces.length
-                          ? setCategory("all")
-                          : router.replace("/closet")
-                      }
-                    />
-                  </View>
-                }
-                renderItem={({ item }) => (
-                  <View style={wide ? styles.cell : styles.stripCell}>
-                    <PieceTile
-                      piece={item}
-                      compact={!wide}
-                      selected={selected.includes(item.id)}
-                      onPress={() => {
-                        if (!busy)
-                          choose(
-                            selected.includes(item.id)
-                              ? selected.filter(
-                                  (pieceId) => pieceId !== item.id,
-                                )
-                              : [...selected, item.id],
-                          );
-                      }}
-                    />
-                  </View>
-                )}
-              />
-            </>
-          )}
+          {collage}
+          {status}
+          {region}
+        </ScrollView>
+      ) : (
+        <View style={styles.fill}>
+          <ScrollView style={styles.fill} contentContainerStyle={styles.column}>
+            {collage}
+          </ScrollView>
+          <View style={[styles.hair, { backgroundColor: colors.line }]} />
+          {status}
+          <View style={styles.dock}>{region}</View>
         </View>
-      </View>
-      <SafeAreaView
-        edges={keyboardVisible ? [] : ["bottom"]}
-        style={styles.footer}
-      >
-        <View style={styles.footerContent}>
-          <ErrorMessage message={error} />
-          <View style={styles.saveRow}>
-            <View style={styles.nameField}>
-              <Field
-                label={t("build.name")}
-                testID="look-name"
-                placeholder={t("build.nameHint")}
-                value={name}
-                onChangeText={setName}
-                maxLength={80}
-                editable={!busy}
-                returnKeyType="done"
-              />
-            </View>
-            <Button
-              label={source ? t("common.saveChanges") : t("common.saveLook")}
-              onPress={() => {
-                void save();
-              }}
-              disabled={
-                !selected.length || !name.trim() || Boolean(source && !dirty)
-              }
-              busy={busy}
-            />
-          </View>
-        </View>
-      </SafeAreaView>
-    </View>
+      )}
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: theme.colors.canvas },
-  workspace: {
-    flex: 1,
-    minHeight: 0,
-    width: "100%",
-    maxWidth: 1120,
-    alignSelf: "center",
+  fill: { flex: 1 },
+  column: { paddingTop: theme.space.sm, gap: theme.space.md },
+  upper: { gap: theme.space.md },
+  titleLine: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: theme.space.sm,
+    minHeight: 64,
   },
-  workspaceWide: { flexDirection: "row" },
-  preview: { flex: 1, minHeight: 0, paddingHorizontal: 24, paddingTop: 8 },
-  summary: { textAlign: "center", paddingTop: 4, paddingBottom: 12 },
-  wardrobe: {
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderColor: theme.colors.line,
+  name: { flexShrink: 1 },
+  hair: { height: StyleSheet.hairlineWidth },
+  status: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    columnGap: theme.space.md,
+    minHeight: theme.size.touch,
   },
-  wardrobeWide: { width: 400, borderTopWidth: 0, paddingTop: 16 },
-  filters: { paddingHorizontal: 24, paddingBottom: 12 },
-  picker: { flex: 1 },
-  hidden: { display: "none" },
-  strip: { paddingHorizontal: 24, gap: 12 },
-  stripCell: { width: 116 },
-  swapCell: { width: 116, height: 176 },
-  grid: { paddingHorizontal: 24, paddingBottom: 24 },
-  row: { gap: 12 },
-  cell: { width: "48%" },
-  empty: { gap: 12 },
-  fill: { alignItems: "center", paddingBottom: 12 },
-  swap: { paddingHorizontal: 24, gap: 12 },
-  swapHeader: { flexDirection: "row", alignItems: "center", gap: 12 },
-  swapTitle: { flex: 1, fontWeight: "600" },
-  swapRow: { flexDirection: "row", gap: 12 },
-  saveRow: { flexDirection: "row", gap: 12, alignItems: "flex-end" },
-  nameField: { flex: 1 },
-  footer: {
-    backgroundColor: theme.colors.canvas,
-    borderTopWidth: 1,
-    borderColor: theme.colors.line,
-  },
-  footerContent: {
-    width: "100%",
-    maxWidth: 1120,
-    alignSelf: "center",
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    gap: 12,
-  },
+  line: { flexShrink: 1 },
+  dock: { minHeight: 304 },
+  region: { gap: theme.space.md, paddingBottom: theme.space.md },
+  surface: { padding: theme.space.lg, borderRadius: theme.radius.md },
+  scroller: { marginRight: -theme.space.lg },
+  tiles: { flexDirection: "row", gap: theme.space.md },
+  tile: { width: 112 },
+  start: { alignItems: "flex-start" },
+  undo: { alignItems: "flex-start", minHeight: theme.size.touch },
 });
