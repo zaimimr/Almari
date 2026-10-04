@@ -1,323 +1,236 @@
-import { useState } from "react";
-import { FlatList, ScrollView, StyleSheet, View } from "react-native";
-import { Stack, router } from "expo-router";
-import { randomUUID } from "expo-crypto";
-import { useCloset } from "../../../src/state/closet";
-import { occasions } from "../../../src/domain/closet";
-import { linkSet } from "../../../src/domain/sets";
-import { shelf } from "../../../src/domain/wardrobe";
+import { StyleSheet, View } from "react-native";
+import { router } from "expo-router";
 import {
-  closetChips,
-  filterPieces,
-  noFilter,
-  type ClosetFilter,
-} from "../../../src/domain/closetFilters";
-import { categoryName, occasionName, styleName, t } from "../../../src/i18n";
-import {
-  AppText,
-  Button,
-  Chip,
-  ErrorMessage,
-  Field,
-  HeaderAction,
-  Message,
-  PieceTile,
-} from "../../../src/ui/legacy";
+  captureProgress,
+  type CaptureProgress,
+} from "../../../src/domain/importing";
+import { categoryName, t, type Key } from "../../../src/i18n";
 import { addPiecesRoute } from "../../../src/state/imports";
+import { AddedBanner } from "../../../src/features/closet/AddedBanner";
+import { ClosetGrid } from "../../../src/features/closet/ClosetGrid";
+import {
+  FilterPanel,
+  FilterRow,
+} from "../../../src/features/closet/FilterPanel";
+import { SelectFooter } from "../../../src/features/closet/SelectFooter";
+import { useClosetScreen } from "../../../src/features/closet/useClosetScreen";
+import {
+  Banner,
+  EmptyState,
+  Expander,
+  HeaderItem,
+  Screen,
+} from "../../../src/ui";
 import { theme } from "../../../src/ui/theme";
 import { useLargeText } from "../../../src/ui/useLargeText";
-import { largeTitleOptions } from "../../../src/navigation/options";
 
-type FilterOption = {
-  key: string;
-  label: string;
-  selected: boolean;
-  change: Partial<ClosetFilter>;
-};
+function progressText(progress: CaptureProgress) {
+  if (!progress.done)
+    return progress.total === 1
+      ? t("progress.newOne")
+      : t("progress.newMany", {
+          total: progress.total,
+          ready: progress.ready,
+        });
+  const part = (count: number, one: Key, many: Key) =>
+    count ? [count === 1 ? t(one) : t(many, { count })] : [];
+  return [
+    ...part(progress.ready, "progress.readyOne", "progress.readyMany"),
+    ...part(progress.confirm, "progress.confirmOne", "progress.confirmMany"),
+    ...part(progress.failed, "capture.failedOne", "capture.failedMany"),
+  ].join(", ");
+}
+
+function ProgressCard({ progress }: { progress: CaptureProgress }) {
+  const { large } = useLargeText();
+  const text = progressText(progress);
+  const groups = progress.byCategory.map(({ category, count }) => ({
+    shown: t("closet.section", { category: categoryName(category), count }),
+    spoken: t("closet.sectionLabel", {
+      category: categoryName(category),
+      pieces:
+        count === 1
+          ? t("common.pieceCountOne")
+          : t("common.pieceCountMany", { count }),
+    }),
+  }));
+  const settled = progress.ready + progress.confirm + progress.failed;
+  return (
+    <Banner
+      tone="progress"
+      text={text}
+      progress={{
+        value: settled / progress.total,
+        meta: groups.map((group) => group.shown).join(large ? "\n" : " · "),
+        done: progress.done,
+      }}
+      accessibilityLabel={[text, ...groups.map((group) => group.spoken)].join(
+        ", ",
+      )}
+      onPress={() => router.push(addPiecesRoute)}
+      testID="progress-card"
+    />
+  );
+}
 
 export default function ClosetScreen() {
-  const { closet, update } = useCloset();
-  const { fontScale, bold } = useLargeText();
-  const [selecting, setSelecting] = useState(false);
-  const [chosen, setChosen] = useState<string[]>([]);
-  const [linked, setLinked] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<ClosetFilter>(noFilter);
-  const [search, setSearch] = useState("");
-  const [showArchived, setShowArchived] = useState(false);
-  const archivedCount = shelf(closet.pieces, true).length;
-  const shelved = shelf(closet.pieces, showArchived);
-  const sampleCount = shelf(closet.pieces, false).filter(
-    (piece) => piece.source === "sample",
-  ).length;
-  const chips = closetChips(shelved);
-  const query = search.trim().toLowerCase();
-  const filtered = filterPieces(shelved, filter).filter((piece) =>
-    piece.name.toLowerCase().includes(query),
+  const screen = useClosetScreen();
+  const { closet, filter, selecting, selected } = screen;
+  const progress = captureProgress(closet);
+  const empty = closet.pieces.length === 0;
+  const putAwayShown = filter.availability === "archived";
+
+  const header = (
+    <View style={styles.header}>
+      {selecting ? null : (
+        <HeaderItem
+          label={t("closet.addPieces")}
+          icon="plus"
+          onPress={() => router.push(addPiecesRoute)}
+          testID="header-add"
+        />
+      )}
+      {empty ? null : selecting ? (
+        <HeaderItem
+          label={t("common.cancel")}
+          onPress={screen.endSelect}
+          testID="header-cancel"
+        />
+      ) : (
+        <HeaderItem
+          label={t("common.select")}
+          onPress={screen.startSelect}
+          testID="header-select"
+        />
+      )}
+    </View>
   );
-  const filterOptions: FilterOption[] = [
-    ...(["desi", "western"] as const).map((style) => ({
-      key: `style-${style}`,
-      label: styleName(style),
-      selected: filter.style === style,
-      change: { style: filter.style === style ? null : style },
-    })),
-    ...occasions.map((occasion) => ({
-      key: `occasion-${occasion.id}`,
-      label: occasionName(occasion.id),
-      selected: filter.occasion === occasion.id,
-      change: {
-        occasion: filter.occasion === occasion.id ? null : occasion.id,
-      },
-    })),
-    ...(["available", "away"] as const).map((availability) => ({
-      key: `availability-${availability}`,
-      label: t(
-        availability === "available" ? "closet.available" : "closet.away",
-      ),
-      selected: filter.availability === availability,
-      change: {
-        availability:
-          filter.availability === availability ? null : availability,
-      },
-    })),
-  ];
 
-  function toggleSelecting() {
-    setSelecting(!selecting);
-    setChosen([]);
-    setLinked(false);
-    setError(null);
-  }
-
-  async function link() {
-    setError(null);
-    try {
-      await update((current) => linkSet(current, chosen, randomUUID()));
-      setSelecting(false);
-      setChosen([]);
-      setLinked(true);
-    } catch {
-      setError(t("sets.linkFailed"));
-    }
-  }
+  const banner = progress ? (
+    <ProgressCard progress={progress} />
+  ) : screen.added.length && !selecting ? (
+    <AddedBanner
+      key={screen.added.join(",")}
+      closet={closet}
+      ids={screen.added}
+      onStart={screen.startWith}
+      onLink={screen.link}
+      onMarkWearMost={screen.startSelect}
+      onNewLook={screen.newLook}
+    />
+  ) : null;
 
   return (
-    <View style={styles.screen}>
-      <Stack.Screen
-        options={{
-          ...largeTitleOptions(fontScale, bold),
-          title: t("title.yourCloset"),
-          headerLeft:
-            closet.pieces.length > 1
-              ? () => (
-                  <HeaderAction
-                    label={selecting ? t("capture.cancel") : t("sets.select")}
-                    onPress={toggleSelecting}
-                  />
-                )
-              : undefined,
-          headerRight: () => (
-            <HeaderAction
-              label={t("title.addPieces")}
-              onPress={() => router.push(addPiecesRoute)}
+    <Screen
+      large
+      title={
+        selecting
+          ? selected.length === 1
+            ? t("common.selectedOne")
+            : t("common.selectedMany", { count: selected.length })
+          : t("nav.closet")
+      }
+      actions={header}
+      search={
+        empty
+          ? undefined
+          : {
+              placeholder: t("closet.search"),
+              onChangeText: (search) => screen.change({ search }),
+            }
+      }
+      maintainVisibleContentPosition
+      footer={
+        selecting ? (
+          <SelectFooter
+            canAct={screen.owned.length > 0}
+            canStyle={screen.styleable.length > 0}
+            putAwayShown={putAwayShown}
+            wornOpen={screen.wornOpen}
+            result={screen.result}
+            onWornToggle={() => screen.setWornOpen(!screen.wornOpen)}
+            onWorn={screen.markWorn}
+            onLink={screen.linkSelected}
+            onPutAway={() => screen.putAway(!putAwayShown)}
+            onNewLook={() => screen.newLook(screen.styleable)}
+            onStart={() => screen.startWith(screen.styleable)}
+          />
+        ) : undefined
+      }
+      testID="closet-screen"
+    >
+      {empty ? (
+        <View style={styles.content}>
+          {banner ?? (
+            <EmptyState
+              mark
+              title={t("closet.firstTitle")}
+              action={{
+                label: t("closet.addPieces"),
+                onPress: () => router.push(addPiecesRoute),
+              }}
+              testID="closet-empty"
             />
-          ),
-        }}
-      />
-      <FlatList
-        data={filtered}
-        numColumns={2}
-        keyExtractor={(piece) => piece.id}
-        contentInsetAdjustmentBehavior="automatic"
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag"
-        contentContainerStyle={styles.content}
-        columnWrapperStyle={styles.row}
-        extraData={{ selecting, chosen }}
-        ListHeaderComponent={
-          <View style={styles.intro}>
-            <AppText muted>
-              {shelved.length === 0
-                ? t("closet.introEmpty")
-                : shelved.length === 1
-                  ? t("closet.introOne")
-                  : t("closet.introMany", { count: shelved.length })}
-            </AppText>
-            {selecting ? (
-              <View style={styles.starter}>
-                <AppText muted>{t("sets.hint")}</AppText>
-                <Button
-                  label={t("sets.link")}
-                  disabled={chosen.length < 2}
-                  onPress={() => {
-                    void link();
-                  }}
-                />
-                <ErrorMessage message={error} />
-              </View>
-            ) : linked ? (
-              <AppText accessibilityLiveRegion="polite">
-                {t("sets.linked")}
-              </AppText>
-            ) : null}
-            {sampleCount > 0 ? (
-              <View style={styles.starter}>
-                <AppText variant="footnote" muted>
-                  {t("closet.samplesIncluded", { count: sampleCount })}
-                </AppText>
-                <Button
-                  label={t("title.buildLook")}
-                  onPress={() => router.push("/look/build")}
-                />
-              </View>
-            ) : null}
-            {closet.pieces.length > 0 ? (
-              <>
-                <Field
-                  label={t("closet.find")}
-                  placeholder={t("closet.findHint")}
-                  value={search}
-                  onChangeText={setSearch}
-                  autoCorrect={false}
-                  clearButtonMode="while-editing"
-                />
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.chips}
-                  accessibilityLabel={t("closet.categories")}
-                >
-                  {chips.map((id) => (
-                    <Chip
-                      key={id}
-                      label={id === "all" ? t("closet.all") : categoryName(id)}
-                      selected={filter.category === id}
-                      onPress={() =>
-                        setFilter((current) => ({ ...current, category: id }))
-                      }
-                    />
-                  ))}
-                </ScrollView>
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.chips}
-                  accessibilityLabel={t("closet.filters")}
-                  testID="closet-filters"
-                >
-                  {filterOptions.map((option) => (
-                    <Chip
-                      key={option.key}
-                      label={option.label}
-                      selected={option.selected}
-                      onPress={() =>
-                        setFilter((current) => ({
-                          ...current,
-                          ...option.change,
-                        }))
-                      }
-                    />
-                  ))}
-                  {archivedCount || showArchived ? (
-                    <Chip
-                      label={t("archive.filter", { count: archivedCount })}
-                      selected={showArchived}
-                      onPress={() => setShowArchived(!showArchived)}
-                    />
-                  ) : null}
-                </ScrollView>
-              </>
-            ) : null}
-          </View>
-        }
-        ListEmptyComponent={
-          closet.pieces.length === 0 ? (
-            <View style={styles.empty}>
-              <View style={styles.firstPiece}>
-                <AppText variant="display" style={styles.emptyNumber}>
-                  {t("closet.firstTitle")}
-                </AppText>
-                <AppText muted style={styles.emptyCopy}>
-                  {t("closet.firstBody")}
-                </AppText>
-              </View>
-              <Button
-                label={t("closet.addFirst")}
-                onPress={() => router.push(addPiecesRoute)}
-              />
-              <AppText variant="footnote" muted style={styles.note}>
-                {t("closet.savedOnDevice")}
-              </AppText>
-            </View>
-          ) : (
-            <Message
-              title={t("closet.noneFoundTitle")}
-              description={t("closet.noMatch")}
-              action={
-                <Button
-                  label={t("closet.clearFilters")}
-                  secondary
-                  onPress={() => {
-                    setSearch("");
-                    setFilter(noFilter);
-                    setShowArchived(false);
-                  }}
-                />
-              }
+          )}
+        </View>
+      ) : (
+        <View style={styles.content}>
+          <FilterRow
+            filter={filter}
+            offered={screen.offered}
+            open={screen.panelOpen}
+            onToggle={() => screen.setPanelOpen(!screen.panelOpen)}
+            onChange={screen.change}
+          />
+          <Expander
+            id="closet-more"
+            headless
+            open={screen.panelOpen}
+            onToggle={() => screen.setPanelOpen(!screen.panelOpen)}
+          >
+            <FilterPanel
+              filter={filter}
+              pieces={closet.pieces}
+              filtered={screen.filtered}
+              onChange={screen.change}
+              onClear={screen.clear}
             />
-          )
-        }
-        renderItem={({ item }) => (
-          <View style={styles.cell}>
-            <PieceTile
-              piece={item}
-              selected={selecting && chosen.includes(item.id)}
-              onPress={() =>
+          </Expander>
+          {banner}
+          {screen.sections.length ? (
+            <ClosetGrid
+              sections={screen.sections}
+              gridKey={JSON.stringify({ ...filter, search: "" })}
+              selecting={selecting}
+              selected={selected}
+              onPress={(piece) =>
                 selecting
-                  ? setChosen((current) =>
-                      current.includes(item.id)
-                        ? current.filter((id) => id !== item.id)
-                        : [...current, item.id],
-                    )
-                  : router.push({
-                      pathname: "/piece/[id]",
-                      params: { id: item.id },
-                    })
+                  ? screen.toggle(piece.id)
+                  : router.push(`/piece/${piece.id}`)
               }
+              onLongPress={(piece) => {
+                if (!selecting) screen.startSelect();
+                screen.toggle(piece.id);
+              }}
             />
-          </View>
-        )}
-      />
-    </View>
+          ) : (
+            <EmptyState
+              title={t("closet.noneFoundTitle")}
+              secondary={
+                screen.panelOpen
+                  ? undefined
+                  : { label: t("closet.clearFilters"), onPress: screen.clear }
+              }
+              testID="closet-none"
+            />
+          )}
+        </View>
+      )}
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: theme.colors.canvas },
-  content: {
-    padding: 24,
-    paddingBottom: 110,
-    width: "100%",
-    maxWidth: 720,
-    alignSelf: "center",
-  },
-  intro: { gap: 20, paddingBottom: 24 },
-  starter: { gap: 12 },
-  chips: { gap: 8, paddingVertical: 4 },
-  row: { gap: 16 },
-  cell: { width: "48%", flexGrow: 0 },
-  empty: { gap: 20, paddingTop: 24 },
-  firstPiece: {
-    minHeight: 270,
-    justifyContent: "center",
-    gap: 20,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: theme.colors.line,
-    paddingVertical: 40,
-  },
-  emptyNumber: { color: theme.colors.plum },
-  emptyCopy: { lineHeight: 28 },
-  note: { textAlign: "center" },
+  header: { flexDirection: "row", alignItems: "center", gap: theme.space.sm },
+  content: { gap: theme.space.lg },
 });
