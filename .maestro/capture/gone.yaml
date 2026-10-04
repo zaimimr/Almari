@@ -4,8 +4,20 @@ appId: com.zaimimran.almari
 ---
 - launchApp
 - openLink: "almari://capture/missing-id"
-- waitForAnimationToEnd
-- tapOn:
-    point: "68%,54%"
+- repeat:
+    times: 3
+    while:
+      notVisible: "This photo is no longer waiting"
+    commands:
+      - extendedWaitUntil:
+          visible: "This photo is no longer waiting"
+          timeout: 3000
+          optional: true
+      - runFlow:
+          when:
+            notVisible: "This photo is no longer waiting"
+          commands:
+            - tapOn:
+                point: "68%,54%"
 - assertVisible: "This photo is no longer waiting"
 - tapOn: "Go back"
