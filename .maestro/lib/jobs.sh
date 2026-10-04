@@ -11,7 +11,7 @@ job() {
   cp "assets/wardrobe/$2.png" "$photos/$1.png"
   jq -nc --arg id "$1" --arg kind "$3" --arg name "$4" --argjson extra "$extra" '{
     id: $id, source: ($id + ".png"), createdAt: "2026-10-01T08:00:00.000Z", state: "review", attempts: 1,
-    prepared: { original: ($id + ".png"), cutout: ($id + ".png"), thumbnail: null, frame: null, instances: 1,
+    prepared: { original: ($id + ".png"), cutout: ($id + ".png"), enhanced: ($id + ".png"), thumbnail: null, frame: null, instances: 1,
       labels: [{ group: "kind", value: $kind, score: 0.9 }], palette: [{ rgb: [150, 150, 150], share: 1 }], embedding: null },
     kind: $kind, name: $name, checks: []
   } * $extra'

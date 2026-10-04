@@ -4,5 +4,8 @@ appId: com.zaimimran.almari
 ---
 - launchApp
 - openLink: "almari://capture/missing-id"
+- waitForAnimationToEnd
+- tapOn:
+    point: "68%,54%"
 - assertVisible: "This photo is no longer waiting"
 - tapOn: "Go back"

@@ -1,6 +1,4 @@
 appId: com.zaimimran.almari
-env:
-  COUNT: "1"
 ---
 - tapOn: "Choose photos"
 - evalScript: ${output.photo = 0}

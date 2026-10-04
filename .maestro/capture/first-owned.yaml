@@ -9,8 +9,16 @@ appId: com.zaimimran.almari
     id: "job-confirm-1"
 - tapOn:
     id: "job-confirm-2"
+- scrollUntilVisible:
+    element:
+      id: "job-confirm-3"
+    centerElement: true
 - tapOn:
     id: "job-confirm-3"
+- scrollUntilVisible:
+    element:
+      id: "job-confirm-4"
+    centerElement: true
 - tapOn:
     id: "job-confirm-4"
 - tapOn: "Confirm 4 pieces"

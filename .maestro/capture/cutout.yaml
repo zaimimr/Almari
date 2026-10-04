@@ -6,7 +6,8 @@ appId: com.zaimimran.almari
 - tapOn:
     id: "job-ready-1"
 - tapOn: "Adjust cut-out"
-- assertVisible: "Cut-out"
+- assertVisible: "Adjust cut-out"
+- assertVisible: "Restore"
 - tapOn: "Done"
 - assertVisible:
     id: "confirm-screen"

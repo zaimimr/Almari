@@ -5,10 +5,20 @@ appId: com.zaimimran.almari
 - runFlow: ../lib/open-add.yaml
 - tapOn:
     id: "job-ready-1"
-- tapOn: "Remove photo"
+- scrollUntilVisible:
+    element:
+      id: "confirm-remove"
+    centerElement: true
+- tapOn:
+    id: "confirm-remove"
 - assertVisible: "Removed"
 - tapOn: "Undo"
 - tapOn:
     id: "job-ready-1"
-- tapOn: "Retake"
+- scrollUntilVisible:
+    element:
+      id: "confirm-retake"
+    centerElement: true
+- tapOn:
+    id: "confirm-retake"
 - assertVisible: "Take a photo|Choose photo|Cancel"

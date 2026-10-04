@@ -11,6 +11,7 @@ appId: com.zaimimran.almari
     element:
       id: "confirm-label"
     direction: DOWN
+    centerElement: true
 - tapOn:
     id: "confirm-label"
 - tapOn: "Choose a photo"
@@ -21,11 +22,17 @@ appId: com.zaimimran.almari
     text: "Add|Done|Choose"
     optional: true
 - extendedWaitUntil:
-    visible: "Save care label"
+    visible: "Choose a photo|Take another photo"
     timeout: 60000
+- scrollUntilVisible:
+    element: "Save care label"
+    centerElement: true
 - tapOn: "Save care label"
 - scrollUntilVisible:
     element:
       id: "confirm-label"
     direction: DOWN
-- assertVisible: "Edit"
+    centerElement: true
+- assertVisible:
+    id: "confirm-label"
+    text: "Edit care label"

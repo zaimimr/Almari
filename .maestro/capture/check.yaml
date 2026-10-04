@@ -7,7 +7,11 @@ appId: com.zaimimran.almari
     id: "job-confirm-1"
 - assertVisible: "New piece, 1 of 2"
 - takeScreenshot: docs/redesign/screens/after/capture/confirm
-- tapOn: "Tunics"
+- tapOn: "Tops"
+- scrollUntilVisible:
+    element:
+      id: "confirm-colour"
+    centerElement: true
 - tapOn:
     id: "confirm-colour"
 - tapOn: "Blush"

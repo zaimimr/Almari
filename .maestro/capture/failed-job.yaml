@@ -8,9 +8,14 @@ appId: com.zaimimran.almari
 - tapOn:
     text: "Got it"
     optional: true
-- runFlow: ../lib/pick-photos.yaml
+- runFlow:
+    file: ../lib/pick-photos.yaml
+    env:
+      COUNT: "1"
 - extendedWaitUntil:
-    visible: "Could not finish"
+    visible:
+      id: "job-failed-1"
+      text: ".*Could not finish"
     timeout: 120000
 - assertVisible: "Try again"
 - tapOn:

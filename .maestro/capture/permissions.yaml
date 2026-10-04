@@ -15,7 +15,12 @@ appId: com.zaimimran.almari
 - assertVisible: "Open Settings"
 - tapOn:
     id: "source-library"
-- assertVisible: "Cancel"
-- tapOn: "Cancel"
+- waitForAnimationToEnd
+- tapOn:
+    id: "Cancel"
+- extendedWaitUntil:
+    visible:
+      id: "capture-screen"
+    timeout: 10000
 - assertVisible:
     id: "capture-screen"

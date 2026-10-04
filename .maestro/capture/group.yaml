@@ -23,6 +23,10 @@ appId: com.zaimimran.almari
     id: "region-2"
 - tapOn: "Smaller"
 - tapOn: "Use this box"
+- scrollUntilVisible:
+    element:
+      id: "group-draw"
+    centerElement: true
 - tapOn:
     id: "group-draw"
 - swipe:
@@ -42,6 +46,13 @@ appId: com.zaimimran.almari
     timeout: 60000
 - tapOn:
     id: "capture-add"
-- tapOn:
-    id: "piece-tile-0"
+- scrollUntilVisible:
+    element:
+      text: "Taupe kaftan.*"
+    centerElement: true
+- tapOn: "Taupe kaftan.*"
+- scrollUntilVisible:
+    element:
+      id: "piece-set"
+    centerElement: true
 - assertVisible: "Part of a set"

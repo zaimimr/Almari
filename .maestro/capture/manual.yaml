@@ -3,7 +3,7 @@ appId: com.zaimimran.almari
 # seed: fresh.sh
 ---
 - addMedia:
-    - "../../assets/wardrobe/olive-maxi-dress.png"
+    - "../../assets/wardrobe/taupe-bag.png"
 - runFlow: ../lib/open-add.yaml
 - tapOn:
     text: "Got it"
@@ -20,12 +20,16 @@ appId: com.zaimimran.almari
     optional: true
 - assertVisible:
     id: "manual-photo"
-- tapOn: "Dresses"
-- tapOn: "Dress"
+- tapOn: "Bags"
+- tapOn: "Handbag"
+- scrollUntilVisible:
+    element:
+      id: "manual-name"
+    centerElement: true
 - tapOn:
     id: "manual-name"
-- inputText: "Olive maxi"
+- inputText: "Taupe bag"
 - hideKeyboard
 - takeScreenshot: docs/redesign/screens/after/capture/by-hand
 - tapOn: "Add to closet"
-- assertVisible: "Olive maxi"
+- assertVisible: "Taupe bag.*"

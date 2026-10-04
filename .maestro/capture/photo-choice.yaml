@@ -5,17 +5,27 @@ appId: com.zaimimran.almari
 - runFlow: ../lib/open-add.yaml
 - tapOn:
     id: "job-ready-1"
+- scrollUntilVisible:
+    element:
+      id: "confirm-photo"
+    centerElement: true
 - tapOn:
     id: "confirm-photo"
 - tapOn: "Original"
 - assertVisible:
     text: "Original"
-    selected: true
+    childOf:
+      id: "confirm-photo"
 - tapOn: "Looks right"
 - tapOn:
     id: "job-ready-1"
+- scrollUntilVisible:
+    element:
+      id: "confirm-photo"
+    centerElement: true
 - tapOn:
     id: "confirm-photo"
 - assertVisible:
     text: "Original"
-    selected: true
+    childOf:
+      id: "confirm-photo"

@@ -5,6 +5,10 @@ appId: com.zaimimran.almari
 - runFlow: ../lib/open-add.yaml
 - tapOn:
     id: "job-ready-1"
+- scrollUntilVisible:
+    element:
+      id: "check-name"
+    centerElement: true
 - tapOn:
     id: "check-name"
 - eraseText
@@ -12,7 +16,7 @@ appId: com.zaimimran.almari
 - hideKeyboard
 - tapOn: "Cancel"
 - assertVisible: "Discard your changes?"
-- tapOn: "Keep editing"
+- tapOn: "Cancel"
 - assertVisible: "Renamed kurta"
 - tapOn: "Cancel"
 - tapOn: "Discard"
