@@ -6,6 +6,7 @@ import {
 } from "react-native";
 import { lastWorn } from "../../domain/closetFilters";
 import type { Piece } from "../../domain/closet";
+import { wearDate } from "../../domain/looks";
 import { clockFor, stylePiece } from "../../domain/today";
 import { locale, t } from "../../i18n";
 import { now } from "../../state/clock";
@@ -24,7 +25,9 @@ export function Rediscover({ model }: { model: TodayModel }) {
   const meta = (piece: Piece) => {
     const date = worn[piece.id];
     return date
-      ? t("looks.lastWorn", { date: shortDate(date, locale) })
+      ? t("looks.lastWorn", {
+          date: shortDate(wearDate(model.closet, date), locale),
+        })
       : t("closet.neverWorn");
   };
   const start = (piece: Piece) =>

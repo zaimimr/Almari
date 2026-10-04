@@ -79,7 +79,7 @@ const crossfade = {
 };
 
 const isPiece = (image: Piece | ImageSource): image is Piece =>
-  "photo" in image && "id" in image;
+  typeof image === "object" && "photo" in image && "id" in image;
 
 export function Tile({
   image,
