@@ -183,7 +183,7 @@ export default function Onboarding() {
 
   function finish(addClothes: boolean) {
     void run(
-      (current) => finishOnboarding(current, clockFor(new Date())),
+      (current) => finishOnboarding(current, clockFor(now())),
       () => {
         router.replace("/today");
         if (addClothes) router.push(addPiecesRoute);
