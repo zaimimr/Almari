@@ -30,7 +30,7 @@ import { scheduleOnUI } from "react-native-worklets";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Stack, router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { t } from "../i18n";
+import { t, useLocale } from "../i18n";
 import { largeTitleOptions } from "../navigation/options";
 import { Button } from "./Button";
 import { HeaderItem, HeaderMedia } from "./HeaderItem";
@@ -138,6 +138,7 @@ export function Screen({
   keyboardFooter = "ride",
   children,
 }: ScreenProps) {
+  useLocale();
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();

@@ -1,9 +1,10 @@
 import { Tabs } from "expo-router";
 import Feather from "@expo/vector-icons/Feather";
 import { theme } from "../ui/theme";
-import { t } from "../i18n";
+import { t, useLocale } from "../i18n";
 
 export default function ClosetTabs() {
+  useLocale();
   return (
     <Tabs
       screenOptions={{

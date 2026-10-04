@@ -1,8 +1,9 @@
 import { NativeTabs } from "expo-router/unstable-native-tabs";
 import { theme } from "../ui/theme";
-import { t } from "../i18n";
+import { t, useLocale } from "../i18n";
 
 export default function ClosetTabs() {
+  useLocale();
   return (
     <NativeTabs
       tintColor={theme.colors.plum}

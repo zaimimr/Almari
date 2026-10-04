@@ -1,5 +1,4 @@
 import {
-  Fragment,
   createContext,
   useContext,
   useEffect,
@@ -16,7 +15,7 @@ import {
   sampleCatalogVersion,
   withSampleAttributes,
 } from "../domain/samples";
-import { locale, setLanguage } from "../i18n";
+import { LocaleContext, locale, setLanguage } from "../i18n";
 import { closetStorage } from "../storage/local";
 import { fixtures, loadFixtures } from "../testing/fixtures";
 import { useAttributeRefresh, useImportRunner } from "./imports";
@@ -88,7 +87,9 @@ export function ClosetProvider({
     <ClosetStatusContext.Provider value={{ status, retry }}>
       {status === "ready" ? (
         <Context.Provider value={repository}>
-          <Fragment key={locale}>{children}</Fragment>
+          <LocaleContext.Provider value={locale}>
+            {children}
+          </LocaleContext.Provider>
         </Context.Provider>
       ) : null}
       {overlay}

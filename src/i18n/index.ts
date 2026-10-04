@@ -1,3 +1,4 @@
+import { createContext, useContext } from "react";
 import type {
   Category,
   GarmentKind,
@@ -34,6 +35,10 @@ export function setLanguage(language: Language) {
   locale = next;
   speakIn(locale);
 }
+
+export const LocaleContext = createContext<Locale>(locale);
+
+export const useLocale = () => useContext(LocaleContext);
 
 export const t = (key: Key, vars?: Vars) =>
   translate({ en, nb }, locale, key, vars);

@@ -1,237 +1,241 @@
-import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 import Constants from "expo-constants";
-import { Stack, router } from "expo-router";
-import type { Language } from "../../src/domain/closet";
+import { router } from "expo-router";
+import type { CardLayout, Language } from "../../src/domain/closet";
+import { replayOnboarding, resetCloset } from "../../src/domain/onboarding";
+import { engineName } from "../../src/domain/scoring/engine";
+import { Completeness } from "../../src/features/profile/Completeness";
+import { MorningOutfit } from "../../src/features/profile/MorningOutfit";
 import {
-  answersFrom,
-  replayOnboarding,
-  resetCloset,
-} from "../../src/domain/onboarding";
-import { closetStats } from "../../src/domain/profileStats";
-import { formatHeight } from "../../src/domain/units";
-import { seasonLabel } from "../../src/features/selfie/palette";
-import { t } from "../../src/i18n";
+  openNeverWorn,
+  profileSummary,
+} from "../../src/features/profile/useProfile";
+import { t, useLocale } from "../../src/i18n";
 import { useCloset } from "../../src/state/closet";
+import { syncSchedule } from "../../src/state/notifications";
 import { discardAllPhotos } from "../../src/storage/local";
 import {
-  AppText,
-  Button,
-  Chip,
-  ChoiceGroup,
-  ErrorMessage,
-  FormScreen,
-} from "../../src/ui/legacy";
+  ChipRow,
+  Expander,
+  Row,
+  Rows,
+  Screen,
+  Section,
+  Text,
+  useOneExpander,
+} from "../../src/ui";
 import { confirmAction } from "../../src/ui/confirm";
 import { theme } from "../../src/ui/theme";
 
 const languages = ["system", "en", "nb"] as const;
+const layouts = ["minimal", "reasons", "full"] as const;
+
+type Open = "morning" | "language" | "layout";
 
 export default function Profile() {
-  const { closet, update, reset: resetStore } = useCloset();
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const answers = answersFrom(closet);
-  const stats = closetStats(closet);
-  const { hijab, coverage, place, body, style, fit, colours } = answers;
-  const summary = (...parts: (string | null)[]) =>
-    parts.filter(Boolean).join(", ") || t("profile.notAnswered");
-  const rows: { step: string; title: string; text: string }[] = [
-    {
-      step: "hijab",
-      title: t("onboarding.hijab.title"),
-      text: summary(
-        hijab.hijab && t(`onboarding.hijab.${hijab.hijab}`),
-        coverage.coverage && coverage.coverage !== "relaxed"
-          ? t(`onboarding.coverage.${coverage.coverage}`)
-          : null,
-      ),
-    },
-    {
-      step: "place",
-      title: t("onboarding.place.title"),
-      text: summary(
-        t(`onboarding.units.${body.units}`),
-        place.place?.name ?? null,
-      ),
-    },
-    {
-      step: "body",
-      title: t("onboarding.body.title"),
-      text: summary(
-        body.heightCm === null ? null : formatHeight(body.heightCm, body.units),
-        body.bodyShape && t(`shape.${body.bodyShape}`),
-      ),
-    },
-    {
-      step: "taste",
-      title: t("onboarding.taste.title"),
-      text: summary(
-        fit.fit && t(`onboarding.fit.${fit.fit}`),
-        colours.colourLean && t(`onboarding.colourLean.${colours.colourLean}`),
-        style.styleLean && t(`onboarding.styleLean.${style.styleLean}`),
-      ),
-    },
-    {
-      step: "colours",
-      title: t("profile.colours"),
-      text: summary(colours.colour ? seasonLabel(colours.colour.season) : null),
-    },
-  ];
-  async function run(action: () => Promise<void>) {
-    setBusy(true);
-    setError(null);
-    try {
-      await action();
-    } catch {
-      setError(t("settings.failed"));
-    } finally {
-      setBusy(false);
-    }
-  }
+  useLocale();
+  const { closet, update, reset } = useCloset();
+  const { open, toggle } = useOneExpander<Open>();
+  const summary = profileSummary(closet);
+  const edit = t("common.edit");
 
-  function chooseLanguage(language: Language) {
-    void run(() =>
-      update((current) => ({
-        ...current,
-        styling: { ...current.styling, language },
-      })),
+  const setStyling = (change: Partial<typeof closet.styling>) =>
+    void update((current) => ({
+      ...current,
+      styling: { ...current.styling, ...change },
+    })).catch(() => undefined);
+
+  async function replay() {
+    const confirmed = await confirmAction(
+      t("settings.replay.title"),
+      t("settings.replay.body"),
+      t("settings.replay"),
     );
+    if (!confirmed) return;
+    await update(replayOnboarding);
+    await syncSchedule(null).catch(() => undefined);
+    router.replace("/onboarding");
   }
 
-  function replay() {
-    void run(async () => {
-      await update(replayOnboarding);
-      router.replace("/onboarding");
-    });
-  }
-
-  async function reset() {
+  async function wipe() {
     const confirmed = await confirmAction(
       t("settings.reset.title"),
       t("settings.reset.text"),
       t("settings.reset.confirm"),
     );
     if (!confirmed) return;
-    await run(async () => {
-      await resetStore((current) => resetCloset(current).closet);
-      await discardAllPhotos().catch(() => undefined);
-      router.replace("/onboarding");
-    });
+    await reset((current) => resetCloset(current).closet);
+    await syncSchedule(null).catch(() => undefined);
+    await discardAllPhotos().catch(() => undefined);
+    router.replace("/onboarding");
   }
 
-  return (
-    <FormScreen>
-      <Stack.Screen options={{ title: t("profile.title") }} />
-      <AppText variant="title">{t("settings.answers")}</AppText>
-      {rows.map((row) => (
-        <View key={row.step} style={styles.row} testID={`answer-${row.step}`}>
-          <View style={styles.text}>
-            <AppText style={styles.label}>{row.title}</AppText>
-            <AppText muted>{row.text}</AppText>
-          </View>
-          <Chip
-            label={t("profile.change")}
-            accessibilityLabel={`${t("profile.change")}: ${row.title}`}
-            onPress={() =>
-              router.push({
-                pathname: "/onboarding",
-                params: { step: row.step },
-              })
-            }
-          />
-        </View>
-      ))}
-      <AppText variant="title">{t("style.title")}</AppText>
-      <Button
-        label={t("profile.style")}
-        secondary
-        onPress={() => router.push("/today/style")}
-      />
-      <AppText variant="title">{t("stats.title")}</AppText>
-      <View style={styles.stats} testID="closet-stats">
-        <Stat label={t("stats.pieces")} value={String(stats.pieces)} />
-        <Stat label={t("stats.neverWorn")} value={String(stats.neverWorn)} />
-      </View>
-      <View style={styles.text}>
-        <AppText style={styles.label}>{t("stats.mostWorn")}</AppText>
-        {stats.mostWorn.length ? (
-          stats.mostWorn.map(({ piece, count }) => (
-            <AppText key={piece.id} muted>
-              {t(count === 1 ? "stats.wornOnce" : "stats.wornMany", {
-                name: piece.name,
-                count,
-              })}
-            </AppText>
-          ))
-        ) : (
-          <AppText muted>{t("stats.nothingWorn")}</AppText>
-        )}
-      </View>
-      <AppText variant="title">{t("settings.app")}</AppText>
-      <ChoiceGroup
-        label={t("settings.language")}
-        options={languages.map((id) => ({
-          id,
-          label: t(`settings.language.${id}`),
-        }))}
-        value={closet.styling.language}
-        disabled={busy}
-        onChange={chooseLanguage}
-      />
-      <Button
-        label={t("settings.replay")}
-        secondary
-        disabled={busy}
-        onPress={replay}
-      />
-      <Button
-        label={t("settings.reset")}
-        danger
-        disabled={busy}
-        onPress={() => {
-          void reset();
-        }}
-      />
-      <ErrorMessage message={error} />
-      <AppText variant="footnote" muted>
-        {t("settings.privacy")}
-      </AppText>
-      <AppText variant="footnote" muted testID="app-version">
-        {t("settings.version", {
-          version: Constants.expoConfig?.version ?? "",
-        })}
-      </AppText>
-    </FormScreen>
+  const answer = (title: string, meta: string, step: string) => (
+    <Row
+      key={step}
+      title={title}
+      meta={meta}
+      trailing="chevron"
+      accessibilityLabel={`${title}, ${meta}, ${edit}`}
+      onPress={() => router.push(`/profile/answer/${step}`)}
+      testID={`answer-${step}`}
+    />
   );
-}
 
-function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <View style={styles.stat}>
-      <AppText variant="title">{value}</AppText>
-      <AppText muted>{label}</AppText>
-    </View>
+    <Screen title={t("profile.title")} testID="profile">
+      <View style={styles.page}>
+        <Completeness closet={closet} />
+        <Rows>
+          <Row
+            title={t("style.title")}
+            meta={summary.style}
+            trailing="chevron"
+            onPress={() => router.push("/profile/style")}
+            testID="profile-style"
+          />
+          <Row
+            title={t("never.title")}
+            meta={summary.never}
+            trailing="chevron"
+            onPress={() => router.push("/profile/never")}
+            testID="profile-never"
+          />
+          <Row
+            title={t("wearMore.title")}
+            meta={summary.wearMore}
+            trailing="chevron"
+            onPress={() => router.push("/profile/wear-more")}
+            testID="profile-wear-more"
+          />
+        </Rows>
+        <Section title={t("settings.answers")}>
+          <Rows>
+            {answer(t("profile.name"), summary.name, "name")}
+            {answer(t("onboarding.place.title"), summary.place, "place")}
+            {answer(t("onboarding.body.title"), summary.body, "body")}
+            {answer(t("profile.colours"), summary.colours, "colours")}
+          </Rows>
+        </Section>
+        <Section title={t("stats.title")} testID="closet-stats">
+          <Rows>
+            {summary.neverWorn ? (
+              <Row
+                title={t("stats.neverWorn")}
+                meta={summary.neverWorn}
+                trailing="chevron"
+                onPress={openNeverWorn}
+                testID="stats-never-worn"
+              />
+            ) : null}
+            {summary.mostWorn ? (
+              <Row
+                title={t("stats.mostWorn")}
+                meta={summary.mostWorn.text}
+                trailing="chevron"
+                onPress={() => router.push(`/piece/${summary.mostWorn!.id}`)}
+                testID="stats-most-worn"
+              />
+            ) : (
+              <Row
+                title={t("stats.mostWorn")}
+                trailing={{ value: t("stats.nothingWorn") }}
+                testID="stats-most-worn"
+              />
+            )}
+          </Rows>
+        </Section>
+        <Section title={t("settings.title")}>
+          <View style={styles.expanders}>
+            <MorningOutfit
+              open={open === "morning"}
+              onToggle={() => toggle("morning")}
+            />
+            <Expander
+              id="profile-language"
+              title={t("settings.language")}
+              value={t(`settings.language.${closet.styling.language}`)}
+              open={open === "language"}
+              onToggle={() => toggle("language")}
+              testID="profile-language"
+            >
+              <ChipRow<Language>
+                options={languages.map((id) => ({
+                  id,
+                  label: t(`settings.language.${id}`),
+                }))}
+                value={closet.styling.language}
+                onChange={(language) => {
+                  if (typeof language === "string") setStyling({ language });
+                }}
+                inSurface
+              />
+            </Expander>
+            <Expander
+              id="profile-layout"
+              title={t("style.layout")}
+              value={t(`style.layout.${closet.styling.layout}`)}
+              open={open === "layout"}
+              onToggle={() => toggle("layout")}
+              testID="profile-layout"
+            >
+              <ChipRow<CardLayout>
+                options={layouts.map((id) => ({
+                  id,
+                  label: t(`style.layout.${id}`),
+                  accessibilityLabel: t("common.optionInGroup", {
+                    option: t(`style.layout.${id}`),
+                    group: t("style.layout"),
+                  }),
+                }))}
+                value={closet.styling.layout}
+                onChange={(layout) => {
+                  if (typeof layout === "string") setStyling({ layout });
+                }}
+                inSurface
+              />
+            </Expander>
+          </View>
+        </Section>
+        <Section title={t("settings.advanced")}>
+          <Rows>
+            <Row
+              title={t("stylist.label")}
+              meta={engineName(closet.styling.engine)}
+              trailing="chevron"
+              onPress={() => router.push("/profile/stylist")}
+              testID="profile-stylist"
+            />
+          </Rows>
+        </Section>
+        <Section title={t("settings.app")}>
+          <Rows>
+            <Row
+              title={t("settings.replay")}
+              onPress={() => void replay()}
+              testID="settings-replay"
+            />
+            <Row
+              title={t("settings.reset")}
+              onPress={() => void wipe()}
+              testID="settings-reset"
+            />
+          </Rows>
+          <Text role="footnote" tone="muted">
+            {t("settings.privacy")}
+          </Text>
+          <Text role="footnote" tone="muted" testID="app-version">
+            {t("settings.version", {
+              version: Constants.expoConfig?.version ?? "",
+            })}
+          </Text>
+        </Section>
+      </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  stats: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
-  stat: {
-    flexGrow: 1,
-    flexBasis: 140,
-    padding: 16,
-    gap: 2,
-    borderRadius: theme.radius.md,
-    borderCurve: "continuous",
-    backgroundColor: theme.colors.surface,
-  },
-  row: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    alignItems: "center",
-    gap: 12,
-  },
-  text: { flexGrow: 1, flexBasis: 240, gap: 2 },
-  label: { fontWeight: "600" },
+  page: { gap: theme.space.xl },
+  expanders: { gap: theme.space.lg },
 });
