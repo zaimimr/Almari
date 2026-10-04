@@ -1,332 +1,78 @@
-import { useEffect, useRef, useState, type PropsWithChildren } from "react";
-import { ActivityIndicator, StyleSheet, View } from "react-native";
-import { Stack, router } from "expo-router";
-import * as ImagePicker from "expo-image-picker";
-import ClosetVision, {
-  type SelfieReading,
-} from "../../modules/closet-vision/src";
-import type { ColourProfile } from "../../src/domain/closet";
-import {
-  adjustColours,
-  bestColours,
-  fromSelfie,
-  labHex,
-  resampleColours,
-  type Retake,
-} from "../../src/domain/colourAnalysis";
-import { applyAnswer } from "../../src/domain/onboarding";
-import { clockFor } from "../../src/domain/today";
-import { seasonLabel } from "../../src/features/colourText";
-import { OnboardingBar } from "../../src/features/OnboardingBar";
-import { SamplePoints } from "../../src/features/SamplePoints";
-import { SelfieCamera } from "../../src/features/SelfieCamera";
+import { useState } from "react";
+import { NotMe } from "../../src/features/selfie/NotMe";
+import { PaletteResult } from "../../src/features/selfie/PaletteResult";
+import { SelfieCameraPhase } from "../../src/features/selfie/SelfieCameraPhase";
+import { SelfieTips } from "../../src/features/selfie/SelfieTips";
+import { useSelfie } from "../../src/features/selfie/useSelfie";
 import { t } from "../../src/i18n";
-import { useCloset } from "../../src/state/closet";
-import { discardTemporary } from "../../src/storage/local";
-import {
-  AppText,
-  Button,
-  ChoiceGroup,
-  ErrorMessage,
-  FormScreen,
-} from "../../src/ui/legacy";
-import { theme } from "../../src/ui/theme";
-import { now } from "../../src/state/clock";
-
-type Phase =
-  | { kind: "intro" }
-  | { kind: "measuring" }
-  | { kind: "retake"; reason: Retake | "failed" }
-  | {
-      kind: "result";
-      profile: ColourProfile;
-      photo: { uri: string; reading: SelfieReading };
-    };
-
-type Camera = "pending" | "on" | "off" | "denied";
+import { Footer, Screen } from "../../src/ui";
 
 export default function Colours() {
-  const { update } = useCloset();
-  const [phase, setPhase] = useState<Phase>({ kind: "intro" });
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [camera, setCamera] = useState<Camera>(() =>
-    ClosetVision.isAvailable() ? "pending" : "off",
-  );
-  const [dragging, setDragging] = useState(false);
-  const kept = useRef<string | null>(null);
+  const selfie = useSelfie();
+  const [notMe, setNotMe] = useState(false);
+  const { phase, profile, palette } = selfie;
 
-  function discard() {
-    const uri = kept.current;
-    kept.current = null;
-    if (uri) void discardTemporary(uri).catch(() => undefined);
-  }
+  const footer =
+    phase === "tips" ? (
+      <Footer
+        primary={{
+          label: t("colours.openCamera"),
+          onPress: selfie.openCamera,
+          testID: "colours-open-camera",
+        }}
+      />
+    ) : phase === "result" ? (
+      <Footer
+        primary={{
+          label: t("colours.save"),
+          onPress: () => void selfie.save(),
+          busy: selfie.saving,
+          testID: "colours-save",
+        }}
+        error={selfie.error}
+      />
+    ) : null;
 
-  useEffect(() => {
-    if (!ClosetVision.isAvailable()) return;
-    ImagePicker.requestCameraPermissionsAsync()
-      .then((permission) => setCamera(permission.granted ? "on" : "denied"))
-      .catch(() => setCamera("off"));
-  }, []);
-
-  useEffect(() => discard, []);
-
-  async function measure(uri: string) {
-    setError(null);
-    discard();
-    kept.current = uri;
-    setPhase({ kind: "measuring" });
-    try {
-      const reading = await ClosetVision.analyzeSelfie(uri);
-      const outcome = fromSelfie(reading);
-      if ("retake" in outcome) {
-        discard();
-        setPhase({ kind: "retake", reason: outcome.retake });
-      } else
-        setPhase({
-          kind: "result",
-          profile: outcome.profile,
-          photo: { uri, reading },
-        });
-    } catch {
-      discard();
-      setPhase({ kind: "retake", reason: "failed" });
-    }
-  }
-
-  async function pick() {
-    setError(null);
-    try {
-      const picked = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ["images"],
-        quality: 1,
-        exif: false,
-      });
-      const uri = picked.canceled ? undefined : picked.assets[0]?.uri;
-      if (uri) await measure(uri);
-    } catch {
-      setError(t("colours.cameraFailed"));
-    }
-  }
-
-  async function save(profile: ColourProfile) {
-    setBusy(true);
-    setError(null);
-    try {
-      await update((current) =>
-        applyAnswer(
-          current,
-          "colours",
-          {
-            colour: adjustColours(profile, {}),
-            colourLean: current.styling.profile.colourLean,
-          },
-          clockFor(now()),
-        ),
-      );
-      discard();
-      router.back();
-    } catch {
-      setError(t("colours.saveFailed"));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  if (phase.kind === "measuring")
-    return (
-      <Shell>
-        <ActivityIndicator color={theme.colors.plum} />
-        <AppText muted accessibilityLiveRegion="polite">
-          {t("colours.busy")}
-        </AppText>
-      </Shell>
-    );
-
-  if (phase.kind === "result") {
-    const { profile, photo } = phase;
-    const set = (change: Parameters<typeof adjustColours>[1]) =>
-      setPhase({ ...phase, profile: adjustColours(profile, change) });
-    return (
-      <Shell scrollEnabled={!dragging}>
-        <SamplePoints
-          uri={photo.uri}
-          reading={photo.reading}
+  return (
+    <Screen title={t("onboarding.colours.title")} footer={footer}>
+      {phase === "tips" ? <SelfieTips /> : null}
+      {phase === "camera" || phase === "measuring" ? (
+        <SelfieCameraPhase
+          camera={selfie.camera}
+          guide={selfie.guide}
+          retake={selfie.retake}
+          hold={selfie.hold}
+          cameraRef={selfie.cameraRef}
+          measuring={phase === "measuring"}
+          photo={selfie.photo}
+          onReading={selfie.onReading}
+          onUnavailable={selfie.onUnavailable}
+          onCapture={selfie.capture}
+          onLibrary={() => void selfie.chooseFromLibrary()}
+          onTryAgain={selfie.openCamera}
+        />
+      ) : null}
+      {phase === "result" && profile && palette ? (
+        <PaletteResult
           profile={profile}
-          onDragging={setDragging}
-          onSample={(part, lab) =>
-            setPhase((current) =>
-              current.kind === "result"
-                ? {
-                    ...current,
-                    profile: resampleColours(current.profile, part, lab),
-                  }
-                : current,
-            )
-          }
-        />
-        <AppText style={styles.label}>{t("colours.measured")}</AppText>
-        <View style={styles.measured}>
-          {(["skin", "hair", "eyes"] as const).map((part) => {
-            const lab = profile[part];
-            return (
-              <View key={part} style={styles.part} testID={`measured-${part}`}>
-                <View
-                  style={[
-                    styles.dot,
-                    lab ? { backgroundColor: labHex(lab) } : styles.empty,
-                  ]}
-                />
-                <AppText>{t(`colours.${part}`)}</AppText>
-                {lab ? null : (
-                  <AppText variant="footnote" muted>
-                    {t("colours.unknown")}
-                  </AppText>
-                )}
-              </View>
-            );
-          })}
-        </View>
-        <AppText variant="title" testID="season">
-          {t("colours.result", { season: seasonLabel(profile.season) })}
-        </AppText>
-        <AppText muted>{t("colours.adjust")}</AppText>
-        <ChoiceGroup
-          label={t("colours.undertone")}
-          options={(["warm", "cool", "neutral"] as const).map((id) => ({
-            id,
-            label: t(`undertone.${id}`),
-          }))}
-          value={profile.undertone}
-          disabled={busy}
-          onChange={(undertone) => set({ undertone })}
-        />
-        <ChoiceGroup
-          label={t("colours.depth")}
-          options={(["light", "medium", "deep"] as const).map((id) => ({
-            id,
-            label: t(`depth.${id}`),
-          }))}
-          value={profile.depth}
-          disabled={busy}
-          onChange={(depth) => set({ depth })}
-        />
-        <ChoiceGroup
-          label={t("colours.contrast")}
-          options={(["low", "medium", "high"] as const).map((id) => ({
-            id,
-            label: t(`contrast.${id}`),
-          }))}
-          value={profile.contrast}
-          disabled={busy}
-          onChange={(contrast) => set({ contrast })}
-        />
-        <AppText style={styles.label}>{t("colours.best")}</AppText>
-        <View style={styles.palette}>
-          {bestColours(profile).map((lab) => (
-            <View
-              key={lab.join()}
-              style={[styles.dot, { backgroundColor: labHex(lab) }]}
-            />
-          ))}
-        </View>
-        <ErrorMessage message={error} />
-        <Button
-          label={t("colours.save")}
-          busy={busy}
-          onPress={() => {
-            void save(profile);
-          }}
-        />
-        <Button
-          label={t("colours.tryAgain")}
-          secondary
-          disabled={busy}
-          onPress={() => {
-            discard();
-            setPhase({ kind: "intro" });
-          }}
-        />
-      </Shell>
-    );
-  }
-
-  return (
-    <Shell>
-      {phase.kind === "retake" ? (
-        <View style={styles.notice} accessibilityLiveRegion="polite">
-          <AppText>{t(`colours.retake.${phase.reason}`)}</AppText>
-        </View>
+          palette={palette}
+          photo={selfie.photo}
+          plain={selfie.plain}
+        >
+          <NotMe
+            open={notMe}
+            onToggle={() => setNotMe((open) => !open)}
+            profile={profile}
+            hairCovered={selfie.hairCovered}
+            onHairCovered={selfie.setHairCovered}
+            onAdjust={selfie.adjust}
+            onRetake={() => {
+              setNotMe(false);
+              selfie.retakePhoto();
+            }}
+          />
+        </PaletteResult>
       ) : null}
-      {camera === "on" ? (
-        <SelfieCamera
-          disabled={busy}
-          onCapture={(uri) => {
-            void measure(uri);
-          }}
-          onUnavailable={() => setCamera("off")}
-        />
-      ) : null}
-      {camera === "denied" ? <AppText>{t("colours.cameraOff")}</AppText> : null}
-      <AppText>{t("colours.tips")}</AppText>
-      <AppText muted>{t("colours.hijab")}</AppText>
-      <AppText variant="footnote" muted>
-        {t("colours.deleted")}
-      </AppText>
-      <ErrorMessage message={error} />
-      <Button
-        label={t("colours.library")}
-        secondary={camera === "on"}
-        onPress={() => {
-          void pick();
-        }}
-      />
-    </Shell>
+    </Screen>
   );
 }
-
-function Shell({
-  children,
-  scrollEnabled,
-}: PropsWithChildren<{ scrollEnabled?: boolean }>) {
-  return (
-    <View style={styles.screen}>
-      <Stack.Screen options={{ headerShown: false }} />
-      <OnboardingBar
-        action={{
-          label: t("common.back"),
-          back: true,
-          onPress: () => router.back(),
-        }}
-      />
-      <FormScreen scrollEnabled={scrollEnabled}>
-        <AppText variant="display" accessibilityRole="header">
-          {t("colours.title")}
-        </AppText>
-        {children}
-      </FormScreen>
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: theme.colors.canvas },
-  label: { fontWeight: "600" },
-  measured: { flexDirection: "row", flexWrap: "wrap", gap: 16 },
-  part: { alignItems: "center", gap: 4, minWidth: 88 },
-  dot: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: theme.colors.line,
-  },
-  empty: { backgroundColor: theme.colors.surface, borderStyle: "dashed" },
-  palette: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
-  notice: {
-    padding: 16,
-    borderRadius: theme.radius.md,
-    borderCurve: "continuous",
-    backgroundColor: theme.colors.plumSoft,
-  },
-});

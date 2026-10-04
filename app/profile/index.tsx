@@ -10,7 +10,7 @@ import {
 } from "../../src/domain/onboarding";
 import { closetStats } from "../../src/domain/profileStats";
 import { formatHeight } from "../../src/domain/units";
-import { seasonLabel } from "../../src/features/colourText";
+import { seasonLabel } from "../../src/features/selfie/palette";
 import { t } from "../../src/i18n";
 import { useCloset } from "../../src/state/closet";
 import { discardAllPhotos } from "../../src/storage/local";

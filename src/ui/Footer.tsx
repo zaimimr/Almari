@@ -196,7 +196,7 @@ export function Footer({
               </View>
             ) : null}
             <Animated.View
-              style={[!stacked && pair && styles.half, reveal]}
+              style={[!stacked && styles.half, reveal]}
               pointerEvents={waiting ? "none" : "auto"}
               {...(waiting ? hidden : null)}
             >
