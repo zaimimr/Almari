@@ -1,0 +1,7 @@
+appId: com.zaimimran.almari
+---
+- runFlow: sample-closet.yaml
+- tapOn: "Closet"
+- tapOn:
+    id: "header-add"
+- tapOn: "Scan"

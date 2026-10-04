@@ -1,0 +1,5 @@
+appId: com.zaimimran.almari
+# UC-F12-06 reset
+# seed: reduce-motion-off.sh
+---
+- launchApp

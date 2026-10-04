@@ -1,0 +1,12 @@
+appId: com.zaimimran.almari
+# UC-F03-05
+# seed: fixture.sh scan=kameez-dupatta failCapture=1
+---
+- runFlow: ../lib/open-scan.yaml
+- extendedWaitUntil:
+    visible: "Missed. Hold still."
+    timeout: 20000
+- extendedWaitUntil:
+    visible:
+      id: "tray-slot-1"
+    timeout: 30000

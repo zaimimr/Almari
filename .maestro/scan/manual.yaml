@@ -1,0 +1,28 @@
+appId: com.zaimimran.almari
+# UC-F03-03
+# seed: fixture.sh scan=kameez-dupatta
+---
+- runFlow: ../lib/open-scan.yaml
+- tapOn: "Manual"
+- extendedWaitUntil:
+    visible: "Tap to take it"
+    timeout: 20000
+- tapOn: "Take (a )?photo"
+- extendedWaitUntil:
+    visible:
+      id: "tray-slot-1"
+    timeout: 20000
+- tapOn:
+    id: "header-switch"
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
+    timeout: 20000
+- tapOn: "Closet"
+- tapOn:
+    id: "header-add"
+- tapOn: "Scan"
+- extendedWaitUntil:
+    visible: "Tap to take it"
+    timeout: 20000

@@ -1,0 +1,35 @@
+appId: com.zaimimran.almari
+# UC-F03-04
+# seed: fixture.sh scan=kameez-dupatta
+---
+- runFlow: ../lib/open-scan.yaml
+- extendedWaitUntil:
+    visible:
+      id: "tray-slot-2"
+    timeout: 40000
+- tapOn: "Done"
+- extendedWaitUntil:
+    visible:
+      id: "review-thumb-2"
+    timeout: 20000
+- takeScreenshot: docs/redesign/screens/after/scan/scanned
+- tapOn: "Link as a set"
+- tapOn: "Done"
+- repeat:
+    while:
+      notVisible: "Add 2 pieces"
+    times: 4
+    commands:
+      - tapOn: "Done"
+- tapOn: "Add 2 pieces"
+- extendedWaitUntil:
+    visible: "2 added"
+    timeout: 20000
+- tapOn:
+    id: "header-add"
+- tapOn: "Scan"
+- extendedWaitUntil:
+    visible: "Hold up a piece"
+    timeout: 20000
+- tapOn: "Back"
+- assertVisible: "Add pieces"

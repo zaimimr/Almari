@@ -1,0 +1,33 @@
+appId: com.zaimimran.almari
+# UC-F03-07
+# seed: fixture.sh scan=kameez-dupatta
+---
+- runFlow: ../lib/open-scan.yaml
+- extendedWaitUntil:
+    visible: "Hold up a piece"
+    timeout: 20000
+- extendedWaitUntil:
+    visible:
+      id: "moment-found"
+    timeout: 20000
+- extendedWaitUntil:
+    visible: "Hold still"
+    timeout: 20000
+- extendedWaitUntil:
+    visible:
+      id: "tray-slot-1"
+    timeout: 20000
+- assertNotVisible:
+    id: "scan-sticker"
+- extendedWaitUntil:
+    visible:
+      id: "tray-slot-2"
+    timeout: 30000
+- takeScreenshot: docs/redesign/screens/after/scan/tray
+- tapOn: "Done"
+- assertVisible: "Pieces found"
+- assertVisible:
+    id: "review-thumb-1"
+- assertVisible:
+    id: "review-thumb-2"
+- assertVisible: "Link as a set"

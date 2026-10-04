@@ -1,0 +1,13 @@
+appId: com.zaimimran.almari
+# UC-F12-06
+# seed: fixture.sh scan=kameez-dupatta,reduce-motion.sh
+---
+- runFlow: ../lib/open-scan.yaml
+- extendedWaitUntil:
+    visible:
+      id: "moment-found"
+    timeout: 20000
+- extendedWaitUntil:
+    visible:
+      id: "tray-slot-1"
+    timeout: 20000

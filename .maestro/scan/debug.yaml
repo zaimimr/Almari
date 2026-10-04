@@ -1,0 +1,18 @@
+appId: com.zaimimran.almari
+# UC-F03-06
+# seed: fixture.sh scan=kameez-dupatta
+---
+- runFlow: ../lib/open-scan.yaml
+- extendedWaitUntil:
+    visible: "Hold up a piece"
+    timeout: 20000
+- longPressOn:
+    id: "scan-guide"
+- extendedWaitUntil:
+    visible:
+      id: "scan-readout"
+    timeout: 5000
+- longPressOn:
+    id: "scan-guide"
+- assertNotVisible:
+    id: "scan-readout"

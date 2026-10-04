@@ -1,0 +1,25 @@
+appId: com.zaimimran.almari
+# UC-F03-01
+---
+- runFlow: ../lib/sample-closet.yaml
+- launchApp:
+    permissions:
+      camera: deny
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
+    timeout: 20000
+- tapOn: "Closet"
+- tapOn:
+    id: "header-add"
+- tapOn: "Scan"
+- extendedWaitUntil:
+    visible: "Camera access is off"
+    timeout: 20000
+- assertVisible: "Open Settings"
+- assertVisible: "Choose photos"
+- takeScreenshot: docs/redesign/screens/after/scan/denied
+- tapOn: "Choose photos"
+- extendedWaitUntil:
+    visible: "Add pieces"
+    timeout: 20000
