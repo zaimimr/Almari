@@ -1,0 +1,20 @@
+appId: com.zaimimran.almari
+# UC-F02-19
+# seed: fresh.sh,seed-ready.sh
+---
+- runFlow: ../lib/open-add.yaml
+- tapOn:
+    id: "job-ready-1"
+- tapOn:
+    id: "check-name"
+- eraseText
+- inputText: "Renamed kurta"
+- hideKeyboard
+- tapOn: "Cancel"
+- assertVisible: "Discard your changes?"
+- tapOn: "Keep editing"
+- assertVisible: "Renamed kurta"
+- tapOn: "Cancel"
+- tapOn: "Discard"
+- assertVisible:
+    id: "capture-screen"

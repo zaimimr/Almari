@@ -76,3 +76,10 @@ From `design-system.md` review round 4. Each file's owner edits.
 - `.maestro/lib/clear.sh` resets the text size to medium, so a large-text flow does not leak into the next flow.
 - `skip-onboarding.yaml` taps `onboarding-next` (up to 15 times) until "You are set"; `sample-closet.yaml` taps "Try the sample closet".
 - Fixture key `selfie` (seed `selfie.sh`) returns a canned `SelfieReading`, because the simulator analysis rejects stock photos as mixed light. The live analysis is checked by the owner (UC-F01-07 steps 3 and 4).
+
+### L4 Add pieces
+
+- Closet reads `captureProgress(closet)` from `src/domain/importing.ts` for the progress card.
+- Closet reads `takeLastAdded()` from `src/state/launch.ts` on focus for the "N added" Banner. Add pieces calls `setLastAdded(ids)` after `acceptImports`, and Add by hand calls it with the one new id.
+- `settleWardrobe` runs inside `acceptImports`, so Closet does not settle again.
+- A failed job has no cut-out, so its confirm shows "Cut out by hand" disabled until a retry or retake succeeds.

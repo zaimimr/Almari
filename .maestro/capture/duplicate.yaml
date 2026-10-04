@@ -1,0 +1,14 @@
+appId: com.zaimimran.almari
+# UC-F02-09
+# seed: fresh.sh,seed-owned.sh,seed-duplicate.sh
+---
+- runFlow: ../lib/open-add.yaml
+- tapOn:
+    id: "job-confirm-1"
+- assertVisible: "Already in your closet?"
+- tapOn: "Different piece"
+- assertNotVisible: "Already in your closet?"
+- tapOn: "Back|Cancel"
+- tapOn:
+    text: "Discard"
+    optional: true

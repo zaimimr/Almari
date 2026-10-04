@@ -1,0 +1,7 @@
+appId: com.zaimimran.almari
+---
+- launchApp
+- tapOn: "Closet"
+- tapOn: "Add pieces"
+- assertVisible:
+    id: "capture-screen"

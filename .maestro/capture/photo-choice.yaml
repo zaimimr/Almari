@@ -1,0 +1,21 @@
+appId: com.zaimimran.almari
+# UC-F02-08
+# seed: fresh.sh,seed-ready.sh
+---
+- runFlow: ../lib/open-add.yaml
+- tapOn:
+    id: "job-ready-1"
+- tapOn:
+    id: "confirm-photo"
+- tapOn: "Original"
+- assertVisible:
+    text: "Original"
+    selected: true
+- tapOn: "Looks right"
+- tapOn:
+    id: "job-ready-1"
+- tapOn:
+    id: "confirm-photo"
+- assertVisible:
+    text: "Original"
+    selected: true

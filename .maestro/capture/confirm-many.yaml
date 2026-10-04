@@ -1,0 +1,25 @@
+appId: com.zaimimran.almari
+# UC-F02-20
+# seed: fresh.sh,seed-hijabs.sh
+---
+- runFlow: ../lib/open-add.yaml
+- tapOn:
+    id: "header-select"
+- tapOn:
+    id: "job-confirm-1"
+- tapOn:
+    id: "job-confirm-2"
+- tapOn:
+    id: "job-confirm-3"
+- tapOn:
+    id: "job-confirm-4"
+- tapOn: "Confirm 4 pieces"
+- assertVisible: "Confirm 4 pieces"
+- tapOn: "Hijab"
+- tapOn: "Desi"
+- takeScreenshot: docs/redesign/screens/after/capture/batch
+- tapOn: "Looks right"
+- assertVisible:
+    id: "job-ready-4"
+- assertNotVisible:
+    id: "job-confirm-1"

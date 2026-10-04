@@ -1,0 +1,21 @@
+appId: com.zaimimran.almari
+# UC-F02-21
+# seed: fresh.sh,seed-hijabs.sh
+---
+- runFlow: ../lib/open-add.yaml
+- tapOn:
+    id: "header-select"
+- tapOn:
+    id: "job-confirm-1"
+- tapOn:
+    id: "job-confirm-2"
+- tapOn:
+    id: "job-confirm-3"
+- tapOn:
+    id: "job-confirm-4"
+- tapOn: "Confirm 4 pieces"
+- tapOn: "Looks right"
+- tapOn: "Add 4 pieces"
+- assertVisible: "Add tops, bottoms and shoes to style from your clothes"
+- assertNotVisible: "Start with these"
+- assertVisible: "Mark what I wear most"

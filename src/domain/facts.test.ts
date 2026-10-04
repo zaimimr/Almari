@@ -69,7 +69,7 @@ const seasonOf = (piece: Piece) =>
 test("the item page facts follow the spec order with their sources", () => {
   assert.deepEqual(facts(kurta), [
     { key: "colour", label: "Colour", value: "Sage", source: "confirmed" },
-    { key: "kind", label: "Subcategory", value: "Kurta", source: "proposed" },
+    { key: "kind", label: "Garment", value: "Kurta", source: "proposed" },
     { key: "fabric", label: "Fabric", value: "Lawn", source: "label" },
     {
       key: "pattern",
@@ -262,7 +262,7 @@ test("confirming a subcategory guess also fixes its style and refits the details
   };
   const closet = savePiece(emptyCloset, tunic);
   const choice = factChoice(tunic, "kind")!;
-  assert.equal(en[choice.label], "Subcategory");
+  assert.equal(en[choice.label], "Garment");
   assert.equal(choice.current, "tunic");
   assert.ok(
     choice.options.some(

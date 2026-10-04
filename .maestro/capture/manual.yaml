@@ -1,0 +1,31 @@
+appId: com.zaimimran.almari
+# UC-F02-16
+# seed: fresh.sh
+---
+- addMedia:
+    - "../../assets/wardrobe/olive-maxi-dress.png"
+- runFlow: ../lib/open-add.yaml
+- tapOn:
+    text: "Got it"
+    optional: true
+- tapOn: "Add by hand"
+- assertVisible:
+    id: "manual-slot"
+- tapOn: "Choose photo"
+- tapOn:
+    text: "Photo, [^,]+, [0-9:]+.*"
+    index: 0
+- tapOn:
+    text: "Add|Done|Choose"
+    optional: true
+- assertVisible:
+    id: "manual-photo"
+- tapOn: "Dresses"
+- tapOn: "Dress"
+- tapOn:
+    id: "manual-name"
+- inputText: "Olive maxi"
+- hideKeyboard
+- takeScreenshot: docs/redesign/screens/after/capture/by-hand
+- tapOn: "Add to closet"
+- assertVisible: "Olive maxi"

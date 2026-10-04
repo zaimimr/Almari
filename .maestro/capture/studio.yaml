@@ -1,0 +1,21 @@
+appId: com.zaimimran.almari
+# UC-F02-11
+# seed: fresh.sh,seed-ready.sh,fixture.sh studio=ok
+---
+- runFlow: ../lib/open-add.yaml
+- tapOn:
+    id: "job-ready-1"
+- tapOn:
+    id: "confirm-photo"
+- tapOn: "Clean background"
+- extendedWaitUntil:
+    visible:
+      id: "moment-generating"
+    timeout: 10000
+- extendedWaitUntil:
+    notVisible:
+      id: "moment-generating"
+    timeout: 30000
+- assertVisible:
+    text: "Clean background"
+    selected: true

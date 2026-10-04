@@ -1,0 +1,16 @@
+appId: com.zaimimran.almari
+# UC-F02-01
+# seed: fresh.sh
+---
+- runFlow: ../lib/open-add.yaml
+- assertVisible: "Daylight, facing a window"
+- tapOn: "Got it"
+- assertNotVisible: "Daylight, facing a window"
+- tapOn:
+    id: "header-tips"
+- assertVisible: "Daylight, facing a window"
+- assertVisible: "Take photos"
+- assertVisible: "Choose photos"
+- assertVisible: "Scan"
+- assertVisible: "Add by hand"
+- takeScreenshot: docs/redesign/screens/after/capture/tips

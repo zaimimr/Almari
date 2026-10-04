@@ -1,0 +1,13 @@
+appId: com.zaimimran.almari
+# UC-F02-11
+# seed: fresh.sh,seed-ready.sh,fixture.sh studio=offline
+---
+- runFlow: ../lib/open-add.yaml
+- tapOn:
+    id: "job-ready-1"
+- tapOn:
+    id: "confirm-photo"
+- tapOn: "Clean background"
+- extendedWaitUntil:
+    visible: "You are offline"
+    timeout: 30000

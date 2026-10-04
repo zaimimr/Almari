@@ -1,0 +1,14 @@
+appId: com.zaimimran.almari
+env:
+  COUNT: "1"
+---
+- tapOn: "Choose photos"
+- evalScript: ${output.photo = 0}
+- repeat:
+    times: ${COUNT}
+    commands:
+      - tapOn:
+          text: "Photo, [^,]+, [0-9:]+.*"
+          index: ${output.photo}
+      - evalScript: ${output.photo = output.photo + 1}
+- tapOn: "Add|Done"

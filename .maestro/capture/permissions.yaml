@@ -1,0 +1,21 @@
+appId: com.zaimimran.almari
+# UC-F02-04
+# seed: fresh.sh
+---
+- launchApp:
+    permissions:
+      camera: deny
+- tapOn: "Closet"
+- tapOn: "Add pieces"
+- tapOn:
+    text: "Got it"
+    optional: true
+- tapOn: "Take photos"
+- assertVisible: "Camera access is off"
+- assertVisible: "Open Settings"
+- tapOn:
+    id: "source-library"
+- assertVisible: "Cancel"
+- tapOn: "Cancel"
+- assertVisible:
+    id: "capture-screen"

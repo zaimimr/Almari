@@ -1,0 +1,20 @@
+appId: com.zaimimran.almari
+# UC-F02-02
+# seed: fresh.sh,fixture.sh slowPrepare=3000
+---
+- addMedia:
+    - "../../assets/wardrobe/navy-blazer.png"
+- runFlow: ../lib/open-add.yaml
+- tapOn:
+    text: "Got it"
+    optional: true
+- runFlow: ../lib/pick-photos.yaml
+- extendedWaitUntil:
+    visible:
+      id: "moment-generating"
+    timeout: 30000
+- extendedWaitUntil:
+    visible:
+      id: "job-ready-1"
+    timeout: 120000
+- assertVisible: "Colour: .*"

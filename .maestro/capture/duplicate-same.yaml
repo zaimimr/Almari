@@ -1,0 +1,13 @@
+appId: com.zaimimran.almari
+# UC-F02-09
+# seed: fresh.sh,seed-owned.sh,seed-duplicate.sh
+---
+- runFlow: ../lib/open-add.yaml
+- tapOn:
+    id: "job-confirm-1"
+- assertVisible: "Already in your closet?"
+- tapOn: "Same piece"
+- assertVisible:
+    id: "capture-screen"
+- assertNotVisible:
+    id: "job-confirm-1"

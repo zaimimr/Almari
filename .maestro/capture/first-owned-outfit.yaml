@@ -1,0 +1,10 @@
+appId: com.zaimimran.almari
+# UC-F02-21
+# seed: fresh.sh,seed-outfit-jobs.sh
+---
+- runFlow: ../lib/open-add.yaml
+- tapOn: "Add 3 pieces"
+- assertVisible: "3 added"
+- assertVisible: "Start with these"
+- tapOn: "Today"
+- assertNotVisible: "Sample"

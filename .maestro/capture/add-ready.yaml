@@ -1,0 +1,17 @@
+appId: com.zaimimran.almari
+# UC-F02-14
+# seed: fresh.sh,seed-owned.sh,seed-wears.sh,seed-ready.sh
+---
+- runFlow: ../lib/open-add.yaml
+- tapOn: "Add 2 pieces"
+- assertVisible: "2 added"
+- assertVisible: "Link as a set"
+- assertVisible: "Start with these"
+- tapOn: "Link as a set"
+- assertVisible: "Linked"
+- tapOn: "Start with these"
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
+    timeout: 60000
+- assertVisible: "Started with.*"

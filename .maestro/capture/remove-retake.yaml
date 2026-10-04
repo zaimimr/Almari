@@ -1,0 +1,14 @@
+appId: com.zaimimran.almari
+# UC-F02-17
+# seed: fresh.sh,seed-ready.sh
+---
+- runFlow: ../lib/open-add.yaml
+- tapOn:
+    id: "job-ready-1"
+- tapOn: "Remove photo"
+- assertVisible: "Removed"
+- tapOn: "Undo"
+- tapOn:
+    id: "job-ready-1"
+- tapOn: "Retake"
+- assertVisible: "Take a photo|Choose photo|Cancel"

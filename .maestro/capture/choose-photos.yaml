@@ -1,0 +1,26 @@
+appId: com.zaimimran.almari
+# UC-F02-03
+# seed: fresh.sh
+---
+- addMedia:
+    - "../../assets/wardrobe/ivory-tunic.png"
+    - "../../assets/wardrobe/charcoal-trousers.png"
+    - "../../assets/wardrobe/mauve-hijab.png"
+- runFlow: ../lib/open-add.yaml
+- tapOn:
+    text: "Got it"
+    optional: true
+- runFlow:
+    file: ../lib/pick-photos.yaml
+    env:
+      COUNT: "3"
+- extendedWaitUntil:
+    notVisible:
+      id: "moment-generating"
+    timeout: 180000
+- scrollUntilVisible:
+    element:
+      id: "job-(ready|confirm)-.*"
+      index: 2
+    direction: DOWN
+- takeScreenshot: docs/redesign/screens/after/capture/add

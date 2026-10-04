@@ -23,7 +23,7 @@ test("a key reads from the chosen catalog and fills its placeholders", () => {
       first: "Tops",
       second: "Layers",
     }),
-    "Is this in Tops or Layers?",
+    "Tops or Layers?",
   );
   assert.equal(
     translate(catalogs, "nb", "piece.styleFixed", { styles: "Desi" }),

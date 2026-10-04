@@ -1,0 +1,12 @@
+appId: com.zaimimran.almari
+# UC-F02-22
+# seed: fresh.sh,seed-ready.sh
+---
+- runFlow: ../lib/open-add.yaml
+- tapOn: "Colour: .*"
+- tapOn: "Blush"
+- assertVisible: "Colour: Blush"
+- tapOn: "Add 2 pieces"
+- tapOn: "Sage kurta"
+- assertVisible:
+    text: "Blush"

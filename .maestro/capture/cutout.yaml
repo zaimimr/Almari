@@ -1,0 +1,12 @@
+appId: com.zaimimran.almari
+# UC-F02-12
+# seed: fresh.sh,seed-ready.sh
+---
+- runFlow: ../lib/open-add.yaml
+- tapOn:
+    id: "job-ready-1"
+- tapOn: "Adjust cut-out"
+- assertVisible: "Cut-out"
+- tapOn: "Done"
+- assertVisible:
+    id: "confirm-screen"

@@ -1,9 +1,8 @@
-import { useState } from "react";
-import { StyleSheet, View, type GestureResponderEvent } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useRef, useState } from "react";
+import { Pressable, StyleSheet, View } from "react-native";
 import { Image } from "expo-image";
 import { randomUUID } from "expo-crypto";
-import { Stack, router, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import type { Frame, ImportJob } from "../../../src/domain/closet";
 import { boxFrom, resizeBox } from "../../../src/domain/capture";
 import {
@@ -12,34 +11,36 @@ import {
   cropCapture,
   isSettled,
   removeImport,
+  setKeepAsSet,
 } from "../../../src/domain/importing";
+import { jobPiece } from "../../../src/features/capture/jobs";
 import { t } from "../../../src/i18n";
+import { useDiscardChanges } from "../../../src/navigation/useDiscardChanges";
 import { useCloset } from "../../../src/state/closet";
+import { now } from "../../../src/state/clock";
 import { changeImports } from "../../../src/state/imports";
 import { photoUri } from "../../../src/storage/local";
-import {
-  AppText,
-  Button,
-  Chip,
-  ErrorMessage,
-  FormScreen,
-  HeaderAction,
-  Message,
-  Screen,
-} from "../../../src/ui/legacy";
+import { Button, Footer, Row, Rows, Screen, Text } from "../../../src/ui";
 import { theme } from "../../../src/ui/theme";
-import { now } from "../../../src/state/clock";
+import { useColors } from "../../../src/ui/useColors";
+import { useLargeText } from "../../../src/ui/useLargeText";
 
 const startBox: Frame = { x: 0.25, y: 0.25, width: 0.5, height: 0.5 };
 const step = 0.05;
+const moveStep = 0.05;
+
+const clamp = (value: number, max: number) =>
+  Math.min(Math.max(value, 0), Math.max(max, 0));
 
 function frameOf(job: ImportJob) {
   return job.crop ?? job.region?.frame ?? null;
 }
 
-function titleOf(job: ImportJob) {
+function nameOf(job: ImportJob, number: number) {
   if (job.name) return job.name;
-  return job.region ? t(`region.${job.region.kind}`) : t("capture.newPiece");
+  return job.region
+    ? t(`region.${job.region.kind}`)
+    : t("capture.photoNumber", { number });
 }
 
 function place(frame: Frame) {
@@ -51,50 +52,78 @@ function place(frame: Frame) {
   } as const;
 }
 
-export default function CapturePieces() {
+const percent = (value: number) => Math.round(value * 100);
+
+export default function PiecesFound() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { closet, update } = useCloset();
+  const colors = useColors();
+  const { ax } = useLargeText();
   const jobs = captureJobs(closet, id);
+  const [initialSet] = useState(() => jobs.some((job) => job.keepAsSet));
   const [dropped, setDropped] = useState<string[]>([]);
+  const [keepSet, setKeepSet] = useState(initialSet);
   const [drawing, setDrawing] = useState<{
     job: string | null;
     box: Frame;
   } | null>(null);
-  const [start, setStart] = useState<{ x: number; y: number } | null>(null);
-  const [stage, setStage] = useState({ width: 0, height: 0 });
+  const gesture = useRef<{
+    start: { x: number; y: number };
+    moved: boolean;
+  } | null>(null);
+  const [width, setWidth] = useState(0);
   const [aspect, setAspect] = useState(0.75);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const dirty = dropped.length > 0 || keepSet !== initialSet;
+  const allowClose = useDiscardChanges(dirty, busy);
 
   if (!jobs.length)
     return (
-      <Screen centered>
-        <Message
-          title={t("capture.group.gone")}
-          description={t("capture.group.goneHint")}
-          action={
-            <Button label={t("common.goBack")} onPress={() => router.back()} />
-          }
-        />
-      </Screen>
+      <Screen
+        title={t("capture.group.title")}
+        headerTitleVisible
+        gone={{ title: t("capture.group.gone") }}
+      />
     );
 
   const scanned = new Set(jobs.map((job) => job.source)).size > 1;
   const source =
     jobs.find((job) => job.id === drawing?.job)?.source ?? jobs[0]!.source;
-  const othersIgnored = jobs.some((job) => (job.people ?? 0) > 1);
-  const fit =
-    stage.width && stage.height
-      ? stage.width / stage.height > aspect
-        ? { width: stage.height * aspect, height: stage.height }
-        : { width: stage.width, height: stage.width / aspect }
-      : null;
+  const kept = jobs.filter((job) => !dropped.includes(job.id));
+  const height = width / aspect;
 
-  function point(event: GestureResponderEvent) {
+  function point(x: number, y: number) {
     return {
-      x: event.nativeEvent.locationX / (fit?.width ?? 1),
-      y: event.nativeEvent.locationY / (fit?.height ?? 1),
+      x: width ? x / width : 0,
+      y: height ? y / height : 0,
     };
+  }
+
+  function moveBox(dx: number, dy: number) {
+    if (!drawing) return;
+    const box = drawing.box;
+    setDrawing({
+      ...drawing,
+      box: {
+        ...box,
+        x: clamp(box.x + dx, 1 - box.width),
+        y: clamp(box.y + dy, 1 - box.height),
+      },
+    });
+  }
+
+  function centreBox(at: { x: number; y: number }) {
+    if (!drawing) return;
+    const box = drawing.box;
+    setDrawing({
+      ...drawing,
+      box: {
+        ...box,
+        x: clamp(at.x - box.width / 2, 1 - box.width),
+        y: clamp(at.y - box.height / 2, 1 - box.height),
+      },
+    });
   }
 
   function resize(change: number) {
@@ -102,11 +131,11 @@ export default function CapturePieces() {
       setDrawing({ ...drawing, box: resizeBox(drawing.box, change) });
   }
 
-  function toggle(job: string, drop: boolean) {
+  function toggle(job: string) {
     setDropped((current) =>
-      drop
-        ? [...new Set([...current, job])]
-        : current.filter((item) => item !== job),
+      current.includes(job)
+        ? current.filter((item) => item !== job)
+        : [...current, job],
     );
   }
 
@@ -130,305 +159,320 @@ export default function CapturePieces() {
   }
 
   async function done() {
-    if (busy) return;
+    if (busy || !kept.length) return;
+    const next = kept.find((job) => job.state === "review");
     setBusy(true);
     setError(null);
     try {
       await changeImports(update, (current) =>
-        dropped.reduce((next, job) => removeImport(next, job), current),
+        setKeepAsSet(
+          dropped.reduce((result, job) => removeImport(result, job), current),
+          id,
+          keepSet && kept.length > 1,
+        ),
       );
-      router.back();
+      allowClose();
+      if (next)
+        router.replace({ pathname: "/capture/[id]", params: { id: next.id } });
+      else router.back();
     } catch {
       setError(t("capture.saveFailed"));
       setBusy(false);
     }
   }
 
-  function photo(size: { width: number; height: number } | null) {
-    return (
-      <View
-        style={[
-          styles.photo,
-          size
-            ? { width: size.width, height: size.height }
-            : { aspectRatio: aspect },
-        ]}
-      >
-        <Image
-          source={{ uri: photoUri(source) }}
+  const photo = (
+    <View
+      style={[
+        styles.photo,
+        { backgroundColor: colors.sunken, aspectRatio: aspect },
+      ]}
+      onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
+    >
+      <Image
+        source={{ uri: photoUri(source) }}
+        style={StyleSheet.absoluteFill}
+        contentFit="fill"
+        accessibilityLabel={t("capture.photo")}
+        onLoad={(event) => setAspect(event.source.width / event.source.height)}
+      />
+      {drawing ? (
+        <View
           style={StyleSheet.absoluteFill}
-          contentFit="fill"
-          accessibilityLabel={t("capture.photo")}
-          onLoad={(event) =>
-            setAspect(event.source.width / event.source.height)
-          }
-        />
-        {drawing ? (
-          <View
-            style={StyleSheet.absoluteFill}
-            accessible
-            accessibilityRole="adjustable"
-            accessibilityLabel={t("capture.box")}
-            accessibilityActions={[
-              { name: "increment", label: t("capture.larger") },
-              { name: "decrement", label: t("capture.smaller") },
-            ]}
-            onAccessibilityAction={(event) =>
-              resize(
-                event.nativeEvent.actionName === "increment" ? step : -step,
-              )
+          testID="draw-area"
+          accessible
+          accessibilityRole="adjustable"
+          accessibilityLabel={t("capture.box")}
+          accessibilityValue={{
+            text: t("capture.boxValue", {
+              width: percent(drawing.box.width),
+              height: percent(drawing.box.height),
+              x: percent(drawing.box.x),
+              y: percent(drawing.box.y),
+            }),
+          }}
+          accessibilityActions={[
+            { name: "increment", label: t("capture.larger") },
+            { name: "decrement", label: t("capture.smaller") },
+            {
+              name: "up",
+              label: t("common.move", { direction: t("direction.up") }),
+            },
+            {
+              name: "down",
+              label: t("common.move", { direction: t("direction.down") }),
+            },
+            {
+              name: "left",
+              label: t("common.move", { direction: t("direction.left") }),
+            },
+            {
+              name: "right",
+              label: t("common.move", { direction: t("direction.right") }),
+            },
+          ]}
+          onAccessibilityAction={(event) => {
+            const action = event.nativeEvent.actionName;
+            if (action === "increment") resize(step);
+            else if (action === "decrement") resize(-step);
+            else if (action === "up") moveBox(0, -moveStep);
+            else if (action === "down") moveBox(0, moveStep);
+            else if (action === "left") moveBox(-moveStep, 0);
+            else if (action === "right") moveBox(moveStep, 0);
+          }}
+          onAccessibilityEscape={() => setDrawing(null)}
+          onStartShouldSetResponder={() => true}
+          onMoveShouldSetResponder={() => true}
+          onResponderTerminationRequest={() => false}
+          onResponderGrant={(event) => {
+            gesture.current = {
+              start: point(
+                event.nativeEvent.locationX,
+                event.nativeEvent.locationY,
+              ),
+              moved: false,
+            };
+          }}
+          onResponderMove={(event) => {
+            const current = gesture.current;
+            if (!current) return;
+            const box = boxFrom(
+              current.start,
+              point(event.nativeEvent.locationX, event.nativeEvent.locationY),
+            );
+            if (box) {
+              current.moved = true;
+              setDrawing({ ...drawing, box });
             }
-            onStartShouldSetResponder={() => true}
-            onMoveShouldSetResponder={() => true}
-            onResponderTerminationRequest={() => false}
-            onResponderGrant={(event) => setStart(point(event))}
-            onResponderMove={(event) => {
-              const box = start ? boxFrom(start, point(event)) : null;
-              if (box) setDrawing({ ...drawing, box });
-            }}
-            onResponderRelease={() => setStart(null)}
-          >
+          }}
+          onResponderRelease={() => {
+            const current = gesture.current;
+            gesture.current = null;
+            if (current && !current.moved) centreBox(current.start);
+          }}
+        >
+          <View
+            pointerEvents="none"
+            style={[
+              styles.box,
+              {
+                borderColor: colors.blush,
+                backgroundColor: `${colors.plumSoft}40`,
+              },
+              place(drawing.box),
+            ]}
+          />
+          {busy ? (
             <View
+              testID="moment-selecting"
               pointerEvents="none"
-              style={[styles.box, styles.drawn, place(drawing.box)]}
+              style={StyleSheet.absoluteFill}
             />
-          </View>
-        ) : (
-          jobs.map((job, index) => {
-            const frame = frameOf(job);
-            return frame ? (
-              <View
-                key={job.id}
-                pointerEvents="none"
-                style={[
-                  styles.box,
-                  dropped.includes(job.id) && styles.droppedBox,
-                  place(frame),
-                ]}
-              >
-                <AppText variant="footnote" style={styles.number}>
-                  {index + 1}
-                </AppText>
-              </View>
-            ) : null;
-          })
-        )}
-      </View>
-    );
-  }
+          ) : null}
+        </View>
+      ) : (
+        jobs.map((job, index) => {
+          const frame = frameOf(job);
+          if (!frame) return null;
+          const isDropped = dropped.includes(job.id);
+          return (
+            <Pressable
+              key={job.id}
+              testID={`region-${index + 1}`}
+              accessibilityRole="button"
+              accessibilityLabel={`${index + 1}, ${nameOf(job, index + 1)}, ${t("capture.adjust")}`}
+              hitSlop={12}
+              disabled={!isSettled(job)}
+              onPress={() => setDrawing({ job: job.id, box: frame })}
+              style={[
+                styles.outline,
+                {
+                  borderColor: isDropped ? colors.onMedia : colors.blush,
+                  borderStyle: isDropped ? "dashed" : "solid",
+                  shadowColor: colors.ink,
+                },
+                place(frame),
+              ]}
+            >
+              {ax ? null : (
+                <View
+                  style={[styles.pill, { backgroundColor: colors.scrimPill }]}
+                >
+                  <Text role="mark" tone="onMedia">
+                    {index + 1}
+                  </Text>
+                </View>
+              )}
+            </Pressable>
+          );
+        })
+      )}
+    </View>
+  );
 
   if (drawing)
     return (
-      <SafeAreaView edges={["bottom"]} style={styles.drawing}>
-        <Stack.Screen
-          options={{
-            title: drawing.job ? t("capture.adjust") : t("capture.addPiece"),
-            headerLeft: () => (
-              <HeaderAction
-                label={t("capture.cancel")}
-                onPress={() => setDrawing(null)}
-              />
-            ),
-          }}
-        />
-        <AppText muted>{t("capture.drawHint")}</AppText>
-        <View
-          style={styles.stage}
-          onLayout={(event) => setStage(event.nativeEvent.layout)}
-        >
-          {fit ? photo(fit) : null}
-        </View>
-        <View style={styles.row}>
-          <Button
-            label={t("capture.smaller")}
-            secondary
-            compact
-            onPress={() => resize(-step)}
+      <Screen
+        title={t("capture.group.title")}
+        headerTitleVisible
+        leading="cancel"
+        onCancel={() => setDrawing(null)}
+        footer={
+          <Footer
+            error={error}
+            primary={{
+              label: t("capture.useBox"),
+              onPress: () => void applyBox(),
+              busy,
+              testID: "group-use-box",
+            }}
           />
-          <Button
-            label={t("capture.larger")}
-            secondary
-            compact
-            onPress={() => resize(step)}
-          />
+        }
+        testID="group-screen"
+      >
+        <View style={styles.content}>
+          {photo}
+          <View style={styles.controls}>
+            <Button
+              label={t("capture.smaller")}
+              variant="quiet"
+              onPress={() => resize(-step)}
+            />
+            <Button
+              label={t("capture.larger")}
+              variant="quiet"
+              onPress={() => resize(step)}
+            />
+          </View>
         </View>
-        <ErrorMessage message={error} />
-        <Button
-          label={t("capture.useBox")}
-          busy={busy}
-          onPress={() => {
-            void applyBox();
-          }}
-        />
-      </SafeAreaView>
+      </Screen>
     );
 
   return (
-    <View style={styles.screen}>
-      <Stack.Screen
-        options={{
-          title: scanned ? t("scan.reviewTitle") : t("capture.group.title"),
-          headerLeft: () => (
-            <HeaderAction
-              label={t("capture.cancel")}
-              onPress={() => router.back()}
+    <Screen
+      title={t("capture.group.title")}
+      headerTitleVisible
+      leading="cancel"
+      onCancel={() => router.back()}
+      footer={
+        <Footer
+          error={error}
+          primary={{
+            label: t("common.done"),
+            onPress: () => void done(),
+            busy,
+            disabled: kept.length === 0,
+            testID: "group-done",
+          }}
+        />
+      }
+      testID="group-screen"
+    >
+      <View style={styles.content}>
+        {scanned ? null : photo}
+        <Rows>
+          {jobs.map((job, index) => {
+            const name = nameOf(job, index + 1);
+            const title = scanned ? name : `${index + 1} ${name}`;
+            const isKept = !dropped.includes(job.id);
+            return (
+              <Row
+                key={job.id}
+                title={title}
+                meta={
+                  job.region?.partial ? t("capture.partialShort") : undefined
+                }
+                leading={{ thumb: jobPiece(job) }}
+                checked={isKept}
+                onPress={() => toggle(job.id)}
+                accessibilityLabel={scanned ? name : `${index + 1}, ${name}`}
+                last={index === jobs.length - 1}
+                testID={`group-row-${index + 1}`}
+              />
+            );
+          })}
+        </Rows>
+        {jobs.length > 1 ? (
+          <Rows>
+            <Row
+              title={t("closet.linkSet")}
+              trailing={{
+                toggle: keepSet && kept.length > 1,
+                onToggle: (next) => {
+                  if (kept.length > 1) setKeepSet(next);
+                },
+              }}
+              last
+              testID="group-set"
             />
-          ),
-        }}
-      />
-      <FormScreen>
-        <AppText muted>{t("capture.group.intro")}</AppText>
-        {othersIgnored ? (
-          <AppText accessibilityLiveRegion="polite">
-            {t("capture.othersIgnored")}
-          </AppText>
+          </Rows>
         ) : null}
-        {scanned ? null : photo(null)}
-        {jobs.map((job, index) => {
-          const thumb = job.prepared?.thumbnail ?? job.region?.cutout ?? null;
-          const isDropped = dropped.includes(job.id);
-          const title = titleOf(job);
-          return (
-            <View
-              key={job.id}
-              style={[styles.proposal, isDropped && styles.droppedRow]}
-            >
-              <View style={styles.thumb}>
-                {thumb ? (
-                  <Image
-                    source={{ uri: photoUri(thumb) }}
-                    style={styles.image}
-                    contentFit="contain"
-                    recyclingKey={`${job.id}-${thumb}`}
-                  />
-                ) : null}
-              </View>
-              <View style={styles.details}>
-                <AppText
-                  style={styles.label}
-                >{`${index + 1}. ${title}`}</AppText>
-                {job.region?.partial ? (
-                  <AppText variant="footnote" muted>
-                    {t("capture.partial")}
-                  </AppText>
-                ) : null}
-                <View style={styles.row}>
-                  <Chip
-                    label={t("capture.keep")}
-                    accessibilityLabel={`${t("capture.keep")}, ${title}`}
-                    selected={!isDropped}
-                    onPress={() => toggle(job.id, false)}
-                  />
-                  <Chip
-                    label={t("capture.drop")}
-                    accessibilityLabel={`${t("capture.drop")}, ${title}`}
-                    selected={isDropped}
-                    onPress={() => toggle(job.id, true)}
-                  />
-                </View>
-                {isSettled(job) && !isDropped ? (
-                  <Button
-                    label={t("capture.adjust")}
-                    secondary
-                    compact
-                    onPress={() =>
-                      setDrawing({ job: job.id, box: frameOf(job) ?? startBox })
-                    }
-                  />
-                ) : null}
-              </View>
-            </View>
-          );
-        })}
         {scanned ? null : (
-          <Button
-            label={t("capture.addPiece")}
-            secondary
-            onPress={() => setDrawing({ job: null, box: startBox })}
-          />
+          <View style={styles.bleed}>
+            <Button
+              label={t("capture.addPiece")}
+              variant="quiet"
+              onPress={() => setDrawing({ job: null, box: startBox })}
+              testID="group-draw"
+            />
+          </View>
         )}
-      </FormScreen>
-      <SafeAreaView edges={["bottom"]} style={styles.footer}>
-        <View style={styles.footerContent}>
-          <ErrorMessage message={error} />
-          <Button
-            label={t("capture.done")}
-            busy={busy}
-            onPress={() => {
-              void done();
-            }}
-          />
-        </View>
-      </SafeAreaView>
-    </View>
+      </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: theme.colors.canvas },
-  drawing: {
-    flex: 1,
-    gap: theme.space.md,
-    padding: theme.space.xl,
-    backgroundColor: theme.colors.canvas,
-  },
-  stage: { flex: 1, alignItems: "center", justifyContent: "center" },
+  content: { gap: theme.space.lg },
   photo: {
     width: "100%",
     borderRadius: theme.radius.md,
     borderCurve: "continuous",
     overflow: "hidden",
-    backgroundColor: theme.colors.surface,
+  },
+  outline: {
+    position: "absolute",
+    borderWidth: 2,
+    borderRadius: theme.radius.sm,
+    shadowOpacity: 0.6,
+    shadowRadius: 1,
+    shadowOffset: { width: 0, height: 0 },
   },
   box: {
     position: "absolute",
     borderWidth: 2,
-    borderRadius: 4,
-    borderColor: theme.colors.plum,
+    borderRadius: theme.radius.sm,
   },
-  drawn: {
-    borderStyle: "dashed",
-    backgroundColor: `${theme.colors.plumSoft}66`,
-  },
-  droppedBox: { borderColor: theme.colors.line },
-  number: {
+  pill: {
     alignSelf: "flex-start",
-    margin: 4,
-    paddingHorizontal: 6,
-    borderRadius: 8,
-    overflow: "hidden",
-    color: theme.colors.onPlum,
-    backgroundColor: theme.colors.plum,
-    fontWeight: "600",
+    margin: theme.space.xs,
+    paddingHorizontal: theme.space.sm,
+    borderRadius: theme.radius.full,
   },
-  proposal: { flexDirection: "row", gap: 12, alignItems: "flex-start" },
-  droppedRow: { opacity: 0.55 },
-  thumb: {
-    width: 88,
-    aspectRatio: 1,
-    borderRadius: theme.radius.md,
-    borderCurve: "continuous",
-    borderWidth: 1,
-    borderColor: theme.colors.line,
-    overflow: "hidden",
-    padding: 4,
-    backgroundColor: theme.colors.canvas,
+  controls: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: theme.space.xl,
   },
-  image: { width: "100%", height: "100%" },
-  details: { flex: 1, gap: 8 },
-  label: { fontWeight: "600" },
-  row: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  footer: {
-    backgroundColor: theme.colors.canvas,
-    borderTopWidth: 1,
-    borderColor: theme.colors.line,
-  },
-  footerContent: {
-    width: "100%",
-    maxWidth: 720,
-    alignSelf: "center",
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    gap: 12,
-  },
+  bleed: { marginLeft: -theme.space.sm, alignSelf: "flex-start" },
 });

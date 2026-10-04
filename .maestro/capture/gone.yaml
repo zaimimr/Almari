@@ -1,0 +1,8 @@
+appId: com.zaimimran.almari
+# UC-F02-18
+# seed: fresh.sh
+---
+- launchApp
+- openLink: "almari://capture/missing-id"
+- assertVisible: "This photo is no longer waiting"
+- tapOn: "Go back"

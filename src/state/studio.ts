@@ -6,10 +6,12 @@ import ClosetVision from "../../modules/closet-vision/src";
 import {
   discardPhoto,
   installId,
+  keepPhotoAs,
   keepPhotoBytes,
   photoUpload,
   photoUri,
 } from "../storage/local";
+import { fixtures } from "../testing/fixtures";
 
 export type StudioPiece = {
   category: Category;
@@ -24,6 +26,23 @@ const studioUrl = process.env.EXPO_PUBLIC_STUDIO_URL;
 const studioToken = process.env.EXPO_PUBLIC_STUDIO_TOKEN;
 
 export const studioAvailable = Boolean(studioUrl && studioToken);
+
+export function studioOffered() {
+  return studioAvailable || Boolean(fixtures.studio);
+}
+
+const fixtureErrors = {
+  offline: "offline",
+  limit: "limit",
+  fail: "failed",
+} as const;
+
+async function fixtureStudio(source: string, id: string) {
+  await new Promise((resolve) => setTimeout(resolve, 1500));
+  if (fixtures.studio !== "ok")
+    throw new Error(fixtureErrors[fixtures.studio ?? "fail"]);
+  return keepPhotoAs(photoUri(source), `${id}-studio`);
+}
 
 async function studioInput(source: string, id: string) {
   if (!ClosetVision.isAvailable()) return null;
@@ -48,6 +67,7 @@ export async function renderStudio(
   id: string,
   piece: StudioPiece,
 ): Promise<string> {
+  if (fixtures.studio) return fixtureStudio(source, id);
   const input = await studioInput(source, id);
   const body = new FormData();
   body.append("image", (await photoUpload(input ?? source)) as Blob);
@@ -93,9 +113,9 @@ export function studioFailure(error: unknown): StudioProblem {
 }
 
 const messages = {
-  offline: "photo.studioOffline",
-  limit: "photo.studioLimit",
-  failed: "photo.studioFailed",
+  offline: "common.offline",
+  limit: "photo.cleanLimit",
+  failed: "photo.cleanFailed",
 } as const;
 
 export function useStudioMaker() {

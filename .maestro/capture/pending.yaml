@@ -1,0 +1,24 @@
+appId: com.zaimimran.almari
+# UC-F02-15
+# seed: fresh.sh,fixture.sh slowPrepare=6000
+---
+- addMedia:
+    - "../../assets/wardrobe/ivory-hijab.png"
+- runFlow: ../lib/open-add.yaml
+- tapOn:
+    text: "Got it"
+    optional: true
+- runFlow: ../lib/pick-photos.yaml
+- tapOn: "Back"
+- assertVisible: "1 new piece, getting ready"
+- stopApp
+- launchApp
+- tapOn: "Closet"
+- extendedWaitUntil:
+    visible: "1 ready to add"
+    timeout: 120000
+- assertVisible: "Hijabs & scarves 1"
+- tapOn:
+    id: "progress-card"
+- assertVisible:
+    id: "capture-screen"

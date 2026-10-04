@@ -1,5 +1,5 @@
-import { PieceEditor } from "../../src/features/PieceEditor";
+import { AddByHand } from "../../src/features/capture/AddByHand";
 
-export default function AddPiece() {
-  return <PieceEditor />;
+export default function NewPiece() {
+  return <AddByHand />;
 }

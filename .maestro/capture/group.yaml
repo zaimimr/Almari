@@ -1,0 +1,47 @@
+appId: com.zaimimran.almari
+# UC-F02-06
+# seed: fresh.sh,seed-capture.sh
+---
+- runFlow: ../lib/open-add.yaml
+- extendedWaitUntil:
+    visible: "3 pieces in one photo"
+    timeout: 120000
+- extendedWaitUntil:
+    notVisible:
+      id: "moment-generating"
+    timeout: 120000
+- tapOn: "3 pieces in one photo"
+- assertVisible:
+    id: "region-1"
+- takeScreenshot: docs/redesign/screens/after/capture/group
+- tapOn:
+    id: "group-row-1"
+- assertVisible: "Link as a set"
+- tapOn:
+    id: "group-set"
+- tapOn:
+    id: "region-2"
+- tapOn: "Smaller"
+- tapOn: "Use this box"
+- tapOn:
+    id: "group-draw"
+- swipe:
+    from:
+      id: "draw-area"
+    direction: RIGHT
+- tapOn: "Use this box"
+- tapOn: "Done"
+- repeat:
+    while:
+      visible: "Looks right"
+    commands:
+      - tapOn: "Looks right"
+- extendedWaitUntil:
+    visible:
+      id: "capture-add"
+    timeout: 60000
+- tapOn:
+    id: "capture-add"
+- tapOn:
+    id: "piece-tile-0"
+- assertVisible: "Part of a set"

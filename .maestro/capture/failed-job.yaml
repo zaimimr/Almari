@@ -1,0 +1,23 @@
+appId: com.zaimimran.almari
+# UC-F02-05
+# seed: fresh.sh,fixture.sh failPrepare=1
+---
+- addMedia:
+    - "../../assets/wardrobe/sage-kurta.png"
+- runFlow: ../lib/open-add.yaml
+- tapOn:
+    text: "Got it"
+    optional: true
+- runFlow: ../lib/pick-photos.yaml
+- extendedWaitUntil:
+    visible: "Could not finish"
+    timeout: 120000
+- assertVisible: "Try again"
+- tapOn:
+    id: "job-failed-1"
+- assertVisible: "Cut out by hand"
+- assertVisible: "Retake"
+- assertVisible: "Remove photo"
+- tapOn: "Remove photo"
+- assertVisible: "Removed"
+- assertVisible: "Undo"

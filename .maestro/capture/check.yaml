@@ -1,0 +1,21 @@
+appId: com.zaimimran.almari
+# UC-F02-07
+# seed: fresh.sh,seed-review.sh
+---
+- runFlow: ../lib/open-add.yaml
+- tapOn:
+    id: "job-confirm-1"
+- assertVisible: "New piece, 1 of 2"
+- takeScreenshot: docs/redesign/screens/after/capture/confirm
+- tapOn: "Tunics"
+- tapOn:
+    id: "confirm-colour"
+- tapOn: "Blush"
+- tapOn: "Looks right"
+- assertVisible: "New piece, 2 of 2"
+- tapOn: "Blazer"
+- tapOn: "Looks right"
+- assertVisible:
+    id: "job-ready-2"
+- assertNotVisible:
+    id: "job-confirm-1"
