@@ -37,7 +37,7 @@ export function FirstRun({ model }: { model: TodayModel }) {
         action={{
           label: t("today.firstRun.style"),
           accessibilityValue: t("today.firstRun.styleHint"),
-          onPress: () => router.push("/profile/style"),
+          onPress: () => router.push("/profile/answer/style"),
         }}
         secondary={{
           label: t("sample.try"),

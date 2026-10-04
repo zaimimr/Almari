@@ -98,13 +98,13 @@ export default function PieceDetail() {
   const planWith = () =>
     router.push(
       (needsStyle
-        ? "/profile/style?then=today"
+        ? "/profile/answer/style"
         : `/today/adjust?keep=${pieceId}&focus=day`) as Href,
     );
 
   const startWith = () => {
     if (needsStyle) {
-      router.push("/profile/style?then=today" as Href);
+      router.push("/profile/answer/style" as Href);
       return;
     }
     void act((current) => stylePiece(current, pieceId, clockFor(now()))).then(

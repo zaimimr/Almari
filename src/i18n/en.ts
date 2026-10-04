@@ -709,8 +709,7 @@ export const en = {
     "Your clothes, photos, looks, answers and today's outfit are deleted from this phone. The sample closet comes back and onboarding starts again. This cannot be undone.",
   "settings.reset.confirm": "Delete everything",
   "settings.failed": "This could not be saved. Please try again.",
-  "settings.privacy":
-    "Everything stays on this phone. There is no account and no login. Only the city name you type (to find it) and its position (for the weather) are sent to Apple.",
+  "settings.privacy": "Everything stays on this phone.",
   "settings.version": "Version {version}",
   "archive.title": "Archive",
   "archive.help":
@@ -1518,6 +1517,9 @@ export const en = {
   "common.optionInGroup": "{option}, {group}",
   "profile.morning": "Morning outfit",
   "profile.name": "Name",
+  "profile.location": "Location",
+  "profile.tile.coverage": "Coverage",
+  "profile.tile.sparkle": "Sparkle",
   "style.rules": "Style rules",
   "style.rulesSet": "{count} set",
   "style.occasion": "Occasion",

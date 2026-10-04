@@ -8,11 +8,11 @@ appId: com.zaimimran.almari
 - assertVisible:
     id: "profile"
 - tapOn:
-    id: "answer-name"
+    id: "profile-name"
 - eraseText: 20
 - tapOn: "Save"
 - tapOn:
-    id: "answer-name"
+    id: "profile-name"
 - inputText: "Sara A"
 - tapOn: "Save"
 - back

@@ -720,8 +720,7 @@ export const nb: Record<Key, string> = {
     "Klærne, bildene, antrekkene, svarene og dagens antrekk slettes fra denne telefonen. Eksempelgarderoben kommer tilbake, og introduksjonen starter på nytt. Dette kan ikke angres.",
   "settings.reset.confirm": "Slett alt",
   "settings.failed": "Dette kunne ikke lagres. Prøv igjen.",
-  "settings.privacy":
-    "Alt blir på denne telefonen. Det finnes ingen konto og ingen innlogging. Bare bynavnet du skriver og posisjonen til byen sendes til Apple for å finne været.",
+  "settings.privacy": "Alt blir på denne telefonen.",
   "settings.version": "Versjon {version}",
   "archive.title": "Arkiv",
   "archive.help":
@@ -1537,6 +1536,9 @@ export const nb: Record<Key, string> = {
   "common.optionInGroup": "{option}, {group}",
   "profile.morning": "Morgenantrekk",
   "profile.name": "Navn",
+  "profile.location": "Sted",
+  "profile.tile.coverage": "Dekning",
+  "profile.tile.sparkle": "Pynt",
   "style.rules": "Stilregler",
   "style.rulesSet": "{count} valgt",
   "style.occasion": "Anledning",

@@ -1,27 +1,23 @@
 appId: com.zaimimran.almari
 # UC-F11-01
-# seed: seed-owned.sh,seed-wears.sh
 ---
 - runFlow: ../lib/sample-closet.yaml
 - tapOn:
     id: "header-profile"
 - assertVisible:
     id: "profile"
-- assertVisible: "The stylist knows .*% of your style"
-- scrollUntilVisible:
-    element:
-      id: "stats-never-worn"
-- tapOn:
-    id: "stats-never-worn"
 - assertVisible:
-    id: "closet-grid"
-- back
-- tapOn:
-    id: "header-profile"
+    id: "profile-name"
+- assertVisible:
+    id: "style-board"
+- takeScreenshot: docs/redesign/screens/after/profile/profile
 - scrollUntilVisible:
     element:
-      id: "stats-most-worn"
-- tapOn:
-    id: "stats-most-worn"
-- back
+      id: "app-version"
+- assertVisible:
+    id: "profile-never"
+- assertVisible:
+    id: "profile-language"
+- assertVisible:
+    id: "settings-reset"
 - takeScreenshot: docs/redesign/screens/after/profile/profile-scrolled

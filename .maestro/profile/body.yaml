@@ -8,9 +8,9 @@ appId: com.zaimimran.almari
     id: "profile"
 - scrollUntilVisible:
     element:
-      id: "answer-body"
+      id: "profile-body"
 - tapOn:
-    id: "answer-body"
+    id: "profile-body"
 - tapOn:
     id: "answer-height"
 - inputText: "1.65"

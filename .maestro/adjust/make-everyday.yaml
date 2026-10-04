@@ -21,6 +21,6 @@ appId: com.zaimimran.almari
 - tapOn:
     id: "header-profile"
 - scrollUntilVisible:
-    element: "Your style.*"
+    element:
+      id: "tile-style"
     timeout: 60000
-- assertVisible: "Work.*"

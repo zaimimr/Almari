@@ -8,23 +8,32 @@ appId: com.zaimimran.almari
     id: "profile"
 - scrollUntilVisible:
     element:
-      id: "answer-place"
+      id: "profile-location"
 - tapOn:
-    id: "answer-place"
+    id: "profile-location"
 - tapOn: "Search for your city"
 - inputText: "Oslo"
 - pressKey: Enter
 - tapOn: "Oslo.*"
 - tapOn: "Save"
 - tapOn:
-    id: "answer-body"
+    id: "profile-body"
 - tapOn: "Feet and °F"
 - tapOn: "Save"
+- scrollUntilVisible:
+    direction: UP
+    element:
+      id: "tile-colours"
 - tapOn:
-    id: "answer-colours"
+    id: "tile-colours"
 - tapOn: "Bold"
+- tapOn: "Save"
+- scrollUntilVisible:
+    direction: UP
+    element:
+      id: "profile-name"
 - tapOn:
-    id: "answer-name"
+    id: "profile-name"
 - inputText: "x"
 - tapOn: "Cancel"
 - takeScreenshot: docs/redesign/screens/after/profile/answer

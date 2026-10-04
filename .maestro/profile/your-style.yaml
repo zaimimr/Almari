@@ -6,22 +6,17 @@ appId: com.zaimimran.almari
     id: "header-profile"
 - assertVisible:
     id: "profile"
-- tapOn: "Your style"
+- tapOn:
+    id: "tile-coverage"
+- tapOn:
+    id: "card-full"
 - assertVisible:
-    id: "your-style"
-- tapOn:
-    id: "style-occasion"
-- tapOn:
-    id: "style-occasion"
-- tapOn:
-    id: "style-coverage"
-- tapOn: "My own"
-- assertVisible: "Sleeves.*"
-- assertVisible: "Hem.*"
+    id: "card-full"
+    selected: true
 - takeScreenshot: docs/redesign/screens/after/profile/style
-- tapOn: "Cancel"
-- assertVisible: "Discard.*"
-- tapOn: "Keep editing"
-- tapOn: "Save and update today"
+- tapOn: "Save"
 - assertVisible:
-    id: "today-outfit"
+    id: "profile"
+- assertVisible:
+    id: "tile-coverage"
+    text: ".*Fully covered.*"

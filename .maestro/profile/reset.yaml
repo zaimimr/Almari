@@ -7,15 +7,6 @@ appId: com.zaimimran.almari
 - assertVisible:
     id: "profile"
 - scrollUntilVisible:
-    element: "Show intro again"
-- tapOn: "Show intro again"
-- tapOn: "Show intro again"
-- assertVisible:
-    id: "onboarding-next"
-- runFlow: ../lib/sample-closet.yaml
-- tapOn:
-    id: "header-profile"
-- scrollUntilVisible:
     element: "Delete all data"
 - tapOn: "Delete all data"
 - tapOn: "Delete all data"
