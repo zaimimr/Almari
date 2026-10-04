@@ -29,7 +29,7 @@ appId: com.zaimimran.almari
 - scrollUntilVisible:
     element:
       id: "today-undo"
-    direction: DOWN
+    direction: UP
     centerElement: true
     timeout: 60000
 - takeScreenshot: docs/redesign/screens/after/today/another-ax5

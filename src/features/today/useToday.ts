@@ -69,6 +69,10 @@ const at = () => now().toISOString();
 
 export function useToday() {
   const { closet, update } = useCloset();
+  const latest = useRef(closet);
+  useEffect(() => {
+    latest.current = closet;
+  }, [closet]);
   const [busy, setBusy] = useState(false);
   const [styling, setStyling] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -245,9 +249,9 @@ export function useToday() {
 
   useEffect(() => {
     const refresh = () => {
-      void update((current) => ensureToday(current, clockFor(now()))).catch(
-        () => undefined,
-      );
+      const ensure = (current: Closet) => ensureToday(current, clockFor(now()));
+      if (ensure(latest.current) === latest.current) return;
+      void update(ensure).catch(() => undefined);
     };
     refresh();
     const subscription = AppState.addEventListener("change", (state) => {

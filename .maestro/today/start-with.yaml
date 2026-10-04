@@ -32,16 +32,9 @@ appId: com.zaimimran.almari
     id: "start-knit"
 - extendedWaitUntil:
     visible:
-      id: "today-outfit"
-    timeout: 60000
-- scrollUntilVisible:
-    element:
       id: "start-knit"
-    direction: DOWN
-    centerElement: true
-- assertVisible:
-    id: "start-knit"
-    text: "(.*, )?checked"
+      text: "(.*, )?checked"
+    timeout: 60000
 - assertVisible:
     id: "start-hijab"
     checked: false
