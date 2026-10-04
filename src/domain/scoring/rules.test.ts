@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  emptyTaste,
   neutralProfile,
   type Category,
   type GarmentKind,
@@ -10,7 +11,9 @@ import {
 } from "../closet";
 import type { Attributes } from "../attributes";
 import { ruleBook } from "./rulebook";
+import { styleOutfits } from "../styling";
 import { reasonFor, ruleHits } from "./rules";
+import { rulesScorer } from "./rulesScorer";
 
 const request = (changes: Partial<OutfitRequest> = {}): OutfitRequest => ({
   occasion: "everyday",
@@ -265,4 +268,55 @@ test("a bridal piece is read as heavy by the rules", () => {
     embellishment: "bridal",
   });
   assert.ok(hitIds([bridal, hijab]).includes("statement-hijab-busy-main"));
+});
+
+const gymCloset = [
+  make("leggings", "bottom", "leggings"),
+  make("jeans", "bottom", "jeans"),
+  make("sports top", "top", "sports-top"),
+  make("blouse", "top", "blouse"),
+  make("dress", "dress", "dress"),
+  make("abaya", "dress", "abaya"),
+  make("sneakers", "shoes", "sneakers"),
+  make("heels", "shoes", "heels"),
+  make("loafers", "shoes", "loafers"),
+  make("instant hijab", "hijab", "instant-hijab"),
+  make("silk hijab", "hijab", "hijab"),
+  make("blazer", "layer", "blazer"),
+  make("tote", "bag", "tote"),
+];
+const gymContext = { profile: neutralProfile, taste: emptyTaste, wear: {} };
+
+test("Trening picks sneakers, never a dress, heels, a blazer or a bag", () => {
+  const result = styleOutfits(
+    gymCloset,
+    request({ occasion: "gym" }),
+    "seed",
+    rulesScorer,
+    gymContext,
+  );
+  assert.ok(result.outfits.length);
+  for (const outfit of result.outfits) {
+    assert.ok(outfit.ids.includes("sneakers"));
+    for (const id of ["dress", "abaya", "heels", "loafers", "blazer", "tote"])
+      assert.ok(!outfit.ids.includes(id));
+  }
+  assert.ok(result.outfits[0]!.ids.includes("leggings"));
+  assert.ok(result.outfits[0]!.ids.includes("sports top"));
+  assert.ok(result.outfits[0]!.ids.includes("instant hijab"));
+});
+
+test("Trening without any gym clothes says so instead of styling", () => {
+  const result = styleOutfits(
+    gymCloset.filter(
+      (piece) => piece.kind !== "leggings" && piece.kind !== "sports-top",
+    ),
+    request({ occasion: "gym" }),
+    "seed",
+    rulesScorer,
+    gymContext,
+  );
+  assert.equal(result.status, "missing");
+  assert.equal(result.outfits.length, 0);
+  assert.equal(result.problems[0]!.message, "No gym clothes yet");
 });

@@ -136,6 +136,28 @@ function fitsStyle(piece: Piece, style: Style) {
   return !piece.styles || piece.styles.includes(style);
 }
 
+const activewear: readonly string[] = [
+  "leggings",
+  "joggers",
+  "sports-top",
+  "hoodie",
+];
+
+const offAtGym: readonly string[] = ["heels", "blazer"];
+
+function fitsOccasion(piece: Piece, request: OutfitRequest) {
+  if (request.occasion !== "gym") return true;
+  if (piece.category === "dress" || piece.category === "bag") return false;
+  if (piece.category === "accessory") return false;
+  if (piece.kind && offAtGym.includes(piece.kind)) return false;
+  if (piece.category === "shoes") return piece.kind === "sneakers";
+  if (piece.kind === "coat")
+    return (
+      request.weather.source !== "unknown" && request.weather.warmth === "cold"
+    );
+  return true;
+}
+
 function outside(request: OutfitRequest) {
   return (
     request.weather.source !== "unknown" &&
@@ -477,7 +499,24 @@ export function styleOutfits(
       !excluded.has(piece.id) &&
       !isNeverWear(context.profile, piece),
   );
-  const eligible = available.filter((piece) => fitsStyle(piece, request.style));
+  const eligible = available.filter(
+    (piece) => fitsStyle(piece, request.style) && fitsOccasion(piece, request),
+  );
+  if (
+    request.occasion === "gym" &&
+    ![...kept, ...eligible].some(
+      (piece) => piece.kind && activewear.includes(piece.kind),
+    )
+  )
+    return fail("missing", [
+      {
+        code: "missing-role",
+        severity: "missing",
+        message: t("styling.gapGym"),
+        ids: [],
+        actions: [{ type: "add-pieces" }],
+      },
+    ]);
   const keptRole = (role: Role) =>
     kept.filter((piece) => roleOf(piece) === role);
   const eligibleRole = (role: Role) =>
@@ -727,7 +766,8 @@ export function replacementsFor(
         roleOf(piece) === role &&
         !currentIds.includes(piece.id) &&
         !request.excludedIds.includes(piece.id) &&
-        !isNeverWear(context.profile, piece),
+        !isNeverWear(context.profile, piece) &&
+        fitsOccasion(piece, request),
     )
     .map((piece) => {
       const outfit = currentIds.map((id) =>

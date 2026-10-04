@@ -17,7 +17,7 @@ import { activeSession, saveEverydayStyle } from "./today";
 
 const clock = { localDate: "2026-10-01", timeZone: "Europe/Oslo" };
 
-test("the seven occasions carry their formality levels and phrases", () => {
+test("the eight occasions carry their formality levels and phrases", () => {
   assert.deepEqual(
     occasions.map((occasion) => [
       occasion.id,
@@ -27,6 +27,7 @@ test("the seven occasions carry their formality levels and phrases", () => {
     [
       ["everyday", "Everyday", 1],
       ["work", "Work", 2],
+      ["gym", "Gym", 0],
       ["dinner", "Dinner or dawat", 3],
       ["eid", "Eid", 4],
       ["party", "Party or mehndi", 4],
@@ -35,7 +36,7 @@ test("the seven occasions carry their formality levels and phrases", () => {
     ],
   );
   assert.equal(occasionPhrase("party"), "a party or mehndi");
-  assert.deepEqual(occasionOptions()[2], {
+  assert.deepEqual(occasionOptions()[3], {
     id: "dinner",
     label: "Dinner or dawat",
   });

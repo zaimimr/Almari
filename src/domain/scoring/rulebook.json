@@ -310,6 +310,26 @@
       "weight": -0.6
     },
     {
+      "id": "gym-activewear",
+      "source": "owner:gym",
+      "layer": "style",
+      "when": { "occasion": ["gym"] },
+      "if": {
+        "has": {
+          "kind": ["leggings", "joggers", "sports-top", "hoodie", "t-shirt"]
+        }
+      },
+      "weight": 1.5
+    },
+    {
+      "id": "gym-instant-hijab",
+      "source": "owner:gym",
+      "layer": "style",
+      "when": { "occasion": ["gym"] },
+      "if": { "has": { "kind": ["instant-hijab"] } },
+      "weight": 1.0
+    },
+    {
       "id": "hijab-warm-fabric-cold",
       "source": "western-hijab:59",
       "layer": "style",
