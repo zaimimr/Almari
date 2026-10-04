@@ -6,7 +6,6 @@ import type { SelectResult } from "./useClosetScreen";
 
 export function SelectFooter({
   canAct,
-  canStyle,
   putAwayShown,
   wornOpen,
   result,
@@ -14,11 +13,8 @@ export function SelectFooter({
   onWorn,
   onLink,
   onPutAway,
-  onNewLook,
-  onStart,
 }: {
   canAct: boolean;
-  canStyle: boolean;
   putAwayShown: boolean;
   wornOpen: boolean;
   result: SelectResult;
@@ -26,8 +22,6 @@ export function SelectFooter({
   onWorn: (day: "today" | "yesterday") => void;
   onLink: () => void;
   onPutAway: () => void;
-  onNewLook: () => void;
-  onStart: () => void;
 }) {
   const markWorn = {
     label: t("looks.markWorn"),
@@ -93,18 +87,6 @@ export function SelectFooter({
       ]}
       actionsContent={content}
       error={result && "error" in result ? result.error : null}
-      secondary={{
-        label: t("looks.new"),
-        onPress: onNewLook,
-        disabled: !canStyle,
-        testID: "select-new-look",
-      }}
-      primary={{
-        label: t("pieces.startWithThese"),
-        onPress: onStart,
-        disabled: !canStyle,
-        testID: "select-start",
-      }}
     />
   );
 }

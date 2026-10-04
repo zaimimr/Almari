@@ -24,6 +24,5 @@ appId: com.zaimimran.almari
 - tapOn: "Confirm 4 pieces"
 - tapOn: "Looks right"
 - tapOn: "Add 4 pieces"
-- assertVisible: "Add tops, bottoms and shoes to style from your clothes"
-- assertNotVisible: "Start with these"
-- assertVisible: "Mark what I wear most"
+- assertVisible: "4 added"
+- assertVisible: "Start with these"

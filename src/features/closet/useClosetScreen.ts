@@ -129,7 +129,6 @@ export function useClosetScreen() {
     return piece ? [piece] : [];
   });
   const owned = chosen.filter((piece) => piece.source === "owned");
-  const styleable = chosen.filter((piece) => piece.status !== "archived");
 
   const run = (transform: Parameters<typeof update>[0], done: () => void) =>
     update(transform).then(done, (error: unknown) =>
@@ -215,15 +214,6 @@ export function useClosetScreen() {
     router.navigate("/(tabs)/today");
   };
 
-  const newLook = (pieces: Piece[]) => {
-    const ids = pieces
-      .filter((piece) => piece.status !== "archived")
-      .map((piece) => piece.id);
-    endSelect();
-    setAdded([]);
-    router.push({ pathname: "/look/build", params: { pieces: ids.join(",") } });
-  };
-
   return {
     closet,
     filter,
@@ -239,7 +229,6 @@ export function useClosetScreen() {
     selected,
     chosen,
     owned,
-    styleable,
     startSelect,
     endSelect,
     toggle,
@@ -251,9 +240,7 @@ export function useClosetScreen() {
     linkSelected,
     putAway,
     startWith,
-    newLook,
     added,
     setAdded,
-    link,
   };
 }

@@ -4,11 +4,7 @@ appId: com.zaimimran.almari
 ---
 - runFlow: ../lib/open-closet.yaml
 - assertVisible:
-    id: "chip-more"
-- assertVisible:
     id: "category-all"
-- assertVisible:
-    id: "chip-needs-details"
 - assertNotVisible:
     id: "tile-sample-mauve-hijab"
 - takeScreenshot: docs/redesign/screens/after/closet/closet
@@ -39,11 +35,9 @@ appId: com.zaimimran.almari
           end: 85%, 29%
 - tapOn:
     id: "category-all"
-- tapOn:
-    id: "chip-more"
+- runFlow: ../lib/open-filter.yaml
 - assertVisible:
     id: "closet-panel"
-- assertVisible: "Fully covered"
 - assertVisible: "Not worn lately"
 - assertNotVisible:
     id: "closet-clear"
@@ -52,96 +46,37 @@ appId: com.zaimimran.almari
     id: "show-not-worn-lately"
 - assertVisible:
     id: "closet-clear"
-- tapOn:
-    id: "chip-more"
+- runFlow: ../lib/open-filter.yaml
 - assertVisible: "Olive maxi dress.*"
 - assertNotVisible: "Rose tunic.*"
 - assertNotVisible: "Taupe abaya.*"
-- tapOn:
-    id: "chip-more"
+- runFlow: ../lib/open-filter.yaml
 - tapOn:
     id: "show-not-worn-lately"
 - tapOn:
     id: "colour-blush"
-- tapOn:
-    id: "chip-more"
+- runFlow: ../lib/open-filter.yaml
 - assertVisible: "Chiffon hijab.*"
 - assertNotVisible: "Sand hijab.*"
-- tapOn:
-    id: "chip-more"
+- runFlow: ../lib/open-filter.yaml
 - tapOn:
     id: "colour-blush"
-- tapOn:
-    id: "coverage-full"
-- tapOn:
-    id: "chip-more"
-- assertVisible: "Sage blouse.*"
-- assertVisible: "Ivory trousers.*"
-- assertNotVisible: "Sand hijab.*"
-- scrollUntilVisible:
-    element: "Taupe abaya.*"
-    direction: DOWN
-- scrollUntilVisible:
-    element: "Navy blazer.*"
-    direction: DOWN
-- assertNotVisible: "Knee skirt.*"
-- scrollUntilVisible:
-    element:
-      id: "chip-more"
-    direction: UP
-- tapOn:
-    id: "chip-more"
-- waitForAnimationToEnd
-- swipe:
-    start: 85%, 44%
-    end: 40%, 44%
-- tapOn:
-    id: "coverage-layer"
-- assertVisible:
-    id: "coverage-layer"
-    selected: true
-- tapOn:
-    id: "chip-more"
-- assertVisible: "Knee skirt.*"
-- assertNotVisible: "Sage blouse.*"
-- tapOn:
-    id: "chip-more"
 - tapOn:
     id: "season-winter"
 - tapOn:
     id: "closet-clear"
 - assertNotVisible:
     id: "closet-clear"
-- tapOn:
-    id: "chip-more"
+- runFlow: ../lib/open-filter.yaml
 - assertVisible: "Chiffon hijab.*"
-- tapOn:
-    id: "chip-more"
+- runFlow: ../lib/open-filter.yaml
 - waitForAnimationToEnd
-- swipe:
-    start: 85%, 56%
-    end: 40%, 56%
 - tapOn:
     id: "show-archived"
 - assertVisible: "No pieces found"
 - assertVisible:
     id: "closet-clear"
-- tapOn:
-    id: "chip-more"
+- runFlow: ../lib/open-filter.yaml
 - assertVisible: "No pieces found"
 - tapOn: "Clear filters"
 - assertVisible: "Chiffon hijab.*"
-- tapOn:
-    id: "chip-needs-details"
-- assertVisible: "Sage blouse.*"
-- assertNotVisible: "Sand hijab.*"
-- assertNotVisible: "Chiffon hijab.*"
-- scrollUntilVisible:
-    element: "Rose tunic.*"
-    direction: DOWN
-- scrollUntilVisible:
-    element: "Olive maxi dress.*"
-    direction: DOWN
-- assertNotVisible: "Ivory trousers.*"
-- assertNotVisible: "Knee skirt.*"
-- assertNotVisible: "Black boots.*"

@@ -14,8 +14,6 @@ appId: com.zaimimran.almari
     id: "select-mark-worn"
 - assertVisible:
     id: "select-put-away"
-- assertVisible:
-    id: "select-start"
 - tapOn:
     id: "tile-seed-chiffon-hijab"
 - tapOn:

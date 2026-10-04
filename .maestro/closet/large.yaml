@@ -21,14 +21,12 @@ appId: com.zaimimran.almari
 - extendedWaitUntil:
     visible: ".*klare til å legges til.*"
     timeout: 120000
-- tapOn:
-    id: "chip-more"
+- runFlow: ../lib/open-filter.yaml
 - waitForAnimationToEnd
 - assertVisible:
     id: "closet-panel"
 - takeScreenshot: docs/redesign/screens/after/closet/ax-more
-- tapOn:
-    id: "chip-more"
+- runFlow: ../lib/open-filter.yaml
 - repeat:
     times: 8
     while:

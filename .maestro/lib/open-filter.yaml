@@ -1,0 +1,8 @@
+appId: com.zaimimran.almari
+---
+- scrollUntilVisible:
+    element:
+      id: "chip-more"
+    direction: RIGHT
+- tapOn:
+    id: "chip-more"

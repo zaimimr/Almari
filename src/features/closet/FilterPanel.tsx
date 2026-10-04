@@ -5,20 +5,13 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
-import {
-  occasions,
-  type Category,
-  type Occasion,
-  type Piece,
-  type Style,
-} from "../../domain/closet";
+import type { Category, Piece } from "../../domain/closet";
 import { colorName, namedSwatch } from "../../domain/color";
 import type { ClosetFilter } from "../../domain/closetFilters";
-import type { PieceCoverage, WearSeason } from "../../domain/facts";
-import { categoryName, occasionName, styleName, t } from "../../i18n";
+import type { WearSeason } from "../../domain/facts";
+import { categoryName, t } from "../../i18n";
 import { Button, Chip, ChipRow, Text } from "../../ui";
 import { gutterFor, theme } from "../../ui/theme";
-import { useColors } from "../../ui/useColors";
 import { useLargeText } from "../../ui/useLargeText";
 import { colourLabel } from "../ColourChips";
 
@@ -38,9 +31,7 @@ const showLabels: Record<Show, string> = {
   archived: "closet.putAway",
 };
 
-const coverages: PieceCoverage[] = ["full", "moderate", "layer"];
 const seasonIds: WearSeason[] = ["summer", "winter", "all-year"];
-const styleIds: Style[] = ["desi", "western"];
 
 const showOf = (filter: ClosetFilter): Show | null =>
   filter.wear ??
@@ -52,15 +43,8 @@ export function filterValues(filter: ClosetFilter): string[] {
   const show = showOf(filter);
   return [
     filter.colour ? colourLabel(filter.colour) : null,
-    filter.coverage === "needs-details"
-      ? t("piece.needsDetails")
-      : filter.coverage
-        ? t(`pieceCoverage.${filter.coverage}`)
-        : null,
     filter.season ? t(`value.season.${filter.season}`) : null,
     show ? t(showLabels[show] as Parameters<typeof t>[0]) : null,
-    filter.style ? styleName(filter.style) : null,
-    filter.occasion ? occasionName(filter.occasion) : null,
   ].filter((value): value is string => value !== null);
 }
 
@@ -77,27 +61,17 @@ export function FilterRow({
   onToggle: () => void;
   onChange: (next: Partial<ClosetFilter>) => void;
 }) {
-  const colors = useColors();
   const { width: windowWidth } = useWindowDimensions();
   const gutter = gutterFor(windowWidth);
   const values = filterValues(filter);
-  const needs = filter.coverage === "needs-details";
 
-  const chips = (
-    <>
-      <Chip
-        label={t("piece.needsDetails")}
-        dot
-        selected={needs}
-        role="button"
-        onPress={() => onChange({ coverage: needs ? null : "needs-details" })}
-        testID="chip-needs-details"
-      />
-      <View
-        style={[styles.divider, { backgroundColor: colors.line }]}
-        accessibilityElementsHidden
-        importantForAccessibility="no-hide-descendants"
-      />
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={{ marginHorizontal: -gutter }}
+      contentContainerStyle={[styles.row, { paddingHorizontal: gutter }]}
+    >
       <View accessibilityRole="radiogroup" style={styles.row}>
         {(["all", ...offered] as const).map((id) => (
           <Chip
@@ -110,13 +84,8 @@ export function FilterRow({
           />
         ))}
       </View>
-    </>
-  );
-
-  return (
-    <View style={styles.filterRow}>
       <Chip
-        label={t("closet.more")}
+        label={t("closet.filter")}
         kind="control"
         opens="expander"
         expanded={open}
@@ -125,15 +94,7 @@ export function FilterRow({
         onPress={onToggle}
         testID="chip-more"
       />
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={{ marginRight: -gutter }}
-        contentContainerStyle={[styles.row, { paddingRight: gutter }]}
-      >
-        {chips}
-      </ScrollView>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -189,11 +150,7 @@ export function FilterPanel({
     ),
   ];
   const ids = new Map(names.map((name) => [colourId(name), name]));
-  const used = occasions.filter(({ id }) =>
-    pieces.some((piece) => piece.traits?.occasions?.includes(id)),
-  );
   const show = showOf(filter);
-  const coverage = filter.coverage === "needs-details" ? null : filter.coverage;
 
   const group = (label: string, row: React.ReactNode) => (
     <Group label={label} width={labelWidth} onMeasure={measure}>
@@ -225,22 +182,6 @@ export function FilterPanel({
             />,
           )
         : null}
-      {group(
-        t("coverage.levelLabel"),
-        <ChipRow
-          layout="scroll"
-          optional
-          options={coverages.map((id) => ({
-            id,
-            label: t(`pieceCoverage.${id}`),
-          }))}
-          value={coverage}
-          onChange={(next) =>
-            onChange({ coverage: typeof next === "string" ? next : null })
-          }
-          testID="coverage"
-        />,
-      )}
       {group(
         t("fact.season"),
         <ChipRow
@@ -280,37 +221,6 @@ export function FilterPanel({
           testID="show"
         />,
       )}
-      {group(
-        t("adjust.style"),
-        <ChipRow
-          layout="scroll"
-          optional
-          options={styleIds.map((id) => ({ id, label: styleName(id) }))}
-          value={filter.style}
-          onChange={(next) =>
-            onChange({ style: typeof next === "string" ? next : null })
-          }
-          testID="style"
-        />,
-      )}
-      {used.length
-        ? group(
-            t("adjust.occasion"),
-            <ChipRow
-              layout="scroll"
-              optional
-              options={used.map(({ id }) => ({ id, label: occasionName(id) }))}
-              value={filter.occasion}
-              onChange={(next) =>
-                onChange({
-                  occasion:
-                    typeof next === "string" ? (next as Occasion) : null,
-                })
-              }
-              testID="occasion"
-            />,
-          )
-        : null}
       <View style={styles.clear}>
         {filtered ? (
           <Button
@@ -327,17 +237,7 @@ export function FilterPanel({
 }
 
 const styles = StyleSheet.create({
-  filterRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: theme.space.sm,
-  },
   row: { flexDirection: "row", alignItems: "center", gap: theme.space.sm },
-  divider: {
-    width: StyleSheet.hairlineWidth,
-    alignSelf: "stretch",
-    marginVertical: theme.space.sm,
-  },
   panel: { gap: theme.space.md },
   group: { flexDirection: "row", alignItems: "center", gap: theme.space.md },
   groupStacked: { flexDirection: "column", alignItems: "stretch" },

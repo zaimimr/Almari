@@ -5,7 +5,7 @@ import type { ClosetSection } from "../../domain/closetFilters";
 import { mainColourName } from "../../domain/color";
 import { needsDetails } from "../../domain/facts";
 import { t } from "../../i18n";
-import { Tile } from "../../ui";
+import { Symbol, Tile } from "../../ui";
 import { gutterFor, theme } from "../../ui/theme";
 import { colourLabel } from "../ColourChips";
 
@@ -96,6 +96,16 @@ export function ClosetGrid({
               accessibilityLabel={tileLabel(piece, meta)}
               testID={`tile-${piece.id}`}
             />
+            {meta ? (
+              <View
+                style={styles.away}
+                pointerEvents="none"
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+              >
+                <Symbol name="moon.zzz" size={13} tone="muted" />
+              </View>
+            ) : null}
           </View>
         );
       }}
@@ -111,4 +121,9 @@ const styles = StyleSheet.create({
     paddingBottom: theme.space.footerInset,
   },
   row: { gap },
+  away: {
+    position: "absolute",
+    right: theme.space.sm,
+    bottom: theme.space.sm,
+  },
 });

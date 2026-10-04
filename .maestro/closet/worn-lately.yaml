@@ -41,12 +41,10 @@ appId: com.zaimimran.almari
     element:
       id: "chip-more"
     direction: UP
-- tapOn:
-    id: "chip-more"
+- runFlow: ../lib/open-filter.yaml
 - tapOn:
     id: "show-not-worn-lately"
-- tapOn:
-    id: "chip-more"
+- runFlow: ../lib/open-filter.yaml
 - assertNotVisible:
     id: "tile-seed-chiffon-hijab"
 - assertNotVisible:

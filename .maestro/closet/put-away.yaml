@@ -25,16 +25,14 @@ appId: com.zaimimran.almari
     id: "tile-seed-hijab"
 - tapOn:
     id: "header-cancel"
-- tapOn:
-    id: "chip-more"
+- runFlow: ../lib/open-filter.yaml
 - waitForAnimationToEnd
 - swipe:
     start: 85%, 56%
     end: 40%, 56%
 - tapOn:
     id: "show-archived"
-- tapOn:
-    id: "chip-more"
+- runFlow: ../lib/open-filter.yaml
 - assertVisible:
     id: "tile-seed-chiffon-hijab"
 - assertVisible:

@@ -27,8 +27,6 @@ appId: com.zaimimran.almari
     id: "tile-seed-blouse"
 - assertNotVisible:
     id: "tile-seed-chiffon-hijab"
-- assertVisible:
-    id: "chip-more"
 - repeat:
     times: 4
     while:

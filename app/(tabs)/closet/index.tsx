@@ -14,13 +14,7 @@ import {
 } from "../../../src/features/closet/FilterPanel";
 import { SelectFooter } from "../../../src/features/closet/SelectFooter";
 import { useClosetScreen } from "../../../src/features/closet/useClosetScreen";
-import {
-  Banner,
-  EmptyState,
-  Expander,
-  HeaderItem,
-  Screen,
-} from "../../../src/ui";
+import { Banner, EmptyState, HeaderItem, Screen } from "../../../src/ui";
 import { theme } from "../../../src/ui/theme";
 import { useLargeText } from "../../../src/ui/useLargeText";
 
@@ -114,9 +108,6 @@ export default function ClosetScreen() {
       closet={closet}
       ids={screen.added}
       onStart={screen.startWith}
-      onLink={screen.link}
-      onMarkWearMost={screen.startSelect}
-      onNewLook={screen.newLook}
     />
   ) : null;
 
@@ -143,7 +134,6 @@ export default function ClosetScreen() {
         selecting ? (
           <SelectFooter
             canAct={screen.owned.length > 0}
-            canStyle={screen.styleable.length > 0}
             putAwayShown={putAwayShown}
             wornOpen={screen.wornOpen}
             result={screen.result}
@@ -151,8 +141,6 @@ export default function ClosetScreen() {
             onWorn={screen.markWorn}
             onLink={screen.linkSelected}
             onPutAway={() => screen.putAway(!putAwayShown)}
-            onNewLook={() => screen.newLook(screen.styleable)}
-            onStart={() => screen.startWith(screen.styleable)}
           />
         ) : undefined
       }
@@ -188,12 +176,7 @@ export default function ClosetScreen() {
                 onToggle={() => screen.setPanelOpen(!screen.panelOpen)}
                 onChange={screen.change}
               />
-              <Expander
-                id="closet-more"
-                headless
-                open={screen.panelOpen}
-                onToggle={() => screen.setPanelOpen(!screen.panelOpen)}
-              >
+              {screen.panelOpen ? (
                 <FilterPanel
                   filter={filter}
                   pieces={closet.pieces}
@@ -201,7 +184,7 @@ export default function ClosetScreen() {
                   onChange={screen.change}
                   onClear={screen.clear}
                 />
-              </Expander>
+              ) : null}
               {banner}
             </>
           }
