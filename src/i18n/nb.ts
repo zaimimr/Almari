@@ -1410,6 +1410,7 @@ export const nb: Record<Key, string> = {
   "cutout.zoomIn": "Zoom inn",
   "fact.coverage": "Dekning",
   "fact.sparkle": "Pynt",
+  "photo.adjust": "Juster",
   "photo.clean": "Ren bakgrunn",
   "photo.cleanDone": "Bakgrunnen er renset",
   "photo.cleanFailed": "Kunne ikke rense bakgrunnen",

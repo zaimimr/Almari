@@ -1394,6 +1394,7 @@ export const en = {
   "cutout.zoomIn": "Zoom in",
   "fact.coverage": "Coverage",
   "fact.sparkle": "Sparkle",
+  "photo.adjust": "Adjust",
   "photo.clean": "Clean background",
   "photo.cleanDone": "Background cleaned",
   "photo.cleanFailed": "Could not clean the background",

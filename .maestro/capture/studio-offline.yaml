@@ -5,11 +5,7 @@ appId: com.zaimimran.almari
 - runFlow: ../lib/open-add.yaml
 - tapOn:
     id: "job-ready-1"
-- scrollUntilVisible:
-    element:
-      id: "confirm-photo"
-    centerElement: true
-- tapOn:
+- assertVisible:
     id: "confirm-photo"
 - tapOn: "Clean background"
 - extendedWaitUntil:

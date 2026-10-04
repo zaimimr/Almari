@@ -5,7 +5,8 @@ appId: com.zaimimran.almari
 - runFlow: ../lib/open-add.yaml
 - tapOn:
     id: "job-ready-1"
-- tapOn: "Adjust cut-out"
+- tapOn:
+    id: "confirm-cutout"
 - assertVisible: "Adjust cut-out"
 - assertVisible: "Restore"
 - tapOn: "Done"

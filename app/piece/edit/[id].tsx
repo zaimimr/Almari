@@ -39,16 +39,18 @@ import {
   Text,
   Tile,
 } from "../../../src/ui";
+import {
+  PhotoToolbar,
+  type PhotoView,
+} from "../../../src/features/capture/PhotoToolbar";
 import { confirmAction } from "../../../src/ui/confirm";
 import { theme } from "../../../src/ui/theme";
 
-type Shown = "enhanced" | "plain" | "original" | "studio";
-
-function shownOf(piece: Piece, photo: string): Shown | null {
+function shownOf(piece: Piece, photo: string): PhotoView | null {
   const variants = piece.variants ?? {};
   if (variants.studio && photo === variants.studio) return "studio";
-  if (variants.enhanced && photo === variants.enhanced) return "enhanced";
-  if (variants.plain && photo === variants.plain) return "plain";
+  if (variants.enhanced && photo === variants.enhanced) return "cutout";
+  if (variants.plain && photo === variants.plain) return "cutout";
   if (piece.original && photo === piece.original) return "original";
   return null;
 }
@@ -112,11 +114,10 @@ function Editor({ piece }: { piece: Piece }) {
     !sample && !newPhoto && canPrepareOnDevice && Boolean(cutout);
 
   const options = [
-    piece.variants?.enhanced ? "enhanced" : null,
-    piece.variants?.plain ? "plain" : null,
+    piece.variants?.enhanced || piece.variants?.plain ? "cutout" : null,
     piece.original ? "original" : null,
     cleanOffered && studioSource(piece) ? "studio" : null,
-  ].filter((option): option is Shown => option !== null);
+  ].filter((option): option is PhotoView => option !== null);
 
   async function makeClean() {
     const source = studioSource(piece);
@@ -140,12 +141,17 @@ function Editor({ piece }: { piece: Piece }) {
     setPhoto(file);
   }
 
-  function pickShown(next: Shown) {
+  function pickShown(next: PhotoView) {
     if (next === "studio" && !studioMade) {
       void makeClean();
       return;
     }
-    const file = next === "original" ? piece.original : piece.variants?.[next];
+    const file =
+      next === "original"
+        ? piece.original
+        : next === "studio"
+          ? piece.variants?.studio
+          : (piece.variants?.enhanced ?? piece.variants?.plain);
     if (file) setPhoto(file);
   }
 
@@ -261,13 +267,6 @@ function Editor({ piece }: { piece: Piece }) {
     }
   }
 
-  const label = (option: Shown) =>
-    option === "studio"
-      ? studio.making
-        ? t("photo.cleanMaking")
-        : t("photo.clean")
-      : t(`photo.${option}`);
-
   return (
     <Screen
       title={t("piece.edit.title")}
@@ -302,42 +301,34 @@ function Editor({ piece }: { piece: Piece }) {
         </Text>
       ) : (
         <>
-          {hasVariants && !newPhoto && options.length ? (
-            <ChipRow
-              label={t("editor.photoPreview")}
-              options={options.map((option) => ({
-                id: option,
-                label: label(option),
-              }))}
-              value={shown}
+          {(hasVariants && !newPhoto && options.length) || cutoutOffered ? (
+            <PhotoToolbar
+              options={hasVariants && !newPhoto ? options : []}
+              value={shown ?? "cutout"}
               onChange={(next) => {
-                if (typeof next === "string" && !busy) pickShown(next as Shown);
+                if (!busy) pickShown(next);
               }}
+              adjust={
+                cutoutOffered
+                  ? {
+                      label: cutout?.cutout
+                        ? t("photo.adjust")
+                        : t("cutout.byHand"),
+                      disabled:
+                        busy ||
+                        (Boolean(cutout?.cutout) && shown === "original"),
+                      testID: "edit-cutout",
+                      onPress: () =>
+                        router.push({
+                          pathname: "/cutout/[id]",
+                          params: { id: piece.id, target: "piece" },
+                        }),
+                    }
+                  : null
+              }
+              making={studio.making}
               testID="edit-photo"
             />
-          ) : null}
-          {cutoutOffered ? (
-            <View style={styles.leading}>
-              <Button
-                variant="quiet"
-                size="small"
-                icon="scissors"
-                label={cutout?.cutout ? t("cutout.adjust") : t("cutout.byHand")}
-                disabled={busy || studio.making}
-                testID="edit-cutout"
-                onPress={() =>
-                  router.push({
-                    pathname: "/cutout/[id]",
-                    params: { id: piece.id, target: "piece" },
-                  })
-                }
-              />
-            </View>
-          ) : null}
-          {cleanOffered && !studioMade && options.includes("studio") ? (
-            <Text role="footnote" tone="muted">
-              {t("photo.cleanNote")}
-            </Text>
           ) : null}
           <Expander
             id="edit-change-photo"

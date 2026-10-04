@@ -59,11 +59,11 @@ import { theme } from "../../ui/theme";
 import { ColourChips, colourLabel } from "../ColourChips";
 import { useRetake, type CaptureProblem } from "../Retake";
 import { jobColour, jobPhoto, jobPiece } from "./jobs";
+import { PhotoToolbar, type PhotoView } from "./PhotoToolbar";
 import { removeWithUndo } from "./removed";
 
 type StyleChoice = Style | "both";
-type Open = "photo" | "colour" | "garment" | "style" | null;
-type PhotoChoice = "enhanced" | "plain" | "original" | "studio";
+type Open = "colour" | "garment" | "style" | null;
 
 const attributeQuestions: Partial<Record<AttributeKey, Key>> = {
   length: "question.length",
@@ -77,13 +77,6 @@ const adviceKeys = {
   dark: "advice.dark.title",
   "mixed-light": "advice.mixed-light.title",
 } as const;
-
-const photoKeys: Record<PhotoChoice, Key> = {
-  enhanced: "photo.enhanced",
-  plain: "photo.plain",
-  original: "photo.original",
-  studio: "photo.clean",
-};
 
 const problemKeys: Record<CaptureProblem, Key> = {
   "camera-off": "common.cameraOff",
@@ -128,19 +121,19 @@ function questionText(
   return null;
 }
 
-function photoChoiceOf(job: ImportJob): PhotoChoice {
+function photoChoiceOf(job: ImportJob): PhotoView {
   if (!job.prepared?.cutout || job.keepOriginal) return "original";
   if (job.variant === "studio" && job.prepared.studio) return "studio";
-  if (job.variant === "plain" || !job.prepared.enhanced) return "plain";
-  return "enhanced";
+  return "cutout";
 }
 
-function photoChange(choice: PhotoChoice): {
+function photoChange(choice: PhotoView): {
   keepOriginal: boolean;
   variant: Variant;
 } {
   if (choice === "original") return { keepOriginal: true, variant: "enhanced" };
-  return { keepOriginal: false, variant: choice };
+  if (choice === "studio") return { keepOriginal: false, variant: "studio" };
+  return { keepOriginal: false, variant: "enhanced" };
 }
 
 export function ConfirmPiece({ id, run }: { id: string; run: string[] }) {
@@ -188,7 +181,7 @@ function ConfirmForm({
   const [name, setName] = useState(initial.name);
   const [kind, setKind] = useState(initial.kind);
   const [chosenStyles, setStyles] = useState(initial.styles);
-  const [photo, setPhoto] = useState<PhotoChoice>(initial.photo);
+  const [photo, setPhoto] = useState<PhotoView>(initial.photo);
   const [colour, setColour] = useState(initial.colour);
   const [answer, setAnswer] = useState<AttributeValue | undefined>(
     initial.answer,
@@ -255,24 +248,22 @@ function ConfirmForm({
       : t("confirm.title");
   const shown = jobPhoto({ ...job, ...photoChange(photo) });
   const cutout = failed ? undefined : importCutout(job);
-  const cutoutButton =
-    failed || (canPrepareOnDevice && cutout?.cutout === null) ? (
-      <Button
-        label={t("cutout.byHand")}
-        variant="quiet"
-        icon="scissors"
-        disabled={failed || busy || studio.making}
-        onPress={() => openCutout(job.id)}
-      />
-    ) : canPrepareOnDevice && cutout?.cutout && photo !== "original" ? (
-      <Button
-        label={t("cutout.adjust")}
-        variant="quiet"
-        icon="scissors"
-        disabled={busy || studio.making}
-        onPress={() => openCutout(job.id)}
-      />
-    ) : null;
+  const adjust =
+    failed || (canPrepareOnDevice && cutout?.cutout === null)
+      ? {
+          label: t("cutout.byHand"),
+          disabled: failed || busy,
+          onPress: () => openCutout(job.id),
+          testID: "confirm-cutout",
+        }
+      : canPrepareOnDevice && cutout?.cutout
+        ? {
+            label: t("photo.adjust"),
+            disabled: busy || photo === "original",
+            onPress: () => openCutout(job.id),
+            testID: "confirm-cutout",
+          }
+        : null;
 
   const duplicate = job.duplicateOf
     ? (closet.pieces.find((item) => item.id === job.duplicateOf) ??
@@ -427,8 +418,13 @@ function ConfirmForm({
               accessibilityLabel={t("capture.photo")}
             />
           </View>
-          {cutoutButton ? (
-            <View style={styles.bleed}>{cutoutButton}</View>
+          {adjust ? (
+            <PhotoToolbar
+              options={["original"]}
+              value="original"
+              onChange={() => undefined}
+              adjust={adjust}
+            />
           ) : null}
           {actionsRow}
         </View>
@@ -457,11 +453,10 @@ function ConfirmForm({
   const attributeAsked = job.attributeCheck;
   const studioSource = importStudioSource(job);
   const offerStudio = studioOffered() && Boolean(studioSource);
-  const photoOptions: PhotoChoice[] = !prepared.cutout
+  const photoOptions: PhotoView[] = !prepared.cutout
     ? ["original"]
     : [
-        ...(prepared.enhanced ? (["enhanced"] as const) : []),
-        "plain",
+        "cutout",
         "original",
         ...(offerStudio || prepared.studio ? (["studio"] as const) : []),
       ];
@@ -495,19 +490,15 @@ function ConfirmForm({
       return next;
     }).catch(() => undefined);
     if (!applied) void discardPhoto(file).catch(() => undefined);
-    else {
-      setPhoto("studio");
-      setOpen(null);
-    }
+    else setPhoto("studio");
   }
 
-  function pickPhoto(next: PhotoChoice) {
+  function pickPhoto(next: PhotoView) {
     if (next === "studio" && !prepared!.studio) {
       void makeStudio();
       return;
     }
     setPhoto(next);
-    setOpen(null);
   }
 
   function nextConfirm() {
@@ -634,7 +625,31 @@ function ConfirmForm({
             accessibilityLabel={name || t("capture.photo")}
           />
         </View>
-        {cutoutButton ? <View style={styles.bleed}>{cutoutButton}</View> : null}
+        <PhotoToolbar
+          options={photoOptions}
+          value={photo}
+          onChange={pickPhoto}
+          adjust={adjust}
+          making={studio.making}
+          disabled={busy}
+          testID="confirm-photo"
+        />
+        {studio.message ? (
+          <View style={styles.block}>
+            <Text role="footnote" tone="error">
+              {studio.message}
+            </Text>
+            {studio.message !== t("photo.cleanLimit") ? (
+              <View style={styles.bleed}>
+                <Button
+                  label={t("common.tryAgain")}
+                  variant="quiet"
+                  onPress={() => void makeStudio()}
+                />
+              </View>
+            ) : null}
+          </View>
+        ) : null}
         {question === "category" ? (
           <View style={styles.block}>
             {categoryChips(asked ?? t("piece.category"))}
@@ -666,49 +681,6 @@ function ConfirmForm({
           />
         ) : null}
         <View style={styles.rows}>
-          <Expander
-            id="photo"
-            title={t("fact.photo")}
-            value={t(photoKeys[photo])}
-            open={open === "photo" || studio.making}
-            onToggle={() => toggle("photo")}
-            testID="confirm-photo"
-          >
-            <View style={styles.block}>
-              <ChipRow
-                options={photoOptions.map((option) => ({
-                  id: option,
-                  label: t(photoKeys[option]),
-                }))}
-                value={photo}
-                onChange={(next) => {
-                  if (typeof next === "string") pickPhoto(next as PhotoChoice);
-                }}
-                inSurface
-              />
-              {offerStudio && !prepared.studio && !studio.message ? (
-                <Text role="footnote" tone="muted">
-                  {t("photo.cleanNote")}
-                </Text>
-              ) : null}
-              {studio.message ? (
-                <View style={styles.block}>
-                  <Text role="footnote" tone="error">
-                    {studio.message}
-                  </Text>
-                  {studio.message !== t("photo.cleanLimit") ? (
-                    <View style={styles.bleed}>
-                      <Button
-                        label={t("common.tryAgain")}
-                        variant="quiet"
-                        onPress={() => void makeStudio()}
-                      />
-                    </View>
-                  ) : null}
-                </View>
-              ) : null}
-            </View>
-          </Expander>
           {colour ? (
             <Expander
               id="colour"
