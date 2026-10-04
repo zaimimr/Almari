@@ -25,5 +25,5 @@ appId: com.zaimimran.almari
     timeout: 10000
 - tapOn: "Looks"
 - extendedWaitUntil:
-    visible: ${output.title}
+    visible: ".*${output.title}"
     timeout: 10000
