@@ -53,6 +53,7 @@
         }
       ],
       "expo-localization",
+      "./plugins/withoutPush",
       [
         "expo-notifications",
         {
