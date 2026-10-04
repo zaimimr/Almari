@@ -68,6 +68,7 @@ export class ClosetRepository {
     const operation = this.queue.then(async () => {
       if (!this.initialized) throw new Error(t("error.closetOpening"));
       const next = transform(this.snapshot);
+      if (next === this.snapshot && !clear) return;
       if (clear) await this.storage.clear?.();
       await this.storage.write(JSON.stringify(next));
       this.snapshot = next;

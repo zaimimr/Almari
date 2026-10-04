@@ -1,6 +1,6 @@
 appId: com.zaimimran.almari
 # Task 41: AX5
-# seed: seed-owned-everyday.sh,ax5.sh
+# seed: seed-owned-everyday.sh,seed-no-wears.sh,ax5.sh
 ---
 - launchApp:
     permissions:
@@ -20,17 +20,20 @@ appId: com.zaimimran.almari
     id: "change-strip-header"
 - scrollUntilVisible:
     element:
-      id: "today-another"
+      id: "today-start-with"
     direction: DOWN
-    centerElement: true
+- waitForAnimationToEnd
+- swipe:
+    start: 50%, 35%
+    end: 50%, 58%
+    duration: 3000
 - waitForAnimationToEnd
 - tapOn:
     id: "today-another"
 - scrollUntilVisible:
     element:
       id: "today-undo"
-    direction: UP
-    centerElement: true
+    direction: DOWN
     timeout: 60000
 - takeScreenshot: docs/redesign/screens/after/today/another-ax5
 - scrollUntilVisible:
@@ -45,7 +48,8 @@ appId: com.zaimimran.almari
 - scrollUntilVisible:
     element:
       id: "today-rediscover"
-    direction: UP
+    direction: DOWN
+    visibilityPercentage: 10
 - scrollUntilVisible:
     element:
       id: "rediscover-.*"
