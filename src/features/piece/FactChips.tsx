@@ -27,7 +27,6 @@ import {
   type Style,
 } from "../../domain/closet";
 import { colorName, colourNames, namedSwatch } from "../../domain/color";
-import { confirmedLength, confirmedSleeve } from "../../domain/coverage";
 import { locale, t, type Key } from "../../i18n";
 import { Chip, ChipRow, Expander, Text } from "../../ui";
 import { useColors } from "../../ui/useColors";
@@ -401,6 +400,7 @@ export function FactChips({
   const specs = factSpecs(piece);
   const [open, setOpen] = useState<string | null>(null);
   const [shown, setShown] = useState<string | null>(null);
+  const [lineEnd, setLineEnd] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const lines = useRef(new Map<string, number>());
   const secondTop = useRef(0);
@@ -411,6 +411,19 @@ export function FactChips({
       setOpen(null);
       return;
     }
+    const at = specs.findIndex((spec) => spec.id === id);
+    const top = lines.current.get(id);
+    let end = at;
+    for (
+      let index = at + 1;
+      top !== undefined && index < specs.length;
+      index++
+    ) {
+      const y = lines.current.get(specs[index]!.id);
+      if (y === undefined || Math.abs(y - top) > 2) break;
+      end = index;
+    }
+    setLineEnd(specs[end]?.id ?? null);
     setShown(id);
     setOpen(id);
   };
@@ -438,19 +451,8 @@ export function FactChips({
     }
   };
 
-  const split = (() => {
-    if (!current) return specs.length;
-    const at = specs.findIndex((spec) => spec.id === current.id);
-    const top = lines.current.get(current.id);
-    if (at < 0 || top === undefined) return specs.length;
-    let end = at;
-    for (let index = at + 1; index < specs.length; index++) {
-      const y = lines.current.get(specs[index]!.id);
-      if (y === undefined || Math.abs(y - top) > 2) break;
-      end = index;
-    }
-    return end + 1;
-  })();
+  const breakAt = lineEnd ? specs.findIndex((spec) => spec.id === lineEnd) : -1;
+  const split = current && breakAt >= 0 ? breakAt + 1 : specs.length;
 
   const chip = (spec: FactSpec, second: boolean) => {
     const label = spec.showKey ? spec.name : undefined;

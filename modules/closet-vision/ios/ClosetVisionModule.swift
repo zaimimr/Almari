@@ -684,7 +684,11 @@ public class ClosetVisionModule: Module {
     }
 
     View(CutoutEditorView.self) {
-      Events("onReady", "onEdit", "onSelect")
+      Events("onReady", "onEdit", "onSelect", "onSelecting")
+
+      Prop("labels") { (view: CutoutEditorView, labels: [String: String]?) in
+        view.labels = labels ?? [:]
+      }
 
       Prop("original") { (view: CutoutEditorView, original: String?) in
         view.original = original
@@ -716,6 +720,10 @@ public class ClosetVisionModule: Module {
 
       AsyncFunction("reset") { (view: CutoutEditorView) in
         view.reset()
+      }.runOnQueue(.main)
+
+      AsyncFunction("zoom") { (view: CutoutEditorView, closer: Bool) in
+        view.zoom(in: closer)
       }.runOnQueue(.main)
 
       AsyncFunction("save") { (view: CutoutEditorView, id: String, promise: Promise) in

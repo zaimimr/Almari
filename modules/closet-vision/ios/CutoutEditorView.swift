@@ -39,6 +39,10 @@ final class CutoutEditorView: ExpoView, UIScrollViewDelegate {
   let onReady = EventDispatcher()
   let onEdit = EventDispatcher()
   let onSelect = EventDispatcher()
+  let onSelecting = EventDispatcher()
+  var labels: [String: String] = [:] {
+    didSet { describe() }
+  }
 
   var original: String?
   var cutout: String?
@@ -51,7 +55,11 @@ final class CutoutEditorView: ExpoView, UIScrollViewDelegate {
   private let faded = UIImageView()
   private let kept = UIImageView()
   private let cover = CALayer()
-  private let spinner = UIActivityIndicatorView(style: .medium)
+  private let ring = CAShapeLayer()
+  private let halo = CAShapeLayer()
+  private let rings = CALayer()
+  private var focus: CGPoint?
+  private var stillMotion = UIAccessibility.isReduceMotionEnabled
   private var selector: CutoutSelector?
   private var selecting = false
   private let queue = DispatchQueue(label: "almari.cutout.editor")
@@ -93,9 +101,96 @@ final class CutoutEditorView: ExpoView, UIScrollViewDelegate {
     let press = UILongPressGestureRecognizer(target: self, action: #selector(pressed(_:)))
     press.minimumPressDuration = 0.4
     canvas.addGestureRecognizer(press)
-    spinner.color = .white
-    spinner.hidesWhenStopped = true
-    addSubview(spinner)
+    let circle = UIBezierPath(ovalIn: CGRect(x: 0, y: 0, width: 72, height: 72)).cgPath
+    halo.path = circle
+    halo.fillColor = nil
+    halo.strokeColor = UIColor(red: 0.2, green: 0.18, blue: 0.16, alpha: 1).cgColor
+    halo.lineWidth = 4
+    ring.path = circle
+    ring.fillColor = nil
+    ring.strokeColor = UIColor.white.cgColor
+    ring.lineWidth = 2
+    rings.frame = CGRect(x: 0, y: 0, width: 72, height: 72)
+    rings.addSublayer(halo)
+    rings.addSublayer(ring)
+    rings.opacity = 0
+    layer.addSublayer(rings)
+    isAccessibilityElement = true
+    accessibilityTraits = .allowsDirectInteraction
+    NotificationCenter.default.addObserver(
+      self, selector: #selector(motionChanged),
+      name: UIAccessibility.reduceMotionStatusDidChangeNotification, object: nil)
+    describe()
+  }
+
+  @objc private func motionChanged() {
+    stillMotion = UIAccessibility.isReduceMotionEnabled
+  }
+
+  private func describe() {
+    accessibilityLabel = labels["canvas"]
+    var actions: [UIAccessibilityCustomAction] = []
+    if let select = labels["selectPiece"] {
+      actions.append(UIAccessibilityCustomAction(name: select) { [weak self] _ in
+        guard let self else { return false }
+        self.select(at: CGPoint(x: self.canvas.bounds.midX, y: self.canvas.bounds.midY), shown: self.center(of: self.canvas))
+        return true
+      })
+    }
+    if let zoomIn = labels["zoomIn"] {
+      actions.append(UIAccessibilityCustomAction(name: zoomIn) { [weak self] _ in
+        self?.zoom(in: true)
+        return true
+      })
+    }
+    if let fit = labels["fit"] {
+      actions.append(UIAccessibilityCustomAction(name: fit) { [weak self] _ in
+        self?.zoom(in: false)
+        return true
+      })
+    }
+    accessibilityCustomActions = actions
+  }
+
+  private func center(of view: UIView) -> CGPoint {
+    view.convert(CGPoint(x: view.bounds.midX, y: view.bounds.midY), to: self)
+  }
+
+  func zoom(in closer: Bool) {
+    guard pixels.width > 0, canvas.bounds.width > 0 else { return }
+    if !closer {
+      scroll.setZoomScale(1, animated: !stillMotion)
+      return
+    }
+    let scale: CGFloat = 3
+    let spot = focus ?? CGPoint(x: canvas.bounds.midX, y: canvas.bounds.midY)
+    let width = scroll.bounds.width / scale
+    let height = scroll.bounds.height / scale
+    scroll.zoom(
+      to: CGRect(x: spot.x - width / 2, y: spot.y - height / 2, width: width, height: height),
+      animated: !stillMotion)
+  }
+
+  private func showRing(at point: CGPoint) {
+    CATransaction.begin()
+    CATransaction.setDisableActions(true)
+    rings.position = point
+    CATransaction.commit()
+    let fade = CABasicAnimation(keyPath: "opacity")
+    fade.fromValue = rings.presentation()?.opacity ?? 0
+    fade.toValue = 1
+    fade.duration = 0.12
+    rings.opacity = 1
+    rings.add(fade, forKey: "fade")
+  }
+
+  private func hideRing() {
+    let fade = CABasicAnimation(keyPath: "opacity")
+    fade.fromValue = rings.presentation()?.opacity ?? 1
+    fade.toValue = 0
+    fade.duration = 0.12
+    rings.opacity = 0
+    rings.add(fade, forKey: "fade")
   }
 
   override func layoutSubviews() {
@@ -330,28 +425,37 @@ final class CutoutEditorView: ExpoView, UIScrollViewDelegate {
   }
 
   @objc private func pressed(_ gesture: UILongPressGestureRecognizer) {
-    guard gesture.state == .began, !saving, !selecting, let selector, canvas.bounds.width > 0 else { return }
-    let location = gesture.location(in: canvas)
+    guard gesture.state == .began else { return }
+    select(at: gesture.location(in: canvas), shown: gesture.location(in: self))
+  }
+
+  private func select(at location: CGPoint, shown: CGPoint) {
+    guard !saving, !selecting, let selector, canvas.bounds.width > 0 else { return }
     let spot = CGPoint(x: location.x / canvas.bounds.width, y: location.y / canvas.bounds.height)
     let width = pixels.width
     let height = pixels.height
     selecting = true
-    spinner.center = gesture.location(in: self)
-    spinner.startAnimating()
+    focus = location
+    showRing(at: shown)
+    onSelecting(["selecting": true])
     queue.async { [weak self] in
       let alpha = selector.select(at: spot)
       let outline = alpha.flatMap { Self.outline($0, width: width, height: height) }
       DispatchQueue.main.async {
         guard let self else { return }
         self.selecting = false
-        self.spinner.stopAnimating()
-        guard let alpha, !self.saving, self.selector === selector else { return }
+        self.hideRing()
+        guard let alpha, !self.saving, self.selector === selector else {
+          self.onSelecting(["selecting": false, "found": false])
+          return
+        }
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         self.remember()
         self.apply(alpha)
         self.edited()
+        self.onSelecting(["selecting": false, "found": true])
         self.onSelect()
-        if let outline { self.glow(outline) }
+        if let outline { self.glow(outline, from: location) }
       }
     }
   }
@@ -373,33 +477,54 @@ final class CutoutEditorView: ExpoView, UIScrollViewDelegate {
     return GarmentPipeline.shared.render(edge)
   }
 
-  private func glow(_ outline: CGImage) {
+  private func glow(_ outline: CGImage, from origin: CGPoint) {
     let line = CALayer()
     line.frame = canvas.bounds
     line.contents = outline
-    line.shadowColor = UIColor.white.cgColor
+    line.shadowColor = UIColor(red: 0.2, green: 0.18, blue: 0.16, alpha: 1).cgColor
     line.shadowOffset = .zero
-    line.shadowRadius = 6
+    line.shadowRadius = 1
     line.shadowOpacity = 1
-    let sweep = CAGradientLayer()
-    sweep.frame = line.bounds.insetBy(dx: -12, dy: -12)
-    sweep.startPoint = CGPoint(x: 0, y: 0)
-    sweep.endPoint = CGPoint(x: 1, y: 1)
-    sweep.colors = [UIColor(white: 1, alpha: 0.35), .white, UIColor(white: 1, alpha: 0.35)].map(\.cgColor)
-    sweep.locations = [1, 1.15, 1.3]
-    line.mask = sweep
     canvas.layer.addSublayer(line)
-    let move = CABasicAnimation(keyPath: "locations")
-    move.fromValue = [-0.3, -0.15, 0]
-    move.toValue = [1, 1.15, 1.3]
-    move.duration = 0.7
-    move.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
-    sweep.add(move, forKey: "sweep")
+    let silk = CAMediaTimingFunction(controlPoints: 0.22, 0.61, 0.36, 1)
+    let hold: CFTimeInterval
+    if stillMotion {
+      let appear = CABasicAnimation(keyPath: "opacity")
+      appear.fromValue = 0
+      appear.toValue = 1
+      appear.duration = 0.2
+      line.add(appear, forKey: "appear")
+      hold = 0.9
+    } else {
+      let bounds = line.bounds
+      let reach = [
+        CGPoint(x: bounds.minX, y: bounds.minY), CGPoint(x: bounds.maxX, y: bounds.minY),
+        CGPoint(x: bounds.minX, y: bounds.maxY), CGPoint(x: bounds.maxX, y: bounds.maxY),
+      ].map { hypot($0.x - origin.x, $0.y - origin.y) }.max() ?? 1
+      let sweep = CAShapeLayer()
+      sweep.frame = bounds
+      sweep.path = UIBezierPath(
+        arcCenter: origin, radius: reach, startAngle: 0, endAngle: .pi * 2, clockwise: true
+      ).cgPath
+      sweep.fillColor = UIColor.white.cgColor
+      line.mask = sweep
+      let small = UIBezierPath(
+        arcCenter: origin, radius: 1, startAngle: 0, endAngle: .pi * 2, clockwise: true
+      ).cgPath
+      let grow = CABasicAnimation(keyPath: "path")
+      grow.fromValue = small
+      grow.toValue = sweep.path
+      grow.duration = 0.64
+      grow.timingFunction = silk
+      sweep.add(grow, forKey: "sweep")
+      hold = 1.04
+    }
     let fade = CABasicAnimation(keyPath: "opacity")
     fade.fromValue = 1
     fade.toValue = 0
-    fade.beginTime = CACurrentMediaTime() + 0.5
-    fade.duration = 0.5
+    fade.beginTime = CACurrentMediaTime() + hold
+    fade.duration = 0.4
+    fade.timingFunction = silk
     fade.fillMode = .forwards
     fade.isRemovedOnCompletion = false
     CATransaction.begin()
@@ -411,6 +536,7 @@ final class CutoutEditorView: ExpoView, UIScrollViewDelegate {
   private func begin(at location: CGPoint) {
     guard !saving, !selecting, let stencil, canvas.bounds.width > 0 else { return }
     remember()
+    focus = location
     let width = prepareStroke()
     let spot = point(location)
     stencil.fillEllipse(in: CGRect(x: spot.x - width / 2, y: spot.y - width / 2, width: width, height: width))

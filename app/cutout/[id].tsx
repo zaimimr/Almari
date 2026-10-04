@@ -1,7 +1,6 @@
 import { useRef, useState } from "react";
-import { ActivityIndicator, StyleSheet, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Stack, router, useLocalSearchParams } from "expo-router";
+import { StyleSheet, View } from "react-native";
+import { router, useLocalSearchParams, useNavigation } from "expo-router";
 import {
   CutoutEditorView,
   type CutoutEditorHandle,
@@ -16,20 +15,19 @@ import {
   type BrushSize,
   type CutoutMode,
 } from "../../src/domain/cutout";
-import { MissingPiece } from "../../src/features/MissingPiece";
 import { t } from "../../src/i18n";
 import { useDiscardChanges } from "../../src/navigation/useDiscardChanges";
 import { useCloset } from "../../src/state/closet";
 import { discardPhoto, photoUri } from "../../src/storage/local";
 import {
-  AppText,
   Button,
-  Chip,
-  ErrorMessage,
-  HeaderAction,
-  Message,
+  CameraFrame,
+  Footer,
   Screen,
-} from "../../src/ui/legacy";
+  Segmented,
+  Silk,
+} from "../../src/ui";
+import { announce } from "../../src/ui/announce";
 import { theme } from "../../src/ui/theme";
 
 const brushes: BrushSize[] = ["small", "medium", "large"];
@@ -39,7 +37,29 @@ export default function AdjustCutout() {
     id: string;
     target: "import" | "piece";
   }>();
+  const { closet } = useCloset();
+  const exists =
+    target === "piece"
+      ? closet.pieces.some((item) => item.id === id)
+      : closet.imports.some((item) => item.id === id);
+  if (!exists)
+    return (
+      <Screen
+        title={t("cutout.title")}
+        gone={{
+          title:
+            target === "import"
+              ? t("capture.gone.title")
+              : t("piece.missing.title"),
+        }}
+      />
+    );
+  return <Editor id={id} target={target === "import" ? "import" : "piece"} />;
+}
+
+function Editor({ id, target }: { id: string; target: "import" | "piece" }) {
   const { closet, update } = useCloset();
+  const navigation = useNavigation();
   const [source] = useState(() => {
     if (target === "piece") {
       const piece = closet.pieces.find((item) => item.id === id);
@@ -53,29 +73,28 @@ export default function AdjustCutout() {
   const [mode, setMode] = useState<CutoutMode>("restore");
   const [brush, setBrush] = useState<BrushSize>("medium");
   const [canUndo, setCanUndo] = useState(false);
+  const [edited, setEdited] = useState(false);
   const [held, setHeld] = useState(false);
+  const [picked, setPicked] = useState(false);
+  const [selecting, setSelecting] = useState(false);
+  const [zoomed, setZoomed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const allowClose = useDiscardChanges(canUndo, busy);
+  const allowClose = useDiscardChanges(edited, busy);
 
-  if (!source) return <MissingPiece />;
-
-  if (state === "failed")
+  if (!source || state === "failed")
     return (
-      <Screen centered>
-        <Message
-          title={source.cutout ? t("cutout.adjust") : t("cutout.byHand")}
-          description={t("cutout.failed")}
-          action={
-            <Button label={t("common.goBack")} onPress={() => router.back()} />
-          }
-        />
-      </Screen>
+      <Screen
+        title={t("cutout.title")}
+        media
+        gone={{ title: t("cutout.failed") }}
+      />
     );
 
   async function done() {
     if (!editor.current || busy) return;
     if (!canUndo) {
+      allowClose();
       router.back();
       return;
     }
@@ -104,132 +123,163 @@ export default function AdjustCutout() {
   }
 
   const ready = state === "ready" && !busy;
+  const guide = !held
+    ? t("cutout.hold")
+    : picked
+      ? t("cutout.selected")
+      : undefined;
+
+  const markEdited = () => {
+    if (edited) return;
+    setEdited(true);
+    navigation.setOptions({ gestureEnabled: false });
+  };
 
   return (
-    <View style={styles.screen}>
-      <Stack.Screen
-        options={{
-          title: source.cutout ? t("cutout.adjust") : t("cutout.byHand"),
-          gestureEnabled: false,
-          headerLeft: () => (
-            <HeaderAction
-              label={t("common.cancel")}
-              onPress={() => router.back()}
-            />
-          ),
-        }}
-      />
-      <View style={styles.canvas}>
-        <CutoutEditorView
-          ref={editor}
-          style={StyleSheet.absoluteFill}
-          original={photoUri(source.original)}
-          cutout={source.cutout ? photoUri(source.cutout) : null}
-          area={source.area}
-          mode={mode}
-          brushSize={brushSizes[brush]}
-          onReady={(event) => setState(event.nativeEvent.state)}
-          onEdit={(event) => setCanUndo(event.nativeEvent.canUndo)}
-          onSelect={() => setHeld(true)}
+    <Screen
+      title={t("cutout.title")}
+      media
+      scroll={false}
+      leading="cancel"
+      onCancel={() => router.back()}
+      footer={
+        <Footer
+          media
+          primary={{
+            label: t("common.done"),
+            onPress: () => void done(),
+            busy,
+            disabled: state !== "ready",
+            testID: "cutout-done",
+          }}
+          error={error}
         />
-        {state === "loading" || busy ? (
-          <View style={styles.loading} pointerEvents="none">
-            <ActivityIndicator color={theme.colors.onPlum} />
-          </View>
-        ) : null}
-      </View>
-      <SafeAreaView edges={["bottom"]} style={styles.panel}>
-        <View style={styles.row}>
-          <Chip
-            label={t("cutout.restore")}
-            selected={mode === "restore"}
-            disabled={!ready}
-            onPress={() => setMode("restore")}
-          />
-          <Chip
-            label={t("cutout.erase")}
-            selected={mode === "erase"}
-            disabled={!ready}
-            onPress={() => setMode("erase")}
-          />
-        </View>
-        <View style={styles.row}>
-          <AppText variant="footnote" muted>
-            {t("cutout.brush")}
-          </AppText>
-          {brushes.map((size) => (
-            <Chip
-              key={size}
-              label={t(`cutout.${size}`)}
-              selected={brush === size}
-              disabled={!ready}
-              onPress={() => setBrush(size)}
-            />
-          ))}
-        </View>
-        <AppText
-          variant="footnote"
-          muted
-          style={held ? styles.hidden : undefined}
-          accessibilityElementsHidden={held}
+      }
+      testID="cutout-screen"
+    >
+      <View style={styles.body}>
+        <CameraFrame
+          guide={guide}
+          testID="cutout-frame"
+          controls={
+            <View style={styles.controls}>
+              <Segmented
+                media
+                label={t("cutout.brush")}
+                options={[
+                  { id: "restore", label: t("cutout.restore") },
+                  { id: "erase", label: t("cutout.erase") },
+                ]}
+                value={mode}
+                onChange={setMode}
+                disabled={!ready}
+              />
+              <Segmented
+                media
+                label={t("cutout.brush")}
+                options={brushes.map((size) => ({
+                  id: size,
+                  label: t(`cutout.${size}`),
+                }))}
+                value={brush}
+                onChange={setBrush}
+                disabled={!ready}
+              />
+              <View style={styles.row}>
+                <Button
+                  variant="quiet"
+                  media
+                  label={t("cutout.undo")}
+                  disabled={!ready || !canUndo}
+                  testID="cutout-undo"
+                  onPress={() => void editor.current?.undo()}
+                />
+                <Button
+                  variant="quiet"
+                  media
+                  label={t("cutout.reset")}
+                  disabled={!ready}
+                  testID="cutout-reset"
+                  onPress={() => void editor.current?.reset()}
+                />
+                <Button
+                  variant="quiet"
+                  media
+                  label={zoomed ? t("cutout.fit") : t("cutout.zoomIn")}
+                  disabled={!ready}
+                  testID="cutout-zoom"
+                  onPress={() => {
+                    void editor.current?.zoom(!zoomed);
+                    setZoomed(!zoomed);
+                  }}
+                />
+              </View>
+            </View>
+          }
         >
-          {t("cutout.hold")}
-        </AppText>
-        <ErrorMessage message={error} />
-        <View style={styles.row}>
-          <View style={styles.action}>
-            <Button
-              label={t("cutout.undo")}
-              secondary
-              compact
-              disabled={!ready || !canUndo}
-              onPress={() => void editor.current?.undo()}
+          <View style={StyleSheet.absoluteFill} testID="cutout-canvas">
+            <CutoutEditorView
+              ref={editor}
+              style={StyleSheet.absoluteFill}
+              original={photoUri(source.original)}
+              cutout={source.cutout ? photoUri(source.cutout) : null}
+              area={source.area}
+              mode={mode}
+              brushSize={brushSizes[brush]}
+              labels={{
+                canvas: t("editor.photoPreview"),
+                selectPiece: t("cutout.selectPiece"),
+                zoomIn: t("cutout.zoomIn"),
+                fit: t("cutout.fit"),
+              }}
+              onReady={(event) => setState(event.nativeEvent.state)}
+              onEdit={(event) => {
+                setCanUndo(event.nativeEvent.canUndo);
+                if (event.nativeEvent.canUndo) markEdited();
+                setPicked(false);
+              }}
+              onSelecting={(event) => {
+                const { selecting: now, found } = event.nativeEvent;
+                setSelecting(now);
+                if (now) return;
+                setHeld(true);
+                if (found) {
+                  setPicked(true);
+                  announce(t("cutout.selected"));
+                } else announce(t("cutout.noneFound"));
+              }}
             />
           </View>
-          <View style={styles.action}>
-            <Button
-              label={t("cutout.reset")}
-              secondary
-              compact
-              disabled={!ready}
-              onPress={() => void editor.current?.reset()}
+          {state === "loading" ? (
+            <View
+              style={StyleSheet.absoluteFill}
+              pointerEvents="none"
+              testID="moment-loading"
+            >
+              <Silk
+                kind="placeholder"
+                shape="tile"
+                label={t("cutout.title")}
+                style={StyleSheet.absoluteFill}
+              />
+            </View>
+          ) : null}
+          {selecting ? (
+            <View
+              style={styles.selecting}
+              pointerEvents="none"
+              testID="moment-selecting"
             />
-          </View>
-        </View>
-        <Button
-          label={t("common.done")}
-          busy={busy}
-          disabled={state !== "ready"}
-          onPress={() => void done()}
-        />
-      </SafeAreaView>
-    </View>
+          ) : null}
+        </CameraFrame>
+      </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: theme.colors.canvas },
-  canvas: { flex: 1, backgroundColor: theme.colors.ink },
-  loading: {
-    ...StyleSheet.absoluteFill,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  panel: {
-    gap: theme.space.md,
-    paddingHorizontal: theme.space.xl,
-    paddingTop: theme.space.md,
-    paddingBottom: theme.space.md,
-    backgroundColor: theme.colors.canvas,
-    borderTopWidth: 1,
-    borderColor: theme.colors.line,
-  },
-  row: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    alignItems: "center",
-    gap: theme.space.sm,
-  },
-  action: { flexGrow: 1, minWidth: 120 },
-  hidden: { opacity: 0 },
+  body: { flex: 1, gap: theme.space.md },
+  controls: { gap: theme.space.md },
+  row: { flexDirection: "row", flexWrap: "wrap" },
+  selecting: { position: "absolute", width: 1, height: 1 },
 });

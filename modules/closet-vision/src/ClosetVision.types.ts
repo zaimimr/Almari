@@ -149,5 +149,6 @@ export type CutoutEdit = {
 export type CutoutEditorHandle = {
   undo(): Promise<void>;
   reset(): Promise<void>;
+  zoom(closer: boolean): Promise<void>;
   save(id: string): Promise<CutoutEdit>;
 };

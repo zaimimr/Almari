@@ -13,6 +13,10 @@ export type CutoutEditorProps = {
   onReady: (event: { nativeEvent: { state: "ready" | "failed" } }) => void;
   onEdit: (event: { nativeEvent: { canUndo: boolean } }) => void;
   onSelect?: () => void;
+  onSelecting?: (event: {
+    nativeEvent: { selecting: boolean; found?: boolean };
+  }) => void;
+  labels?: Record<string, string>;
   ref?: Ref<CutoutEditorHandle>;
 };
 

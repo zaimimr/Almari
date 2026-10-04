@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { Platform, StyleSheet, View } from "react-native";
-import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { randomUUID } from "expo-crypto";
 import { router, useLocalSearchParams } from "expo-router";
@@ -12,19 +11,23 @@ import {
   labelFromDraft,
   type LabelDraft,
 } from "../../src/domain/careLabel";
-import { MissingPiece } from "../../src/features/MissingPiece";
 import { t } from "../../src/i18n";
+import { useDiscardChanges } from "../../src/navigation/useDiscardChanges";
 import { useCloset } from "../../src/state/closet";
 import { fibreLabel, readCareLabel } from "../../src/state/careLabel";
 import { discardPhoto, photoUri } from "../../src/storage/local";
 import {
-  AppText,
   Button,
-  ErrorMessage,
   Field,
-  FormScreen,
-} from "../../src/ui/legacy";
+  Footer,
+  Screen,
+  Section,
+  Silk,
+  Text,
+  Tile,
+} from "../../src/ui";
 import { confirmAction } from "../../src/ui/confirm";
+import { useLargeText } from "../../src/ui/useLargeText";
 import { theme } from "../../src/ui/theme";
 
 export default function CareLabelScreen() {
@@ -32,22 +35,58 @@ export default function CareLabelScreen() {
     id: string;
     target: "import" | "piece";
   }>();
-  const { closet, update } = useCloset();
+  const { closet } = useCloset();
   const owner =
     target === "piece"
       ? closet.pieces.find((item) => item.id === id)
       : closet.imports.find((item) => item.id === id);
-  const saved = owner?.label;
+  if (!owner)
+    return (
+      <Screen
+        title={t("careLabel.title")}
+        gone={{
+          title:
+            target === "import"
+              ? t("capture.gone.title")
+              : t("piece.missing.title"),
+        }}
+      />
+    );
+  return (
+    <LabelEditor id={id} target={target === "import" ? "import" : "piece"} />
+  );
+}
+
+function LabelEditor({
+  id,
+  target,
+}: {
+  id: string;
+  target: "import" | "piece";
+}) {
+  const { closet, update } = useCloset();
+  const { ax } = useLargeText();
+  const owner =
+    target === "piece"
+      ? closet.pieces.find((item) => item.id === id)
+      : closet.imports.find((item) => item.id === id);
+  const [saved] = useState(owner?.label);
   const [photo, setPhoto] = useState<string | null>(saved?.photo ?? null);
-  const [draft, setDraft] = useState<LabelDraft>(() =>
+  const [initial] = useState<LabelDraft>(() =>
     draftFromLabel(saved, fibreLabel),
   );
-  const [found, setFound] = useState(saved ? hasLabelFields(saved) : false);
+  const [draft, setDraft] = useState<LabelDraft>(initial);
   const [busy, setBusy] = useState(false);
   const [reading, setReading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [readError, setReadError] = useState<string | null>(null);
   const unsaved = useRef<string | null>(null);
   const closed = useRef(false);
+
+  const dirty =
+    photo !== (saved?.photo ?? null) ||
+    JSON.stringify(draft) !== JSON.stringify(initial);
+  const allowClose = useDiscardChanges(dirty, busy);
 
   useEffect(
     () => () => {
@@ -58,10 +97,9 @@ export default function CareLabelScreen() {
     [],
   );
 
-  if (!owner) return <MissingPiece />;
-
   async function pick(source: "camera" | "library") {
     setError(null);
+    setReadError(null);
     try {
       if (source === "camera") {
         const permission = await ImagePicker.requestCameraPermissionsAsync();
@@ -92,9 +130,10 @@ export default function CareLabelScreen() {
       unsaved.current = read.photo;
       setPhoto(read.photo);
       setDraft(draftFromLabel(read.fields, fibreLabel));
-      setFound(hasLabelFields(read.fields));
+      const any = hasLabelFields(read.fields);
+      if (!any) setReadError(t("careLabel.nothingFound"));
     } catch {
-      setError(t("careLabel.unreadable"));
+      setReadError(t("careLabel.unreadable"));
     } finally {
       setReading(false);
     }
@@ -117,7 +156,7 @@ export default function CareLabelScreen() {
   }
 
   async function save() {
-    if (!photo || busy || reading) return;
+    if (!photo || busy || reading || !dirty) return;
     setBusy(true);
     setError(null);
     try {
@@ -130,6 +169,7 @@ export default function CareLabelScreen() {
       if (saved && saved.photo !== photo)
         void discardPhoto(saved.photo).catch(() => undefined);
       unsaved.current = null;
+      allowClose();
       router.back();
     } catch {
       setError(t("careLabel.saveFailed"));
@@ -153,6 +193,7 @@ export default function CareLabelScreen() {
           : setImportLabel(current, id, undefined),
       );
       void discardPhoto(saved.photo).catch(() => undefined);
+      allowClose();
       router.back();
     } catch {
       setError(t("careLabel.removeFailed"));
@@ -160,111 +201,203 @@ export default function CareLabelScreen() {
     }
   }
 
-  const choose = (
-    <View style={styles.actions}>
-      {Platform.OS !== "web" ? (
-        <View style={styles.action}>
-          <Button
-            label={
-              photo ? t("careLabel.takeAnother") : t("careLabel.takePhoto")
-            }
-            secondary={Boolean(photo)}
-            disabled={busy || reading}
-            onPress={() => {
-              void pick("camera");
-            }}
-          />
-        </View>
-      ) : null}
-      <View style={styles.action}>
-        <Button
-          label={t("careLabel.choosePhoto")}
-          secondary
-          disabled={busy || reading}
-          onPress={() => {
-            void pick("library");
-          }}
-        />
-      </View>
-    </View>
-  );
+  const camera = Platform.OS !== "web";
+  const shown = Boolean(photo) || Boolean(saved);
 
   return (
-    <FormScreen>
+    <Screen
+      title={t("careLabel.title")}
+      leading="cancel"
+      onCancel={() => router.back()}
+      footer={
+        <Footer
+          primary={{
+            label: t("careLabel.save"),
+            onPress: () => void save(),
+            busy,
+            disabled: !photo || !dirty || reading,
+            testID: "care-label-save",
+          }}
+          error={error}
+        />
+      }
+      testID="care-label-screen"
+    >
       {photo ? (
-        <View style={styles.photo}>
-          <Image
-            source={{ uri: photoUri(photo) }}
-            style={styles.image}
-            contentFit="contain"
+        reading ? (
+          <View testID="moment-generating">
+            <Silk kind="sheen" label={t("careLabel.reading")}>
+              <Tile
+                image={{ uri: photoUri(photo) }}
+                size="hero"
+                raw
+                accessibilityLabel={t("careLabel.photo")}
+              />
+            </Silk>
+          </View>
+        ) : (
+          <Tile
+            image={{ uri: photoUri(photo) }}
+            size="hero"
+            raw
             accessibilityLabel={t("careLabel.photo")}
+            testID="care-label-photo"
+          />
+        )
+      ) : reading ? (
+        <View testID="moment-generating">
+          <Silk
+            kind="placeholder"
+            shape="tile"
+            label={t("careLabel.reading")}
           />
         </View>
       ) : (
-        <AppText>{t("careLabel.intro")}</AppText>
+        <Text role="body" tone="muted">
+          {t("careLabel.intro")}
+        </Text>
       )}
-      {reading ? (
-        <AppText muted accessibilityLiveRegion="polite">
-          {t("careLabel.reading")}
-        </AppText>
+      {readError ? (
+        <Text role="footnote" tone="error" testID="care-label-read-error">
+          {readError}
+        </Text>
       ) : null}
-      {choose}
-      {photo ? (
+      <View style={styles.leading}>
+        {photo ? (
+          <>
+            {camera ? (
+              <Button
+                variant="quiet"
+                label={t("careLabel.takeAnother")}
+                disabled={busy || reading}
+                onPress={() => void pick("camera")}
+              />
+            ) : null}
+            <Button
+              variant="quiet"
+              label={t("common.choosePhoto")}
+              disabled={busy || reading}
+              testID="care-label-choose"
+              onPress={() => void pick("library")}
+            />
+          </>
+        ) : (
+          <>
+            {camera ? (
+              <Button
+                variant="secondary"
+                label={t("common.takePhoto")}
+                disabled={busy || reading}
+                onPress={() => void pick("camera")}
+              />
+            ) : null}
+            <Button
+              variant="quiet"
+              label={t("common.choosePhoto")}
+              disabled={busy || reading}
+              testID="care-label-choose"
+              onPress={() => void pick("library")}
+            />
+          </>
+        )}
+      </View>
+      {shown ? (
         <>
-          <AppText muted>
-            {found ? t("careLabel.found") : t("careLabel.nothingFound")}
-          </AppText>
-          <View style={styles.section}>
-            <AppText style={styles.label}>{t("careLabel.madeOf")}</AppText>
-            {draft.materials.map((item, index) => (
-              <View key={index} style={styles.material}>
-                <View style={styles.fibre}>
-                  <Field
-                    label={t("careLabel.fibre", { number: index + 1 })}
-                    value={item.fibre}
-                    onChangeText={(fibre) => changeMaterial(index, { fibre })}
-                    maxLength={40}
-                    autoCapitalize="none"
-                  />
+          <Section title={t("careLabel.madeOf")} testID="care-label-materials">
+            <View style={styles.materials}>
+              {!ax && draft.materials.length ? (
+                <View
+                  style={styles.material}
+                  importantForAccessibility="no-hide-descendants"
+                  accessibilityElementsHidden
+                >
+                  <View style={styles.fibre}>
+                    <Text role="subhead" tone="muted">
+                      {t("careLabel.fibreLabel")}
+                    </Text>
+                  </View>
+                  <View style={styles.percent}>
+                    <Text role="subhead" tone="muted">
+                      {t("careLabel.percentLabel")}
+                    </Text>
+                  </View>
+                  <View style={styles.spacer} />
                 </View>
-                <View style={styles.percent}>
-                  <Field
-                    label={t("careLabel.percent", { number: index + 1 })}
-                    value={item.percent}
-                    onChangeText={(percent) =>
-                      changeMaterial(index, { percent })
-                    }
-                    keyboardType="number-pad"
-                    maxLength={3}
-                  />
+              ) : null}
+              {draft.materials.map((item, index) => (
+                <View key={index} style={ax ? styles.stacked : styles.material}>
+                  <View style={ax ? undefined : styles.fibre}>
+                    <Field
+                      label={
+                        ax
+                          ? t("careLabel.fibreLabel")
+                          : t("careLabel.fibre", { number: index + 1 })
+                      }
+                      hideLabel={!ax}
+                      accessibilityLabel={t("careLabel.fibre", {
+                        number: index + 1,
+                      })}
+                      value={item.fibre}
+                      onChangeText={(fibre) => changeMaterial(index, { fibre })}
+                      maxLength={40}
+                      autoCapitalize="none"
+                      testID={`care-label-fibre-${index}`}
+                    />
+                  </View>
+                  <View style={ax ? undefined : styles.percent}>
+                    <Field
+                      label={
+                        ax
+                          ? t("careLabel.percentLabel")
+                          : t("careLabel.percent", { number: index + 1 })
+                      }
+                      hideLabel={!ax}
+                      accessibilityLabel={t("careLabel.percent", {
+                        number: index + 1,
+                      })}
+                      value={item.percent}
+                      onChangeText={(percent) =>
+                        changeMaterial(index, { percent })
+                      }
+                      keyboardType="number-pad"
+                      maxLength={3}
+                      testID={`care-label-percent-${index}`}
+                    />
+                  </View>
+                  <View style={styles.leading}>
+                    <Button
+                      variant="icon"
+                      icon="minus.circle"
+                      label={t("careLabel.removeFibre", { number: index + 1 })}
+                      disabled={busy || reading}
+                      onPress={() =>
+                        change({
+                          materials: draft.materials.filter(
+                            (_, at) => at !== index,
+                          ),
+                        })
+                      }
+                    />
+                  </View>
                 </View>
+              ))}
+              <View style={styles.leading}>
                 <Button
-                  label={t("careLabel.removeFibre", { number: index + 1 })}
-                  danger
-                  compact
+                  variant="quiet"
+                  label={t("careLabel.addFibre")}
                   disabled={busy || reading}
                   onPress={() =>
                     change({
-                      materials: draft.materials.filter(
-                        (_, at) => at !== index,
-                      ),
+                      materials: [
+                        ...draft.materials,
+                        { fibre: "", percent: "" },
+                      ],
                     })
                   }
                 />
               </View>
-            ))}
-            <Button
-              label={t("careLabel.addFibre")}
-              secondary
-              compact
-              disabled={busy || reading}
-              onPress={() =>
-                change({
-                  materials: [...draft.materials, { fibre: "", percent: "" }],
-                })
-              }
-            />
-          </View>
+            </View>
+          </Section>
           <Field
             label={t("careLabel.size")}
             testID="care-label-size"
@@ -274,64 +407,45 @@ export default function CareLabelScreen() {
           />
           <Field
             label={t("careLabel.brand")}
+            testID="care-label-brand"
             value={draft.brand}
             onChangeText={(brand) => change({ brand })}
             maxLength={40}
           />
           <Field
             label={t("careLabel.origin")}
+            testID="care-label-origin"
             value={draft.origin}
             onChangeText={(origin) => change({ origin })}
             maxLength={40}
           />
-          <ErrorMessage message={error} />
-          <Button
-            label={t("careLabel.save")}
-            busy={busy}
-            disabled={reading}
-            onPress={() => {
-              void save();
-            }}
-          />
         </>
-      ) : (
-        <ErrorMessage message={error} />
-      )}
-      {saved ? (
-        <Button
-          label={t("careLabel.remove")}
-          danger
-          disabled={busy || reading}
-          onPress={() => {
-            void remove();
-          }}
-        />
       ) : null}
-    </FormScreen>
+      {saved ? (
+        <View style={styles.leading}>
+          <Button
+            variant="destructive"
+            label={t("careLabel.remove")}
+            disabled={busy || reading}
+            testID="care-label-remove"
+            onPress={() => void remove()}
+          />
+        </View>
+      ) : null}
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  photo: {
-    height: 220,
-    borderRadius: theme.radius.md,
-    borderCurve: "continuous",
-    borderWidth: 1,
-    borderColor: theme.colors.line,
-    overflow: "hidden",
-    backgroundColor: theme.colors.canvas,
-  },
-  image: { width: "100%", height: "100%" },
-  actions: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
-  action: { flexGrow: 1, minWidth: 130 },
-  section: { gap: 12 },
-  label: { fontWeight: "600" },
+  leading: { alignItems: "flex-start" },
+  materials: { gap: theme.space.sm },
   material: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    alignItems: "flex-end",
-    gap: 8,
+    alignItems: "center",
+    gap: theme.space.sm,
   },
-  fibre: { flexGrow: 2, flexBasis: 140 },
-  percent: { flexGrow: 1, flexBasis: 90 },
+  stacked: { gap: theme.space.sm },
+  fibre: { flex: 2 },
+  percent: { flex: 1 },
+  spacer: { width: theme.size.controlSmall },
 });
