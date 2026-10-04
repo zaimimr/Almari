@@ -1,0 +1,38 @@
+# seed: seed-piece.sh
+appId: com.zaimimran.almari
+# UC-F05-03
+---
+- launchApp
+- extendedWaitUntil:
+    visible: "Closet"
+    timeout: 60000
+- openLink: "almari://piece/seed-blazer"
+- runFlow:
+    when:
+      visible: "Open"
+    commands:
+      - tapOn: "Open"
+- extendedWaitUntil:
+    visible:
+      id: "piece-detail"
+    timeout: 20000
+- tapOn:
+    id: "fact-warmth"
+- tapOn:
+    id: "fact-warmth-warmth-warm"
+- assertVisible: ".*Warm.*"
+- openLink: "almari://piece/seed-hijab"
+- runFlow:
+    when:
+      visible: "Open"
+    commands:
+      - tapOn: "Open"
+- extendedWaitUntil:
+    visible:
+      id: "piece-detail"
+    timeout: 20000
+- tapOn:
+    id: "fact-warmth"
+- tapOn:
+    id: "fact-warmth-warmth-warm"
+- assertVisible: ".*Warm.*"

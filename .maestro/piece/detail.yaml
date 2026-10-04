@@ -1,0 +1,46 @@
+# seed: seed-looks.sh,seed-wears.sh,seed-piece.sh
+appId: com.zaimimran.almari
+# UC-F05-01
+---
+- launchApp
+- extendedWaitUntil:
+    visible: "Closet"
+    timeout: 60000
+- openLink: "almari://piece/seed-tunic"
+- runFlow:
+    when:
+      visible: "Open"
+    commands:
+      - tapOn: "Open"
+- extendedWaitUntil:
+    visible:
+      id: "piece-detail"
+    timeout: 20000
+- assertVisible: "Rose tunic"
+- assertVisible: "Worn.*"
+- assertVisible:
+    id: "fact-coverage"
+- assertVisible: "Start with this piece"
+- takeScreenshot: docs/redesign/screens/after/piece/piece
+- scrollUntilVisible:
+    element:
+      id: "piece-care-label"
+    direction: DOWN
+- assertVisible: "Part of a set"
+- assertVisible: "Grey trousers"
+- takeScreenshot: docs/redesign/screens/after/piece/piece-scrolled
+- openLink: "almari://piece/seed-blazer"
+- runFlow:
+    when:
+      visible: "Open"
+    commands:
+      - tapOn: "Open"
+- extendedWaitUntil:
+    visible:
+      id: "piece-detail"
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      id: "piece-looks"
+    direction: DOWN
+- assertVisible: "Office navy"

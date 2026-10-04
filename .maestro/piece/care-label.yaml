@@ -1,0 +1,64 @@
+# seed: seed-piece.sh
+appId: com.zaimimran.almari
+# UC-F05-10
+---
+- addMedia:
+    - "../../assets/fixtures/care-label.jpg"
+- launchApp
+- extendedWaitUntil:
+    visible: "Closet"
+    timeout: 60000
+- openLink: "almari://piece/seed-tunic"
+- runFlow:
+    when:
+      visible: "Open"
+    commands:
+      - tapOn: "Open"
+- extendedWaitUntil:
+    visible:
+      id: "piece-detail"
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      id: "piece-care-label"
+    direction: DOWN
+- tapOn:
+    id: "piece-care-label"
+- tapOn:
+    id: "care-label-choose"
+- extendedWaitUntil:
+    visible: "Photo, .*"
+    timeout: 20000
+- tapOn: "Photo, .*"
+- runFlow:
+    when:
+      visible: "Add|Done"
+    commands:
+      - tapOn: "Add|Done"
+- extendedWaitUntil:
+    visible:
+      id: "care-label-photo"
+    timeout: 60000
+- takeScreenshot: docs/redesign/screens/after/piece/care-label
+- tapOn: "Save care label"
+- extendedWaitUntil:
+    visible:
+      id: "piece-detail"
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      id: "piece-care-label"
+    direction: DOWN
+- tapOn:
+    id: "piece-care-label"
+- scrollUntilVisible:
+    element:
+      id: "care-label-remove"
+    direction: DOWN
+- tapOn:
+    id: "care-label-remove"
+- tapOn: "Remove"
+- extendedWaitUntil:
+    visible:
+      id: "piece-detail"
+    timeout: 20000

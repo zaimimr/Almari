@@ -1,0 +1,24 @@
+# seed: seed-piece.sh
+appId: com.zaimimran.almari
+# UC-F05-15
+---
+- launchApp
+- extendedWaitUntil:
+    visible: "Closet"
+    timeout: 60000
+- openLink: "almari://piece/seed-hijab"
+- runFlow:
+    when:
+      visible: "Open"
+    commands:
+      - tapOn: "Open"
+- extendedWaitUntil:
+    visible:
+      id: "piece-detail"
+    timeout: 20000
+- tapOn:
+    id: "fact-colour"
+- tapOn:
+    id: "fact-colour-colour-blush"
+- assertVisible: ".*Blush.*"
+- takeScreenshot: docs/redesign/screens/after/piece/colour

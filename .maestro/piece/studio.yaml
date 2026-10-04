@@ -1,0 +1,34 @@
+# seed: fixture.sh studio=ok,seed-piece.sh
+appId: com.zaimimran.almari
+# UC-F05-09
+---
+- launchApp
+- extendedWaitUntil:
+    visible: "Closet"
+    timeout: 60000
+- openLink: "almari://piece/seed-tunic"
+- runFlow:
+    when:
+      visible: "Open"
+    commands:
+      - tapOn: "Open"
+- extendedWaitUntil:
+    visible:
+      id: "piece-detail"
+    timeout: 20000
+- tapOn:
+    id: "piece-edit"
+- extendedWaitUntil:
+    visible:
+      id: "piece-edit-screen"
+    timeout: 10000
+- assertVisible: "Clean background sends this photo to Cloudflare\\."
+- tapOn:
+    id: "edit-photo-studio"
+- extendedWaitUntil:
+    visible:
+      id: "edit-hero"
+    timeout: 60000
+- assertVisible:
+    id: "edit-photo-studio"
+    selected: true

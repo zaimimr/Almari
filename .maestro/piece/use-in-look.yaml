@@ -1,0 +1,28 @@
+# seed: seed-piece.sh
+appId: com.zaimimran.almari
+# UC-F05-13
+---
+- launchApp
+- extendedWaitUntil:
+    visible: "Closet"
+    timeout: 60000
+- openLink: "almari://piece/seed-tunic"
+- runFlow:
+    when:
+      visible: "Open"
+    commands:
+      - tapOn: "Open"
+- extendedWaitUntil:
+    visible:
+      id: "piece-detail"
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      id: "piece-add-to-look"
+    direction: DOWN
+- tapOn:
+    id: "piece-add-to-look"
+- extendedWaitUntil:
+    visible: ".*Rose tunic.*"
+    timeout: 20000
+# after L11: save the look and see it under the piece

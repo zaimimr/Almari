@@ -1,0 +1,64 @@
+appId: com.zaimimran.almari
+# UC-F05-14
+---
+- runFlow: ../lib/skip-onboarding.yaml
+- openLink: "almari://piece/nope"
+- runFlow:
+    when:
+      visible: "Open"
+    commands:
+      - tapOn: "Open"
+- extendedWaitUntil:
+    visible: "This piece is no longer here"
+    timeout: 20000
+- tapOn: "Go back"
+- openLink: "almari://piece/edit/nope"
+- runFlow:
+    when:
+      visible: "Open"
+    commands:
+      - tapOn: "Open"
+- extendedWaitUntil:
+    visible: "This piece is no longer here"
+    timeout: 20000
+- tapOn: "Go back"
+- openLink: "almari://label/nope?target=piece"
+- runFlow:
+    when:
+      visible: "Open"
+    commands:
+      - tapOn: "Open"
+- extendedWaitUntil:
+    visible: "This piece is no longer here"
+    timeout: 20000
+- tapOn: "Go back"
+- openLink: "almari://cutout/nope?target=piece"
+- runFlow:
+    when:
+      visible: "Open"
+    commands:
+      - tapOn: "Open"
+- extendedWaitUntil:
+    visible: "This piece is no longer here"
+    timeout: 20000
+- tapOn: "Go back"
+- openLink: "almari://label/nope?target=import"
+- runFlow:
+    when:
+      visible: "Open"
+    commands:
+      - tapOn: "Open"
+- extendedWaitUntil:
+    visible: "This photo is no longer waiting"
+    timeout: 20000
+- tapOn: "Go back"
+- openLink: "almari://cutout/nope?target=import"
+- runFlow:
+    when:
+      visible: "Open"
+    commands:
+      - tapOn: "Open"
+- extendedWaitUntil:
+    visible: "This photo is no longer waiting"
+    timeout: 20000
+- tapOn: "Go back"

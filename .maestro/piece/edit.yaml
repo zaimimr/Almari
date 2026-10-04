@@ -1,0 +1,53 @@
+# seed: seed-piece.sh
+appId: com.zaimimran.almari
+# UC-F05-06
+---
+- launchApp
+- extendedWaitUntil:
+    visible: "Closet"
+    timeout: 60000
+- openLink: "almari://piece/seed-tunic"
+- runFlow:
+    when:
+      visible: "Open"
+    commands:
+      - tapOn: "Open"
+- extendedWaitUntil:
+    visible:
+      id: "piece-detail"
+    timeout: 20000
+- tapOn:
+    id: "piece-edit"
+- extendedWaitUntil:
+    visible:
+      id: "piece-edit-screen"
+    timeout: 10000
+- tapOn:
+    id: "edit-name"
+- eraseText
+- inputText: "Rose kurta"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "edit-category-top"
+    direction: DOWN
+- tapOn:
+    id: "edit-category-top"
+- tapOn:
+    id: "edit-kind-blouse"
+- tapOn:
+    id: "edit-save"
+- extendedWaitUntil:
+    visible: "Rose kurta"
+    timeout: 10000
+- tapOn:
+    id: "piece-edit"
+- tapOn:
+    id: "edit-name"
+- inputText: " new"
+- hideKeyboard
+- tapOn: "Cancel"
+- assertVisible: "Discard your changes\\?"
+- tapOn: "Discard"
+- assertVisible:
+    id: "piece-detail"

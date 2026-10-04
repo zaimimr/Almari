@@ -1,0 +1,37 @@
+# seed: seed-looks.sh,seed-piece.sh
+appId: com.zaimimran.almari
+# UC-F05-11
+---
+- launchApp
+- extendedWaitUntil:
+    visible: "Closet"
+    timeout: 60000
+- openLink: "almari://piece/seed-hijab"
+- runFlow:
+    when:
+      visible: "Open"
+    commands:
+      - tapOn: "Open"
+- extendedWaitUntil:
+    visible:
+      id: "piece-detail"
+    timeout: 20000
+- tapOn:
+    id: "piece-edit"
+- extendedWaitUntil:
+    visible:
+      id: "piece-edit-screen"
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      id: "edit-remove"
+    direction: DOWN
+- tapOn:
+    id: "edit-remove"
+- assertVisible: "Remove this piece\\?"
+- assertVisible: ".*It is in 1 look\\..*"
+- tapOn: "Remove"
+- extendedWaitUntil:
+    visible: "Closet"
+    timeout: 20000
+- assertNotVisible: "Sand hijab"

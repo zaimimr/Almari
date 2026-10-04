@@ -1,0 +1,26 @@
+# seed: seed-piece.sh
+appId: com.zaimimran.almari
+# UC-F05-02
+---
+- launchApp
+- extendedWaitUntil:
+    visible: "Closet"
+    timeout: 60000
+- openLink: "almari://piece/seed-long-blouse"
+- runFlow:
+    when:
+      visible: "Open"
+    commands:
+      - tapOn: "Open"
+- extendedWaitUntil:
+    visible:
+      id: "piece-detail"
+    timeout: 20000
+- tapOn:
+    id: "fact-fabric"
+- tapOn:
+    id: "fact-looks-right"
+- assertNotVisible:
+    id: "fact-looks-right"
+- assertVisible:
+    id: "fact-fabric"

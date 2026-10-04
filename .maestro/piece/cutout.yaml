@@ -1,0 +1,46 @@
+# seed: seed-piece.sh
+appId: com.zaimimran.almari
+# UC-F05-08
+---
+- launchApp
+- extendedWaitUntil:
+    visible: "Closet"
+    timeout: 60000
+- openLink: "almari://piece/seed-tunic"
+- runFlow:
+    when:
+      visible: "Open"
+    commands:
+      - tapOn: "Open"
+- extendedWaitUntil:
+    visible:
+      id: "piece-detail"
+    timeout: 20000
+- tapOn:
+    id: "piece-edit"
+- extendedWaitUntil:
+    visible:
+      id: "piece-edit-screen"
+    timeout: 10000
+- tapOn:
+    id: "edit-cutout"
+- extendedWaitUntil:
+    visible:
+      id: "cutout-canvas"
+    timeout: 20000
+- extendedWaitUntil:
+    notVisible:
+      id: "moment-loading"
+    timeout: 30000
+- longPressOn:
+    id: "cutout-canvas"
+- extendedWaitUntil:
+    visible: "Piece selected"
+    timeout: 20000
+- takeScreenshot: docs/redesign/screens/after/piece/cutout
+- tapOn:
+    id: "cutout-done"
+- extendedWaitUntil:
+    visible:
+      id: "piece-edit-screen"
+    timeout: 30000

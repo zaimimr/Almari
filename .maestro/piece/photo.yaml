@@ -1,0 +1,45 @@
+# seed: seed-piece.sh
+appId: com.zaimimran.almari
+# UC-F05-07
+---
+- addMedia:
+    - "../../assets/wardrobe/sage-kurta.png"
+- launchApp
+- extendedWaitUntil:
+    visible: "Closet"
+    timeout: 60000
+- openLink: "almari://piece/seed-tunic"
+- runFlow:
+    when:
+      visible: "Open"
+    commands:
+      - tapOn: "Open"
+- extendedWaitUntil:
+    visible:
+      id: "piece-detail"
+    timeout: 20000
+- tapOn:
+    id: "piece-edit"
+- tapOn: "Change photo"
+- tapOn:
+    id: "edit-choose-photo"
+- extendedWaitUntil:
+    visible: "Photo, .*"
+    timeout: 20000
+- tapOn: "Photo, .*"
+- runFlow:
+    when:
+      visible: "Add|Done"
+    commands:
+      - tapOn: "Add|Done"
+- extendedWaitUntil:
+    visible:
+      id: "edit-save"
+      enabled: true
+    timeout: 60000
+- tapOn:
+    id: "edit-save"
+- extendedWaitUntil:
+    visible:
+      id: "piece-detail"
+    timeout: 60000
