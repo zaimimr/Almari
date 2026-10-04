@@ -22,3 +22,4 @@ appId: com.zaimimran.almari
 - extendedWaitUntil:
     visible: "Edit your look"
     timeout: 10000
+- assertVisible: "Save changes"

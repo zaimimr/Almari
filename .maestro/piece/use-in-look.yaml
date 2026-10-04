@@ -25,4 +25,8 @@ appId: com.zaimimran.almari
 - extendedWaitUntil:
     visible: ".*Rose tunic.*"
     timeout: 20000
-# after L11: save the look and see it under the piece
+- tapOn: "Save look"
+- extendedWaitUntil:
+    visible:
+      id: "piece-detail"
+    timeout: 20000

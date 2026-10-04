@@ -1,0 +1,30 @@
+appId: com.zaimimran.almari
+# UC-F10-03
+---
+- launchApp:
+    clearState: true
+    permissions:
+      all: allow
+- runFlow: ../lib/sample-closet.yaml
+- extendedWaitUntil:
+    visible: "Looks"
+    timeout: 60000
+- tapOn: "Looks"
+- tapOn:
+    id: "header-new"
+- extendedWaitUntil:
+    visible: "New look"
+    timeout: 20000
+- tapOn:
+    id: "build-piece-sample-.*hijab.*"
+    index: 0
+- tapOn:
+    id: "outfit-piece-sample-.*hijab.*"
+- assertVisible: "Change hijab"
+- tapOn:
+    id: "strip-piece-.*"
+    index: 1
+- extendedWaitUntil:
+    visible: "Undo"
+    timeout: 10000
+- takeScreenshot: docs/redesign/screens/after/build-look/build-swap

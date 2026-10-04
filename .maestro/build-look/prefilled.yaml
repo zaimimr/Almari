@@ -1,5 +1,5 @@
 appId: com.zaimimran.almari
-# UC-F04-07
+# UC-F10-07
 # seed: seed-closet.sh
 ---
 - runFlow: ../lib/open-closet.yaml
@@ -12,14 +12,10 @@ appId: com.zaimimran.almari
 - tapOn:
     id: "select-new-look"
 - extendedWaitUntil:
-    notVisible:
-      id: "select-new-look"
-    timeout: 10000
-- assertNotVisible:
-    id: "closet-grid"
-- extendedWaitUntil:
     visible: "New look"
     timeout: 20000
+- assertVisible:
+    id: "outfit-piece-seed-hijab"
 - tapOn: "Save look"
 - extendedWaitUntil:
     visible:

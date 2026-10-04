@@ -1,0 +1,25 @@
+appId: com.zaimimran.almari
+# UC-F10-02
+---
+- launchApp:
+    clearState: true
+    permissions:
+      all: allow
+- runFlow: ../lib/sample-closet.yaml
+- extendedWaitUntil:
+    visible: "Looks"
+    timeout: 60000
+- tapOn: "Looks"
+- tapOn:
+    id: "header-new"
+- extendedWaitUntil:
+    visible: "New look"
+    timeout: 20000
+- tapOn:
+    id: "build-piece-sample-.*(kurta|tunic|top).*"
+    index: 0
+- tapOn: "Fill the rest"
+- extendedWaitUntil:
+    visible:
+      id: "outfit-piece-sample-.*(shoes|flats|sandals|sneakers).*"
+    timeout: 60000
