@@ -18,11 +18,13 @@ appId: com.zaimimran.almari
           id: "onboarding-next"
 - tapOn: "07:00"
 - extendedWaitUntil:
-    visible: "Notification access is off"
+    visible:
+      id: "notify-denied"
     timeout: 10000
 - assertVisible: "Open Settings"
 - assertVisible:
     id: "notify-07:00"
     selected: true
 - tapOn: "Off"
-- assertNotVisible: "Notification access is off"
+- assertNotVisible:
+    id: "notify-denied"

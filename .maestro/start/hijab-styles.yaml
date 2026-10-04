@@ -28,8 +28,11 @@ appId: com.zaimimran.almari
     id: "card-khimar"
     text: "checkbox, checked"
 - scrollUntilVisible:
-    element: "None of these"
-- tapOn: "None of these"
+    element:
+      id: "card-none"
+- scroll
+- tapOn:
+    id: "card-none"
 - scrollUntilVisible:
     element:
       id: "card-hijab"

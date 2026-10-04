@@ -21,4 +21,4 @@ appId: com.zaimimran.almari
       id: "today-outfit"
     timeout: 60000
 - tapOn: "Closet"
-- assertVisible: "Sample"
+- assertVisible: ".*sample pieces included.*"

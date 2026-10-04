@@ -50,7 +50,12 @@ export function StepNotifications({
       />
       {denied && time ? (
         <View style={styles.denied}>
-          <Text role="footnote" tone="error" accessibilityLiveRegion="polite">
+          <Text
+            role="footnote"
+            tone="error"
+            accessibilityLiveRegion="polite"
+            testID="notify-denied"
+          >
             {t("notify.denied")}
           </Text>
           <View style={styles.start}>

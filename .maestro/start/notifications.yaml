@@ -24,7 +24,8 @@ appId: com.zaimimran.almari
 - assertVisible:
     id: "notify-07:00"
     selected: true
-- assertNotVisible: "Notification access is off"
+- assertNotVisible:
+    id: "notify-denied"
 - takeScreenshot: docs/redesign/screens/after/start/notify
 - tapOn: "Next"
 - assertVisible: "Which colours suit you?"
