@@ -389,15 +389,24 @@ export function factSpecs(piece: Piece): FactSpec[] {
   ].filter((spec): spec is FactSpec => spec !== null);
 }
 
+const briefFacts = ["kind", "colour", "season", "availability"];
+
+export const moreFacts = (piece: Piece) =>
+  factSpecs(piece).filter((spec) => !briefFacts.includes(spec.id));
+
 export function FactChips({
   piece,
   onChange,
+  more = false,
 }: {
   piece: Piece;
   onChange: (next: (closet: Closet) => Closet) => Promise<void>;
+  more?: boolean;
 }) {
   const colors = useColors();
-  const specs = factSpecs(piece);
+  const specs = more
+    ? moreFacts(piece)
+    : factSpecs(piece).filter((spec) => briefFacts.includes(spec.id));
   const [open, setOpen] = useState<string | null>(null);
   const [shown, setShown] = useState<string | null>(null);
   const [lineEnd, setLineEnd] = useState<string | null>(null);

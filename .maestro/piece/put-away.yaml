@@ -16,20 +16,14 @@ appId: com.zaimimran.almari
     visible:
       id: "piece-detail"
     timeout: 20000
+- tapOn:
+    id: "piece-edit"
 - scrollUntilVisible:
     element:
-      id: "piece-put-away"
+      id: "edit-put-away"
     direction: DOWN
 - tapOn:
-    id: "piece-put-away"
-- assertVisible:
-    id: "piece-put-away-result"
-- tapOn:
-    id: "piece-undo"
-- assertVisible:
-    id: "piece-start-with"
-- tapOn:
-    id: "piece-put-away"
+    id: "edit-put-away"
 - assertVisible:
     id: "piece-back-in-closet"
 - tapOn:

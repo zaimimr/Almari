@@ -16,6 +16,7 @@ appId: com.zaimimran.almari
     visible:
       id: "piece-detail"
     timeout: 20000
+- runFlow: ../lib/open-more-details.yaml
 - assertVisible: ".*Needs details.*"
 - tapOn:
     id: "fact-coverage"
@@ -35,6 +36,7 @@ appId: com.zaimimran.almari
     visible:
       id: "piece-detail"
     timeout: 20000
+- runFlow: ../lib/open-more-details.yaml
 - tapOn:
     id: "fact-coverage"
 - assertVisible:

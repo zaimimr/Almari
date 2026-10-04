@@ -16,6 +16,7 @@ appId: com.zaimimran.almari
     visible:
       id: "piece-detail"
     timeout: 20000
+- runFlow: ../lib/open-more-details.yaml
 - tapOn:
     id: "fact-sparkle"
 - tapOn:
@@ -31,10 +32,12 @@ appId: com.zaimimran.almari
     visible:
       id: "piece-detail"
     timeout: 20000
+- runFlow: ../lib/open-more-details.yaml
 - tapOn:
     id: "fact-warmth"
 - tapOn:
     id: "fact-warmth-warmth-warm"
+- tapOn: "Cancel"
 - assertVisible:
     id: "fact-season"
 - assertVisible: ".*Winter.*"

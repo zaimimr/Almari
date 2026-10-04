@@ -1,0 +1,11 @@
+appId: com.zaimimran.almari
+---
+- tapOn:
+    id: "piece-edit"
+- scrollUntilVisible:
+    element:
+      id: "edit-more"
+    direction: DOWN
+    centerElement: true
+- tapOn:
+    id: "edit-more"

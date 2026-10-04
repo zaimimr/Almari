@@ -22,12 +22,15 @@ import { pieceCutout } from "../../../src/domain/cutout";
 import { filesInUse } from "../../../src/domain/importing";
 import { confirmEdits } from "../../../src/domain/recognition";
 import { unlinkPiece } from "../../../src/domain/sets";
+import { dropFromToday } from "../../../src/domain/today";
+import { setArchived } from "../../../src/domain/wardrobe";
 import { useDiscardChanges } from "../../../src/navigation/useDiscardChanges";
 import { categoryName, kindName, t } from "../../../src/i18n";
 import { useCloset } from "../../../src/state/closet";
 import { canPrepareOnDevice, measurePiece } from "../../../src/state/imports";
 import { studioAvailable, useStudioMaker } from "../../../src/state/studio";
 import { discardPhoto, keepPhoto } from "../../../src/storage/local";
+import { FactChips, moreFacts } from "../../../src/features/piece/FactChips";
 import {
   Button,
   ChipRow,
@@ -43,6 +46,7 @@ import {
   PhotoToolbar,
   type PhotoView,
 } from "../../../src/features/capture/PhotoToolbar";
+import { announce } from "../../../src/ui/announce";
 import { confirmAction } from "../../../src/ui/confirm";
 import { theme } from "../../../src/ui/theme";
 
@@ -87,7 +91,7 @@ function Editor({ piece }: { piece: Piece }) {
   const [photo, setPhoto] = useState(piece.photo);
   const [newPhoto, setNewPhoto] = useState<string | null>(null);
   const [leaveSet, setLeaveSet] = useState(false);
-  const [changing, setChanging] = useState(false);
+  const [more, setMore] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const studio = useStudioMaker();
@@ -178,7 +182,6 @@ function Editor({ piece }: { piece: Piece }) {
       const asset = result.assets?.[0];
       if (!result.canceled && asset) {
         setNewPhoto(asset.uri);
-        setChanging(false);
       }
     } catch {
       setError(t("common.photoOpenFailed"));
@@ -231,6 +234,23 @@ function Editor({ piece }: { piece: Piece }) {
       if (copied) void discardPhoto(copied).catch(() => undefined);
       setError(t("common.error.save"));
     } finally {
+      setBusy(false);
+    }
+  }
+
+  async function putAway() {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await update((current) =>
+        dropFromToday(setArchived(current, piece.id, true), piece.id),
+      );
+      announce(t("result.putAway"));
+      allowClose();
+      router.back();
+    } catch {
+      setError(t("common.error.save"));
       setBusy(false);
     }
   }
@@ -330,27 +350,24 @@ function Editor({ piece }: { piece: Piece }) {
               testID="edit-photo"
             />
           ) : null}
-          <Expander
-            id="edit-change-photo"
-            title={t("editor.changePhoto")}
-            open={changing}
-            onToggle={() => setChanging((open) => !open)}
-            actions={[
-              {
-                label: t("common.takePhoto"),
-                variant: "secondary",
-                disabled: busy,
-                onPress: () => void pick("camera"),
-              },
-              {
-                label: t("common.choosePhoto"),
-                variant: "quiet",
-                disabled: busy,
-                testID: "edit-choose-photo",
-                onPress: () => void pick("library"),
-              },
-            ]}
-          />
+          <View style={styles.photoRow}>
+            <Button
+              variant="secondary"
+              icon="camera"
+              label={t("common.takePhoto")}
+              disabled={busy}
+              testID="edit-take-photo"
+              onPress={() => void pick("camera")}
+            />
+            <Button
+              variant="secondary"
+              icon="photo.on.rectangle"
+              label={t("common.choosePhoto")}
+              disabled={busy}
+              testID="edit-choose-photo"
+              onPress={() => void pick("library")}
+            />
+          </View>
         </>
       )}
       <Field
@@ -402,6 +419,17 @@ function Editor({ piece }: { piece: Piece }) {
           ) : null}
         </View>
       ) : null}
+      {moreFacts(piece).length ? (
+        <Expander
+          id="edit-more"
+          title={t("editor.moreDetails")}
+          open={more}
+          onToggle={() => setMore((open) => !open)}
+          testID="edit-more"
+        >
+          <FactChips piece={piece} onChange={update} more />
+        </Expander>
+      ) : null}
       {piece.setId ? (
         leaveSet ? (
           <ResultBar
@@ -426,6 +454,16 @@ function Editor({ piece }: { piece: Piece }) {
         )
       ) : null}
       <View style={styles.leading}>
+        {piece.status === "archived" ? null : (
+          <Button
+            variant="quiet"
+            icon="archivebox"
+            label={t("closet.putAwayAction")}
+            disabled={busy}
+            testID="edit-put-away"
+            onPress={() => void putAway()}
+          />
+        )}
         <Button
           variant="destructive"
           label={t("editor.remove")}
@@ -439,6 +477,7 @@ function Editor({ piece }: { piece: Piece }) {
 }
 
 const styles = StyleSheet.create({
-  leading: { alignItems: "flex-start" },
+  leading: { alignItems: "flex-start", gap: theme.space.sm },
+  photoRow: { flexDirection: "row", flexWrap: "wrap", gap: theme.space.sm },
   group: { gap: theme.space.sm },
 });

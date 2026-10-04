@@ -7,7 +7,7 @@ import {
   type Piece,
 } from "../../src/domain/closet";
 import { setMembers } from "../../src/domain/sets";
-import { clockFor, dropFromToday, stylePiece } from "../../src/domain/today";
+import { clockFor, stylePiece } from "../../src/domain/today";
 import { setArchived } from "../../src/domain/wardrobe";
 import { FactChips } from "../../src/features/piece/FactChips";
 import { usePiece, wearLine } from "../../src/features/piece/usePiece";
@@ -18,7 +18,6 @@ import {
   Button,
   Footer,
   HeaderItem,
-  ResultBar,
   Row,
   Rows,
   Screen,
@@ -54,7 +53,6 @@ function labelMeta(label: CareLabel | undefined): string | undefined {
 export default function PieceDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { closet, piece, change, error } = usePiece(id);
-  const [putAway, setPutAway] = useState(false);
   const [busy, setBusy] = useState(false);
 
   if (!piece) return <Screen gone={{ title: t("piece.missing.title") }} />;
@@ -79,18 +77,10 @@ export default function PieceDetail() {
     }
   };
 
-  const putAwayNow = () =>
-    void act((current) =>
-      dropFromToday(setArchived(current, pieceId, true), pieceId),
-    ).then((saved) => {
-      if (saved) setPutAway(true);
-    });
-
   const backInCloset = () =>
     void act((current) => setArchived(current, pieceId, false)).then(
       (saved) => {
         if (!saved) return;
-        setPutAway(false);
         announce(t("result.backInCloset"));
       },
     );
@@ -225,46 +215,22 @@ export default function PieceDetail() {
           </Rows>
         </Section>
       ) : null}
-      <View style={styles.actions}>
-        {putAway ? (
-          <ResultBar
-            text={t("result.putAway")}
-            announce
-            testID="piece-put-away-result"
-            action={{
-              label: t("common.undo"),
-              onPress: backInCloset,
-              testID: "piece-undo",
-            }}
+      {!archived && !away ? (
+        <View style={styles.actions}>
+          <Button
+            variant="quiet"
+            icon="calendar"
+            label={t("piece.planWith")}
+            testID="piece-plan-with"
+            onPress={planWith}
           />
-        ) : (
-          <>
-            {!archived && !away ? (
-              <Button
-                variant="quiet"
-                icon="calendar"
-                label={t("piece.planWith")}
-                testID="piece-plan-with"
-                onPress={planWith}
-              />
-            ) : null}
-            {!archived ? (
-              <Button
-                variant="quiet"
-                icon="archivebox"
-                label={t("closet.putAwayAction")}
-                testID="piece-put-away"
-                onPress={putAwayNow}
-              />
-            ) : null}
-          </>
-        )}
-      </View>
+        </View>
+      ) : null}
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   title: { gap: theme.space.xs },
-  actions: { alignItems: "flex-start", gap: theme.space.sm },
+  actions: { alignItems: "flex-start" },
 });

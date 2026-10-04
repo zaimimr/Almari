@@ -20,7 +20,6 @@ appId: com.zaimimran.almari
     timeout: 20000
 - tapOn:
     id: "piece-edit"
-- tapOn: "Change photo"
 - tapOn:
     id: "edit-choose-photo"
 - extendedWaitUntil:

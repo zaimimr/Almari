@@ -984,6 +984,7 @@ export const en = {
   "error.piecesSave": "These pieces could not be saved. Please try again.",
   "editor.addToCloset": "Add to closet",
   "editor.changePhoto": "Change photo",
+  "editor.moreDetails": "More details",
   "editor.choosePhoto": "Choose a photo",
   "editor.nameHint": "e.g. Mauve chiffon hijab",
   "editor.photoPreview": "Clothing photo preview",

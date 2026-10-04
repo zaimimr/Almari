@@ -19,7 +19,7 @@ appId: com.zaimimran.almari
 - assertVisible: "Rose tunic"
 - assertVisible: "Worn.*"
 - assertVisible:
-    id: "fact-coverage"
+    id: "fact-kind"
 - assertVisible: "Start with this piece"
 - takeScreenshot: docs/redesign/screens/after/piece/piece
 - scrollUntilVisible:

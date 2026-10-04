@@ -998,6 +998,7 @@ export const nb: Record<Key, string> = {
   "error.piecesSave": "Plaggene kunne ikke lagres. Prøv igjen.",
   "editor.addToCloset": "Legg i garderoben",
   "editor.changePhoto": "Bytt bilde",
+  "editor.moreDetails": "Flere detaljer",
   "editor.choosePhoto": "Velg et bilde",
   "editor.nameHint": "f.eks. Lilla chiffonhijab",
   "editor.photoPreview": "Forhåndsvisning av plaggbildet",
