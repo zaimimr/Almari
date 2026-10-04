@@ -10,7 +10,7 @@ import type { FactSpec } from "./FactChips";
 
 export function availabilityFact(piece: Piece): FactSpec {
   const reason = piece.status === "away" ? (piece.away ?? null) : null;
-  const value = reason ? t(`piece.away.${reason}`) : t("closet.available");
+  const value = reason ? t(`piece.away.${reason}`) : t("piece.available");
   return {
     id: "availability",
     name: t("piece.availability"),
@@ -20,7 +20,7 @@ export function availabilityFact(piece: Piece): FactSpec {
       {
         id: "availability",
         options: [
-          { id: "available", label: t("closet.available") },
+          { id: "available", label: t("piece.available") },
           ...awayReasons.map((id) => ({ id, label: t(`piece.away.${id}`) })),
         ],
         value: reason ?? "available",

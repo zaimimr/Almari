@@ -1516,6 +1516,7 @@ export const en = {
   "pieceWeather.fine": "Fine",
   "sets.removed": "Removed from set",
   "style.both": "Both",
+  "piece.available": "Available",
 };
 
 export type Key = keyof typeof en;

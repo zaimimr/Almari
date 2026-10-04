@@ -1535,4 +1535,5 @@ export const nb: Record<Key, string> = {
   "pieceWeather.fine": "Greit",
   "sets.removed": "Fjernet fra settet",
   "style.both": "Begge",
+  "piece.available": "Tilgjengelig",
 };
