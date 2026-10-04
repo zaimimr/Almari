@@ -1,11 +1,7 @@
 appId: com.zaimimran.almari
 ---
 - runFlow: skip-onboarding.yaml
-- scrollUntilVisible:
-    element: "Start with the sample closet"
-    direction: DOWN
-    timeout: 60000
-- tapOn: "Start with the sample closet"
+- tapOn: "Try the sample closet"
 - runFlow:
     when:
       visible: "Try a sample style"

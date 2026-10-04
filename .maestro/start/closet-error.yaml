@@ -1,0 +1,10 @@
+appId: com.zaimimran.almari
+# UC-F01-02
+# seed: broken-closet.sh
+---
+- launchApp
+- extendedWaitUntil:
+    visible: "Could not open your closet"
+    timeout: 20000
+- assertVisible: "Try again"
+- takeScreenshot: docs/redesign/screens/after/start/closet-error

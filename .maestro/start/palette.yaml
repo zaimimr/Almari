@@ -1,0 +1,67 @@
+# seed: selfie.sh
+appId: com.zaimimran.almari
+# UC-F01-21
+---
+- addMedia:
+    - "../../assets/fixtures/selfie.jpg"
+- launchApp:
+    clearState: true
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible: "What is your name\\?"
+    timeout: 20000
+- repeat:
+    times: 10
+    while:
+      notVisible: "Which colours suit you\\?"
+    commands:
+      - tapOn:
+          id: "onboarding-next"
+- tapOn: "Take a selfie"
+- tapOn: "Open camera"
+- tapOn:
+    id: "colours-library"
+- extendedWaitUntil:
+    visible: "Photo, \\d+ [A-Za-z]+, \\d+:\\d+"
+    timeout: 20000
+- tapOn: "Photo, \\d+ [A-Za-z]+, \\d+:\\d+"
+- runFlow:
+    when:
+      visible: "Add|Done"
+    commands:
+      - tapOn: "Add|Done"
+- extendedWaitUntil:
+    visible:
+      id: "colour-result"
+    timeout: 60000
+- assertVisible: "Best hijab shades"
+- assertVisible: "Go easy on"
+- assertVisible:
+    id: "colours-save"
+- takeScreenshot: docs/redesign/screens/after/start/palette
+- tapOn: "These don't look like me"
+- assertVisible:
+    id: "colours-hair-toggle"
+- assertVisible: "Undertone"
+- assertVisible: "Depth"
+- assertVisible: "Contrast"
+- takeScreenshot: docs/redesign/screens/after/start/palette-notme
+- tapOn: "Save colours"
+- assertVisible: "Which colours suit you\\?"
+- assertVisible:
+    id: "colours-saved"
+- repeat:
+    times: 10
+    while:
+      notVisible: "You are set"
+    commands:
+      - tapOn:
+          id: "onboarding-next"
+- tapOn: "Try the sample closet"
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
+    timeout: 60000
+- tapOn: "Profile"
+- assertVisible: "(Light|Warm|Clear|Cool|Soft|Deep) (spring|summer|autumn|winter)"

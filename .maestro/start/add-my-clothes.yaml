@@ -1,0 +1,23 @@
+appId: com.zaimimran.almari
+# UC-F01-09
+---
+- launchApp:
+    clearState: true
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible: "What is your name\\?"
+    timeout: 20000
+- repeat:
+    times: 10
+    while:
+      notVisible: "You are set"
+    commands:
+      - tapOn:
+          id: "onboarding-next"
+- tapOn:
+    id: "done-add"
+- assertNotVisible: "You are set"
+- extendedWaitUntil:
+    visible: "Photo tips|Add pieces"
+    timeout: 10000

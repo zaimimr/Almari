@@ -5,13 +5,10 @@ appId: com.zaimimran.almari
     permissions:
       all: allow
 - repeat:
-    times: 11
+    times: 15
     while:
       notVisible: "You are set"
     commands:
-      - scrollUntilVisible:
-          element: "Skip"
-          direction: DOWN
-          timeout: 60000
-      - tapOn: "Skip"
+      - tapOn:
+          id: "onboarding-next"
 - assertVisible: "You are set"

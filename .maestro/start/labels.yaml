@@ -1,0 +1,83 @@
+appId: com.zaimimran.almari
+# UC-F01-03 labels
+---
+- launchApp:
+    clearState: true
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible: "What is your name\\?"
+    timeout: 20000
+- assertVisible:
+    id: "step-title"
+    text: "What is your name?"
+- tapOn:
+    id: "onboarding-next"
+- assertVisible:
+    id: "step-title"
+    text: "Do you wear a hijab?"
+- tapOn:
+    id: "onboarding-next"
+- assertVisible:
+    id: "step-title"
+    text: "Which styles do you wear?"
+- tapOn:
+    id: "onboarding-next"
+- assertVisible:
+    id: "step-title"
+    text: "How covered do you like your everyday outfits?"
+- tapOn:
+    id: "onboarding-next"
+- assertVisible:
+    id: "step-title"
+    text: "What do you wear most days?"
+- tapOn:
+    id: "onboarding-next"
+- assertVisible:
+    id: "step-title"
+    text: "How do you like your clothes to sit?"
+- tapOn:
+    id: "onboarding-next"
+- assertVisible:
+    id: "step-title"
+    text: "For Eid and parties, how much sparkle?"
+- tapOn:
+    id: "onboarding-next"
+- assertVisible:
+    id: "step-title"
+    text: "Where are you?"
+- tapOn:
+    id: "onboarding-next"
+- assertVisible:
+    id: "step-title"
+    text: "When should your outfit come?"
+- tapOn:
+    id: "onboarding-next"
+- assertVisible:
+    id: "step-title"
+    text: "Which colours suit you?"
+- tapOn:
+    id: "onboarding-next"
+- assertVisible: "You are set"
+- tapOn: "Back"
+- tapOn: "Back"
+- tapOn: "Back"
+- tapOn: "Back"
+- tapOn: "Back"
+- assertVisible: "How do you like your clothes to sit?"
+- tapOn:
+    id: "card-loose"
+- assertVisible:
+    id: "card-loose"
+    selected: true
+- assertVisible:
+    id: "card-structured"
+    selected: false
+- tapOn: "Back"
+- tapOn: "Back"
+- tapOn: "Back"
+- tapOn:
+    id: "card-hijab"
+- assertVisible:
+    id: "card-hijab"
+    text: "checkbox, checked"

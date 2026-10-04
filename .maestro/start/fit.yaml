@@ -1,0 +1,52 @@
+appId: com.zaimimran.almari
+# UC-F01-16
+---
+- launchApp:
+    clearState: true
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible: "What is your name\\?"
+    timeout: 20000
+- repeat:
+    times: 10
+    while:
+      notVisible: "How do you like your clothes to sit?"
+    commands:
+      - tapOn:
+          id: "onboarding-next"
+- tapOn:
+    id: "card-structured"
+- assertVisible:
+    id: "card-structured"
+    selected: true
+- takeScreenshot: docs/redesign/screens/after/start/fit
+- tapOn: "Next"
+- assertVisible: "For Eid and parties, how much sparkle?"
+- repeat:
+    times: 10
+    while:
+      notVisible: "You are set"
+    commands:
+      - tapOn:
+          id: "onboarding-next"
+- tapOn: "Try the sample closet"
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
+    timeout: 60000
+- tapOn: "Profile"
+- scrollUntilVisible:
+    element: "Replay onboarding"
+- tapOn: "Replay onboarding"
+- assertVisible: "What is your name?"
+- repeat:
+    times: 10
+    while:
+      notVisible: "How do you like your clothes to sit?"
+    commands:
+      - tapOn:
+          id: "onboarding-next"
+- assertVisible:
+    id: "card-structured"
+    selected: true

@@ -1,0 +1,64 @@
+appId: com.zaimimran.almari
+# UC-F01-13
+---
+- launchApp:
+    clearState: true
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible: "What is your name\\?"
+    timeout: 20000
+- repeat:
+    times: 10
+    while:
+      notVisible: "Do you wear a hijab?"
+    commands:
+      - tapOn:
+          id: "onboarding-next"
+- tapOn: "Always"
+- tapOn: "Next"
+- assertVisible: "Which styles do you wear?"
+- assertVisible:
+    id: "step-3-of-10"
+- tapOn:
+    id: "card-hijab"
+- tapOn:
+    id: "card-khimar"
+- assertVisible:
+    id: "card-khimar"
+    text: "checkbox, checked"
+- scrollUntilVisible:
+    element: "None of these"
+    centerElement: true
+- tapOn: "None of these"
+- scrollUntilVisible:
+    element:
+      id: "card-hijab"
+    direction: UP
+- assertVisible:
+    id: "card-hijab"
+    text: "checkbox, unchecked"
+- assertVisible:
+    id: "card-khimar"
+    text: "checkbox, unchecked"
+- tapOn:
+    id: "card-shayla"
+- assertVisible:
+    id: "card-shayla"
+    text: "checkbox, checked"
+- takeScreenshot: docs/redesign/screens/after/start/hijab-styles
+- scrollUntilVisible:
+    element:
+      id: "card-none"
+    centerElement: true
+- assertVisible:
+    id: "card-none"
+    text: "checkbox, unchecked"
+- tapOn: "Back"
+- assertVisible: "Do you wear a hijab?"
+- tapOn: "No"
+- tapOn: "Next"
+- assertVisible: "How covered do you like your everyday outfits?"
+- assertVisible:
+    id: "step-3-of-9"
+- assertNotVisible: "Which styles do you wear?"

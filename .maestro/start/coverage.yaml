@@ -1,0 +1,61 @@
+appId: com.zaimimran.almari
+# UC-F01-14
+---
+- launchApp:
+    clearState: true
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible: "What is your name\\?"
+    timeout: 20000
+- repeat:
+    times: 10
+    while:
+      notVisible: "How covered do you like your everyday outfits?"
+    commands:
+      - tapOn:
+          id: "onboarding-next"
+- tapOn:
+    id: "card-relaxed"
+- assertVisible:
+    id: "card-relaxed"
+    selected: true
+- takeScreenshot: docs/redesign/screens/after/start/coverage
+- scrollUntilVisible:
+    element: "No preference"
+    centerElement: true
+- tapOn: "No preference"
+- assertVisible:
+    id: "card-relaxed"
+    selected: false
+- tapOn:
+    id: "card-relaxed"
+- tapOn: "Next"
+- assertVisible: "What do you wear most days?"
+- repeat:
+    times: 10
+    while:
+      notVisible: "You are set"
+    commands:
+      - tapOn:
+          id: "onboarding-next"
+- tapOn: "Try the sample closet"
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
+    timeout: 60000
+- tapOn: "Profile"
+- scrollUntilVisible:
+    element: "Replay onboarding"
+- tapOn: "Replay onboarding"
+- assertVisible: "What is your name?"
+- repeat:
+    times: 10
+    while:
+      notVisible: "How covered do you like your everyday outfits?"
+    commands:
+      - tapOn:
+          id: "onboarding-next"
+- assertVisible:
+    id: "card-relaxed"
+    selected: true

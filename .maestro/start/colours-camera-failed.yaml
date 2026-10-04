@@ -1,0 +1,27 @@
+appId: com.zaimimran.almari
+# UC-F01-11
+# seed: fixture.sh cameraFails=true
+---
+- launchApp:
+    clearState: true
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible: "What is your name\\?"
+    timeout: 20000
+- repeat:
+    times: 10
+    while:
+      notVisible: "Which colours suit you\\?"
+    commands:
+      - tapOn:
+          id: "onboarding-next"
+- tapOn: "Take a selfie"
+- tapOn: "Open camera"
+- tapOn:
+    id: "face-circle"
+- extendedWaitUntil:
+    visible: ".*Could not open the camera"
+    timeout: 10000
+- assertVisible: "Try again"
+- assertVisible: "Choose a recent selfie"

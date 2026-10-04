@@ -1,0 +1,46 @@
+appId: com.zaimimran.almari
+# UC-F01-19
+# seed: fixture.sh now=2026-10-05T06:59:30+02:00
+---
+- launchApp:
+    clearState: true
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible: "What is your name\\?"
+    timeout: 20000
+- repeat:
+    times: 10
+    while:
+      notVisible: "When should your outfit come?"
+    commands:
+      - tapOn:
+          id: "onboarding-next"
+- assertVisible:
+    id: "notify-off"
+    selected: true
+- assertVisible: "21:00 the night before"
+- tapOn: "07:00"
+- assertVisible:
+    id: "notify-07:00"
+    selected: true
+- assertNotVisible: "Notification access is off"
+- takeScreenshot: docs/redesign/screens/after/start/notify
+- tapOn: "Next"
+- assertVisible: "Which colours suit you?"
+- tapOn: "Back"
+- assertVisible:
+    id: "notify-07:00"
+    selected: true
+- repeat:
+    times: 10
+    while:
+      notVisible: "You are set"
+    commands:
+      - tapOn:
+          id: "onboarding-next"
+- tapOn: "Try the sample closet"
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
+    timeout: 60000

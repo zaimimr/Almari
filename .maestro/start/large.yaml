@@ -1,0 +1,72 @@
+# seed: selfie.sh
+appId: com.zaimimran.almari
+# seed: ax5.sh
+# seed: fixture.sh language=nb
+---
+- addMedia:
+    - "../../assets/fixtures/selfie.jpg"
+- launchApp:
+    clearState: true
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible:
+      id: "step-1-of-10"
+    timeout: 20000
+- tapOn:
+    id: "onboarding-next"
+- tapOn:
+    id: "hijab-always"
+- tapOn:
+    id: "onboarding-next"
+- assertVisible:
+    id: "step-3-of-10"
+- takeScreenshot: docs/redesign/screens/after/start/ax-hijab-styles
+- tapOn:
+    id: "onboarding-next"
+- assertVisible:
+    id: "step-4-of-10"
+- takeScreenshot: docs/redesign/screens/after/start/ax-coverage
+- repeat:
+    while:
+      notVisible:
+        id: "step-8-of-10"
+    commands:
+      - tapOn:
+          id: "onboarding-next"
+- takeScreenshot: docs/redesign/screens/after/start/ax-place
+- tapOn:
+    id: "onboarding-next"
+- assertVisible:
+    id: "step-9-of-10"
+- takeScreenshot: docs/redesign/screens/after/start/ax-notify
+- tapOn:
+    id: "onboarding-next"
+- assertVisible:
+    id: "step-10-of-10"
+- tapOn:
+    id: "colours-selfie"
+- tapOn:
+    id: "colours-open-camera"
+- assertVisible:
+    id: "face-circle"
+- takeScreenshot: docs/redesign/screens/after/start/ax-face
+- scrollUntilVisible:
+    element:
+      id: "colours-library"
+- tapOn:
+    id: "colours-library"
+- extendedWaitUntil:
+    visible: "Photo, \\d+ [A-Za-z]+, \\d+:\\d+"
+    timeout: 20000
+- tapOn: "Photo, \\d+ [A-Za-z]+, \\d+:\\d+"
+- runFlow:
+    when:
+      visible: "Add|Done"
+    commands:
+      - tapOn: "Add|Done"
+- extendedWaitUntil:
+    visible:
+      id: "colour-result"
+    timeout: 60000
+- takeScreenshot: docs/redesign/screens/after/start/ax-palette

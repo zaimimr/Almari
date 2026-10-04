@@ -1,0 +1,59 @@
+# seed: selfie.sh
+appId: com.zaimimran.almari
+# UC-F01-07
+---
+- addMedia:
+    - "../../assets/fixtures/selfie.jpg"
+- launchApp:
+    clearState: true
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible: "What is your name\\?"
+    timeout: 20000
+- repeat:
+    times: 10
+    while:
+      notVisible: "Which colours suit you\\?"
+    commands:
+      - tapOn:
+          id: "onboarding-next"
+- tapOn: "Take a selfie"
+- assertVisible: "Daylight, facing a window"
+- assertVisible: "Wipe the lens"
+- assertVisible: "No glasses"
+- assertVisible: "No bold lipstick"
+- assertVisible: "The selfie stays on this phone."
+- takeScreenshot: docs/redesign/screens/after/start/selfie-tips
+- tapOn: "Open camera"
+- assertNotVisible: ".*Camera access is off.*"
+- assertVisible: "Choose a recent selfie"
+- takeScreenshot: docs/redesign/screens/after/start/face
+- tapOn:
+    id: "colours-library"
+- extendedWaitUntil:
+    visible: "Photo, \\d+ [A-Za-z]+, \\d+:\\d+"
+    timeout: 20000
+- tapOn: "Photo, \\d+ [A-Za-z]+, \\d+:\\d+"
+- runFlow:
+    when:
+      visible: "Add|Done"
+    commands:
+      - tapOn: "Add|Done"
+- extendedWaitUntil:
+    visible:
+      id: "colour-result"
+    timeout: 60000
+- assertVisible: "Best hijab shades"
+- assertVisible: "Go easy on"
+- tapOn: "These don't look like me"
+- assertVisible: "Retake"
+- assertVisible: "Wearing a hijab in the photo"
+- tapOn: "Cool"
+- assertVisible:
+    id: "colour-result"
+- tapOn: "Save colours"
+- assertVisible: "Which colours suit you\\?"
+- assertVisible:
+    id: "colours-saved"
+- takeScreenshot: docs/redesign/screens/after/start/colours-saved

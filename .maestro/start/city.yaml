@@ -1,0 +1,44 @@
+appId: com.zaimimran.almari
+# UC-F01-04
+---
+- launchApp:
+    clearState: true
+    permissions:
+      all: allow
+      location: never
+- extendedWaitUntil:
+    visible: "What is your name\\?"
+    timeout: 20000
+- repeat:
+    times: 10
+    while:
+      notVisible: "Where are you?"
+    commands:
+      - tapOn:
+          id: "onboarding-next"
+- tapOn:
+    id: "place-locate"
+- extendedWaitUntil:
+    visible: "Location access is off"
+    timeout: 10000
+- assertVisible: "Open Settings"
+- tapOn:
+    id: "place-search"
+- inputText: "Oslo"
+- pressKey: Enter
+- extendedWaitUntil:
+    visible:
+      id: "place-check"
+    timeout: 20000
+- assertNotVisible: "Location access is off"
+- takeScreenshot: docs/redesign/screens/after/start/place
+- tapOn:
+    id: "place-search"
+- eraseText: 10
+- inputText: "Qxzqvbnw"
+- pressKey: Enter
+- extendedWaitUntil:
+    visible: "Could not find this city"
+    timeout: 20000
+- assertNotVisible:
+    id: "place-check"

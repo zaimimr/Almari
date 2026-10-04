@@ -62,3 +62,17 @@ From `design-system.md` review round 4. Each file's owner edits.
 - `flows/F01-start.md` lines 77, 548 and 559, `flows/F11-profile-and-style.md` lines 262 and 618, `flows/F12-app-wide-checks.md` lines 139 and 352: `blushStrong` is `#9A5A52` at every setting and is no longer swapped under Increase Contrast; `paper` is gone (cards are cut-outs on `canvas`).
 - `flows/F01-start.md` lines 332 and 344: the face circle has one stroke; the dashed ring gives way to the `plum` arc in the same lane, with no lane outside it.
 - `flows/F11-profile-and-style.md` line 605: done in `design-system.md` (Profile recipe and Silk > `progress`).
+
+## Lane notes
+
+### L3 F01 Start
+
+- L12 reuses from `src/features/onboarding/`: `coverageOptions`, `styleOptionsCards`, `fitOptions`, `hijabStyleOptions` (`illustrations.ts`), `StepPlace`, `StepNotifications`, `StepColours` and `BodyShapes`.
+- `/onboarding/colours` saves through `applyAnswer("colours")` and pops, so Profile's Colours answer needs no second save.
+- `seasonLabel` and `paletteOf` live in `src/features/selfie/palette.ts` (not in `PaletteResult.tsx`), because `StepColours` and Profile read them too.
+- `/onboarding?step=<step>` still opens one step and Next saves and pops, so the old Profile "Change" rows keep working until L12.
+- Card selection in Maestro is asserted with `selected: true` (radio) on `card-<id>`. Checkbox cards and chips always report `checked: false` on iOS, so they are asserted with `id` plus `text: "checkbox, checked"` or `"checkbox, unchecked"`.
+- `Footer`: a lone primary is now full width, as in the mockup.
+- `.maestro/lib/clear.sh` resets the text size to medium, so a large-text flow does not leak into the next flow.
+- `skip-onboarding.yaml` taps `onboarding-next` (up to 15 times) until "You are set"; `sample-closet.yaml` taps "Try the sample closet".
+- Fixture key `selfie` (seed `selfie.sh`) returns a canned `SelfieReading`, because the simulator analysis rejects stock photos as mixed light. The live analysis is checked by the owner (UC-F01-07 steps 3 and 4).

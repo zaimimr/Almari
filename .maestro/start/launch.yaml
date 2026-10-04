@@ -1,0 +1,15 @@
+appId: com.zaimimran.almari
+# UC-F01-01
+---
+- runFlow: ../lib/sample-closet.yaml
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
+    timeout: 60000
+- extendedWaitUntil:
+    notVisible:
+      id: "splash"
+    timeout: 10000
+- takeScreenshot: docs/redesign/screens/after/start/launch

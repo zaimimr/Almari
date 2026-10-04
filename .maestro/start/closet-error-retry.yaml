@@ -1,0 +1,16 @@
+appId: com.zaimimran.almari
+# UC-F01-02
+# seed: broken-closet.sh
+---
+- launchApp
+- extendedWaitUntil:
+    visible: "Could not open your closet"
+    timeout: 20000
+- runFlow: ../lib/sample-closet.yaml
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
+    timeout: 60000
+- assertNotVisible: "Could not open your closet"

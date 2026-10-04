@@ -1,0 +1,25 @@
+appId: com.zaimimran.almari
+# UC-F01-08
+---
+- launchApp:
+    clearState: true
+    permissions:
+      all: allow
+      camera: deny
+- extendedWaitUntil:
+    visible: "What is your name\\?"
+    timeout: 20000
+- repeat:
+    times: 10
+    while:
+      notVisible: "Which colours suit you\\?"
+    commands:
+      - tapOn:
+          id: "onboarding-next"
+- tapOn: "Take a selfie"
+- tapOn: "Open camera"
+- extendedWaitUntil:
+    visible: ".*Camera access is off.*"
+    timeout: 10000
+- assertVisible: "Open Settings"
+- assertVisible: "Choose a recent selfie"
