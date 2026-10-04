@@ -1,393 +1,277 @@
 import { useState } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
-import { Stack, router, useLocalSearchParams } from "expo-router";
+import { StyleSheet, View } from "react-native";
+import { router, useLocalSearchParams, type Href } from "expo-router";
 import {
-  awayReasons,
-  setAway,
-  usedIn,
-  type AwayReason,
+  piecesForLook,
   type Closet,
+  type Piece,
 } from "../../src/domain/closet";
-import {
-  confirmFact,
-  factChoice,
-  pieceFacts,
-  type Fact,
-  type FactKey,
-} from "../../src/domain/facts";
-import { setMembers, unlinkPiece } from "../../src/domain/sets";
+import { setMembers } from "../../src/domain/sets";
 import { clockFor, dropFromToday, stylePiece } from "../../src/domain/today";
-import { MissingPiece } from "../../src/features/MissingPiece";
-import {
-  ArchiveSection,
-  WeatherSection,
-} from "../../src/features/PieceSections";
-import { t } from "../../src/i18n";
-import { labelLines } from "../../src/state/careLabel";
-import { useCloset } from "../../src/state/closet";
-import { canPrepareOnDevice } from "../../src/state/imports";
-import {
-  AppText,
-  Button,
-  Chip,
-  ErrorMessage,
-  FormScreen,
-  HeaderAction,
-  PiecePhoto,
-} from "../../src/ui/legacy";
-import { theme } from "../../src/ui/theme";
+import { setArchived } from "../../src/domain/wardrobe";
+import { FactChips } from "../../src/features/piece/FactChips";
+import { usePiece, wearLine } from "../../src/features/piece/usePiece";
+import { locale, t } from "../../src/i18n";
+import { fibreLabel } from "../../src/state/careLabel";
 import { now } from "../../src/state/clock";
+import {
+  Button,
+  Footer,
+  HeaderItem,
+  ResultBar,
+  Row,
+  Rows,
+  Screen,
+  Section,
+  Text,
+  Tile,
+} from "../../src/ui";
+import { announce } from "../../src/ui/announce";
+import { theme } from "../../src/ui/theme";
+type CareLabel = NonNullable<Piece["label"]>;
+
+function labelMeta(label: CareLabel | undefined): string | undefined {
+  if (!label) return undefined;
+  const percent = new Intl.NumberFormat(locale, { style: "percent" });
+  const list = new Intl.ListFormat(locale, { type: "unit", style: "narrow" });
+  const fibres = label.materials.map((material) =>
+    material.percent === null
+      ? fibreLabel(material.fibre)
+      : t("careLabel.fibreItem", {
+          percent: percent.format(material.percent / 100),
+          fibre: fibreLabel(material.fibre).toLocaleLowerCase(locale),
+        }),
+  );
+  const parts = [
+    fibres.length ? list.format(fibres) : "",
+    label.size ? t("careLabel.lineSize", { size: label.size }) : "",
+    label.brand ? t("careLabel.lineBrand", { brand: label.brand }) : "",
+    label.origin ? t("careLabel.lineOrigin", { origin: label.origin }) : "",
+  ].filter(Boolean);
+  return parts.length ? parts.join("\n") : undefined;
+}
 
 export default function PieceDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { closet, update } = useCloset();
-  const [open, setOpen] = useState<FactKey | null>(null);
+  const { closet, piece, change, error } = usePiece(id);
+  const [putAway, setPutAway] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const piece = closet.pieces.find((item) => item.id === id);
-  if (!piece) return <MissingPiece />;
-  const pieceId = piece.id;
-  const facts = pieceFacts(piece);
-  const choice = open ? factChoice(piece, open) : null;
-  const suggested = choice
-    ? choice.options.find((option) => option.id === choice.current)
-    : undefined;
-  const uses = usedIn(closet, pieceId);
-  const members = setMembers(closet, piece);
 
-  const change = async (transform: (current: Closet) => Closet) => {
+  if (!piece) return <Screen gone={{ title: t("piece.missing.title") }} />;
+
+  const pieceId = piece.id;
+  const archived = piece.status === "archived";
+  const away = piece.status === "away";
+  const looks = closet.looks.filter((look) => look.pieceIds.includes(pieceId));
+  const members = setMembers(closet, piece);
+  const needsStyle = closet.styling.everyday === null;
+
+  const act = async (next: (current: Closet) => Closet) => {
+    if (busy) return false;
     setBusy(true);
-    setError(null);
     try {
-      await update(transform);
+      await change(next);
       return true;
     } catch {
-      setError(t("piece.error.save"));
       return false;
     } finally {
       setBusy(false);
     }
   };
 
-  const confirm = (key: FactKey, option: string) => {
-    void change((current) => confirmFact(current, pieceId, key, option)).then(
+  const putAwayNow = () =>
+    void act((current) =>
+      dropFromToday(setArchived(current, pieceId, true), pieceId),
+    ).then((saved) => {
+      if (saved) setPutAway(true);
+    });
+
+  const backInCloset = () =>
+    void act((current) => setArchived(current, pieceId, false)).then(
       (saved) => {
-        if (saved) setOpen(null);
+        if (!saved) return;
+        setPutAway(false);
+        announce(t("result.backInCloset"));
+      },
+    );
+
+  const planWith = () =>
+    router.push(
+      (needsStyle
+        ? "/profile/style?then=today"
+        : `/today/adjust?keep=${pieceId}&focus=day`) as Href,
+    );
+
+  const startWith = () => {
+    if (needsStyle) {
+      router.push("/profile/style?then=today" as Href);
+      return;
+    }
+    void act((current) => stylePiece(current, pieceId, clockFor(now()))).then(
+      (saved) => {
+        if (saved) router.navigate("/(tabs)/today" as Href);
       },
     );
   };
 
-  const leaveSet = async () => {
-    setBusy(true);
-    setError(null);
-    try {
-      await update((latest) => unlinkPiece(latest, pieceId));
-    } catch {
-      setError(t("sets.removeFailed"));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const markAway = (reason: AwayReason | null) => {
-    void change((current) =>
-      reason
-        ? dropFromToday(setAway(current, pieceId, reason), pieceId)
-        : setAway(current, pieceId, null),
-    );
-  };
-
-  const styleThis = () => {
-    void change((current) =>
-      stylePiece(current, pieceId, clockFor(now())),
-    ).then((saved) => {
-      if (saved) router.navigate("/today");
-    });
-  };
+  const primary = archived
+    ? {
+        label: t("closet.backInCloset"),
+        onPress: backInCloset,
+        testID: "piece-back-in-closet",
+      }
+    : away
+      ? { label: t("piece.planWith"), onPress: planWith, testID: "piece-plan" }
+      : {
+          label: t("piece.startWith"),
+          onPress: startWith,
+          testID: "piece-start-with",
+        };
 
   return (
-    <FormScreen>
-      <Stack.Screen
-        options={{
-          title: t("piece.title"),
-          headerRight: () => (
-            <HeaderAction
-              label={t("piece.edit")}
-              onPress={() =>
-                router.push({
-                  pathname: "/piece/edit/[id]",
-                  params: { id: pieceId },
-                })
-              }
-            />
-          ),
-        }}
-      />
-      <PiecePhoto piece={piece} style={styles.photo} />
-      <View style={styles.intro}>
-        <AppText variant="title">{piece.name}</AppText>
-        <AppText muted testID="piece-used-in">
-          {uses === 0
-            ? t("piece.usedIn.none")
-            : uses === 1
-              ? t("piece.usedIn.one")
-              : t("piece.usedIn.other", { count: uses })}
-        </AppText>
-      </View>
-      {!piece.status && closet.styling.everyday ? (
-        <Button
-          label={t("piece.styleThis")}
-          secondary
-          disabled={busy}
-          onPress={styleThis}
+    <Screen
+      title={piece.name}
+      headerTitleVisible={false}
+      actions={
+        <HeaderItem
+          label={t("common.edit")}
+          testID="piece-edit"
+          onPress={() =>
+            router.push({
+              pathname: "/piece/edit/[id]",
+              params: { id: pieceId },
+            })
+          }
         />
-      ) : null}
-      <View style={styles.section}>
-        <AppText style={styles.label}>{t("piece.facts.title")}</AppText>
-        {facts.length ? (
-          <View style={styles.chips}>
-            {facts.map((fact) => (
-              <FactChip
-                key={fact.key}
-                fact={fact}
-                editable={factChoice(piece, fact.key) !== null}
-                selected={open === fact.key}
-                disabled={busy}
-                onPress={() => setOpen(open === fact.key ? null : fact.key)}
+      }
+      footer={<Footer primary={{ ...primary, busy }} error={error} />}
+      testID="piece-detail"
+    >
+      <Tile
+        image={piece}
+        size="hero"
+        accessibilityLabel={piece.name}
+        testID="piece-hero"
+      />
+      <View style={styles.title}>
+        <Text role="title" accessibilityRole="header">
+          {piece.name}
+        </Text>
+        <Text role="subhead" tone="muted" testID="piece-worn">
+          {wearLine(closet, pieceId)}
+        </Text>
+      </View>
+      <Section title={t("piece.facts.title")} testID="piece-facts">
+        <FactChips key={pieceId} piece={piece} onChange={change} />
+      </Section>
+      {members.length ? (
+        <Section title={t("sets.partOf")} testID="piece-set">
+          <Rows>
+            {members.map((member) => (
+              <Row
+                key={member.id}
+                title={member.name}
+                leading={{ thumb: member }}
+                trailing="chevron"
+                onPress={() =>
+                  router.push({
+                    pathname: "/piece/[id]",
+                    params: { id: member.id },
+                  })
+                }
               />
             ))}
-          </View>
-        ) : (
-          <AppText variant="footnote" muted>
-            {t("piece.facts.none")}
-          </AppText>
-        )}
-        {facts.some((fact) => fact.source === "proposed") ? (
-          <AppText variant="footnote" muted>
-            {t("piece.facts.hint")}
-          </AppText>
-        ) : null}
-        {open && choice ? (
-          <View style={styles.question} testID="fact-question">
-            <AppText style={styles.label}>{t(choice.label)}</AppText>
-            {suggested ? (
-              <AppText variant="footnote" muted>
-                {t("fact.suggested", { value: t(suggested.label) })}
-              </AppText>
-            ) : null}
-            <View style={styles.chips}>
-              {choice.options.map((option) => (
-                <Chip
-                  key={option.id}
-                  label={t(option.label)}
-                  accessibilityLabel={`${t(choice.label)}: ${t(option.label)}`}
-                  selected={option.id === choice.current}
-                  disabled={busy}
-                  onPress={() => confirm(open, option.id)}
-                />
-              ))}
-            </View>
-            <View style={styles.actions}>
-              {choice.current ? (
-                <View style={styles.action}>
-                  <Button
-                    label={t("fact.looksRight")}
-                    accessibilityLabel={`${t(choice.label)}: ${t("fact.looksRight")}`}
-                    compact
-                    busy={busy}
-                    onPress={() => confirm(open, choice.current!)}
-                  />
-                </View>
-              ) : null}
-              <View style={styles.action}>
-                <Button
-                  label={t("piece.fact.notNow")}
-                  secondary
-                  compact
-                  disabled={busy}
-                  onPress={() => setOpen(null)}
-                />
-              </View>
-            </View>
-          </View>
-        ) : null}
-      </View>
-      <WeatherSection piece={piece} />
-      {piece.source === "owned" && canPrepareOnDevice ? (
-        <View style={styles.section} testID="piece-care-label">
-          <AppText style={styles.label}>{t("careLabel.title")}</AppText>
-          {piece.label && labelLines(piece.label).length ? (
-            labelLines(piece.label).map((line) => (
-              <AppText key={line}>{line}</AppText>
-            ))
-          ) : (
-            <AppText variant="footnote" muted>
-              {piece.label
-                ? t("careLabel.pieceEmpty")
-                : t("careLabel.pieceHint")}
-            </AppText>
-          )}
-          <Button
-            label={piece.label ? t("careLabel.viewOrEdit") : t("careLabel.add")}
-            secondary
-            compact
-            disabled={busy}
-            onPress={() =>
-              router.push({
-                pathname: "/label/[id]",
-                params: { id: pieceId, target: "piece" },
-              })
-            }
-          />
-        </View>
+          </Rows>
+        </Section>
       ) : null}
-      {members.length ? (
-        <View style={styles.section} testID="piece-set">
-          <AppText style={styles.label}>{t("sets.partOf")}</AppText>
-          <AppText>{members.map((item) => item.name).join(", ")}</AppText>
-          <Button
-            label={t("sets.remove")}
-            secondary
-            compact
-            disabled={busy}
-            onPress={() => {
-              void leaveSet();
+      <Rows>
+        <Row
+          title={t("careLabel.title")}
+          meta={labelMeta(piece.label)}
+          trailing="chevron"
+          testID="piece-care-label"
+          onPress={() =>
+            router.push({
+              pathname: "/label/[id]",
+              params: { id: pieceId, target: "piece" },
+            })
+          }
+        />
+      </Rows>
+      {looks.length ? (
+        <Section
+          title={
+            looks.length === 1
+              ? t("piece.usedIn.one")
+              : t("piece.usedIn.other", { count: looks.length })
+          }
+          testID="piece-looks"
+        >
+          <Rows>
+            {looks.map((look) => (
+              <Row
+                key={look.id}
+                title={look.name}
+                leading={{ lay: piecesForLook(closet, look) }}
+                trailing="chevron"
+                onPress={() =>
+                  router.push({
+                    pathname: "/look/[id]",
+                    params: { id: look.id },
+                  })
+                }
+              />
+            ))}
+          </Rows>
+        </Section>
+      ) : null}
+      <View style={styles.actions}>
+        <Button
+          variant="quiet"
+          icon="plus"
+          label={t("piece.addToLook")}
+          testID="piece-add-to-look"
+          onPress={() => router.push(`/look/build?pieces=${pieceId}` as Href)}
+        />
+        {putAway ? (
+          <ResultBar
+            text={t("result.putAway")}
+            announce
+            testID="piece-put-away-result"
+            action={{
+              label: t("common.undo"),
+              onPress: backInCloset,
+              testID: "piece-undo",
             }}
           />
-        </View>
-      ) : null}
-      {piece.status !== "archived" ? (
-        <View style={styles.section} testID="piece-availability">
-          <AppText style={styles.label}>{t("piece.away.title")}</AppText>
-          <AppText variant="footnote" muted>
-            {piece.away
-              ? t("piece.away.status", {
-                  reason: t(`piece.away.${piece.away}`),
-                })
-              : t("piece.away.hint")}
-          </AppText>
-          <View style={styles.chips}>
-            {awayReasons.map((reason) => (
-              <Chip
-                key={reason}
-                label={t(`piece.away.${reason}`)}
-                selected={piece.away === reason}
-                disabled={busy}
-                onPress={() => markAway(piece.away === reason ? null : reason)}
+        ) : (
+          <>
+            {!archived && !away ? (
+              <Button
+                variant="quiet"
+                icon="calendar"
+                label={t("piece.planWith")}
+                testID="piece-plan-with"
+                onPress={planWith}
               />
-            ))}
-          </View>
-          {piece.away ? (
-            <Button
-              label={t("piece.away.back")}
-              secondary
-              busy={busy}
-              onPress={() => markAway(null)}
-            />
-          ) : null}
-        </View>
-      ) : null}
-      <ArchiveSection piece={piece} />
-      <ErrorMessage message={error} />
-    </FormScreen>
-  );
-}
-
-function FactChip({
-  fact,
-  editable,
-  selected,
-  disabled,
-  onPress,
-}: {
-  fact: Fact;
-  editable: boolean;
-  selected: boolean;
-  disabled: boolean;
-  onPress: () => void;
-}) {
-  const guess = fact.source === "proposed";
-  const label = t(fact.label);
-  const value = t(fact.value);
-  const content = (
-    <AppText variant="footnote">
-      <AppText variant="footnote" muted>
-        {`${label} `}
-      </AppText>
-      {guess ? `${value} ?` : value}
-    </AppText>
-  );
-  const vars = { label, value };
-  if (!guess || !editable)
-    return (
-      <View
-        testID={`fact-${fact.key}`}
-        accessible
-        accessibilityLabel={t(
-          guess ? "piece.fact.guessFixed" : "piece.fact.known",
-          vars,
+            ) : null}
+            {!archived ? (
+              <Button
+                variant="quiet"
+                icon="archivebox"
+                label={t("closet.putAwayAction")}
+                testID="piece-put-away"
+                onPress={putAwayNow}
+              />
+            ) : null}
+          </>
         )}
-        style={[styles.fact, guess && styles.guess]}
-      >
-        {content}
       </View>
-    );
-  return (
-    <Pressable
-      testID={`fact-${fact.key}`}
-      accessibilityRole="button"
-      accessibilityLabel={t("piece.fact.guess", vars)}
-      accessibilityState={{ selected, disabled }}
-      disabled={disabled}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.fact,
-        styles.guess,
-        selected && styles.guessOpen,
-        pressed && styles.pressed,
-      ]}
-    >
-      {content}
-    </Pressable>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  photo: {
-    height: 280,
-    borderRadius: theme.radius.md,
-    borderCurve: "continuous",
-    overflow: "hidden",
-    backgroundColor: theme.colors.surface,
-  },
-  intro: { gap: theme.space.xs },
-  section: { gap: theme.space.md },
-  label: { fontWeight: "600" },
-  chips: { flexDirection: "row", flexWrap: "wrap", gap: theme.space.sm },
-  fact: {
-    minHeight: 44,
-    justifyContent: "center",
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: theme.colors.line,
-    backgroundColor: theme.colors.surface,
-    paddingHorizontal: theme.space.lg,
-    paddingVertical: theme.space.sm,
-  },
-  guess: {
-    borderStyle: "dashed",
-    borderColor: theme.colors.plum,
-    backgroundColor: theme.colors.canvas,
-  },
-  guessOpen: { backgroundColor: theme.colors.plumSoft },
-  pressed: { opacity: 0.7 },
-  question: {
-    gap: theme.space.md,
-    padding: theme.space.lg,
-    borderRadius: theme.radius.md,
-    borderCurve: "continuous",
-    backgroundColor: theme.colors.plumSoft,
-  },
-  actions: { flexDirection: "row", flexWrap: "wrap", gap: theme.space.md },
-  action: { flexGrow: 1, minWidth: 130 },
+  title: { gap: theme.space.xs },
+  actions: { alignItems: "flex-start", gap: theme.space.sm },
 });
