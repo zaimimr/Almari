@@ -16,11 +16,9 @@ test("a closet saved before the stylist opens with neutral settings and no feedb
   delete raw.feedback;
   for (const key of settingKeys) delete raw.styling.profile[key];
   delete raw.styling.taste;
-  delete raw.styling.engine;
   const closet = decodeCloset(JSON.stringify(raw));
   assert.deepEqual(closet.styling.profile, neutralProfile);
   assert.deepEqual(closet.styling.taste, emptyTaste);
-  assert.equal(closet.styling.engine, "rules");
   assert.deepEqual(closet.feedback, []);
   assert.deepEqual(emptyCloset.styling.profile, neutralProfile);
   assert.equal(neutralProfile.printOnPrint, null);
@@ -101,4 +99,33 @@ test("a feedback event whose cursor is not a whole number keeps the closet unrea
   assert.doesNotThrow(() => decodeCloset(JSON.stringify(raw)));
   raw.feedback[0].cursor = 1.5;
   assert.throws(() => decodeCloset(JSON.stringify(raw)));
+});
+
+test("a closet saved with the Model or Compare stylist still opens and drops the choice", () => {
+  const closet = saveEverydayStyle(
+    addSampleWardrobe(emptyCloset),
+    { occasion: "work", style: "western", hijab: "always", sample: true },
+    { localDate: "2026-10-01", timeZone: "Europe/Oslo" },
+    true,
+  );
+  const rated = giveFeedback(
+    closet,
+    "too-formal",
+    activeSession(closet.styling.today!).revision,
+    "2026-10-01T08:00:00.000Z",
+    "f1",
+  );
+  for (const engine of ["compare", "model"]) {
+    const raw = JSON.parse(JSON.stringify(rated));
+    raw.styling.engine = engine;
+    raw.styling.today.everyday.engine = "model";
+    raw.feedback[0].engine = "model";
+    const opened = decodeCloset(JSON.stringify(raw));
+    assert.equal("engine" in opened.styling, false);
+    assert.equal(opened.feedback.length, 1);
+    assert.deepEqual(
+      activeSession(opened.styling.today!).pieceIds,
+      activeSession(rated.styling.today!).pieceIds,
+    );
+  }
 });

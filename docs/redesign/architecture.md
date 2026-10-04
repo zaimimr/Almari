@@ -293,7 +293,7 @@ These answer the open questions above and override any earlier text in this file
 
 1. Three tabs: Today, Closet, Looks. Profile is pushed from the Today header.
 2. "Save look" on Today saves at once with the suggested name. Rename happens inside the look.
-3. Developer tools stay in release builds: the stylist engine switch (Rules, Model, Compare and Compare results) and the scan speed readout. Place them out of the main path (Profile, under an Advanced group, and a small scan readout), but do not gate them on dev builds.
+3. Developer tools stay in release builds: the stylist engine switch (Rules, Model, Compare and Compare results) and the scan speed readout. Place them out of the main path (Profile, under an Advanced group, and a small scan readout), but do not gate them on dev builds. Superseded 2026-10-05: the stylist engine switch and the Model engine are removed; the rules scorer is the only stylist (`docs/simplify/decisions.md`).
 4. Mood on Today is out of scope. It becomes its own feature after the redesign. Keep the Knit chip interim.
 5. All rows in Domain touches are approved, each with a unit test first.
 6. The UX writer picks the bokmål name for the Looks tab.

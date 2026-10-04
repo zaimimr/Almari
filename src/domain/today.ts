@@ -2,7 +2,6 @@ import {
   coverageNeedFor,
   type Closet,
   type Coverage,
-  type Engine,
   type EverydayStyle,
   type Forecast,
   type ForecastWeather,
@@ -12,7 +11,7 @@ import {
   type WardrobeMode,
   type Weather,
 } from "./closet";
-import { engineFor, scorerFor } from "./scoring/engine";
+import { rulesScorer } from "./scoring/rulesScorer";
 import { scoreContext } from "./scoring/taste";
 import { styleOutfits, type StyleResult } from "./styling";
 import { weatherFor } from "./weather";
@@ -71,13 +70,12 @@ export function resultFor(
   closet: Closet,
   request: OutfitRequest,
   localDate: string,
-  engine: Engine = "rules",
 ): StyleResult {
   return styleOutfits(
     closet.pieces,
     request,
     seedFor(localDate, request),
-    scorerFor(engine),
+    rulesScorer,
     scoreContext(closet),
   );
 }
@@ -87,17 +85,14 @@ function sessionFor(
   request: OutfitRequest,
   localDate: string,
   revision: number,
-  previous: Engine | null,
 ): Session {
-  const engine = engineFor(closet, request, localDate, previous);
-  const result = resultFor(closet, request, localDate, engine);
+  const result = resultFor(closet, request, localDate);
   return {
     revision,
     request,
     cursor: 0,
     pieceIds: result.outfits[0]?.ids ?? [],
     previousPieceIds: null,
-    engine,
   };
 }
 
@@ -122,7 +117,6 @@ function restyle(
     request,
     dayOf(session, today),
     session.revision + 1,
-    session.engine ?? null,
   );
   return session.date ? { ...next, date: session.date } : next;
 }
@@ -178,7 +172,6 @@ export function ensureToday(closet: Closet, clock: Clock): Closet {
           ),
           clock.localDate,
           (current?.everyday.revision ?? 0) + 1,
-          null,
         );
   const plan = current?.occasion;
   return withToday(closet, {
@@ -222,7 +215,6 @@ export function saveEverydayStyle(
       ),
       today.localDate,
       today.everyday.revision + 1,
-      today.everyday.engine ?? null,
     ),
   });
 }
@@ -251,7 +243,6 @@ function withOccasion(
     request,
     date ?? today.localDate,
     (today.occasion?.revision ?? 0) + 1,
-    activeSession(today).engine ?? null,
   );
   return withToday(closet, {
     ...today,
@@ -323,7 +314,6 @@ export function prepareTomorrow(
     ),
     date,
     1,
-    null,
   );
   return withToday(ready, {
     ...today,
@@ -347,12 +337,7 @@ export function backToEveryday(closet: Closet): Closet {
 export function tryAnother(closet: Closet, expectedRevision: number): Closet {
   return withActive(closet, (session, today) => {
     if (session.revision !== expectedRevision) return session;
-    const result = resultFor(
-      closet,
-      session.request,
-      dayOf(session, today),
-      session.engine ?? "rules",
-    );
+    const result = resultFor(closet, session.request, dayOf(session, today));
     const cursor = session.cursor + 1;
     const next = result.outfits[cursor];
     if (!next) return session;

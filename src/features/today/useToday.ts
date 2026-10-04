@@ -25,7 +25,7 @@ import { saveLook as storeLook } from "../../domain/closet";
 import { lookForPieces, plannedToday } from "../../domain/looks";
 import { outfitName } from "../../domain/outfitName";
 import { coverageNote } from "../../domain/outfitView";
-import { scorerFor } from "../../domain/scoring/engine";
+import { rulesScorer } from "../../domain/scoring/rulesScorer";
 import { scoreContext } from "../../domain/scoring/taste";
 import { evaluateOutfit } from "../../domain/styling";
 import {
@@ -105,12 +105,7 @@ export function useToday() {
   const result = useMemo(
     () =>
       today && session
-        ? resultFor(
-            closet,
-            session.request,
-            session.date ?? today.localDate,
-            session.engine ?? "rules",
-          )
+        ? resultFor(closet, session.request, session.date ?? today.localDate)
         : null,
     [closet, today, session],
   );
@@ -152,7 +147,7 @@ export function useToday() {
   const broken = review.filter((problem) => problem.severity !== "review");
 
   const name = request ? outfitName(pieces, request.occasion, locale) : "";
-  const scorer = scorerFor(session?.engine ?? "rules");
+  const scorer = rulesScorer;
   const context = useMemo(() => scoreContext(closet), [closet]);
   const score = useCallback(
     (outfit: Piece[]) =>

@@ -29,7 +29,6 @@ import {
   wearCounts,
   weightOf,
 } from "./scoring/taste";
-import { engineResults } from "./scoring/results";
 import { replacementsFor } from "./styling";
 import {
   activeSession,
@@ -73,7 +72,6 @@ test("Too formal records the event and moves to a less formal outfit for the sam
   assert.deepEqual(next.previousPieceIds, before.pieceIds);
   assert.equal(after.feedback.length, 1);
   assert.equal(after.feedback[0]!.kind, "too-formal");
-  assert.equal(after.feedback[0]!.engine, "rules");
   assert.deepEqual(after.feedback[0]!.pieceIds, before.pieceIds);
   assert.deepEqual(after.feedback[0]!.against, next.pieceIds);
   assert.notDeepEqual(after.styling.taste.weights, {});
@@ -244,7 +242,6 @@ test("feedback about a piece that was later deleted still replays and undoes", (
   const undone = undoFeedback(removed, "d1");
   assert.equal(undone.feedback[0]!.undone, true);
   assert.deepEqual(undone.styling.taste, { weights: {}, pairs: {} });
-  assert.equal(session(undone).engine, "rules");
 });
 
 test("an outfit worn on an earlier day can be worn again today", () => {
@@ -344,7 +341,7 @@ test("a look can be marked worn yesterday and likes are undoable taste", () => {
   );
 });
 
-test("piece wears neither clear today's worn outfit nor count as stylist ratings", () => {
+test("piece wears do not clear today's worn outfit", () => {
   const closet = styled("work");
   const current = session(closet);
   const worn = woreThis(closet, current.revision, at, "w1");
@@ -356,8 +353,4 @@ test("piece wears neither clear today's worn outfit nor count as stylist ratings
   );
   assert.equal(wornNow(marked)?.id, "w1");
   assert.equal(woreThis(marked, current.revision, at, "w2"), marked);
-  assert.deepEqual(
-    engineResults(marked.feedback),
-    engineResults(worn.feedback),
-  );
 });

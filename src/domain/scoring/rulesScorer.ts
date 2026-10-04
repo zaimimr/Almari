@@ -54,7 +54,6 @@ function lower(piece: Piece) {
 
 export function rulesScorerFor(book: RuleBook): Scorer {
   return {
-    id: "rules",
     score(outfit, request, context) {
       const reasons: { text: string; weight: number }[] = [];
       let score = 0;

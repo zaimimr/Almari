@@ -18,7 +18,6 @@ const piece = (id: string): Piece => ({
   source: "owned",
 });
 const byLength: Scorer = {
-  id: "rules",
   score: (outfit) => ({ score: outfit[0]!.id.length, reasons: [] }),
 };
 const set: RatedSet = {

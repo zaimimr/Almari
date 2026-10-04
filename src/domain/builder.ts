@@ -7,7 +7,7 @@ import {
   type Style,
 } from "./closet";
 import { allowedPieces } from "./preferences";
-import { engineFor, scorerFor } from "./scoring/engine";
+import { rulesScorer } from "./scoring/rulesScorer";
 import { scoreContext } from "./scoring/taste";
 import { evaluateOutfit, roleOf, type Problem } from "./styling";
 import { activeSession, everydayRequest, resultFor } from "./today";
@@ -61,8 +61,7 @@ export function fillOutfit(
   request: OutfitRequest,
   localDate: string,
 ): { ids: string[] } | { problems: Problem[] } {
-  const engine = engineFor(closet, request, localDate, null);
-  const result = resultFor(closet, request, localDate, engine);
+  const result = resultFor(closet, request, localDate);
   const first = result.outfits[0];
   return first ? { ids: first.ids } : { problems: result.problems };
 }
@@ -71,7 +70,7 @@ function judge(closet: Closet, request: OutfitRequest, localDate: string) {
   const pool = closet.pieces.filter(
     (piece) => piece.source === request.wardrobe && isAvailable(piece),
   );
-  const scorer = scorerFor(engineFor(closet, request, localDate, null));
+  const scorer = rulesScorer;
   const context = scoreContext(closet);
   return (outfit: Piece[]) => {
     const problems = evaluateOutfit(outfit, request, pool);

@@ -15,7 +15,6 @@ import {
   roleOf,
   styleOutfits,
 } from "../styling";
-import { activeSession, saveEverydayStyle } from "../today";
 import { rulesScorer } from "./rulesScorer";
 import { scoreContext } from "./taste";
 
@@ -172,16 +171,6 @@ test("scoring is deterministic for the same closet, request and seed", () => {
   const run = () =>
     styleOutfits(samples.pieces, request(), "seed", rulesScorer, context);
   assert.deepEqual(run(), run());
-});
-
-test("a new suggestion records the engine that produced it", () => {
-  const closet = saveEverydayStyle(
-    samples,
-    { occasion: "work", style: "western", hijab: "always", sample: true },
-    { localDate: "2026-10-01", timeZone: "Europe/Oslo" },
-    true,
-  );
-  assert.equal(activeSession(closet.styling.today!).engine, "rules");
 });
 
 test("a hijab marked away is never suggested or offered as a replacement", () => {

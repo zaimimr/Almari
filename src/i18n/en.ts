@@ -491,11 +491,6 @@ export const en = {
   "feedback.too-cold": "Too cold",
   "feedback.hijab-mismatch": "Hijab does not match",
   "feedback.not-my-style": "Not my style",
-  "stylist.rules": "Rules",
-  "stylist.model": "Model",
-  "stylist.compare": "Compare",
-  "stylist.rate": "{part} of {whole} ({percent}%)",
-  "stylist.noFeedback": "No feedback yet",
 
   "styling.keptGone": "A piece you chose to keep is no longer in this closet.",
   "styling.keptUnavailable":
@@ -869,19 +864,6 @@ export const en = {
   "looks.worn": "Worn",
   "piece.styleThis": "Style this piece",
   "piece.styleError": "This piece could not be styled. Please try again.",
-  "stylist.label": "Stylist",
-  "stylist.help":
-    "Compare takes turns between Rules and Model for each new suggestion. Today does not show which one styled an outfit.",
-  "stylist.results": "Compare results",
-  "stylist.intro":
-    "With Compare, Rules and Model take turns styling each new suggestion. These numbers come from your feedback on each.",
-  "stylist.wouldWear": "Would wear, first three: {rate}",
-  "stylist.notMyStyle": "Not my style: {rate}",
-  "stylist.wore": "Wore this: {count}",
-  "stylist.unreadOne":
-    "Model needs a photo reading of every piece. 1 of your pieces has none, so Rules styles the requests that could include it.",
-  "stylist.unreadMany":
-    "Model needs a photo reading of every piece. {count} of your pieces have none, so Rules styles the requests that could include them.",
   "coverage.levelLabel": "Coverage",
   "coverage.sleevesLabel": "Sleeves",
   "coverage.hemLabel": "Hem",
@@ -1511,7 +1493,6 @@ export const en = {
   "wearMore.title": "Trying to wear more of",
   "common.none": "None",
   "settings.title": "Settings",
-  "settings.advanced": "Advanced",
   "settings.replay.title": "Show intro again?",
   "settings.replay.body": "Your pieces and looks stay.",
   "common.optionInGroup": "{option}, {group}",

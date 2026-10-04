@@ -422,7 +422,6 @@ test("a version 2 closet opens as version 3 with every piece, look, Today sessio
     ...(renameCelebration(closetV2.styling) as object),
     profile: neutralProfile,
     taste: emptyTaste,
-    engine: "rules",
     units: "metric",
     place: null,
     forecast: null,

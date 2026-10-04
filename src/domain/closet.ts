@@ -330,7 +330,7 @@ export type FeedbackEvent = {
   kind: FeedbackKind;
   pieceIds: string[];
   request: OutfitRequest;
-  engine: Engine;
+  engine?: Engine;
   cursor?: number;
   swap?: { from: string; to: string };
   undone?: boolean;
@@ -477,7 +477,6 @@ export type Styling = {
   today: TodayState | null;
   profile: StyleProfile;
   taste: Taste;
-  engine: Engine | "compare";
   units: Units;
   place: Place | null;
   forecast: Forecast | null;
@@ -527,7 +526,6 @@ export const emptyStyling: Styling = {
   today: null,
   profile: neutralProfile,
   taste: emptyTaste,
-  engine: "rules",
   units: "metric",
   place: null,
   forecast: null,
@@ -986,7 +984,7 @@ function isFeedbackEvent(value: unknown): value is FeedbackEvent {
     feedbackKinds.includes(value.kind as FeedbackKind) &&
     isUniqueStrings(value.pieceIds) &&
     isRequest(value.request) &&
-    isEngine(value.engine) &&
+    optional(value.engine, isEngine) &&
     optional(
       value.swap,
       (swap): swap is { from: string; to: string } =>
@@ -1011,11 +1009,6 @@ function hasStylistState(closet: Closet) {
     (styling.profile === undefined || hasSettings(styling.profile)) &&
     optional(styling.taste, isTaste) &&
     optional(
-      styling.engine,
-      (engine): engine is Engine | "compare" =>
-        isEngine(engine) || engine === "compare",
-    ) &&
-    optional(
       stored.feedback,
       (list): list is FeedbackEvent[] =>
         Array.isArray(list) && list.every(isFeedbackEvent),
@@ -1027,14 +1020,16 @@ function hasStylistState(closet: Closet) {
 
 function withStylistState(closet: Closet): Closet {
   if (!hasStylistState(closet)) throw unreadable();
+  const { engine: _engine, ...styling } = closet.styling as Styling & {
+    engine?: unknown;
+  };
   return {
     ...closet,
     feedback: closet.feedback ?? [],
     styling: {
-      ...closet.styling,
+      ...styling,
       profile: { ...neutralProfile, ...closet.styling.profile },
       taste: closet.styling.taste ?? emptyTaste,
-      engine: closet.styling.engine ?? "rules",
     },
   };
 }

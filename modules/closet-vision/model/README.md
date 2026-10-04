@@ -133,5 +133,3 @@ Without a person, touching garment pixels of any class form one area and the are
 | Screenshot, look with dress, sandal, sunglasses and scarf | dress, shoes, sunglasses, head | 0 | dress | none | 125 ms |
 
 Totals: 16 photos, 23 garments expected, 11 found with the right kind, 6 extra regions of the wrong kind, 12 missed garments. 12 of the 13 sample garments give a single region, but 4 of those carry the wrong kind (charcoal trousers read as upper, chocolate hijab as upper, tunic and kurta as dress) and the loafers give two pants regions. Pieces that touch in an outfit photo merge into one region, which is why the two outfit screenshots give one region each.
-
-The outfit compatibility head used by the Model engine is trained in [compat](compat/README.md).

@@ -186,7 +186,6 @@ function eventFor(
     kind,
     pieceIds,
     request: session.request,
-    engine: session.engine ?? "rules",
     cursor: session.cursor,
     ...(against ? { against } : {}),
   };
@@ -194,12 +193,7 @@ function eventFor(
 
 function nextShown(closet: Closet, session: Session) {
   const today = closet.styling.today!;
-  const outfits = resultFor(
-    closet,
-    session.request,
-    today.localDate,
-    session.engine ?? "rules",
-  ).outfits;
+  const outfits = resultFor(closet, session.request, today.localDate).outfits;
   return outfits.find((outfit) => changed(session.pieceIds, outfit.ids) > 0)
     ?.ids;
 }
@@ -217,12 +211,7 @@ export function giveFeedback(
   if (session.revision !== expectedRevision || !session.pieceIds.length)
     return closet;
   const day = session.date ?? today.localDate;
-  const outfits = resultFor(
-    closet,
-    session.request,
-    day,
-    session.engine ?? "rules",
-  ).outfits;
+  const outfits = resultFor(closet, session.request, day).outfits;
   const next =
     kind === "hijab-mismatch"
       ? null
@@ -232,12 +221,7 @@ export function giveFeedback(
     eventFor(session, kind, session.pieceIds, at, id, next?.ids),
   );
   if (!next) return recorded;
-  const ranked = resultFor(
-    recorded,
-    session.request,
-    day,
-    session.engine ?? "rules",
-  ).outfits;
+  const ranked = resultFor(recorded, session.request, day).outfits;
   const cursor = ranked.findIndex(
     (outfit) => outfit.ids.join() === next.ids.join(),
   );
@@ -309,7 +293,6 @@ export function woreLately(
       kind: "wore",
       pieceIds: [pieceId],
       request: today.everyday.request,
-      engine: today.everyday.engine ?? "rules",
       scope: "piece",
     })),
   );
@@ -347,7 +330,6 @@ export function woreLook(
       ...today.everyday.request,
       occasion: look.occasion ?? today.everyday.request.occasion,
     },
-    engine: today.everyday.engine ?? "rules",
   });
 }
 
