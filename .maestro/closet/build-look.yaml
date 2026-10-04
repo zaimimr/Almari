@@ -6,9 +6,9 @@ appId: com.zaimimran.almari
 - tapOn:
     id: "header-select"
 - tapOn:
-    id: "tile-seed-tunic"
+    id: "tile-seed-chiffon-hijab"
 - tapOn:
-    id: "tile-seed-trousers"
+    id: "tile-seed-hijab"
 - tapOn:
     id: "select-new-look"
 - extendedWaitUntil:

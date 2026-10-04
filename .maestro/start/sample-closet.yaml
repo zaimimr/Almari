@@ -21,4 +21,8 @@ appId: com.zaimimran.almari
       id: "today-outfit"
     timeout: 60000
 - tapOn: "Closet"
-- assertVisible: ".*sample pieces included.*"
+- scrollUntilVisible:
+    element:
+      id: "section-samples"
+    direction: DOWN
+    visibilityPercentage: 1

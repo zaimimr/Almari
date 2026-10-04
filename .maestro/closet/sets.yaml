@@ -17,9 +17,9 @@ appId: com.zaimimran.almari
 - assertVisible:
     id: "select-start"
 - tapOn:
-    id: "tile-seed-tunic"
+    id: "tile-seed-chiffon-hijab"
 - tapOn:
-    id: "tile-seed-trousers"
+    id: "tile-seed-hijab"
 - assertVisible: "2 selected"
 - takeScreenshot: docs/redesign/screens/after/closet/select
 - tapOn:
@@ -30,7 +30,7 @@ appId: com.zaimimran.almari
 - assertVisible:
     id: "header-select"
 - tapOn:
-    id: "tile-seed-tunic"
-- extendedWaitUntil:
-    visible: "Part of a set"
-    timeout: 10000
+    id: "tile-seed-chiffon-hijab"
+- scrollUntilVisible:
+    element: "Part of a set"
+    direction: DOWN

@@ -6,19 +6,27 @@ appId: com.zaimimran.almari
 - tapOn:
     id: "header-select"
 - tapOn:
-    id: "tile-seed-tunic"
-- tapOn:
-    id: "tile-seed-trousers"
-- tapOn:
-    id: "tile-seed-ankle-trousers"
-- scrollUntilVisible:
-    element:
-      id: "tile-seed-hijab"
-    direction: DOWN
+    id: "tile-seed-chiffon-hijab"
 - tapOn:
     id: "tile-seed-hijab"
+- scrollUntilVisible:
+    element:
+      id: "tile-seed-blouse"
+    direction: DOWN
 - tapOn:
-    id: "tile-seed-chiffon-hijab"
+    id: "tile-seed-blouse"
+- scrollUntilVisible:
+    element:
+      id: "tile-seed-tunic"
+    direction: DOWN
+- tapOn:
+    id: "tile-seed-tunic"
+- scrollUntilVisible:
+    element:
+      id: "tile-seed-trousers"
+    direction: DOWN
+- tapOn:
+    id: "tile-seed-trousers"
 - assertVisible: "5 selected"
 - tapOn:
     id: "select-mark-worn"
@@ -40,8 +48,10 @@ appId: com.zaimimran.almari
 - tapOn:
     id: "chip-more"
 - assertNotVisible:
-    id: "tile-seed-tunic"
+    id: "tile-seed-chiffon-hijab"
 - assertNotVisible:
-    id: "tile-seed-trousers"
-- assertVisible:
     id: "tile-seed-blouse"
+- assertNotVisible:
+    id: "tile-seed-tunic"
+- assertVisible:
+    id: "tile-seed-dress"

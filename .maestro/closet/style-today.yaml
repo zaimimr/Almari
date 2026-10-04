@@ -6,15 +6,27 @@ appId: com.zaimimran.almari
 - tapOn:
     id: "header-select"
 - tapOn:
-    id: "tile-seed-tunic"
+    id: "tile-seed-chiffon-hijab"
+- scrollUntilVisible:
+    element:
+      id: "tile-seed-blouse"
+    direction: DOWN
 - tapOn:
-    id: "tile-seed-trousers"
+    id: "tile-seed-blouse"
+- assertVisible: "2 selected"
 - tapOn:
     id: "select-start"
 - extendedWaitUntil:
-    visible:
-      id: "today-outfit"
+    notVisible:
+      id: "closet-screen"
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      id: "outfit-piece-seed-blouse"
+    direction: DOWN
     timeout: 60000
+- assertVisible:
+    id: "outfit-piece-seed-chiffon-hijab"
 - tapOn: "Closet"
 - assertVisible:
     id: "header-select"

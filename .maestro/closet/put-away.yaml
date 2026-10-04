@@ -6,23 +6,23 @@ appId: com.zaimimran.almari
 - tapOn:
     id: "header-select"
 - tapOn:
-    id: "tile-seed-tunic"
+    id: "tile-seed-chiffon-hijab"
 - tapOn:
-    id: "tile-seed-trousers"
+    id: "tile-seed-hijab"
 - tapOn:
     id: "select-put-away"
 - assertVisible:
     id: "select-result"
 - assertNotVisible:
-    id: "tile-seed-tunic"
+    id: "tile-seed-chiffon-hijab"
 - tapOn: "Undo"
 - assertVisible:
-    id: "tile-seed-tunic"
+    id: "tile-seed-chiffon-hijab"
 - assertVisible: "2 selected"
 - tapOn:
     id: "select-put-away"
 - assertNotVisible:
-    id: "tile-seed-trousers"
+    id: "tile-seed-hijab"
 - tapOn:
     id: "header-cancel"
 - tapOn:
@@ -36,20 +36,20 @@ appId: com.zaimimran.almari
 - tapOn:
     id: "chip-more"
 - assertVisible:
-    id: "tile-seed-tunic"
+    id: "tile-seed-chiffon-hijab"
 - assertVisible:
-    id: "tile-seed-trousers"
+    id: "tile-seed-hijab"
 - assertNotVisible:
-    id: "tile-seed-boots"
+    id: "tile-seed-blouse"
 - tapOn:
     id: "header-select"
 - tapOn:
-    id: "tile-seed-tunic"
+    id: "tile-seed-chiffon-hijab"
 - assertVisible: "Back in the closet"
 - tapOn:
     id: "select-put-away"
 - assertVisible: "Put back"
 - assertNotVisible:
-    id: "tile-seed-tunic"
+    id: "tile-seed-chiffon-hijab"
 - assertVisible:
-    id: "tile-seed-trousers"
+    id: "tile-seed-hijab"

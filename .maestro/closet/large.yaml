@@ -1,0 +1,48 @@
+appId: com.zaimimran.almari
+# UC-F04-02
+# seed: seed-closet.sh
+# seed: seed-capture.sh
+# seed: fixture.sh language=nb slowPrepare=5000
+# seed: ax5.sh
+---
+- launchApp:
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible: "Garderobe"
+    timeout: 30000
+- tapOn: "Garderobe"
+- extendedWaitUntil:
+    visible:
+      id: "closet-screen"
+    timeout: 20000
+- assertVisible: "4 nye plagg, .*"
+- takeScreenshot: docs/redesign/screens/after/closet/ax-card
+- extendedWaitUntil:
+    visible: ".*klare til å legges til.*"
+    timeout: 120000
+- tapOn:
+    id: "chip-more"
+- waitForAnimationToEnd
+- assertVisible:
+    id: "closet-panel"
+- takeScreenshot: docs/redesign/screens/after/closet/ax-more
+- tapOn:
+    id: "chip-more"
+- repeat:
+    times: 8
+    while:
+      notVisible:
+        id: "tile-seed-chiffon-hijab"
+    commands:
+      - swipe:
+          start: 50%, 75%
+          end: 50%, 25%
+          duration: 600
+- swipe:
+    start: 50%, 70%
+    end: 50%, 35%
+    duration: 600
+- assertVisible:
+    id: "tile-seed-chiffon-hijab"
+- takeScreenshot: docs/redesign/screens/after/closet/ax-closet

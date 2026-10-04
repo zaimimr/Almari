@@ -5,14 +5,11 @@ appId: com.zaimimran.almari
 # seed: fixture.sh slowPrepare=5000
 ---
 - runFlow: ../lib/open-closet.yaml
-- assertVisible:
-    id: "progress-card"
 - assertVisible: "4 new pieces, .*"
 - extendedWaitUntil:
     visible: ".*ready to add.*"
     timeout: 120000
 - takeScreenshot: docs/redesign/screens/after/closet/progress
-- tapOn:
-    id: "progress-card"
+- tapOn: ".*ready to add.*"
 - assertNotVisible:
     id: "closet-grid"

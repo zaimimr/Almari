@@ -78,52 +78,43 @@ export function FilterRow({
   onChange: (next: Partial<ClosetFilter>) => void;
 }) {
   const colors = useColors();
-  const { ax } = useLargeText();
   const { width: windowWidth } = useWindowDimensions();
   const gutter = gutterFor(windowWidth);
-  const [scrollWidth, setScrollWidth] = useState(0);
   const values = filterValues(filter);
-  const item = scrollWidth > 0 ? { maxWidth: scrollWidth - gutter } : null;
   const needs = filter.coverage === "needs-details";
 
   const chips = (
     <>
-      <View style={item}>
-        <Chip
-          label={t("piece.needsDetails")}
-          dot
-          selected={needs}
-          role="button"
-          onPress={() => onChange({ coverage: needs ? null : "needs-details" })}
-          testID="chip-needs-details"
-        />
-      </View>
+      <Chip
+        label={t("piece.needsDetails")}
+        dot
+        selected={needs}
+        role="button"
+        onPress={() => onChange({ coverage: needs ? null : "needs-details" })}
+        testID="chip-needs-details"
+      />
       <View
         style={[styles.divider, { backgroundColor: colors.line }]}
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
       />
-      <View
-        accessibilityRole="radiogroup"
-        style={[styles.row, ax && styles.wrap]}
-      >
+      <View accessibilityRole="radiogroup" style={styles.row}>
         {(["all", ...offered] as const).map((id) => (
-          <View key={id} style={item}>
-            <Chip
-              label={id === "all" ? t("closet.all") : categoryName(id)}
-              selected={filter.category === id}
-              role="radio"
-              onPress={() => onChange({ category: id })}
-              testID={`category-${id}`}
-            />
-          </View>
+          <Chip
+            key={id}
+            label={id === "all" ? t("closet.all") : categoryName(id)}
+            selected={filter.category === id}
+            role="radio"
+            onPress={() => onChange({ category: id })}
+            testID={`category-${id}`}
+          />
         ))}
       </View>
     </>
   );
 
   return (
-    <View style={[styles.filterRow, ax && styles.wrap]}>
+    <View style={styles.filterRow}>
       <Chip
         label={t("closet.more")}
         kind="control"
@@ -134,19 +125,14 @@ export function FilterRow({
         onPress={onToggle}
         testID="chip-more"
       />
-      {ax ? (
-        chips
-      ) : (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          onLayout={(event) => setScrollWidth(event.nativeEvent.layout.width)}
-          style={{ marginRight: -gutter }}
-          contentContainerStyle={[styles.row, { paddingRight: gutter }]}
-        >
-          {chips}
-        </ScrollView>
-      )}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={{ marginRight: -gutter }}
+        contentContainerStyle={[styles.row, { paddingRight: gutter }]}
+      >
+        {chips}
+      </ScrollView>
     </View>
   );
 }
@@ -347,7 +333,6 @@ const styles = StyleSheet.create({
     gap: theme.space.sm,
   },
   row: { flexDirection: "row", alignItems: "center", gap: theme.space.sm },
-  wrap: { flexWrap: "wrap" },
   divider: {
     width: StyleSheet.hairlineWidth,
     alignSelf: "stretch",
