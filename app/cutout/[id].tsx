@@ -137,7 +137,7 @@ function Editor({ id, target }: { id: string; target: "import" | "piece" }) {
 
   return (
     <Screen
-      title={t("cutout.title")}
+      title={t("cutout.adjust")}
       media
       scroll={false}
       leading="cancel"
@@ -159,6 +159,7 @@ function Editor({ id, target }: { id: string; target: "import" | "piece" }) {
     >
       <View style={styles.body}>
         <CameraFrame
+          full
           guide={guide}
           testID="cutout-frame"
           controls={
