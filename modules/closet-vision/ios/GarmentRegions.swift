@@ -189,7 +189,7 @@ enum GarmentRegions {
     return bounded(kind: region.kind, pixels: pixels, width: width, total: total)
   }
 
-  private static func spread(_ mask: [Bool], width: Int, height: Int, radius: Int, value: Bool) -> [Bool] {
+  static func spread(_ mask: [Bool], width: Int, height: Int, radius: Int, value: Bool) -> [Bool] {
     var rows = mask
     for y in 0..<height {
       for x in 0..<width where mask[y * width + x] == value {

@@ -18,10 +18,13 @@ struct ClothesParse {
     image(grid.labels.map { classes.contains(ClothesClass(rawValue: Int($0)) ?? .background) ? 255 : 0 })
   }
 
-  func mask(of region: FoundRegion) -> CIImage {
-    var bytes = [UInt8](repeating: 0, count: grid.labels.count)
-    for index in region.pixels { bytes[index] = 255 }
-    return image(bytes)
+  func mask(of region: FoundRegion, grow: Int = 0) -> CIImage {
+    var inside = [Bool](repeating: false, count: grid.labels.count)
+    for index in region.pixels { inside[index] = true }
+    if grow > 0 {
+      inside = GarmentRegions.spread(inside, width: grid.width, height: grid.height, radius: grow, value: true)
+    }
+    return image(inside.map { $0 ? 255 : 0 })
   }
 
   func normalizedFrame(of region: FoundRegion) -> CGRect {
@@ -43,17 +46,24 @@ struct ClothesParse {
     ]
   }
 
+  static let padding: CGFloat = 0.1
+
   func cutoutFrame(of region: FoundRegion) -> CGRect {
-    normalizedFrame(of: region).insetBy(dx: -0.02, dy: -0.02)
+    let frame = normalizedFrame(of: region)
+    return frame.insetBy(dx: -frame.width * Self.padding, dy: -frame.height * Self.padding)
       .intersection(CGRect(x: 0, y: 0, width: 1, height: 1))
   }
 
-  func cutout(_ photo: CIImage, region: FoundRegion) -> CIImage {
+  func cutoutRect(of region: FoundRegion) -> CGRect {
     let frame = cutoutFrame(of: region)
-    let rect = CGRect(
+    return CGRect(
       x: frame.minX * extent.width, y: (1 - frame.maxY) * extent.height,
       width: frame.width * extent.width, height: frame.height * extent.height
     ).integral.intersection(extent)
+  }
+
+  func cutout(_ photo: CIImage, region: FoundRegion) -> CIImage {
+    let rect = cutoutRect(of: region)
     return photo.applyingFilter(
       "CIBlendWithMask",
       parameters: [
@@ -103,6 +113,7 @@ final class ClothesParser {
   }
 
   static let skinShare = 0.01
+  static let personGrowth: CGFloat = 0.06
 
   static func showsPerson(skin: Int, mask: Int) -> Bool {
     mask > 0 && Double(skin) / Double(mask) >= skinShare
@@ -161,17 +172,20 @@ final class ClothesParser {
     var inside = 0
     let body: Set<UInt8> = Set([ClothesClass.hair, .face, .leftLeg, .rightLeg, .leftArm, .rightArm].map { UInt8($0.rawValue) })
     if let found {
+      let near = GarmentRegions.spread(
+        found.mask.map { $0 == found.label }, width: found.width, height: found.height,
+        radius: max(1, Int((CGFloat(max(found.width, found.height)) * Self.personGrowth).rounded())), value: true)
       for y in 0..<Self.side {
         for x in 0..<Self.side {
           let px = (area.minX + (CGFloat(x) + 0.5) / side * area.width) / extent.width
           let py = (extent.height - area.maxY + (CGFloat(y) + 0.5) / side * area.height) / extent.height
           let mx = min(found.width - 1, Int(px * CGFloat(found.width)))
           let my = min(found.height - 1, Int(py * CGFloat(found.height)))
-          if found.mask[my * found.width + mx] != found.label {
-            labels[y * Self.side + x] = 0
-          } else {
+          if found.mask[my * found.width + mx] == found.label {
             inside += 1
             if body.contains(labels[y * Self.side + x]) { skin += 1 }
+          } else if !near[my * found.width + mx] {
+            labels[y * Self.side + x] = 0
           }
         }
       }

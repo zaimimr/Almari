@@ -7,6 +7,7 @@ import {
   baselineMs,
   heldPiece,
   holdMs,
+  paddedBox,
   previewBox,
   readFrame,
   restartScan,
@@ -362,7 +363,7 @@ test("a scan capture is a queued import job in the scan", () => {
     createdAt: "2026-10-02T08:00:01Z",
     crop,
   });
-  assert.deepEqual(cropped.imports[1]?.crop, crop);
+  assert.deepEqual(cropped.imports[1]?.crop, paddedBox(crop));
   assert.equal(cropped.imports[1]?.region, undefined);
 });
 
@@ -385,4 +386,14 @@ test("a native frame is decoded from base64", () => {
   assert.deepEqual(decoded.hands, [{ x: 0.5, y: 0.25 }]);
   assert.equal(decoded.parseMs, 61);
   assert.equal(decoded.at, 12);
+});
+
+test("a scan crop is padded a tenth on each side and stays inside the photo", () => {
+  const near = (a: number, b: number) => Math.abs(a - b) < 1e-9;
+  const inside = paddedBox({ x: 0.2, y: 0.3, width: 0.5, height: 0.4 });
+  assert.ok(near(inside.x, 0.15) && near(inside.y, 0.26));
+  assert.ok(near(inside.width, 0.6) && near(inside.height, 0.48));
+  const edge = paddedBox({ x: 0, y: 0.5, width: 0.9, height: 0.5 });
+  assert.ok(near(edge.x, 0) && near(edge.width, 0.99));
+  assert.ok(near(edge.y, 0.45) && near(edge.y + edge.height, 1));
 });

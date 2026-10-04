@@ -188,7 +188,7 @@ final class GarmentPipeline {
       result.people = parse.people
       for (index, region) in GarmentRegions.find(parse.grid, person: parse.people > 0).enumerated() {
         let name = "\(id)-region-\(index + 1).png"
-        try write(parse.cutout(image, region: region), to: name, extent: nil)
+        try write(regionCutout(image, parse: parse, region: region), to: name, extent: nil)
         var record = GarmentRegionRecord()
         record.kind = region.kind
         record.cutout = name
@@ -289,7 +289,7 @@ final class GarmentPipeline {
   private func place(
     _ garment: CIImage, correction: LightCorrection, id: String, enhancer: GarmentEnhancer
   ) throws -> PlacedGarment {
-    let side = (max(garment.extent.width, garment.extent.height) * 1.06).rounded(.up)
+    let side = (max(garment.extent.width, garment.extent.height) * 1.2).rounded(.up)
     let square = CGRect(x: 0, y: 0, width: side, height: side)
     let offsetX = ((side - garment.extent.width) / 2).rounded()
     let offsetY = ((side - garment.extent.height) / 2).rounded()
@@ -409,9 +409,87 @@ final class GarmentPipeline {
 
   private func heldCutout(_ image: CIImage) -> (garment: CIImage, mask: CIImage)? {
     guard let parse = try? loadParser().parse(image),
-      let region = GarmentRegions.held(parse.grid, chroma: chroma(image, parse: parse))
+      let region = GarmentRegions.held(parse.grid)
     else { return nil }
     return (parse.cutout(image, region: region), parse.mask(of: region))
+  }
+
+  private static let guideGrowth = 6
+  private static let spanShare = 0.2
+
+  private func regionCutout(_ image: CIImage, parse: ClothesParse, region: FoundRegion) -> CIImage {
+    let fallback = parse.cutout(image, region: region)
+    let rect = parse.cutoutRect(of: region)
+    let origin = CGAffineTransform(translationX: -rect.minX, y: -rect.minY)
+    let crop = image.cropped(to: rect).transformed(by: origin)
+    guard rect.width >= 16, rect.height >= 16, let working = context.createCGImage(crop, from: crop.extent) else {
+      return fallback
+    }
+    let request = Self.foregroundRequest()
+    let handler = VNImageRequestHandler(cgImage: working)
+    guard (try? handler.perform([request])) != nil, let observation = request.results?.first else {
+      return fallback
+    }
+    let enhancer = GarmentEnhancer(context: context)
+    let guide = parse.mask(of: region, grow: Self.guideGrowth).cropped(to: rect).transformed(by: origin)
+    let guideMap = enhancer.bitmap(guide, longEdge: 128)
+    var best: (mask: CIImage, overlap: Int, size: Int)? = nil
+    for instance in observation.allInstances {
+      guard
+        let buffer = try? observation.generateScaledMaskForImage(forInstances: IndexSet(integer: instance), from: handler)
+      else { continue }
+      let mask = CIImage(cvPixelBuffer: buffer)
+      let map = enhancer.bitmap(mask, longEdge: 128)
+      guard map.width == guideMap.width, map.height == guideMap.height else { continue }
+      var overlap = 0
+      var size = 0
+      for index in 0..<(map.width * map.height) where map.value(index) > 0.5 {
+        size += 1
+        if guideMap.value(index) > 0.5 { overlap += 1 }
+      }
+      if overlap > (best?.overlap ?? 0) { best = (mask, overlap, size) }
+    }
+    guard let best else { return fallback }
+    let spans = Double(best.size - best.overlap) / Double(max(best.size, 1)) > Self.spanShare
+    let mask =
+      spans
+      ? best.mask.applyingFilter("CIMultiplyCompositing", parameters: [kCIInputBackgroundImageKey: guide])
+        .cropped(to: crop.extent)
+      : best.mask
+    let cut = crop.applyingFilter(
+      "CIBlendWithMask",
+      parameters: [
+        kCIInputBackgroundImageKey: CIImage(color: .clear).cropped(to: crop.extent),
+        kCIInputMaskImageKey: mask,
+      ]
+    )
+    .cropped(to: crop.extent)
+    guard let bounds = maskBounds(mask, extent: crop.extent, enhancer: enhancer) else { return fallback }
+    return cut.cropped(to: bounds).transformed(by: CGAffineTransform(translationX: -bounds.minX, y: -bounds.minY))
+  }
+
+  private func maskBounds(_ mask: CIImage, extent: CGRect, enhancer: GarmentEnhancer) -> CGRect? {
+    let map = enhancer.bitmap(mask, longEdge: 256)
+    var minX = map.width
+    var minY = map.height
+    var maxX = -1
+    var maxY = -1
+    for y in 0..<map.height {
+      for x in 0..<map.width where map.value(y * map.width + x) > 0.1 {
+        minX = min(minX, x)
+        maxX = max(maxX, x)
+        minY = min(minY, y)
+        maxY = max(maxY, y)
+      }
+    }
+    guard maxX >= minX, maxY >= minY else { return nil }
+    let scaleX = extent.width / CGFloat(map.width)
+    let scaleY = extent.height / CGFloat(map.height)
+    let bounds = CGRect(
+      x: CGFloat(minX - 1) * scaleX, y: extent.height - CGFloat(maxY + 2) * scaleY,
+      width: CGFloat(maxX - minX + 3) * scaleX, height: CGFloat(maxY - minY + 3) * scaleY
+    ).integral.intersection(extent)
+    return bounds.width >= 16 && bounds.height >= 16 ? bounds : nil
   }
 
   private func chroma(_ image: CIImage, parse: ClothesParse) -> [SIMD2<Double>] {

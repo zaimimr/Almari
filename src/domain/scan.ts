@@ -22,6 +22,7 @@ export const stillOverlap = 0.75;
 export const stillDeltaE = 8;
 export const duplicateDeltaE = 10;
 export const speedWindow = 12;
+export const cropPadding = 0.1;
 
 export type HeldKind = "head" | "upper" | "dress" | "skirt" | "pants" | "bag";
 
@@ -210,6 +211,14 @@ export function heldPiece(
   return { kind, box, colour, share };
 }
 
+export function paddedBox(box: Frame, padding = cropPadding): Frame {
+  const x = Math.max(0, box.x - box.width * padding);
+  const y = Math.max(0, box.y - box.height * padding);
+  const right = Math.min(1, box.x + box.width * (1 + padding));
+  const bottom = Math.min(1, box.y + box.height * (1 + padding));
+  return { x, y, width: right - x, height: bottom - y };
+}
+
 export function overlap(a: Frame, b: Frame) {
   const width = Math.max(
     0,
@@ -371,7 +380,7 @@ export function addScanCapture(
         attempts: 0,
         captureId: scanId,
         ...(job.region ? { region: job.region } : {}),
-        ...(job.crop ? { crop: job.crop } : {}),
+        ...(job.crop ? { crop: paddedBox(job.crop) } : {}),
       },
     ],
   };
