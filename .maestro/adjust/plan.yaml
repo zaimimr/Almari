@@ -1,0 +1,34 @@
+appId: com.zaimimran.almari
+# UC-F07-08
+# seed: fixture.sh now=2026-10-07T09:00:00+02:00
+---
+- runFlow: ../lib/sample-closet.yaml
+- tapOn:
+    id: "occasion-chip"
+- assertVisible: "Adjust"
+- tapOn: "Eid"
+- tapOn: "Choose a date"
+- tapOn:
+    id: "pick-2026-10-11"
+- assertVisible: "Sat 11 Oct"
+- takeScreenshot: docs/redesign/screens/after/adjust/adjust
+- tapOn: "Show outfit"
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
+    timeout: 60000
+- assertVisible: "Sat 11 Oct"
+- assertVisible: "Back to today"
+- assertNotVisible: "Wear this"
+- assertVisible: "Save look"
+- takeScreenshot: docs/redesign/screens/after/adjust/planning
+- tapOn: "Another"
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
+    timeout: 60000
+- tapOn: "Save look"
+- tapOn: "Back to today"
+- assertVisible: "Wear this"
+- tapOn: "Looks"
+- assertVisible: "Planned for Sat 11 Oct"

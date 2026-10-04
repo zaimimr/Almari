@@ -1,0 +1,14 @@
+appId: com.zaimimran.almari
+# UC-F07-06
+---
+- runFlow: ../lib/sample-closet.yaml
+- tapOn:
+    id: "occasion-chip"
+- scrollUntilVisible:
+    element: "My clothes"
+    timeout: 60000
+- tapOn: "My clothes"
+- tapOn: "Show outfit"
+- extendedWaitUntil:
+    visible: "Add pieces"
+    timeout: 60000

@@ -1,0 +1,29 @@
+appId: com.zaimimran.almari
+# UC-F07-05
+# seed: seed-owned-everyday.sh
+---
+- launchApp:
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
+    timeout: 60000
+- scrollUntilVisible:
+    element: "Start with a piece"
+    timeout: 60000
+- tapOn: "Start with a piece"
+- tapOn: "Rose tunic"
+- tapOn: "Grey trousers"
+- assertVisible: "2 selected"
+- takeScreenshot: docs/redesign/screens/after/adjust/pieces
+- tapOn: "Clear"
+- assertNotVisible: "2 selected"
+- tapOn: "Rose tunic"
+- tapOn: "Grey trousers"
+- tapOn: "Start with these"
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
+    timeout: 60000
+- assertVisible: "Started with Rose tunic and Grey trousers"

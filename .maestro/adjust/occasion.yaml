@@ -1,0 +1,14 @@
+appId: com.zaimimran.almari
+# UC-F07-02
+---
+- runFlow: ../lib/sample-closet.yaml
+- tapOn:
+    id: "occasion-chip"
+- tapOn: "Party or mehndi"
+- tapOn: "Desi"
+- tapOn: "Show outfit"
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
+    timeout: 60000
+- assertVisible: "For a party.*"

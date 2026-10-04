@@ -1,0 +1,26 @@
+appId: com.zaimimran.almari
+# UC-F07-03
+---
+- runFlow: ../lib/sample-closet.yaml
+- tapOn:
+    id: "occasion-chip"
+- tapOn: "Work"
+- scrollUntilVisible:
+    element:
+      id: "adjust-make-everyday"
+    timeout: 60000
+- tapOn:
+    id: "adjust-make-everyday"
+- tapOn: "Show outfit"
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
+    timeout: 60000
+- assertNotVisible:
+    id: "session-chip"
+- tapOn:
+    id: "header-profile"
+- scrollUntilVisible:
+    element: "Your style.*"
+    timeout: 60000
+- assertVisible: "Work.*"

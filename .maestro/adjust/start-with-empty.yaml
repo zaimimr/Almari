@@ -1,0 +1,14 @@
+appId: com.zaimimran.almari
+# UC-F07-05
+# seed: seed-owned.sh
+---
+- launchApp:
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible: "Start with a piece"
+    timeout: 60000
+- tapOn: "Start with a piece"
+- assertVisible: "No pieces yet"
+- tapOn: "Add pieces"
+- assertVisible: "Add pieces"
