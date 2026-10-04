@@ -1,0 +1,47 @@
+appId: com.zaimimran.almari
+# UC-F04-12
+# seed: seed-closet.sh
+---
+- runFlow: ../lib/open-closet.yaml
+- tapOn:
+    id: "header-select"
+- tapOn:
+    id: "tile-seed-tunic"
+- tapOn:
+    id: "tile-seed-trousers"
+- tapOn:
+    id: "tile-seed-ankle-trousers"
+- scrollUntilVisible:
+    element:
+      id: "tile-seed-hijab"
+    direction: DOWN
+- tapOn:
+    id: "tile-seed-hijab"
+- tapOn:
+    id: "tile-seed-chiffon-hijab"
+- assertVisible: "5 selected"
+- tapOn:
+    id: "select-mark-worn"
+- assertVisible:
+    id: "worn-today"
+- tapOn:
+    id: "worn-yesterday"
+- assertVisible: "Worn yesterday"
+- tapOn:
+    id: "header-cancel"
+- scrollUntilVisible:
+    element:
+      id: "chip-more"
+    direction: UP
+- tapOn:
+    id: "chip-more"
+- tapOn:
+    id: "show-not-worn-lately"
+- tapOn:
+    id: "chip-more"
+- assertNotVisible:
+    id: "tile-seed-tunic"
+- assertNotVisible:
+    id: "tile-seed-trousers"
+- assertVisible:
+    id: "tile-seed-blouse"

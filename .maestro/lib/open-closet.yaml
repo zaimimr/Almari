@@ -1,0 +1,13 @@
+appId: com.zaimimran.almari
+---
+- launchApp:
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible: "Closet"
+    timeout: 30000
+- tapOn: "Closet"
+- extendedWaitUntil:
+    visible:
+      id: "closet-screen"
+    timeout: 20000

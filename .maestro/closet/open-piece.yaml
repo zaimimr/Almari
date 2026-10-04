@@ -1,0 +1,20 @@
+appId: com.zaimimran.almari
+# UC-F04-09
+# seed: seed-closet.sh
+---
+- runFlow: ../lib/open-closet.yaml
+- scrollUntilVisible:
+    element:
+      id: "tile-seed-chiffon-hijab"
+    direction: DOWN
+- tapOn:
+    id: "tile-seed-chiffon-hijab"
+- assertNotVisible:
+    id: "closet-grid"
+- swipe:
+    start: 1%, 50%
+    end: 90%, 50%
+- extendedWaitUntil:
+    visible:
+      id: "tile-seed-chiffon-hijab"
+    timeout: 5000

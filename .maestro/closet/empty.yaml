@@ -1,0 +1,19 @@
+appId: com.zaimimran.almari
+# UC-F04-01
+# seed: seed-closet.sh empty
+---
+- runFlow: ../lib/open-closet.yaml
+- assertVisible:
+    id: "closet-empty"
+- assertVisible: "Your first piece"
+- assertNotVisible:
+    id: "chip-more"
+- assertNotVisible:
+    id: "header-select"
+- assertVisible:
+    id: "header-add"
+- takeScreenshot: docs/redesign/screens/after/closet/empty
+- tapOn:
+    id: "closet-empty-add"
+- assertNotVisible:
+    id: "closet-empty"

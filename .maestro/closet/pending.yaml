@@ -1,0 +1,18 @@
+appId: com.zaimimran.almari
+# UC-F04-08
+# seed: seed-closet.sh
+# seed: seed-capture.sh
+# seed: fixture.sh slowPrepare=5000
+---
+- runFlow: ../lib/open-closet.yaml
+- assertVisible:
+    id: "progress-card"
+- assertVisible: "4 new pieces, .*"
+- extendedWaitUntil:
+    visible: ".*ready to add.*"
+    timeout: 120000
+- takeScreenshot: docs/redesign/screens/after/closet/progress
+- tapOn:
+    id: "progress-card"
+- assertNotVisible:
+    id: "closet-grid"

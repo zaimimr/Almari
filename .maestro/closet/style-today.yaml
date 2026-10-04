@@ -1,0 +1,21 @@
+appId: com.zaimimran.almari
+# UC-F04-06
+# seed: seed-closet.sh
+---
+- runFlow: ../lib/open-closet.yaml
+- tapOn:
+    id: "header-select"
+- tapOn:
+    id: "tile-seed-tunic"
+- tapOn:
+    id: "tile-seed-trousers"
+- tapOn:
+    id: "select-start"
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
+    timeout: 60000
+- tapOn: "Closet"
+- assertVisible:
+    id: "header-select"
+- assertNotVisible: "2 selected"

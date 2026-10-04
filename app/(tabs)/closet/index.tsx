@@ -168,6 +168,7 @@ export default function ClosetScreen() {
               action={{
                 label: t("closet.addPieces"),
                 onPress: () => router.push(addPiecesRoute),
+                testID: "closet-empty-add",
               }}
               testID="closet-empty"
             />

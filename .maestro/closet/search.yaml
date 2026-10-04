@@ -1,0 +1,18 @@
+appId: com.zaimimran.almari
+# UC-F04-03
+# seed: seed-closet.sh
+---
+- runFlow: ../lib/open-closet.yaml
+- tapOn: "Name or colour"
+- inputText: "hijab"
+- assertVisible: "Sand hijab.*"
+- assertVisible: "Chiffon hijab.*"
+- assertNotVisible: "Rose tunic.*"
+- eraseText: 10
+- inputText: "pink"
+- assertVisible: "Rose tunic.*"
+- assertNotVisible: "Sand hijab.*"
+- eraseText: 10
+- inputText: "zzz"
+- assertVisible: "No pieces found"
+- assertVisible: "Clear filters"

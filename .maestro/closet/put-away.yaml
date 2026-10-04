@@ -1,0 +1,55 @@
+appId: com.zaimimran.almari
+# UC-F04-10
+# seed: seed-closet.sh
+---
+- runFlow: ../lib/open-closet.yaml
+- tapOn:
+    id: "header-select"
+- tapOn:
+    id: "tile-seed-tunic"
+- tapOn:
+    id: "tile-seed-trousers"
+- tapOn:
+    id: "select-put-away"
+- assertVisible:
+    id: "select-result"
+- assertNotVisible:
+    id: "tile-seed-tunic"
+- tapOn: "Undo"
+- assertVisible:
+    id: "tile-seed-tunic"
+- assertVisible: "2 selected"
+- tapOn:
+    id: "select-put-away"
+- assertNotVisible:
+    id: "tile-seed-trousers"
+- tapOn:
+    id: "header-cancel"
+- tapOn:
+    id: "chip-more"
+- waitForAnimationToEnd
+- swipe:
+    start: 85%, 56%
+    end: 40%, 56%
+- tapOn:
+    id: "show-archived"
+- tapOn:
+    id: "chip-more"
+- assertVisible:
+    id: "tile-seed-tunic"
+- assertVisible:
+    id: "tile-seed-trousers"
+- assertNotVisible:
+    id: "tile-seed-boots"
+- tapOn:
+    id: "header-select"
+- tapOn:
+    id: "tile-seed-tunic"
+- assertVisible: "Back in the closet"
+- tapOn:
+    id: "select-put-away"
+- assertVisible: "Put back"
+- assertNotVisible:
+    id: "tile-seed-tunic"
+- assertVisible:
+    id: "tile-seed-trousers"

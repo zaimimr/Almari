@@ -1,0 +1,36 @@
+appId: com.zaimimran.almari
+# UC-F04-05
+# seed: seed-closet.sh
+---
+- runFlow: ../lib/open-closet.yaml
+- tapOn:
+    id: "header-select"
+- assertVisible: "0 selected"
+- assertVisible:
+    id: "header-cancel"
+- assertNotVisible:
+    id: "header-select"
+- assertVisible:
+    id: "select-mark-worn"
+- assertVisible:
+    id: "select-put-away"
+- assertVisible:
+    id: "select-start"
+- tapOn:
+    id: "tile-seed-tunic"
+- tapOn:
+    id: "tile-seed-trousers"
+- assertVisible: "2 selected"
+- takeScreenshot: docs/redesign/screens/after/closet/select
+- tapOn:
+    id: "select-link"
+- assertVisible: "Linked"
+- tapOn:
+    id: "header-cancel"
+- assertVisible:
+    id: "header-select"
+- tapOn:
+    id: "tile-seed-tunic"
+- extendedWaitUntil:
+    visible: "Part of a set"
+    timeout: 10000

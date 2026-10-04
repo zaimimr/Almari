@@ -1,0 +1,55 @@
+appId: com.zaimimran.almari
+# UC-F04-02
+# seed: seed-closet.sh samples
+---
+- runFlow: ../lib/open-closet.yaml
+- extendedWaitUntil:
+    visible:
+      id: "closet-grid"
+    timeout: 10000
+- assertVisible:
+    id: "section-hijab"
+- assertVisible: "Chiffon hijab, Blush"
+- assertNotVisible:
+    id: "closet-loading"
+- repeat:
+    times: 4
+    while:
+      notVisible:
+        id: "category-top"
+    commands:
+      - swipe:
+          start: 85%, 29%
+          end: 30%, 29%
+- tapOn:
+    id: "category-top"
+- assertVisible:
+    id: "section-top"
+- assertNotVisible:
+    id: "section-hijab"
+- assertVisible:
+    id: "chip-more"
+- repeat:
+    times: 4
+    while:
+      notVisible:
+        id: "category-all"
+    commands:
+      - swipe:
+          start: 30%, 29%
+          end: 85%, 29%
+- tapOn:
+    id: "category-all"
+- assertVisible:
+    id: "section-hijab"
+- scrollUntilVisible:
+    element:
+      id: "tile-seed-tunic"
+    direction: DOWN
+- assertVisible: "Rose tunic, Pink, Needs details"
+- scrollUntilVisible:
+    element:
+      id: "section-samples"
+    direction: DOWN
+    visibilityPercentage: 1
+- takeScreenshot: docs/redesign/screens/after/closet/samples
