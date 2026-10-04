@@ -136,7 +136,15 @@ function photoChange(choice: PhotoView): {
   return { keepOriginal: false, variant: "enhanced" };
 }
 
-export function ConfirmPiece({ id, run }: { id: string; run: string[] }) {
+export function ConfirmPiece({
+  id,
+  run,
+  walk = false,
+}: {
+  id: string;
+  run: string[];
+  walk?: boolean;
+}) {
   const { closet, update } = useCloset();
   const job = closet.imports.find((item) => item.id === id);
   const usable =
@@ -153,16 +161,18 @@ export function ConfirmPiece({ id, run }: { id: string; run: string[] }) {
         gone={{ title: t("capture.gone.title") }}
       />
     );
-  return <ConfirmForm job={job} run={run} update={update} />;
+  return <ConfirmForm job={job} run={run} walk={walk} update={update} />;
 }
 
 function ConfirmForm({
   job,
   run,
+  walk,
   update,
 }: {
   job: ImportJob;
   run: string[];
+  walk: boolean;
   update: ReturnType<typeof useCloset>["update"];
 }) {
   const { closet } = useCloset();
@@ -244,8 +254,12 @@ function ConfirmForm({
   const step = run.indexOf(job.id);
   const title =
     run.length > 1 && step >= 0
-      ? t("confirm.titleStep", { n: step + 1, total: run.length })
+      ? walk
+        ? t("confirm.step", { n: step + 1, total: run.length })
+        : t("confirm.titleStep", { n: step + 1, total: run.length })
       : t("confirm.title");
+  const previous = walk && step > 0 ? run[step - 1] : undefined;
+  const following = walk && step >= 0 ? run[step + 1] : undefined;
   const shown = jobPhoto({ ...job, ...photoChange(photo) });
   const cutout = failed ? undefined : importCutout(job);
   const adjust =
@@ -502,6 +516,7 @@ function ConfirmForm({
   }
 
   function nextConfirm() {
+    if (walk) return following;
     return run.find(
       (other) =>
         other !== job.id &&
@@ -511,9 +526,19 @@ function ConfirmForm({
     );
   }
 
-  async function save() {
+  function go(to: string) {
+    if (busy || studio.making) return;
+    if (dirty && name.trim()) {
+      void save(to);
+      return;
+    }
+    allowClose();
+    router.setParams({ id: to });
+  }
+
+  async function save(to?: string) {
     if (!name.trim() || busy || studio.making) return;
-    const next = nextConfirm();
+    const next = to ?? nextConfirm();
     setBusy(true);
     setError(null);
     try {
@@ -603,6 +628,27 @@ function ConfirmForm({
       footer={
         <Footer
           error={error}
+          actions={
+            walk && run.length > 1
+              ? [
+                  {
+                    label: t("confirm.previous"),
+                    icon: "chevron.left",
+                    onPress: () => previous && go(previous),
+                    disabled: !previous || busy,
+                    testID: "confirm-previous",
+                  },
+                  {
+                    label: t("confirm.next"),
+                    icon: "chevron.right",
+                    iconAfter: true,
+                    onPress: () => following && go(following),
+                    disabled: !following || busy,
+                    testID: "confirm-next",
+                  },
+                ]
+              : undefined
+          }
           primary={{
             label: t("common.looksRight"),
             onPress: () => void save(),

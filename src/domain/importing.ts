@@ -593,11 +593,12 @@ export function pieceFromImport(job: ImportJob): Piece | null {
   return job.label ? withCareLabel(accepted, job.label) : accepted;
 }
 
-export function acceptImports(closet: Closet): Closet {
+export function acceptImports(closet: Closet, only?: string[]): Closet {
   let next = closet;
   const accepted: string[] = [];
   const sets = new Map<string, string[]>();
   for (const job of closet.imports) {
+    if (only && !only.includes(job.id)) continue;
     const piece = pieceFromImport(job);
     if (!piece) continue;
     if (!closet.pieces.some((item) => item.id === piece.id)) {

@@ -304,7 +304,7 @@ export const nb: Record<Key, string> = {
   "capture.adjust": "Juster utsnitt",
   "capture.addPiece": "Tegn en ramme",
   "capture.drawHint": "Dra over bildet for å tegne en ramme rundt plagget.",
-  "capture.useBox": "Velg denne rammen",
+  "capture.useBox": "Bruk",
   "capture.cancel": "Avbryt",
   "capture.done": "Ferdig",
   "capture.larger": "Større",
@@ -1442,6 +1442,9 @@ export const nb: Record<Key, string> = {
   "capture.photoNumber": "Bilde {number}",
   "confirm.title": "Nytt plagg",
   "confirm.titleStep": "Nytt plagg, {n} av {total}",
+  "confirm.step": "{n} av {total}",
+  "confirm.previous": "Forrige",
+  "confirm.next": "Neste",
   "fact.photo": "Bilde",
   "capture.partialShort": "Delvis synlig",
   "advice.merged":

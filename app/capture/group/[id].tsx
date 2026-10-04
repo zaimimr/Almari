@@ -1,11 +1,12 @@
 import { useRef, useState } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { Image } from "expo-image";
 import { randomUUID } from "expo-crypto";
 import { router, useLocalSearchParams } from "expo-router";
 import type { Frame, ImportJob } from "../../../src/domain/closet";
 import { boxFrom, resizeBox } from "../../../src/domain/capture";
 import {
+  acceptImports,
   addToCapture,
   captureJobs,
   cropCapture,
@@ -19,8 +20,18 @@ import { useDiscardChanges } from "../../../src/navigation/useDiscardChanges";
 import { useCloset } from "../../../src/state/closet";
 import { now } from "../../../src/state/clock";
 import { changeImports } from "../../../src/state/imports";
+import { setLastAdded } from "../../../src/state/launch";
 import { photoUri } from "../../../src/storage/local";
-import { Button, Footer, Row, Rows, Screen, Text } from "../../../src/ui";
+import {
+  Button,
+  Footer,
+  Row,
+  Rows,
+  Screen,
+  Symbol,
+  Text,
+  Tile,
+} from "../../../src/ui";
 import { theme } from "../../../src/ui/theme";
 import { useColors } from "../../../src/ui/useColors";
 import { useLargeText } from "../../../src/ui/useLargeText";
@@ -28,6 +39,13 @@ import { useLargeText } from "../../../src/ui/useLargeText";
 const startBox: Frame = { x: 0.25, y: 0.25, width: 0.5, height: 0.5 };
 const step = 0.05;
 const moveStep = 0.05;
+
+const handle = 28;
+
+type Drag =
+  | { mode: "draw"; start: { x: number; y: number }; moved: boolean }
+  | { mode: "move"; offset: { x: number; y: number }; moved: boolean }
+  | { mode: "resize"; anchor: { x: number; y: number }; moved: boolean };
 
 const clamp = (value: number, max: number) =>
   Math.min(Math.max(value, 0), Math.max(max, 0));
@@ -67,10 +85,7 @@ export default function PiecesFound() {
     job: string | null;
     box: Frame;
   } | null>(null);
-  const gesture = useRef<{
-    start: { x: number; y: number };
-    moved: boolean;
-  } | null>(null);
+  const gesture = useRef<Drag | null>(null);
   const [width, setWidth] = useState(0);
   const [aspect, setAspect] = useState(0.75);
   const [busy, setBusy] = useState(false);
@@ -91,6 +106,10 @@ export default function PiecesFound() {
   const source =
     jobs.find((job) => job.id === drawing?.job)?.source ?? jobs[0]!.source;
   const kept = jobs.filter((job) => !dropped.includes(job.id));
+  const adding = kept.filter(
+    (job) => job.state === "ready" || job.state === "review",
+  );
+  const waiting = kept.some((job) => !isSettled(job));
   const height = width / aspect;
 
   function point(x: number, y: number) {
@@ -111,6 +130,54 @@ export default function PiecesFound() {
         y: clamp(box.y + dy, 1 - box.height),
       },
     });
+  }
+
+  function grab(at: { x: number; y: number }): Drag {
+    const box = drawing!.box;
+    const near = (x: number, y: number) =>
+      Math.abs((at.x - x) * width) < handle &&
+      Math.abs((at.y - y) * height) < handle;
+    const corners = [
+      [box.x, box.y, box.x + box.width, box.y + box.height],
+      [box.x + box.width, box.y, box.x, box.y + box.height],
+      [box.x, box.y + box.height, box.x + box.width, box.y],
+      [box.x + box.width, box.y + box.height, box.x, box.y],
+    ] as const;
+    const corner = corners.find(([x, y]) => near(x, y));
+    if (corner)
+      return {
+        mode: "resize",
+        anchor: { x: corner[2], y: corner[3] },
+        moved: false,
+      };
+    const inside =
+      at.x >= box.x &&
+      at.x <= box.x + box.width &&
+      at.y >= box.y &&
+      at.y <= box.y + box.height;
+    return inside
+      ? {
+          mode: "move",
+          offset: { x: at.x - box.x, y: at.y - box.y },
+          moved: false,
+        }
+      : { mode: "draw", start: at, moved: false };
+  }
+
+  function drag(current: Drag, at: { x: number; y: number }) {
+    if (!drawing) return;
+    const box = drawing.box;
+    const next =
+      current.mode === "move"
+        ? {
+            ...box,
+            x: clamp(at.x - current.offset.x, 1 - box.width),
+            y: clamp(at.y - current.offset.y, 1 - box.height),
+          }
+        : boxFrom(current.mode === "draw" ? current.start : current.anchor, at);
+    if (!next) return;
+    current.moved = true;
+    setDrawing({ ...drawing, box: next });
   }
 
   function centreBox(at: { x: number; y: number }) {
@@ -158,22 +225,41 @@ export default function PiecesFound() {
     }
   }
 
+  function review(job: string) {
+    router.push({
+      pathname: "/capture/[id]",
+      params: { id: job, run: adding.map((item) => item.id).join(",") },
+    });
+  }
+
   async function done() {
-    if (busy || !kept.length) return;
-    const next = kept.find((job) => job.state === "review");
+    if (busy || waiting || !adding.length) return;
+    const next = adding.find((job) => job.state === "review");
+    const ids = adding.map((job) => job.id);
+    let emptied = false;
     setBusy(true);
     setError(null);
     try {
-      await changeImports(update, (current) =>
-        setKeepAsSet(
+      await changeImports(update, (current) => {
+        const settled = setKeepAsSet(
           dropped.reduce((result, job) => removeImport(result, job), current),
           id,
           keepSet && kept.length > 1,
-        ),
-      );
+        );
+        if (next) return settled;
+        const accepted = acceptImports(settled, ids);
+        emptied = accepted.imports.length === 0;
+        return accepted;
+      });
+      setDropped([]);
+      setBusy(false);
+      if (next) {
+        review(next.id);
+        return;
+      }
+      setLastAdded(ids);
       allowClose();
-      if (next)
-        router.replace({ pathname: "/capture/[id]", params: { id: next.id } });
+      if (emptied) router.dismissTo("/closet");
       else router.back();
     } catch {
       setError(t("capture.saveFailed"));
@@ -245,30 +331,23 @@ export default function PiecesFound() {
           onMoveShouldSetResponder={() => true}
           onResponderTerminationRequest={() => false}
           onResponderGrant={(event) => {
-            gesture.current = {
-              start: point(
-                event.nativeEvent.locationX,
-                event.nativeEvent.locationY,
-              ),
-              moved: false,
-            };
+            gesture.current = grab(
+              point(event.nativeEvent.locationX, event.nativeEvent.locationY),
+            );
           }}
           onResponderMove={(event) => {
             const current = gesture.current;
-            if (!current) return;
-            const box = boxFrom(
-              current.start,
-              point(event.nativeEvent.locationX, event.nativeEvent.locationY),
-            );
-            if (box) {
-              current.moved = true;
-              setDrawing({ ...drawing, box });
-            }
+            if (current)
+              drag(
+                current,
+                point(event.nativeEvent.locationX, event.nativeEvent.locationY),
+              );
           }}
           onResponderRelease={() => {
             const current = gesture.current;
             gesture.current = null;
-            if (current && !current.moved) centreBox(current.start);
+            if (current?.mode === "draw" && !current.moved)
+              centreBox(current.start);
           }}
         >
           <View
@@ -281,7 +360,28 @@ export default function PiecesFound() {
               },
               place(drawing.box),
             ]}
-          />
+          >
+            {(
+              [
+                { top: -8, left: -8 },
+                { top: -8, right: -8 },
+                { bottom: -8, left: -8 },
+                { bottom: -8, right: -8 },
+              ] as const
+            ).map((corner, index) => (
+              <View
+                key={index}
+                style={[
+                  styles.handle,
+                  corner,
+                  {
+                    backgroundColor: colors.onMedia,
+                    borderColor: colors.blushStrong,
+                  },
+                ]}
+              />
+            ))}
+          </View>
           {busy ? (
             <View
               testID="moment-selecting"
@@ -350,21 +450,7 @@ export default function PiecesFound() {
         }
         testID="group-screen"
       >
-        <View style={styles.content}>
-          {photo}
-          <View style={styles.controls}>
-            <Button
-              label={t("capture.smaller")}
-              variant="quiet"
-              onPress={() => resize(-step)}
-            />
-            <Button
-              label={t("capture.larger")}
-              variant="quiet"
-              onPress={() => resize(step)}
-            />
-          </View>
-        </View>
+        <View style={styles.content}>{photo}</View>
       </Screen>
     );
 
@@ -377,11 +463,15 @@ export default function PiecesFound() {
       footer={
         <Footer
           error={error}
+          waiting={waiting}
           primary={{
-            label: t("common.done"),
+            label:
+              adding.length === 1
+                ? t("capture.addOne")
+                : t("capture.addMany", { count: adding.length }),
             onPress: () => void done(),
             busy,
-            disabled: kept.length === 0,
+            disabled: adding.length === 0,
             testID: "group-done",
           }}
         />
@@ -390,28 +480,66 @@ export default function PiecesFound() {
     >
       <View style={styles.content}>
         {scanned ? null : photo}
-        <Rows>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.strip}
+          testID="group-strip"
+        >
           {jobs.map((job, index) => {
             const name = nameOf(job, index + 1);
-            const title = scanned ? name : `${index + 1} ${name}`;
+            const spoken = scanned ? name : `${index + 1}, ${name}`;
             const isKept = !dropped.includes(job.id);
             return (
-              <Row
-                key={job.id}
-                title={title}
-                meta={
-                  job.region?.partial ? t("capture.partialShort") : undefined
-                }
-                leading={{ thumb: jobPiece(job) }}
-                checked={isKept}
-                onPress={() => toggle(job.id)}
-                accessibilityLabel={scanned ? name : `${index + 1}, ${name}`}
-                last={index === jobs.length - 1}
-                testID={`group-row-${index + 1}`}
-              />
+              <View key={job.id}>
+                <Tile
+                  image={jobPiece(job)}
+                  label={scanned ? name : `${index + 1} ${name}`}
+                  meta={
+                    job.region?.partial ? t("capture.partialShort") : undefined
+                  }
+                  size="strip"
+                  state={
+                    job.state === "queued" || job.state === "preparing"
+                      ? job.state
+                      : undefined
+                  }
+                  onPress={
+                    isKept && isSettled(job) && job.state !== "failed"
+                      ? () => review(job.id)
+                      : undefined
+                  }
+                  accessibilityLabel={spoken}
+                  testID={`group-card-${index + 1}`}
+                />
+                <Pressable
+                  accessibilityRole="checkbox"
+                  accessibilityLabel={spoken}
+                  accessibilityState={{ checked: isKept }}
+                  hitSlop={theme.space.sm}
+                  onPress={() => toggle(job.id)}
+                  style={[
+                    styles.check,
+                    {
+                      backgroundColor: isKept ? colors.blush : colors.scrimPill,
+                      borderColor: isKept ? colors.blushStrong : colors.onMedia,
+                    },
+                  ]}
+                  testID={`group-row-${index + 1}`}
+                >
+                  {isKept ? (
+                    <Symbol
+                      name="checkmark"
+                      size={13}
+                      tone="ink"
+                      weight="semibold"
+                    />
+                  ) : null}
+                </Pressable>
+              </View>
             );
           })}
-        </Rows>
+        </ScrollView>
         {jobs.length > 1 ? (
           <Rows>
             <Row
@@ -469,10 +597,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.space.sm,
     borderRadius: theme.radius.full,
   },
-  controls: {
-    flexDirection: "row",
+  handle: {
+    position: "absolute",
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 2,
+  },
+  strip: { gap: theme.space.md },
+  check: {
+    position: "absolute",
+    top: theme.space.sm,
+    right: theme.space.sm,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    alignItems: "center",
     justifyContent: "center",
-    gap: theme.space.xl,
   },
   bleed: { marginLeft: -theme.space.sm, alignSelf: "flex-start" },
 });

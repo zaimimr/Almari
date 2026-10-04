@@ -116,6 +116,29 @@ test("P01 a clear photo becomes a named piece with category, subcategory and sty
   assert.equal(piece.traits, undefined);
 });
 
+test("accepting only some imports leaves the others waiting", () => {
+  const closet = acceptImports(
+    finishImport(
+      startImport(
+        queueImport(finished(), {
+          id: "other",
+          source: "other-original.jpg",
+          createdAt: "2026-10-01T08:00:00Z",
+        }),
+        "other",
+      ),
+      "other",
+      prepared(),
+    ),
+    ["other"],
+  );
+  assert.deepEqual(
+    closet.imports.map((job) => job.id),
+    ["job"],
+  );
+  assert.equal(closet.pieces.length, 1);
+});
+
 test("close calls, missing cutouts, and several garments ask for a quick check", () => {
   let closet = finished({
     labels: closeLabels,
