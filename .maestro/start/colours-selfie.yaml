@@ -4,20 +4,14 @@ appId: com.zaimimran.almari
 ---
 - addMedia:
     - "../../assets/fixtures/selfie.jpg"
-- launchApp:
-    clearState: true
-    permissions:
-      all: allow
-- extendedWaitUntil:
-    visible: "What is your name\\?"
-    timeout: 20000
-- repeat:
-    times: 10
-    while:
-      notVisible: "Which colours suit you\\?"
-    commands:
-      - tapOn:
-          id: "onboarding-next"
+- runFlow: ../lib/sample-closet.yaml
+- tapOn:
+    id: "header-profile"
+- scrollUntilVisible:
+    element:
+      id: "tile-colours"
+- tapOn:
+    id: "tile-colours"
 - tapOn: "Take a selfie"
 - assertVisible: "Daylight, facing a window"
 - assertVisible: "Wipe the lens"

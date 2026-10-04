@@ -35,11 +35,6 @@ appId: com.zaimimran.almari
     id: "onboarding-next"
 - assertVisible:
     id: "step-title"
-    text: "How do you like your clothes to sit?"
-- tapOn:
-    id: "onboarding-next"
-- assertVisible:
-    id: "step-title"
     text: "For Eid and parties, how much sparkle?"
 - tapOn:
     id: "onboarding-next"
@@ -48,30 +43,17 @@ appId: com.zaimimran.almari
     text: "Where are you?"
 - tapOn:
     id: "onboarding-next"
-- assertVisible:
-    id: "step-title"
-    text: "When should your outfit come?"
-- tapOn:
-    id: "onboarding-next"
-- assertVisible:
-    id: "step-title"
-    text: "Which colours suit you?"
-- tapOn:
-    id: "onboarding-next"
 - assertVisible: "You are set"
 - tapOn: "Back"
 - tapOn: "Back"
-- tapOn: "Back"
-- tapOn: "Back"
-- tapOn: "Back"
-- assertVisible: "How do you like your clothes to sit?"
+- assertVisible: "For Eid and parties, how much sparkle?"
 - tapOn:
-    id: "card-loose"
+    id: "sparkle-plain"
 - assertVisible:
-    id: "card-loose"
+    id: "sparkle-plain"
     selected: true
 - assertVisible:
-    id: "card-structured"
+    id: "sparkle-heavy"
     selected: false
 - tapOn: "Back"
 - tapOn: "Back"

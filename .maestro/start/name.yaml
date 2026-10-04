@@ -36,9 +36,8 @@ appId: com.zaimimran.almari
     visible:
       id: "today-outfit"
     timeout: 60000
-- tapOn: "Profile"
-- scrollUntilVisible:
-    element: "Replay onboarding"
-- tapOn: "Replay onboarding"
-- assertVisible: "What is your name?"
+- tapOn:
+    id: "header-profile"
+- assertVisible:
+    id: "profile-name"
 - assertNotVisible: "Sara"

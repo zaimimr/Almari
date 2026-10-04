@@ -318,7 +318,7 @@ These answer the open questions above and override any earlier text in this file
 Round 1 and round 2 of `owner-feedback.md` folded in. Round 2 amends the spec: the fourteen taken items are new features and are in scope.
 
 - Closet could not open: content centred on the splash, "Try again" above the home indicator (UC-F01-02).
-- Onboarding is ten steps in this order: name, hijab, hijab styles, coverage, everyday style, fit, sparkle, location, notifications, colours. Every step skippable, Back on every step. Body and colour lean leave onboarding and stay on Profile. Coverage, everyday style, fit and hijab styles use illustrated choice cards; hijab styles is a new multi-select; coverage gains Relaxed and No preference.
+- Onboarding is seven steps in this order: name, hijab, hijab styles, coverage, everyday style, sparkle, location. Fit, morning outfit and colours live on Profile. Every step skippable, Back on every step. Body and colour lean leave onboarding and stay on Profile. Coverage, everyday style, fit and hijab styles use illustrated choice cards; hijab styles is a new multi-select; coverage gains Relaxed and No preference.
 - Location: "Use my location" or "Search for your city", on the step and on the Profile row.
 - Colours: prep tips, live face circle with feedback, auto capture, palette with best and "go easy on" shades, "These don't look like me". Skin tone chips removed everywhere.
 - Today: "Another" alone in the quiet row, "Not for me" next to Undo after Another, thumbs up, thumbs down and Save as icons on the outfit card (thumbs down is "Not for me"), greeting by name, coverage line, Rediscover row, opened by the morning notification.

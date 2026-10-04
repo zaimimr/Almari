@@ -35,18 +35,13 @@ appId: com.zaimimran.almari
     visible:
       id: "today-outfit"
     timeout: 60000
-- tapOn: "Profile"
+- tapOn:
+    id: "header-profile"
 - scrollUntilVisible:
-    element: "Replay onboarding"
-- tapOn: "Replay onboarding"
-- assertVisible: "What is your name?"
-- repeat:
-    times: 10
-    while:
-      notVisible: "For Eid and parties, how much sparkle?"
-    commands:
-      - tapOn:
-          id: "onboarding-next"
+    element:
+      id: "tile-sparkle"
+- tapOn:
+    id: "tile-sparkle"
 - assertVisible:
     id: "sparkle-heavy"
     selected: true

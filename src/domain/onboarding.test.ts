@@ -319,10 +319,10 @@ test("Back goes to the step before, and the first step has no Back", () => {
   assert.equal(previousStep("name", answers), null);
   assert.equal(previousStep("hijab", answers), "name");
   assert.equal(previousStep("coverage", answers), "hijabStyles");
-  assert.equal(previousStep("done", answers), "colours");
+  assert.equal(previousStep("done", answers), "place");
 });
 
-test("ten steps in the owner's order, hijab styles skipped after Not needed", () => {
+test("seven steps in the owner's order, hijab styles skipped after Not needed", () => {
   assert.deepEqual(
     [...onboardingSteps],
     [
@@ -331,19 +331,16 @@ test("ten steps in the owner's order, hijab styles skipped after Not needed", ()
       "hijabStyles",
       "coverage",
       "style",
-      "fit",
       "sparkle",
       "place",
-      "notifications",
-      "colours",
       "done",
     ],
   );
   const answers = answersFrom(emptyCloset);
-  assert.equal(stepsFor(answers).length, 11);
+  assert.equal(stepsFor(answers).length, 8);
   assert.equal(skipStep("hijab", answers), "hijabStyles");
   const no = { ...answers, hijab: { hijab: "no" as const } };
-  assert.equal(stepsFor(no).length, 10);
+  assert.equal(stepsFor(no).length, 7);
   assert.equal(skipStep("hijab", no), "coverage");
   assert.equal(previousStep("coverage", no), "hijab");
 });

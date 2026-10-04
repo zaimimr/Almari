@@ -24,7 +24,7 @@ appId: com.zaimimran.almari
     timeout: 20000
 - assertVisible: "Oslo"
 - tapOn: "Next"
-- assertVisible: "When should your outfit come?"
+- assertVisible: "You are set"
 - repeat:
     times: 10
     while:
@@ -37,18 +37,13 @@ appId: com.zaimimran.almari
     visible:
       id: "today-outfit"
     timeout: 60000
-- tapOn: "Profile"
+- tapOn:
+    id: "header-profile"
 - scrollUntilVisible:
-    element: "Replay onboarding"
-- tapOn: "Replay onboarding"
-- assertVisible: "What is your name?"
-- repeat:
-    times: 10
-    while:
-      notVisible: "Where are you?"
-    commands:
-      - tapOn:
-          id: "onboarding-next"
+    element:
+      id: "profile-location"
+- tapOn:
+    id: "profile-location"
 - assertVisible:
     id: "place-check"
 - assertVisible: "Oslo"

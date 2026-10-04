@@ -23,15 +23,21 @@ export const onboardingSteps = [
   "hijabStyles",
   "coverage",
   "style",
-  "fit",
   "sparkle",
   "place",
-  "notifications",
-  "colours",
   "done",
 ] as const;
 
-export type OnboardingStep = (typeof onboardingSteps)[number];
+export const answerSteps = [
+  ...onboardingSteps,
+  "fit",
+  "notifications",
+  "colours",
+] as const;
+
+export type OnboardingStep = (typeof answerSteps)[number];
+
+const flow: readonly OnboardingStep[] = onboardingSteps;
 
 export type Answers = {
   name: { name: string | null };
@@ -59,7 +65,7 @@ const hijabPreference = {
 } as const;
 
 export function stepsFor(answers: Answers): OnboardingStep[] {
-  return onboardingSteps.filter(
+  return flow.filter(
     (step) => step !== "hijabStyles" || answers.hijab.hijab !== "no",
   );
 }
@@ -70,8 +76,8 @@ export function skipStep(
 ): OnboardingStep {
   const steps = stepsFor(answers);
   return (
-    onboardingSteps
-      .slice(onboardingSteps.indexOf(step) + 1)
+    flow
+      .slice(flow.indexOf(step) + 1)
       .find((next) => steps.includes(next)) ?? "done"
   );
 }
@@ -82,8 +88,8 @@ export function previousStep(
 ): OnboardingStep | null {
   const steps = stepsFor(answers);
   return (
-    onboardingSteps
-      .slice(0, onboardingSteps.indexOf(step))
+    flow
+      .slice(0, flow.indexOf(step))
       .reverse()
       .find((before) => steps.includes(before)) ?? null
   );

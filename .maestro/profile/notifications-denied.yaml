@@ -1,10 +1,10 @@
 appId: com.zaimimran.almari
-# UC-F01-08
+# UC-F01-19
 ---
 - runFlow: ../lib/sample-closet.yaml
 - launchApp:
     permissions:
-      camera: deny
+      notifications: deny
 - extendedWaitUntil:
     visible:
       id: "today-outfit"
@@ -13,13 +13,15 @@ appId: com.zaimimran.almari
     id: "header-profile"
 - scrollUntilVisible:
     element:
-      id: "tile-colours"
+      id: "profile-morning"
 - tapOn:
-    id: "tile-colours"
-- tapOn: "Take a selfie"
-- tapOn: "Open camera"
+    id: "profile-morning"
+- tapOn: "07:00.*"
 - extendedWaitUntil:
-    visible: ".*Camera access is off.*"
+    visible:
+      id: "notify-denied"
     timeout: 10000
 - assertVisible: "Open Settings"
-- assertVisible: "Choose a recent selfie"
+- tapOn: "Off.*"
+- assertNotVisible:
+    id: "notify-denied"

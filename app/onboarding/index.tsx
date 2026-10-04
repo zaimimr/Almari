@@ -9,7 +9,7 @@ import {
 import Animated, { LayoutAnimationConfig } from "react-native-reanimated";
 import { Stack, router, useLocalSearchParams } from "expo-router";
 import {
-  onboardingSteps,
+  answerSteps,
   type OnboardingStep,
 } from "../../src/domain/onboarding";
 import { StepColours } from "../../src/features/onboarding/StepColours";
@@ -44,7 +44,7 @@ const questions: Record<Exclude<OnboardingStep, "done">, Key> = {
 };
 
 const isStep = (value: unknown): value is OnboardingStep =>
-  onboardingSteps.includes(value as OnboardingStep);
+  answerSteps.includes(value as OnboardingStep);
 
 export default function Onboarding() {
   const params = useLocalSearchParams<{ step?: string }>();

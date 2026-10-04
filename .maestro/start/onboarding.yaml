@@ -10,7 +10,7 @@ appId: com.zaimimran.almari
     timeout: 20000
 - assertVisible: "What is your name?"
 - assertVisible:
-    id: "step-1-of-10"
+    id: "step-1-of-7"
 - assertNotVisible:
     id: "onboarding-back"
 - takeScreenshot: docs/redesign/screens/after/start/name
@@ -22,7 +22,7 @@ appId: com.zaimimran.almari
     id: "onboarding-next"
 - assertVisible: "Do you wear a hijab?"
 - assertVisible:
-    id: "step-2-of-10"
+    id: "step-2-of-7"
 - assertNotVisible: "Skip"
 - tapOn: "Sometimes"
 - takeScreenshot: docs/redesign/screens/after/start/hijab
@@ -51,21 +51,13 @@ appId: com.zaimimran.almari
     id: "style-both"
     selected: true
 - tapOn: "Next"
-- assertVisible: "How do you like your clothes to sit?"
-- tapOn:
-    id: "card-loose"
-- tapOn: "Next"
 - assertVisible: "For Eid and parties, how much sparkle?"
-- tapOn: "A little"
+- tapOn:
+    id: "sparkle-little"
 - tapOn: "Next"
 - assertVisible: "Where are you?"
-- tapOn: "Next"
-- assertVisible: "When should your outfit come?"
-- tapOn: "Next"
-- assertVisible: "Which colours suit you?"
 - assertVisible:
-    id: "step-10-of-10"
-- takeScreenshot: docs/redesign/screens/after/start/colours
+    id: "step-7-of-7"
 - tapOn: "Next"
 - assertVisible: "You are set"
 - assertNotVisible:
@@ -76,36 +68,28 @@ appId: com.zaimimran.almari
     visible:
       id: "today-outfit"
     timeout: 60000
-- tapOn: "Profile"
-- scrollUntilVisible:
-    element: "Replay onboarding"
-- tapOn: "Replay onboarding"
-- assertVisible: "What is your name?"
-- assertVisible: "Sara"
-- tapOn: "Next"
+- tapOn:
+    id: "header-profile"
 - assertVisible:
-    id: "hijab-sometimes"
-    selected: true
-- tapOn: "Next"
-- assertVisible:
-    id: "card-hijab"
-    text: "checkbox, checked"
-- assertVisible:
-    id: "card-shayla"
-    text: "checkbox, checked"
-- tapOn: "Next"
+    id: "profile-name"
+    text: "Sara"
+- tapOn:
+    id: "tile-coverage"
 - assertVisible:
     id: "card-moderate"
     selected: true
-- tapOn: "Next"
+- tapOn: "Back"
+- tapOn:
+    id: "tile-style"
 - assertVisible:
     id: "style-both"
     selected: true
-- tapOn: "Next"
-- assertVisible:
-    id: "card-loose"
-    selected: true
-- tapOn: "Next"
+- tapOn: "Back"
+- scrollUntilVisible:
+    element:
+      id: "tile-sparkle"
+- tapOn:
+    id: "tile-sparkle"
 - assertVisible:
     id: "sparkle-little"
     selected: true

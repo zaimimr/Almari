@@ -4,20 +4,14 @@ appId: com.zaimimran.almari
 ---
 - addMedia:
     - "../../assets/fixtures/selfie.jpg"
-- launchApp:
-    clearState: true
-    permissions:
-      all: allow
-- extendedWaitUntil:
-    visible: "What is your name\\?"
-    timeout: 20000
-- repeat:
-    times: 10
-    while:
-      notVisible: "Which colours suit you\\?"
-    commands:
-      - tapOn:
-          id: "onboarding-next"
+- runFlow: ../lib/sample-closet.yaml
+- tapOn:
+    id: "header-profile"
+- scrollUntilVisible:
+    element:
+      id: "tile-colours"
+- tapOn:
+    id: "tile-colours"
 - tapOn: "Take a selfie"
 - tapOn: "Open camera"
 - tapOn:
@@ -51,17 +45,7 @@ appId: com.zaimimran.almari
 - assertVisible: "Which colours suit you\\?"
 - assertVisible:
     id: "colours-saved"
-- repeat:
-    times: 10
-    while:
-      notVisible: "You are set"
-    commands:
-      - tapOn:
-          id: "onboarding-next"
-- tapOn: "Try the sample closet"
-- extendedWaitUntil:
-    visible:
-      id: "today-outfit"
-    timeout: 60000
-- tapOn: "Profile"
+- tapOn: "Back"
+- assertVisible:
+    id: "profile"
 - assertVisible: "(Light|Warm|Clear|Cool|Soft|Deep) (spring|summer|autumn|winter)"

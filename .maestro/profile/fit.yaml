@@ -1,0 +1,29 @@
+appId: com.zaimimran.almari
+# UC-F01-16
+---
+- runFlow: ../lib/sample-closet.yaml
+- tapOn:
+    id: "header-profile"
+- scrollUntilVisible:
+    element:
+      id: "tile-fit"
+- tapOn:
+    id: "tile-fit"
+- assertVisible: "How do you like your clothes to sit?"
+- tapOn:
+    id: "card-structured"
+- assertVisible:
+    id: "card-structured"
+    selected: true
+- takeScreenshot: docs/redesign/screens/after/profile/fit
+- tapOn: "Save"
+- assertVisible:
+    id: "profile"
+- scrollUntilVisible:
+    element:
+      id: "tile-fit"
+- tapOn:
+    id: "tile-fit"
+- assertVisible:
+    id: "card-structured"
+    selected: true
