@@ -1,4 +1,4 @@
-import { mainColourName, namedSwatch } from "../../domain/color";
+import { colourNames, mainColourName, namedSwatch } from "../../domain/color";
 import { categoryOf, type ImportJob, type Piece } from "../../domain/closet";
 import { t } from "../../i18n";
 import type { TileState } from "../../ui";
@@ -10,7 +10,9 @@ export const hexOf = (name: string) =>
     .join("")}`;
 
 export function jobColour(job: ImportJob): string | null {
-  return job.colour ?? mainColourName(job.prepared?.palette) ?? null;
+  if (job.colour) return job.colour;
+  const main = mainColourName(job.prepared?.palette);
+  return colourNames.find((name) => name.toLowerCase() === main) ?? null;
 }
 
 export function jobPhoto(job: ImportJob): { photo: string; raw: boolean } {

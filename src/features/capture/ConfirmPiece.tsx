@@ -419,12 +419,14 @@ function ConfirmForm({
       >
         <View style={styles.content}>
           {banner}
-          <Tile
-            image={jobPiece(job)}
-            raw
-            size="hero"
-            accessibilityLabel={t("capture.photo")}
-          />
+          <View style={styles.hero}>
+            <Tile
+              image={jobPiece(job)}
+              raw
+              size="hero"
+              accessibilityLabel={t("capture.photo")}
+            />
+          </View>
           {cutoutButton ? (
             <View style={styles.bleed}>{cutoutButton}</View>
           ) : null}
@@ -623,13 +625,15 @@ function ConfirmForm({
     >
       <View style={styles.content}>
         {banner}
-        <Tile
-          image={{ ...jobPiece(job), photo: shown.photo }}
-          raw={shown.raw}
-          size="hero"
-          state={studio.making ? "preparing" : undefined}
-          accessibilityLabel={name || t("capture.photo")}
-        />
+        <View style={styles.hero}>
+          <Tile
+            image={{ ...jobPiece(job), photo: shown.photo }}
+            raw={shown.raw}
+            size="hero"
+            state={studio.making ? "preparing" : undefined}
+            accessibilityLabel={name || t("capture.photo")}
+          />
+        </View>
         {cutoutButton ? <View style={styles.bleed}>{cutoutButton}</View> : null}
         {question === "category" ? (
           <View style={styles.block}>
@@ -809,6 +813,7 @@ const styles = StyleSheet.create({
   content: { gap: theme.space.lg },
   block: { gap: theme.space.md },
   rows: { gap: theme.space.sm },
+  hero: { width: 240, alignSelf: "center" },
   bleed: { marginLeft: -theme.space.sm, alignSelf: "flex-start" },
   actions: {
     flexDirection: "row",
