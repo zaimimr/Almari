@@ -32,4 +32,8 @@ appId: com.zaimimran.almari
 - hideKeyboard
 - takeScreenshot: docs/redesign/screens/after/capture/by-hand
 - tapOn: "Add to closet"
-- assertVisible: "Taupe bag.*"
+- tapOn: "Back"
+- scrollUntilVisible:
+    element:
+      text: "Taupe bag.*"
+    centerElement: true

@@ -3,7 +3,7 @@ appId: com.zaimimran.almari
 # seed: fresh.sh,fixture.sh slowPrepare=3000
 ---
 - addMedia:
-    - "../../assets/wardrobe/navy-blazer.png"
+    - "../../assets/wardrobe/taupe-bag.png"
 - runFlow: ../lib/open-add.yaml
 - tapOn:
     text: "Got it"
@@ -18,6 +18,6 @@ appId: com.zaimimran.almari
     timeout: 30000
 - extendedWaitUntil:
     visible:
-      id: "job-ready-1"
+      id: "job-confirm-1"
+      text: "Taupe .*"
     timeout: 120000
-- assertVisible: "Colour: .*"

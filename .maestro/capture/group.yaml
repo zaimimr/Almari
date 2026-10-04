@@ -18,7 +18,7 @@ appId: com.zaimimran.almari
     id: "group-row-1"
 - assertVisible: "Link as a set"
 - tapOn:
-    id: "group-set"
+    id: "group-set-toggle"
 - tapOn:
     id: "region-2"
 - tapOn: "Smaller"
@@ -35,17 +35,36 @@ appId: com.zaimimran.almari
     direction: RIGHT
 - tapOn: "Use this box"
 - tapOn: "Done"
+- waitForAnimationToEnd
 - repeat:
     while:
       visible: "Looks right"
     commands:
       - tapOn: "Looks right"
+      - waitForAnimationToEnd
+- repeat:
+    while:
+      visible:
+        id: "job-confirm-1"
+    commands:
+      - tapOn:
+          id: "job-confirm-1"
+      - waitForAnimationToEnd
+      - tapOn: "Looks right"
+      - waitForAnimationToEnd
 - extendedWaitUntil:
     visible:
       id: "capture-add"
     timeout: 60000
 - tapOn:
     id: "capture-add"
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible:
+        id: "capture-screen"
+    commands:
+      - tapOn: "Back"
 - scrollUntilVisible:
     element:
       text: "Taupe kaftan.*"

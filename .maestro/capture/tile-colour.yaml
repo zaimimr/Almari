@@ -4,9 +4,14 @@ appId: com.zaimimran.almari
 ---
 - runFlow: ../lib/open-add.yaml
 - tapOn: "Colour: .*"
+- scrollUntilVisible:
+    element:
+      text: "Blush"
+    centerElement: true
 - tapOn: "Blush"
 - assertVisible: "Colour: Blush"
 - tapOn: "Add 2 pieces"
 - tapOn: "Sage kurta"
 - assertVisible:
-    text: "Blush"
+    id: "fact-colour"
+    text: "Colour: Blush"

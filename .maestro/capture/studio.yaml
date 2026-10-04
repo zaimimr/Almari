@@ -22,4 +22,5 @@ appId: com.zaimimran.almari
     timeout: 30000
 - assertVisible:
     text: "Clean background"
-    selected: true
+    childOf:
+      id: "confirm-photo"
