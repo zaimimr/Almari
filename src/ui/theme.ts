@@ -36,17 +36,18 @@ export const theme = {
     xxxl: 48,
     footerInset: 48,
   },
+  font: { serif: "Fraunces-Regular", serifBold: "Fraunces-SemiBold" },
   radius: { print: 4, sm: 8, md: 12, lg: 20, full: 999 },
   type: {
     display: {
-      fontFamily: "Georgia",
+      fontFamily: "Fraunces-Regular",
       fontSize: 40,
       lineHeight: 44,
       letterSpacing: -0.8,
       maxFontSizeMultiplier: 2,
     },
     title: {
-      fontFamily: "Georgia",
+      fontFamily: "Fraunces-Regular",
       fontSize: 28,
       lineHeight: 34,
       letterSpacing: -0.4,

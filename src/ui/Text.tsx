@@ -74,7 +74,7 @@ export function Text({
         type,
         { color: colors[toneColor[tone]] },
         (role === "title" || role === "display") &&
-          bold && { fontFamily: "Georgia-Bold" },
+          bold && { fontFamily: theme.font.serifBold },
         style,
       ]}
     >

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Text as NativeText, View, useWindowDimensions } from "react-native";
 import { greeting, greetingShort } from "../../domain/greeting";
 import { locale, t } from "../../i18n";
-import { gutterFor } from "../../ui/theme";
+import { gutterFor, theme } from "../../ui/theme";
 import { useLargeText } from "../../ui/useLargeText";
 
 const hiddenLayer = {
@@ -41,7 +41,7 @@ export function useGreeting(name: string | undefined, hour: number) {
           allowFontScaling={false}
           style={{
             width: room,
-            fontFamily: bold ? "Georgia-Bold" : "Georgia",
+            fontFamily: bold ? theme.font.serifBold : theme.font.serif,
             fontSize: 34 * Math.min(fontScale, 1.76),
           }}
           onTextLayout={(event) => {

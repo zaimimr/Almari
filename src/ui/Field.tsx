@@ -93,7 +93,7 @@ export function Field({
           ? [
               styles.rename,
               {
-                fontFamily: bold ? "Georgia-Bold" : "Georgia",
+                fontFamily: bold ? theme.font.serifBold : theme.font.serif,
                 borderBottomColor: colors.lineField,
               },
             ]
