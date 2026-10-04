@@ -15,7 +15,8 @@ appId: com.zaimimran.almari
     commands:
       - tapOn:
           id: "onboarding-next"
-- tapOn: "Heavy"
+- tapOn:
+    id: "sparkle-heavy"
 - assertVisible:
     id: "sparkle-heavy"
     selected: true

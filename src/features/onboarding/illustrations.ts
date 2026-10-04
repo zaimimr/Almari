@@ -1,4 +1,9 @@
-import { hijabStyles, type HijabStyle } from "../../domain/closet";
+import {
+  hijabStyles,
+  sparkles,
+  type HijabStyle,
+  type Sparkle,
+} from "../../domain/closet";
 import { t } from "../../i18n";
 import type { ChoiceOption } from "../../ui";
 
@@ -18,6 +23,10 @@ export const illustrations = {
   "hijab-chador": require("../../../assets/illustrations/hijab-chador.jpg"),
   "hijab-niqab": require("../../../assets/illustrations/hijab-niqab.jpg"),
   "hijab-burqa": require("../../../assets/illustrations/hijab-burqa.jpg"),
+  "sparkle-plain": require("../../../assets/illustrations/sparkle-plain.jpg"),
+  "sparkle-little": require("../../../assets/illustrations/sparkle-little.jpg"),
+  "sparkle-heavy": require("../../../assets/illustrations/sparkle-heavy.jpg"),
+  "sparkle-bridal": require("../../../assets/illustrations/sparkle-bridal.jpg"),
 } as const;
 
 export function coverageOptions(): ChoiceOption<
@@ -68,5 +77,14 @@ export function hijabStyleOptions(): ChoiceOption<HijabStyle>[] {
     description: t(`hijabStyle.${id}.description`),
     image: illustrations[`hijab-${id}`],
     bust: true,
+  }));
+}
+
+export function sparkleOptions(): ChoiceOption<Sparkle>[] {
+  return sparkles.map((id) => ({
+    id,
+    label: t(`sparkle.${id}`),
+    description: t(`sparkle.${id}.description`),
+    image: illustrations[`sparkle-${id}`],
   }));
 }

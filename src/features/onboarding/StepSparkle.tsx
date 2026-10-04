@@ -1,7 +1,7 @@
-import { sparkles, type Sparkle } from "../../domain/closet";
+import type { Sparkle } from "../../domain/closet";
 import type { Answers } from "../../domain/onboarding";
-import { t } from "../../i18n";
-import { ChipRow } from "../../ui";
+import { ChoiceCardGroup } from "../../ui";
+import { sparkleOptions } from "./illustrations";
 
 export function StepSparkle({
   answers,
@@ -11,8 +11,8 @@ export function StepSparkle({
   onChange: (next: Answers["sparkle"]) => void;
 }) {
   return (
-    <ChipRow<Sparkle>
-      options={sparkles.map((id) => ({ id, label: t(`sparkle.${id}`) }))}
+    <ChoiceCardGroup<Sparkle>
+      options={sparkleOptions()}
       value={answers.sparkle.sparkle}
       onChange={(next) =>
         onChange({ sparkle: typeof next === "string" ? next : null })
