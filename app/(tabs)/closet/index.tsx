@@ -139,7 +139,6 @@ export default function ClosetScreen() {
               onChangeText: (search) => screen.change({ search }),
             }
       }
-      maintainVisibleContentPosition
       footer={
         selecting ? (
           <SelectFooter
@@ -201,7 +200,6 @@ export default function ClosetScreen() {
           {screen.sections.length ? (
             <ClosetGrid
               sections={screen.sections}
-              gridKey={JSON.stringify({ ...filter, search: "" })}
               selecting={selecting}
               selected={selected}
               onPress={(piece) =>

@@ -46,14 +46,12 @@ function tileLabel(piece: Piece, meta: string | undefined) {
 
 export function ClosetGrid({
   sections,
-  gridKey,
   selecting,
   selected,
   onPress,
   onLongPress,
 }: {
   sections: ClosetSection[];
-  gridKey: string;
   selecting: boolean;
   selected: string[];
   onPress: (piece: Piece) => void;
@@ -64,7 +62,6 @@ export function ClosetGrid({
 
   return (
     <Animated.View
-      key={gridKey}
       entering={crossfade.entering}
       exiting={crossfade.exiting}
       style={styles.sections}

@@ -25,6 +25,7 @@ import Animated, {
   useScrollOffset,
   useSharedValue,
   type AnimatedRef,
+  type SharedValue,
 } from "react-native-reanimated";
 import { scheduleOnUI } from "react-native-worklets";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -73,6 +74,7 @@ function useShowPart(
   scrollRef: AnimatedRef<Animated.ScrollView>,
   topInset: number,
   bottomInset: number,
+  contentHeight: SharedValue<number>,
 ): ShowPart {
   const reduce = useReduceMotion();
   const offset = useScrollOffset(scrollRef);
@@ -100,7 +102,9 @@ function useShowPart(
       if (end <= bottom) return;
       const delta = height <= bottom - top ? end - bottom : box.pageY - top;
       if (delta <= 0) return;
-      const to = offset.get() + delta;
+      const limit = contentHeight.get() - frame.height + bottomInset;
+      const to = Math.min(offset.get() + delta, Math.max(0, limit));
+      if (to <= offset.get()) return;
       if (reduce) {
         scrollTo(scrollRef, 0, to, false);
         return;
@@ -150,10 +154,12 @@ export function Screen({
     Math.max(insets.bottom, theme.space.md),
   );
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
+  const contentHeight = useSharedValue(0);
   const showPart = useShowPart(
     scrollRef,
     insets.top,
     showFooter ? 0 : insets.bottom,
+    contentHeight,
   );
   useImperativeHandle(contentRef, () => scrollRef.current as ScrollView);
   const [under, setUnder] = useState(false);
@@ -272,9 +278,10 @@ export function Screen({
             onLayout={(event) =>
               measureUnder({ viewport: event.nativeEvent.layout.height })
             }
-            onContentSizeChange={(_, height) =>
-              measureUnder({ content: height })
-            }
+            onContentSizeChange={(_, height) => {
+              contentHeight.set(height);
+              measureUnder({ content: height });
+            }}
             contentContainerStyle={{
               paddingHorizontal: gutter,
               paddingTop: theme.space.sm,
