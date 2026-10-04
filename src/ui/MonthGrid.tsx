@@ -85,10 +85,12 @@ function Chevron({
   icon,
   label,
   onPress,
+  testID,
 }: {
   icon: SFSymbol;
   label: string;
   onPress: () => void;
+  testID: string;
 }) {
   const colors = useColors();
   const { symbolScale } = useLargeText();
@@ -109,6 +111,7 @@ function Chevron({
       onPress={onPress}
       onPressIn={() => press.set(timing(1, "quick", "silk"))}
       onPressOut={() => press.set(timing(0, "quick", "silk"))}
+      testID={testID}
       accessibilityRole="button"
       accessibilityLabel={label}
       style={[styles.circle, { width: target, height: target }]}
@@ -206,6 +209,9 @@ function Day({
     <Pressable
       disabled={!pressable}
       onPress={onPress}
+      testID={
+        pressable ? `${mode === "wear" ? "day" : "pick"}-${date}` : undefined
+      }
       onPressIn={() => press.set(timing(1, "quick", "silk"))}
       onPressOut={() => press.set(timing(0, "quick", "silk"))}
       accessible={pressable}
@@ -363,6 +369,7 @@ export function MonthGrid({
             expanded={wear ? date === selected : undefined}
             onPress={() => onSelect(date)}
             last={index === shown.length - 1}
+            testID={`${wear ? "day" : "pick"}-${date}`}
           />
           {wear ? (
             <Expander
@@ -406,6 +413,7 @@ export function MonthGrid({
                 icon="chevron.left"
                 label={t("calendar.previous")}
                 onPress={() => page(-1)}
+                testID="calendar-previous"
               />
             ) : null}
           </View>
@@ -415,6 +423,7 @@ export function MonthGrid({
                 icon="chevron.right"
                 label={t("calendar.next")}
                 onPress={() => page(1)}
+                testID="calendar-next"
               />
             ) : null}
           </View>
