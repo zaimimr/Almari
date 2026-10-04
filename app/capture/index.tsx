@@ -1,6 +1,6 @@
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import type { ImportJob } from "../../src/domain/closet";
 import {
   CaptureSources,
@@ -34,6 +34,12 @@ function slotKey(slot: Slot) {
 
 export default function AddPieces() {
   const grid = useCaptureGrid();
+  const { open: openParam } = useLocalSearchParams<{ open?: string }>();
+  useEffect(() => {
+    if (openParam !== "library") return;
+    router.setParams({ open: undefined });
+    void grid.choosePhotos();
+  }, [openParam, grid]);
   const retake = useRetake();
   const { ax } = useLargeText();
   const [colourFor, setColourFor] = useState<string | null>(null);
