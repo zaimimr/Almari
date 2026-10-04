@@ -6,11 +6,11 @@ appId: com.zaimimran.almari
     direction: DOWN
     timeout: 60000
 - tapOn: "Start with the sample closet"
-- scrollUntilVisible:
-    element: "Try a sample style"
-    centerElement: true
-    timeout: 60000
-- tapOn: "Try a sample style"
+- runFlow:
+    when:
+      visible: "Try a sample style"
+    commands:
+      - tapOn: "Try a sample style"
 - extendedWaitUntil:
     visible:
       id: "today-outfit"
