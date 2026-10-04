@@ -1,0 +1,24 @@
+appId: com.zaimimran.almari
+# UC-F09-06
+# seed: seed-looks-clean.sh,seed-looks.sh,seed-wears.sh,fixture.sh now=2026-10-07T09:00:00+02:00
+---
+- launchApp:
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible: "Looks"
+    timeout: 30000
+- tapOn: "Looks"
+- extendedWaitUntil:
+    visible:
+      id: "look-seed-look-eid"
+    timeout: 10000
+- tapOn:
+    id: "look-seed-look-eid"
+- extendedWaitUntil:
+    visible: "Show on Today"
+    timeout: 10000
+- tapOn: "Change"
+- extendedWaitUntil:
+    visible: "Edit your look"
+    timeout: 10000

@@ -1,0 +1,28 @@
+appId: com.zaimimran.almari
+# UC-F09-13
+# seed: seed-looks-clean.sh,seed-looks.sh,seed-wears.sh,seed-wears-september.sh,fixture.sh now=2026-10-14T09:00:00+02:00
+---
+- launchApp:
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible: "Looks"
+    timeout: 30000
+- tapOn: "Looks"
+- tapOn:
+    id: "header-calendar"
+- tapOn:
+    id: "day-2026-10-02"
+- extendedWaitUntil:
+    visible: "Fri 2 Oct"
+    timeout: 10000
+- tapOn: ".*, Everyday"
+- extendedWaitUntil:
+    visible: "Save look"
+    timeout: 10000
+- swipe:
+    start: 1%, 50%
+    end: 80%, 50%
+- extendedWaitUntil:
+    visible: "Fri 2 Oct"
+    timeout: 10000

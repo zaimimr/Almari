@@ -1,0 +1,16 @@
+appId: com.zaimimran.almari
+# UC-F09-01
+# seed: seed-looks-clean.sh none
+---
+- launchApp:
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible: "Looks"
+    timeout: 30000
+- tapOn: "Looks"
+- extendedWaitUntil:
+    visible: "No looks yet"
+    timeout: 10000
+- assertVisible: "Add pieces"
+- assertNotVisible: "New look"

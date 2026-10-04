@@ -1,0 +1,30 @@
+appId: com.zaimimran.almari
+# UC-F09-02
+# seed: seed-looks-clean.sh,seed-looks.sh,seed-wears.sh,fixture.sh now=2026-10-07T09:00:00+02:00
+---
+- launchApp:
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible: "Looks"
+    timeout: 30000
+- tapOn: "Looks"
+- extendedWaitUntil:
+    visible:
+      id: "look-seed-look-eid"
+    timeout: 10000
+- assertVisible: "Eid lunch, Eid · Planned for Sun 11 Oct, 3 pieces"
+- assertVisible: "Office navy, Work, 4 pieces"
+- assertVisible: "Worn"
+- assertVisible: ".*, Everyday · 2 Oct, 4 pieces"
+- takeScreenshot: docs/redesign/screens/after/looks/looks
+- tapOn:
+    id: "look-seed-look-eid"
+- extendedWaitUntil:
+    visible: "Show on Today"
+    timeout: 10000
+- assertVisible: "Eid lunch"
+- assertVisible: "Rename"
+- assertVisible: "3 pieces"
+- assertVisible: "Change"
+- takeScreenshot: docs/redesign/screens/after/looks/look

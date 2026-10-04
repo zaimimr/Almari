@@ -1,0 +1,27 @@
+appId: com.zaimimran.almari
+# UC-F09-08
+# seed: seed-looks-clean.sh,seed-looks.sh,seed-looks-missing.sh,fixture.sh now=2026-10-07T09:00:00+02:00
+---
+- launchApp:
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible: "Looks"
+    timeout: 30000
+- tapOn: "Looks"
+- extendedWaitUntil:
+    visible: "Office navy, Work · 1 piece missing, 4 pieces"
+    timeout: 10000
+- tapOn:
+    id: "look-seed-look-office"
+- extendedWaitUntil:
+    visible: "1 piece is no longer in your closet"
+    timeout: 10000
+- openLink: almari://look/nope
+- extendedWaitUntil:
+    visible: "This look is no longer here"
+    timeout: 10000
+- tapOn: "Go back"
+- extendedWaitUntil:
+    visible: "1 piece is no longer in your closet"
+    timeout: 10000

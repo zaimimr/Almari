@@ -1,0 +1,50 @@
+appId: com.zaimimran.almari
+# UC-F09-12
+# seed: seed-looks-clean.sh,seed-looks.sh,seed-wears.sh,seed-wears-september.sh,fixture.sh now=2026-10-14T09:00:00+02:00
+---
+- launchApp:
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible: "Looks"
+    timeout: 30000
+- tapOn: "Looks"
+- tapOn:
+    id: "header-calendar"
+- extendedWaitUntil:
+    visible: "October 2026"
+    timeout: 10000
+- assertVisible:
+    id: "day-2026-10-02"
+- assertNotVisible:
+    id: "day-2026-10-01"
+- assertNotVisible:
+    id: "calendar-next"
+- assertVisible: "Variety"
+- takeScreenshot: docs/redesign/screens/after/looks/calendar
+- tapOn: "Variety"
+- extendedWaitUntil:
+    visible: "Not worn lately"
+    timeout: 10000
+- tapOn: "Looks"
+- tapOn:
+    id: "header-calendar"
+- tapOn:
+    id: "calendar-previous"
+- extendedWaitUntil:
+    visible: "September 2026"
+    timeout: 10000
+- assertVisible: "Most worn"
+- assertVisible: "Black boots, 2 times"
+- assertNotVisible: "Variety"
+- tapOn:
+    id: "day-2026-09-12"
+- assertVisible: "Sat 12 Sep"
+- takeScreenshot: docs/redesign/screens/after/looks/calendar-september
+- tapOn:
+    id: "calendar-previous"
+- extendedWaitUntil:
+    visible: "August 2026"
+    timeout: 10000
+- assertVisible: "No looks worn in August"
+- assertNotVisible: "Most worn"
