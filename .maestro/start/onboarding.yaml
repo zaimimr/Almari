@@ -17,7 +17,9 @@ appId: com.zaimimran.almari
 - tapOn:
     id: "name-field"
 - inputText: "Sara"
-- tapOn: "Next"
+- waitForAnimationToEnd
+- tapOn:
+    id: "onboarding-next"
 - assertVisible: "Do you wear a hijab?"
 - assertVisible:
     id: "step-2-of-10"
