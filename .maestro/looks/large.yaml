@@ -1,0 +1,25 @@
+appId: com.zaimimran.almari
+# UC-F09-01, UC-F09-13 at AX5
+# seed: seed-looks-clean.sh,seed-looks.sh,seed-wears.sh,seed-wears-september.sh,fixture.sh now=2026-10-14T09:00:00+02:00
+# seed: ax5.sh
+---
+- launchApp:
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible: "Looks"
+    timeout: 30000
+- tapOn: "Looks"
+- extendedWaitUntil:
+    visible:
+      id: "header-calendar"
+    timeout: 10000
+- takeScreenshot: docs/redesign/screens/after/looks/ax-looks
+- tapOn:
+    id: "header-calendar"
+- extendedWaitUntil:
+    visible: "October 2026.*"
+    timeout: 10000
+- assertVisible:
+    id: "day-2026-10-02"
+- takeScreenshot: docs/redesign/screens/after/looks/ax-calendar
