@@ -15,3 +15,5 @@ appId: com.zaimimran.almari
     visible:
       id: "today-outfit"
     timeout: 60000
+- assertVisible:
+    id: "sample-chip"
