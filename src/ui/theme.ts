@@ -36,7 +36,7 @@ export const theme = {
     xxxl: 48,
     footerInset: 48,
   },
-  font: { serif: "Fraunces-Regular", serifBold: "Fraunces-SemiBold" },
+  fontFamily: { serif: "Fraunces-Regular", serifBold: "Fraunces-SemiBold" },
   radius: { print: 4, sm: 8, md: 12, lg: 20, full: 999 },
   type: {
     display: {

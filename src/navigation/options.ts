@@ -15,7 +15,7 @@ export function largeTitleOptions(fontScale: number, bold: boolean) {
     headerLargeTitleEnabled: true,
     headerLargeTitleStyle: {
       color: theme.colors.ink,
-      fontFamily: bold ? theme.font.serifBold : theme.font.serif,
+      fontFamily: bold ? theme.fontFamily.serifBold : theme.fontFamily.serif,
       fontSize: 34 * Math.min(fontScale, 1.76),
     },
     headerTitleStyle: { color: theme.colors.ink },

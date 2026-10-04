@@ -41,7 +41,7 @@ export function useGreeting(name: string | undefined, hour: number) {
           allowFontScaling={false}
           style={{
             width: room,
-            fontFamily: bold ? theme.font.serifBold : theme.font.serif,
+            fontFamily: bold ? theme.fontFamily.serifBold : theme.fontFamily.serif,
             fontSize: 34 * Math.min(fontScale, 1.76),
           }}
           onTextLayout={(event) => {
