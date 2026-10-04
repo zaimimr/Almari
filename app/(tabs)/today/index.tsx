@@ -1,31 +1,20 @@
-import { useMemo, useState } from "react";
-import { Linking, StyleSheet, View } from "react-native";
+import { useMemo } from "react";
+import { StyleSheet, View } from "react-native";
 import { router } from "expo-router";
-import { colourNames, mainColourName } from "../../../src/domain/color";
-import { setColour } from "../../../src/domain/facts";
 import { plannedPieces } from "../../../src/domain/looks";
 import { replacementsFor, roleOf } from "../../../src/domain/styling";
 import {
   backToEveryday,
   clockFor,
-  discardPlan,
-  dropFromToday,
-  resumePlan,
   toggleKeep,
 } from "../../../src/domain/today";
 import { hijabAlternatives } from "../../../src/domain/wardrobe";
 import { ChangeStrip } from "../../../src/features/ChangeStrip";
-import { ColourChips } from "../../../src/features/ColourChips";
 import { ActionArea } from "../../../src/features/today/ActionArea";
-import { ContextRow } from "../../../src/features/today/ContextRow";
 import { FirstRun } from "../../../src/features/today/FirstRun";
+import { IntentRow } from "../../../src/features/today/IntentRow";
 import { OutfitCard } from "../../../src/features/today/OutfitCard";
-import {
-  ProblemBanner,
-  StaleBanner,
-} from "../../../src/features/today/ProblemBanner";
-import { Rediscover } from "../../../src/features/today/Rediscover";
-import { StartWith } from "../../../src/features/today/StartWith";
+import { ProblemBanner } from "../../../src/features/today/ProblemBanner";
 import {
   useToday,
   type TodayModel,
@@ -47,16 +36,13 @@ import { fullDate, shortWeekday, spokenDate } from "../../../src/ui/dates";
 import { theme } from "../../../src/ui/theme";
 import { useGreeting } from "../../../src/features/today/useGreeting";
 
+const heroSize = 360;
+
 function Strip({ model }: { model: TodayModel }) {
-  const { closet, request, session, open, setOpen, pieces } = model;
-  const [all, setAll] = useState(false);
-  const [editing, setEditing] = useState(false);
-  const [colourId, setColourId] = useState<string | null>(null);
-  const colourFor = closet.pieces.find((piece) => piece.id === colourId);
-  const target =
-    open?.kind === "strip"
-      ? (pieces.find((piece) => piece.id === open.pieceId) ?? null)
-      : null;
+  const { closet, request, session, openId, setOpenId, pieces } = model;
+  const target = openId
+    ? (pieces.find((piece) => piece.id === openId) ?? null)
+    : null;
   const role = target ? roleOf(target) : null;
 
   const strip = useMemo(() => {
@@ -67,7 +53,7 @@ function Strip({ model }: { model: TodayModel }) {
         request,
         session.pieceIds,
         model.score,
-        { all },
+        { all: false },
       );
       const marks = plannedPieces(closet, clockFor(now()));
       const options = comparison
@@ -104,16 +90,9 @@ function Strip({ model }: { model: TodayModel }) {
       ],
       value: undefined,
     };
-  }, [target, role, request, session, closet, pieces, all, model]);
+  }, [target, role, request, session, closet, pieces, model]);
 
   if (!target || !role || !request || !strip) return null;
-
-  const close = () => {
-    setAll(false);
-    setEditing(false);
-    setColourId(null);
-    setOpen(null);
-  };
 
   return (
     <ChangeStrip
@@ -122,12 +101,10 @@ function Strip({ model }: { model: TodayModel }) {
       alternatives={strip.alternatives}
       currentId={target.id}
       open
-      onClose={close}
+      onClose={() => setOpenId(null)}
       onPick={(piece) => {
-        setEditing(false);
-        setColourId(null);
         model.pick(target, piece);
-        setOpen({ kind: "strip", pieceId: piece.id });
+        setOpenId(piece.id);
       }}
       keep={{
         kept: request.keptIds.includes(target.id),
@@ -135,48 +112,9 @@ function Strip({ model }: { model: TodayModel }) {
           void model.run((current) => toggleKeep(current, target.id)),
       }}
       value={strip.value}
-      onShowAll={role === "hijab" && !all ? () => setAll(true) : undefined}
-      onAnotherWithout={
-        role === "hijab"
-          ? undefined
-          : () => {
-              close();
-              void model.restyle(
-                (current) => dropFromToday(current, target.id),
-                null,
-              );
-            }
-      }
-      onEditColour={() => {
-        setEditing(true);
-        setColourId(null);
-      }}
       loading={model.styling}
       testID="change-strip"
-    >
-      {editing && !colourFor ? (
-        <Button
-          label={t("common.editColour")}
-          variant="quiet"
-          size="small"
-          onPress={() => setColourId(target.id)}
-          testID="change-edit-colour"
-        />
-      ) : null}
-      {colourFor ? (
-        <ColourChips
-          value={
-            colourNames.find(
-              (name) => name.toLowerCase() === mainColourName(colourFor.colors),
-            ) ?? null
-          }
-          onPick={(name) =>
-            void model.run((current) => setColour(current, colourFor.id, name))
-          }
-          inSurface
-        />
-      ) : null}
-    </ChangeStrip>
+    />
   );
 }
 
@@ -198,9 +136,7 @@ function TitleRow({ model }: { model: TodayModel }) {
         size="small"
         disabled={model.busy}
         onPress={() =>
-          tomorrow
-            ? model.leaveTomorrow()
-            : void model.restyle(backToEveryday, null)
+          tomorrow ? model.leaveTomorrow() : void model.restyle(backToEveryday)
         }
         testID="today-back"
       />
@@ -212,52 +148,6 @@ function Banners({ model }: { model: TodayModel }) {
   const { result, showOutfit } = model;
   return (
     <>
-      {model.tomorrowWaiting ? (
-        <Banner
-          tone="notice"
-          text={t("today.tomorrow")}
-          actions={[
-            {
-              label: t("today.showTomorrow"),
-              accessibilityLabel: t("today.showTomorrowLabel"),
-              onPress: model.showTomorrow,
-            },
-          ]}
-          testID="today-tomorrow-waiting"
-        />
-      ) : null}
-      {model.planned ? (
-        <Banner
-          tone="notice"
-          text={t("today.planned", { name: model.planned.name })}
-          actions={[
-            {
-              label: t("looks.showOnToday"),
-              onPress: () => void model.showLook(model.planned!.pieceIds),
-            },
-          ]}
-          testID="today-planned"
-        />
-      ) : null}
-      {model.unsaved?.date ? (
-        <Banner
-          tone="notice"
-          text={t("today.unsavedPlan", {
-            day: spokenDate(model.unsaved.date, locale),
-          })}
-          actions={[
-            {
-              label: t("today.openPlan"),
-              onPress: () => void model.restyle(resumePlan, null),
-            },
-            {
-              label: t("common.discard"),
-              onPress: () => void model.run(discardPlan),
-            },
-          ]}
-          testID="today-unsaved"
-        />
-      ) : null}
       {model.stylingFailed ? (
         <Banner
           tone="notice"
@@ -279,31 +169,7 @@ function Banners({ model }: { model: TodayModel }) {
               />
             ))
         : null}
-      {model.lostPieces > 0 || model.broken.length > 0 ? (
-        <StaleBanner model={model} />
-      ) : null}
     </>
-  );
-}
-
-function WeatherMark({ model }: { model: TodayModel }) {
-  const forecast = model.closet.styling.forecast;
-  const date = model.session?.date ?? model.today?.localDate;
-  if (
-    !forecast ||
-    forecast.date !== date ||
-    model.request?.weather.source !== "forecast"
-  )
-    return null;
-  return (
-    <Button
-      label={t("forecast.mark")}
-      accessibilityLabel={t("forecast.markLabel")}
-      variant="quiet"
-      size="small"
-      onPress={() => void Linking.openURL(forecast.attribution.url)}
-      testID="forecast-mark"
-    />
   );
 }
 
@@ -315,7 +181,14 @@ function TodayFooter({ model }: { model: TodayModel }) {
     return (
       <Footer
         primary={{
-          label: t(saved ? "today.openLook" : "common.saveLook"),
+          label: saved
+            ? t("today.openLook")
+            : t("today.saveFor", {
+                day: spokenDate(
+                  model.session?.date ?? model.today?.localDate ?? "",
+                  locale,
+                ),
+              }),
           disabled: model.busy,
           onPress: () => {
             if (saved)
@@ -356,7 +229,7 @@ function TodayFooter({ model }: { model: TodayModel }) {
 
 export default function TodayScreen() {
   const model = useToday();
-  const { closet, today, mode, request, open, setOpen } = model;
+  const { closet, today, mode, request, openId, setOpenId } = model;
   const [title, measure] = useGreeting(closet.styling.name, model.hour);
   const inline = mode === "planning" || mode === "tomorrow";
   const first = !closet.styling.everyday;
@@ -378,8 +251,6 @@ export default function TodayScreen() {
       </Screen>
     );
 
-  const openId = open?.kind === "strip" ? open.pieceId : null;
-
   return (
     <Screen
       large={!inline}
@@ -391,8 +262,7 @@ export default function TodayScreen() {
     >
       {measure}
       <View style={styles.content}>
-        {inline ? <TitleRow model={model} /> : null}
-        <ContextRow model={model} />
+        {inline ? <TitleRow model={model} /> : <IntentRow model={model} />}
         <Banners model={model} />
         {!today ? (
           <Silk
@@ -407,18 +277,14 @@ export default function TodayScreen() {
               <FlatLay
                 pieces={model.pieces}
                 size="hero"
-                maxSize={236}
+                maxSize={heroSize}
                 swapMark
                 keptIds={request?.keptIds}
                 openId={openId}
                 revision={model.revision}
                 state={model.styling ? "arranging" : undefined}
                 onPiecePress={(piece) =>
-                  setOpen(
-                    openId === piece.id
-                      ? null
-                      : { kind: "strip", pieceId: piece.id },
-                  )
+                  setOpenId(openId === piece.id ? null : piece.id)
                 }
                 testID="today-outfit"
               />
@@ -428,9 +294,6 @@ export default function TodayScreen() {
             <ActionArea model={model} />
           </View>
         ) : null}
-        {today ? <StartWith model={model} /> : null}
-        {today ? <Rediscover model={model} /> : null}
-        <WeatherMark model={model} />
       </View>
     </Screen>
   );
@@ -439,8 +302,13 @@ export default function TodayScreen() {
 const styles = StyleSheet.create({
   content: { gap: theme.space.xl },
   outfit: { gap: theme.space.md },
-  hero: { width: "100%", maxWidth: 236, alignSelf: "center" },
-  placeholder: { alignSelf: "center", width: 236, height: 236 },
+  hero: { width: "100%", maxWidth: heroSize, alignSelf: "center" },
+  placeholder: {
+    alignSelf: "center",
+    width: "100%",
+    maxWidth: heroSize,
+    aspectRatio: 1,
+  },
   titleRow: {
     flexDirection: "row",
     flexWrap: "wrap",

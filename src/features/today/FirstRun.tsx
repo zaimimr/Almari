@@ -9,15 +9,13 @@ import type { TodayModel } from "./useToday";
 
 export function FirstRun({ model }: { model: TodayModel }) {
   const trySample = () =>
-    void model.restyle(
-      (current) =>
-        saveEverydayStyle(
-          setWardrobe(current, "sample", clockFor(now())),
-          { occasion: "work", style: "western", hijab: "always", sample: true },
-          clockFor(now()),
-          true,
-        ),
-      null,
+    void model.restyle((current) =>
+      saveEverydayStyle(
+        setWardrobe(current, "sample", clockFor(now())),
+        { occasion: "work", style: "western", hijab: "always", sample: true },
+        clockFor(now()),
+        true,
+      ),
     );
 
   return (

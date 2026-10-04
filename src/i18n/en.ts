@@ -1322,6 +1322,7 @@ export const en = {
   "today.openLook": "Open look",
   "result.saved": "Saved",
   "today.another": "Another",
+  "today.saveFor": "Save for {day}",
   "outfit.notForMeSkipped": "Not for me, previous outfit",
   "result.changed": "Changed",
   "today.check.title": "Check {name}",

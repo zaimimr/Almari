@@ -10,8 +10,6 @@ import {
   type Weather,
 } from "../../domain/closet";
 import {
-  dislikeOutfit,
-  giveFeedback,
   likedNow,
   likeOutfit,
   recordSaved,
@@ -19,11 +17,11 @@ import {
   undoFeedback,
   woreThis,
   wornNow,
-  type Chip,
 } from "../../domain/feedback";
 import { saveLook as storeLook } from "../../domain/closet";
 import { lookForPieces, plannedToday } from "../../domain/looks";
 import { outfitName } from "../../domain/outfitName";
+import type { Occasion } from "../../domain/taxonomy";
 import { coverageNote } from "../../domain/outfitView";
 import { rulesScorer } from "../../domain/scoring/rulesScorer";
 import { scoreContext } from "../../domain/scoring/taste";
@@ -32,6 +30,7 @@ import {
   activeSession,
   applyLook,
   applyRequest,
+  backToEveryday,
   backToToday,
   clockFor,
   ensureToday,
@@ -39,13 +38,11 @@ import {
   prepareTomorrow,
   resultFor,
   saveForecast,
+  startOccasion,
   startOver,
   tryAnother,
-  undoChange,
-  unsavedPlan,
 } from "../../domain/today";
 import { forecastFor, forecastWeather } from "../../domain/weather";
-import { rediscover } from "../../domain/wardrobe";
 import { locale, t } from "../../i18n";
 import { useCloset } from "../../state/closet";
 import { now } from "../../state/clock";
@@ -55,15 +52,7 @@ import { announce } from "../../ui/announce";
 
 export type Mode = "everyday" | "occasion" | "planning" | "tomorrow";
 
-export type Slot =
-  | { kind: "undo"; revision: number; another: boolean }
-  | { kind: "thanks"; revision: number; eventId: string; restore: boolean };
-
-export type Open =
-  | { kind: "reasons" }
-  | { kind: "slotReasons" }
-  | { kind: "check" }
-  | { kind: "strip"; pieceId: string };
+export const intents = ["everyday", "work", "gym", "party"] as const;
 
 const at = () => now().toISOString();
 
@@ -76,15 +65,14 @@ export function useToday() {
     transform: (closet: Closet) => Closet;
     options: { restyle?: boolean };
   } | null>(null);
-  const [slot, setSlot] = useState<Slot | null>(null);
-  const [open, setOpen] = useState<Open | null>(null);
-  const [pendingHijab, setPendingHijab] = useState<string | null>(null);
-  const [leftTomorrow, setLeftTomorrow] = useState(false);
+  const [openId, setOpenId] = useState<string | null>(null);
   const [hour, setHour] = useState(() => now().getHours());
   const [foregrounded, setForegrounded] = useState(0);
   const [forecastFailed, setForecastFailed] = useState(false);
   const [forecastDone, setForecastDone] = useState<string | null>(null);
   const announcing = useRef(false);
+  const shownPlan = useRef<string | null>(null);
+  const handledStale = useRef<string | null>(null);
 
   const today = closet.styling.today;
   const session = today ? activeSession(today) : null;
@@ -143,7 +131,6 @@ export function useToday() {
     () => (showOutfit && request ? evaluateOutfit(pieces, request, pool) : []),
     [showOutfit, pieces, request, pool],
   );
-  const checks = review.filter((problem) => problem.severity === "review");
   const broken = review.filter((problem) => problem.severity !== "review");
 
   const name = request ? outfitName(pieces, request.occasion, locale) : "";
@@ -188,12 +175,11 @@ export function useToday() {
   );
 
   const restyle = useCallback(
-    async (transform: (closet: Closet) => Closet, next: Slot | null) => {
+    async (transform: (closet: Closet) => Closet) => {
       announcing.current = true;
-      setOpen(null);
+      setOpenId(null);
       const saved = await run(transform, { restyle: true });
-      if (saved) setSlot(next);
-      else announcing.current = false;
+      if (!saved) announcing.current = false;
       return saved;
     },
     [run],
@@ -289,7 +275,6 @@ export function useToday() {
     ? () => void run(failed.transform, failed.options)
     : null;
 
-  const visibleSlot = slot && slot.revision === revision ? slot : null;
   const last =
     !!result &&
     result.outfits.length > 1 &&
@@ -298,72 +283,32 @@ export function useToday() {
   const only = !!result && result.outfits.length <= 1;
 
   const another = () =>
-    restyle(
-      (current) => (last ? startOver(current) : tryAnother(current, revision)),
-      last ? null : { kind: "undo", revision: revision + 1, another: true },
+    restyle((current) =>
+      last ? startOver(current) : tryAnother(current, revision),
     );
 
+  const intent = (occasion: Occasion) => {
+    if (!request || occasion === request.occasion) return;
+    const everyday = closet.styling.everyday?.occasion ?? "everyday";
+    void restyle((current) =>
+      occasion === everyday
+        ? backToEveryday(current)
+        : startOccasion(current, {
+            ...request,
+            occasion,
+            keptIds: [],
+            garmentType: null,
+          }),
+    );
+  };
+
   const liked = likedNow(closet);
-  const like = () => {
-    setOpen((current) => (current?.kind === "reasons" ? null : current));
+  const like = () =>
     void run((current) =>
       liked
         ? undoFeedback(current, liked.id)
         : likeOutfit(current, at(), randomUUID()),
-    ).then((saved) => {
-      if (saved && !liked) announce(t("outfit.thanks"), { queue: true });
-    });
-  };
-
-  const feedback = (chip: Chip) => {
-    const id = randomUUID();
-    if (chip === "hijab-mismatch") {
-      const hijab = pieces.find((piece) => piece.category === "hijab");
-      void run((current) =>
-        giveFeedback(current, chip, revision, at(), id),
-      ).then((saved) => {
-        if (!saved) return;
-        setPendingHijab(id);
-        setOpen(hijab ? { kind: "strip", pieceId: hijab.id } : null);
-      });
-      return;
-    }
-    void restyle(
-      (current) => {
-        const liked = likedNow(current);
-        const cleared = liked ? undoFeedback(current, liked.id) : current;
-        return giveFeedback(cleared, chip, revision, at(), id);
-      },
-      { kind: "thanks", revision: revision + 1, eventId: id, restore: true },
     );
-  };
-
-  const skippedFeedback = (_chip: Chip) => {
-    const previous = session?.previousPieceIds;
-    if (!previous) return;
-    const id = randomUUID();
-    setOpen(null);
-    void run((current) => dislikeOutfit(current, previous, at(), id)).then(
-      (saved) => {
-        if (saved)
-          setSlot({ kind: "thanks", revision, eventId: id, restore: false });
-      },
-    );
-  };
-
-  const undo = () => {
-    const current = visibleSlot;
-    setSlot(null);
-    setOpen(null);
-    if (current?.kind === "thanks") {
-      void run((closetNow) => {
-        const withdrawn = undoFeedback(closetNow, current.eventId);
-        return current.restore ? undoChange(withdrawn) : withdrawn;
-      });
-      return;
-    }
-    void run(undoChange);
-  };
 
   const savedLook = session ? lookForPieces(closet, session.pieceIds) : null;
   const saveLook = async () => {
@@ -396,73 +341,52 @@ export function useToday() {
     if (worn) void run((current) => undoFeedback(current, worn.id));
   };
 
-  const pick = (from: Piece, to: Piece) => {
-    const pending = pendingHijab;
-    setPendingHijab(null);
+  const pick = (from: Piece, to: Piece) =>
     void run((current) =>
       swapPiece(current, from.id, to.id, revision, at(), randomUUID()),
     ).then((saved) => {
-      if (!saved) return;
-      announce(t("result.changed"), { queue: true });
-      setSlot(
-        pending
-          ? {
-              kind: "thanks",
-              revision: revision + 1,
-              eventId: pending,
-              restore: true,
-            }
-          : { kind: "undo", revision: revision + 1, another: false },
-      );
-    });
-  };
-
-  const showLook = (ids: string[]) =>
-    restyle((current) => applyLook(current, ids, revision), {
-      kind: "undo",
-      revision: revision + 1,
-      another: false,
+      if (saved) announce(t("result.changed"), { queue: true });
     });
 
   const change = (next: Partial<OutfitRequest>) =>
     request
-      ? restyle(
-          (current) => applyRequest(current, { ...request, ...next }, revision),
-          null,
+      ? restyle((current) =>
+          applyRequest(current, { ...request, ...next }, revision),
         )
       : Promise.resolve(false);
 
-  const leaveTomorrow = () => {
-    setLeftTomorrow(true);
-    void restyle(backToToday, null);
-  };
-
-  const showTomorrow = () => {
-    setLeftTomorrow(false);
-    void restyle((current) => {
-      const day = clockFor(now());
-      return prepareTomorrow(current, day, { source: "unknown" });
-    }, null);
-  };
-
-  const tomorrowWaiting =
-    mode === "everyday" &&
-    leftTomorrow &&
-    !!today?.tomorrow &&
-    today.tomorrow.date === nextLocalDate(today.localDate);
+  const leaveTomorrow = () => void restyle(backToToday);
 
   const planned =
-    mode === "everyday"
-      ? (plannedToday(closet, clock).find(
-          (look) =>
-            [...look.pieceIds].sort().join() !==
-            [...(session?.pieceIds ?? [])].sort().join(),
+    mode === "everyday" && !worn
+      ? (plannedToday(closet, clock).find((look) =>
+          look.pieceIds.every((id) =>
+            closet.pieces.some(
+              (piece) => piece.id === id && isAvailable(piece),
+            ),
+          ),
         ) ?? null)
       : null;
-  const unsaved = mode === "everyday" ? unsavedPlan(closet) : null;
-
-  const rediscoverPieces =
-    mode === "tomorrow" ? [] : rediscover(closet, clock, 6);
+  const plannedKey =
+    planned &&
+    [...planned.pieceIds].sort().join() !==
+      [...(session?.pieceIds ?? [])].sort().join()
+      ? `${clock.localDate}:${planned.id}`
+      : null;
+  const stale = !!today && !!session && (lostPieces > 0 || broken.length > 0);
+  const staleKey = stale ? `${today.active}:${revision}` : null;
+  useEffect(() => {
+    if (!plannedKey || !planned || busy || shownPlan.current === plannedKey)
+      return;
+    shownPlan.current = plannedKey;
+    void restyle((current) => applyLook(current, planned.pieceIds, revision));
+  }, [plannedKey, planned, busy, revision, restyle]);
+  useEffect(() => {
+    if (!staleKey || plannedKey || busy || handledStale.current === staleKey)
+      return;
+    handledStale.current = staleKey;
+    void restyle(startOver);
+  }, [staleKey, plannedKey, busy, restyle]);
 
   return {
     closet,
@@ -474,7 +398,6 @@ export function useToday() {
     pieces,
     lostPieces,
     showOutfit,
-    checks,
     broken,
     name,
     reasonLine,
@@ -491,31 +414,22 @@ export function useToday() {
     forecastLoading,
     run,
     restyle,
-    slot: visibleSlot,
-    open,
-    setOpen,
+    openId,
+    setOpenId,
     last,
     only,
     another,
+    intent,
     liked: !!liked,
     like,
-    feedback,
-    skippedFeedback,
-    undo,
     savedLook,
     saveLook,
     worn,
     wear,
     unwear,
     pick,
-    showLook,
     change,
     leaveTomorrow,
-    showTomorrow,
-    tomorrowWaiting,
-    planned,
-    unsaved,
-    rediscoverPieces,
     scorer,
     context,
   };

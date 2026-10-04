@@ -1,7 +1,7 @@
 import { router } from "expo-router";
 import type { ButtonProps } from "../../ui";
 import type { Problem, ProblemAction } from "../../domain/styling";
-import { clockFor, setWardrobe, startOver } from "../../domain/today";
+import { clockFor, setWardrobe } from "../../domain/today";
 import { styleName, t } from "../../i18n";
 import { now } from "../../state/clock";
 import { addPiecesRoute } from "../../state/imports";
@@ -15,7 +15,7 @@ export function ProblemBanner({
   model: TodayModel;
   problem: Problem;
 }) {
-  const { closet, request, setOpen } = model;
+  const { closet, request } = model;
   if (!request) return null;
   const nameOf = (id: string) =>
     closet.pieces.find((piece) => piece.id === id)?.name ?? "";
@@ -39,12 +39,10 @@ export function ProblemBanner({
       case "add-pieces":
         return router.push(addPiecesRoute);
       case "use-samples":
-        return void model.restyle(
-          (current) => setWardrobe(current, "sample", clockFor(now())),
-          null,
+        return void model.restyle((current) =>
+          setWardrobe(current, "sample", clockFor(now())),
         );
       case "check-piece":
-        return setOpen({ kind: "check" });
       case "edit-piece":
         return router.push({
           pathname: "/piece/[id]",
@@ -72,7 +70,6 @@ export function ProblemBanner({
       case "use-samples":
         return t("sample.try");
       case "check-piece":
-        return t("today.answerQuestion");
       case "edit-piece":
         return t("today.openPiece", { name: nameOf(action.id) });
     }
@@ -96,30 +93,6 @@ export function ProblemBanner({
             : undefined
       }
       testID="today-problem"
-    />
-  );
-}
-
-export function StaleBanner({ model }: { model: TodayModel }) {
-  const lost = model.lostPieces > 0;
-  return (
-    <Banner
-      tone="notice"
-      text={
-        lost
-          ? t("today.pieceUnavailable")
-          : t("today.noLongerFits", {
-              problems: model.broken.map((item) => item.message).join(" "),
-            })
-      }
-      actions={[
-        {
-          label: t("today.findNew"),
-          onPress: () => void model.restyle(startOver, null),
-          busy: model.styling,
-        },
-      ]}
-      testID="today-stale"
     />
   );
 }

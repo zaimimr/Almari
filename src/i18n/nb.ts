@@ -1340,6 +1340,7 @@ export const nb: Record<Key, string> = {
   "today.openLook": "Åpne look",
   "result.saved": "Lagret",
   "today.another": "Et annet",
+  "today.saveFor": "Lagre for {day}",
   "outfit.notForMeSkipped": "Passer ikke, forrige antrekk",
   "result.changed": "Byttet",
   "today.check.title": "Sjekk {name}",
