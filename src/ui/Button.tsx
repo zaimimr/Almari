@@ -23,6 +23,7 @@ export type ButtonProps = {
   variant?: ButtonVariant;
   size?: "regular" | "small";
   icon?: SFSymbol;
+  iconAfter?: boolean;
   selectedIcon?: SFSymbol;
   selected?: boolean;
   busy?: boolean;
@@ -71,6 +72,7 @@ export function Button({
   variant = "primary",
   size = "small",
   icon,
+  iconAfter = false,
   selectedIcon,
   selected,
   busy = false,
@@ -209,7 +211,7 @@ export function Button({
             style={styles.band}
           />
         ) : null}
-        {icon ? (
+        {icon && !iconAfter ? (
           <Symbol name={icon} size={theme.size.iconBar} tone={tone} />
         ) : null}
         <View style={styles.label}>
@@ -217,6 +219,9 @@ export function Button({
             {label}
           </Text>
         </View>
+        {icon && iconAfter ? (
+          <Symbol name={icon} size={theme.size.iconBar} tone={tone} />
+        ) : null}
       </Animated.View>
     </Pressable>
   );

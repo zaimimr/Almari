@@ -34,6 +34,7 @@ export function NotMe({
           label={t("colours.notMe")}
           variant="quiet"
           icon={open ? "chevron.up" : "chevron.down"}
+          iconAfter
           expanded={open}
           onPress={onToggle}
           testID="colours-not-me"

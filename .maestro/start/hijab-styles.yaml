@@ -29,7 +29,6 @@ appId: com.zaimimran.almari
     text: "checkbox, checked"
 - scrollUntilVisible:
     element: "None of these"
-    centerElement: true
 - tapOn: "None of these"
 - scrollUntilVisible:
     element:

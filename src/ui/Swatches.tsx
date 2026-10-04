@@ -17,7 +17,9 @@ export function Swatches({
   const colors = useColors();
   const { large, ax, symbolScale } = useLargeText();
   const named = large || colors.line !== theme.colors.line;
-  const size = theme.size.swatchLarge * symbolScale;
+  const size = ax
+    ? theme.size.swatchLarge
+    : theme.size.swatchLarge * symbolScale;
   const names = colours
     .map(({ name }) => name.toLocaleLowerCase(locale))
     .join(", ");

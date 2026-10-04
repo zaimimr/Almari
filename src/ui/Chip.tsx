@@ -315,7 +315,7 @@ export function ChipRow<T extends string>({
           {chips}
         </ScrollView>
       ) : (
-        <View {...group} style={[styles.row, styles.wrap]}>
+        <View {...group} style={[styles.row, ax ? styles.stack : styles.wrap]}>
           {chips}
         </View>
       )}
@@ -343,5 +343,6 @@ const styles = StyleSheet.create({
   group: { gap: theme.space.md },
   row: { flexDirection: "row", gap: theme.space.sm },
   wrap: { flexWrap: "wrap" },
+  stack: { flexDirection: "column", alignItems: "flex-start" },
   wrapItem: { maxWidth: "100%" },
 });
