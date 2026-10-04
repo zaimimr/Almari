@@ -1,21 +1,28 @@
 import { useEffect, useRef, useState } from "react";
-import { Linking, Pressable, ScrollView, StyleSheet, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Image } from "expo-image";
+import {
+  AppState,
+  Linking,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
+import Animated, { FadeIn, ReduceMotion } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import { randomUUID } from "expo-crypto";
-import { Stack, router } from "expo-router";
+import { router } from "expo-router";
 import {
   LiveScanView,
   type LiveScanHandle,
   type ScanCameraState,
   type ScanFrameEvent,
 } from "../../modules/closet-vision/src";
-import type { Frame, ScanMode } from "../../src/domain/closet";
+import type { ScanMode } from "../../src/domain/closet";
 import { captureJobs } from "../../src/domain/importing";
 import {
   addScanCapture,
+  heldPiece,
   previewBox,
   readFrame,
   restartScan,
@@ -24,71 +31,127 @@ import {
   scanRows,
   scanSpeed,
   scanStep,
-  shutter,
   speedWindow,
   startScan,
   type HeldPiece,
   type ScanStatus,
 } from "../../src/domain/scan";
+import { FixtureScanView } from "../../src/features/FixtureScanView";
 import { ScanLift, type Sticker } from "../../src/features/ScanLift";
 import { t } from "../../src/i18n";
+import { now } from "../../src/state/clock";
 import { useCloset } from "../../src/state/closet";
 import { discardPhoto, photoUri } from "../../src/storage/local";
+import { fixtures } from "../../src/testing/fixtures";
 import {
-  AppText,
-  Button,
-  Chip,
-  ErrorMessage,
-  HeaderAction,
-  Notice,
+  Footer,
+  HeaderItem,
   Screen,
-} from "../../src/ui/legacy";
+  Segmented,
+  Text,
+  Tile,
+} from "../../src/ui";
+import { announce } from "../../src/ui/announce";
+import { CameraFrame } from "../../src/ui/CameraFrame";
+import { motion } from "../../src/ui/motion";
 import { theme } from "../../src/ui/theme";
-import { now } from "../../src/state/clock";
+import { useColors } from "../../src/ui/useColors";
 
-const statusKeys = {
+type Guide = ScanStatus | "failed";
+
+const guideKeys = {
   find: "scan.status.find",
   show: "scan.status.show",
   hold: "scan.status.hold",
   taken: "scan.status.taken",
   ready: "scan.status.ready",
+  failed: "scan.captureFailed",
 } as const;
 
 const aspect = scanCols / scanRows;
 
-type Lift = {
-  id: string;
-  box: Frame;
-  done: boolean;
-  sticker: Sticker | null;
-  file: string | null;
-};
+const thumbIn = FadeIn.duration(motion.duration.base)
+  .easing(motion.easing.silk)
+  .reduceMotion(ReduceMotion.Never);
+
+type Lift = { id: string; sticker: Sticker | null; file: string | null };
+
+function useSteadyGuide(raw: Guide): Guide {
+  const [shown, setShown] = useState<Guide>(raw);
+  const takenAt = useRef(0);
+
+  useEffect(() => {
+    const at = Date.now();
+    const instant = raw === "taken" || raw === "failed";
+    const wait = instant
+      ? 0
+      : Math.max(
+          motion.timer.dwell,
+          takenAt.current + motion.timer.linger - at,
+        );
+    if (raw === "taken") takenAt.current = at;
+    const id = setTimeout(() => setShown(raw), wait);
+    return () => clearTimeout(id);
+  }, [raw]);
+
+  return shown;
+}
+
+function useSpoken(
+  guide: Guide,
+  active: boolean,
+  lastSpoken: { current: number },
+) {
+  useEffect(() => {
+    if (!active || guide === "taken") return;
+    const text =
+      guide === "ready" ? t("scan.status.readyVoice") : t(guideKeys[guide]);
+    const wait = Math.max(
+      0,
+      lastSpoken.current + motion.timer.announce - Date.now(),
+    );
+    const id = setTimeout(() => {
+      lastSpoken.current = Date.now();
+      announce(text, { queue: false });
+    }, wait);
+    return () => clearTimeout(id);
+  }, [guide, active, lastSpoken]);
+}
 
 export default function Scan() {
   const { closet, update } = useCloset();
+  const colors = useColors();
   const [scanId] = useState(() => randomUUID());
   const [facing, setFacing] = useState<"front" | "back">("back");
   const [allowed, setAllowed] = useState(false);
   const [camera, setCamera] = useState<ScanCameraState | "starting">(
     "starting",
   );
-  const [status, setStatus] = useState<ScanStatus>("find");
-  const [showSpeed, setShowSpeed] = useState(__DEV__);
+  const [status, setStatus] = useState<Guide>("find");
+  const [seen, setSeen] = useState<HeldPiece | null>(null);
+  const [readout, setReadout] = useState(false);
   const [speed, setSpeed] = useState<{ fps: number; parse: number } | null>(
     null,
   );
-  const [failed, setFailed] = useState(false);
   const [size, setSize] = useState({ width: 0, height: 0 });
   const [lift, setLift] = useState<Lift | null>(null);
+  const [settled, setSettled] = useState<string[]>([]);
   const view = useRef<LiveScanHandle>(null);
-  const root = useRef<View>(null);
-  const slotView = useRef<View>(null);
   const strip = useRef<ScrollView>(null);
   const scan = useRef(startScan);
+  const held = useRef<HeldPiece | null>(null);
   const readings = useRef<{ at: number; parse: number }[]>([]);
+  const speedAt = useRef(0);
   const taking = useRef(false);
+  const captures = useRef(0);
+  const lastSpoken = useRef(0);
   const jobs = captureJobs(closet, scanId);
   const mode = closet.styling.scan;
+  const ready = camera === "ready";
+  const guide = useSteadyGuide(status);
+  const found =
+    ready && Boolean(seen) && (guide === "hold" || guide === "ready");
+  useSpoken(guide, ready, lastSpoken);
 
   useEffect(() => {
     let live = true;
@@ -106,21 +169,23 @@ export default function Scan() {
     };
   }, []);
 
-  async function take(held: HeldPiece) {
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") restart();
+    });
+    return () => subscription.remove();
+  }, []);
+
+  async function take(piece: HeldPiece) {
     if (!view.current) return;
     taking.current = true;
-    setFailed(false);
     const id = randomUUID();
     const mirrored = facing === "front";
-    setLift({
-      id,
-      box: previewBox(held.box, size, aspect),
-      done: false,
-      sticker: null,
-      file: null,
-    });
+    captures.current += 1;
     try {
-      const shot = await view.current.capture(id, held.box, held.kind);
+      if (fixtures.failCapture && captures.current <= fixtures.failCapture)
+        throw new Error("fixture");
+      const shot = await view.current.capture(id, piece.box, piece.kind);
       await update((current) =>
         addScanCapture(current, scanId, {
           id,
@@ -129,62 +194,58 @@ export default function Scan() {
           ...(shot.region ? { region: shot.region } : { crop: shot.box }),
         }),
       );
-      setLift((current) =>
-        current?.id === id
-          ? {
-              ...current,
-              done: true,
-              sticker: shot.sticker
-                ? {
-                    uri: photoUri(shot.sticker.name),
-                    frame: previewBox(
-                      shot.sticker.frame,
-                      size,
-                      aspect,
-                      mirrored,
-                    ),
-                    mirrored,
-                  }
-                : null,
-              file: shot.sticker?.name ?? null,
-            }
-          : current,
-      );
+      const sticker = shot.sticker
+        ? {
+            uri: photoUri(shot.sticker.name),
+            frame: previewBox(shot.sticker.frame, size, aspect, mirrored),
+            mirrored,
+          }
+        : null;
+      if (sticker) setLift({ id, sticker, file: shot.sticker?.name ?? null });
+      else landed(id, null);
     } catch {
       scan.current = { ...scan.current, last: null };
-      setFailed(true);
-      setLift(null);
+      setStatus("failed");
+      lastSpoken.current = Date.now();
+      announce(t("scan.captureFailed"), { queue: false });
       taking.current = false;
     }
   }
 
-  function landed() {
-    if (lift?.file) void discardPhoto(lift.file);
+  function settle(id: string) {
+    setSettled((current) => [...current, id]);
+  }
+
+  function landed(id: string, file: string | null) {
+    if (file) void discardPhoto(file);
+    settle(id);
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const job = closet.imports.find((item) => item.id === id);
+    lastSpoken.current = Date.now();
+    announce(
+      t("scan.pieceAdded", {
+        name: job?.name ?? t("scan.traySlot", { number: jobs.length + 1 }),
+      }),
+    );
     setLift(null);
     taking.current = false;
   }
 
-  function slot() {
-    return new Promise<Frame | null>((resolve) => {
-      const target = slotView.current;
-      const base = root.current;
-      if (!target || !base) return resolve(null);
-      base.measureInWindow((left, top) =>
-        target.measureInWindow((x, y, width, height) =>
-          resolve({ x: x - left, y: y - top, width, height }),
-        ),
-      );
-    });
+  function capture(piece: HeldPiece) {
+    scan.current = {
+      ...scan.current,
+      hold: null,
+      held: null,
+      last: { kind: piece.kind, colour: piece.colour },
+    };
+    setStatus("taken");
+    void take(piece);
   }
 
   function press() {
-    if (taking.current) return;
-    const step = shutter(scan.current);
-    scan.current = step.state;
-    if (!step.capture) return;
-    setStatus("taken");
-    void take(step.capture);
+    const piece = held.current;
+    if (taking.current || !piece) return;
+    capture(piece);
   }
 
   function choose(next: ScanMode) {
@@ -201,16 +262,26 @@ export default function Scan() {
       ...readings.current.slice(1 - speedWindow),
       { at: frame.at, parse: frame.parseMs },
     ];
-    if (showSpeed) setSpeed(scanSpeed(readings.current));
+    if (readout && frame.at - speedAt.current >= 1000) {
+      speedAt.current = frame.at;
+      setSpeed(scanSpeed(readings.current));
+    }
     if (taking.current) return;
     const step = scanStep(scan.current, frame, mode);
     scan.current = step.state;
+    const piece = step.state.baseline
+      ? heldPiece(step.state.baseline, frame)
+      : null;
+    held.current = piece;
+    setSeen(piece);
     setStatus(step.status);
-    if (step.capture) void take(step.capture);
+    if (step.capture) capture(step.capture);
   }
 
   function restart() {
     scan.current = restartScan(scan.current);
+    held.current = null;
+    setSeen(null);
     setStatus("find");
   }
 
@@ -223,210 +294,274 @@ export default function Scan() {
     else router.back();
   }
 
-  const header = (
-    <Stack.Screen
-      options={{
-        title: t("scan.title"),
-        headerLeft: () => (
-          <HeaderAction
-            label={t("common.close")}
-            onPress={() => router.back()}
-          />
-        ),
-        headerRight: () => (
-          <HeaderAction label={t("capture.done")} onPress={finish} />
-        ),
-      }}
-    />
-  );
+  function toggleReadout() {
+    setReadout((shown) => !shown);
+  }
+
+  const library = () =>
+    router.dismissTo({ pathname: "/capture", params: { open: "library" } });
 
   if (camera === "denied" || camera === "unavailable")
     return (
-      <Screen centered>
-        {header}
-        <Notice
-          message={t(
-            camera === "denied" ? "problem.camera-off" : "scan.unavailable",
-          )}
-          actions={[
-            ...(camera === "denied"
-              ? [
-                  {
-                    label: t("problem.openSettings"),
+      <Screen media scroll={false} title={t("scan.title")}>
+        <CameraFrame
+          full
+          unavailable={
+            camera === "denied"
+              ? {
+                  title: t("common.cameraOff"),
+                  action: {
+                    label: t("common.openSettings"),
                     onPress: () => void Linking.openSettings(),
+                    media: true,
                   },
-                ]
-              : []),
-            { label: t("common.goBack"), onPress: () => router.back() },
-          ]}
+                  secondary: {
+                    label: t("capture.choosePhotos"),
+                    onPress: library,
+                    variant: "quiet",
+                    media: true,
+                  },
+                }
+              : {
+                  title: t("scan.unavailable"),
+                  action: {
+                    label: t("capture.choosePhotos"),
+                    onPress: library,
+                    media: true,
+                  },
+                }
+          }
         />
       </Screen>
     );
 
+  const box =
+    seen && size.width
+      ? previewBox(seen.box, size, aspect, facing === "front")
+      : null;
+  const shelf = jobs.filter((job) => settled.includes(job.id));
+  const names = shelf
+    .map((job, index) => job.name ?? t("scan.traySlot", { number: index + 1 }))
+    .join(", ");
+  const guideText = ready ? t(guideKeys[guide]) : t("scan.starting");
+  const speedText = speed ? t("scan.speed", speed) : null;
+
   return (
-    <View ref={root} style={styles.screen}>
-      {header}
-      <View
-        style={styles.camera}
-        onLayout={(event) => setSize(event.nativeEvent.layout)}
-      >
-        <LiveScanView
-          ref={view}
-          style={StyleSheet.absoluteFill}
-          facing={facing}
-          active={allowed}
-          frozen={Boolean(lift)}
-          fps={scanFps}
-          onFrame={(event) => onFrame(event.nativeEvent)}
-          onCamera={(event) => setCamera(event.nativeEvent.state)}
+    <Screen
+      media
+      scroll={false}
+      title={t("scan.title")}
+      actions={
+        <HeaderItem
+          icon="camera.rotate"
+          label={t("scan.switch")}
+          testID="header-switch"
+          onPress={() => {
+            setFacing((current) => (current === "back" ? "front" : "back"));
+            restart();
+          }}
         />
-        {mode === "manual" && camera === "ready" ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t("scan.shutter")}
-            disabled={Boolean(lift)}
-            onPress={press}
-            style={({ pressed }) => [
-              styles.shutter,
-              (pressed || lift) && styles.pressed,
-            ]}
+      }
+      footer={
+        <Footer
+          media
+          primary={{
+            label: t("common.done"),
+            onPress: finish,
+            disabled: jobs.length === 0,
+          }}
+        />
+      }
+    >
+      <CameraFrame
+        full
+        outline={
+          box ? { frame: box, state: found ? "found" : "searching" } : null
+        }
+        shutter={{ onPress: press, disabled: !found || Boolean(lift) }}
+        tray={
+          <View
+            accessible={shelf.length > 0}
+            accessibilityRole="image"
+            accessibilityLabel={
+              shelf.length
+                ? t("scan.trayLabel", { count: shelf.length, names })
+                : undefined
+            }
+            accessibilityElementsHidden={shelf.length === 0}
+            style={styles.trayBox}
           >
-            <View style={styles.shutterButton} />
-          </Pressable>
-        ) : null}
-      </View>
-      <SafeAreaView edges={["bottom"]} style={styles.panel}>
-        <Pressable
-          accessibilityLiveRegion="polite"
-          onLongPress={() => setShowSpeed((shown) => !shown)}
-        >
-          <AppText variant="title">
-            {camera === "ready" ? t(statusKeys[status]) : t("scan.starting")}
-          </AppText>
-        </Pressable>
-        {showSpeed && speed ? (
-          <AppText variant="footnote" muted>
-            {t("scan.speed", speed)}
-          </AppText>
-        ) : null}
-        <ErrorMessage message={failed ? t("problem.failed") : null} />
-        <ScrollView
-          ref={strip}
-          horizontal
-          style={styles.stripBox}
-          contentContainerStyle={styles.strip}
-          onContentSizeChange={() =>
-            strip.current?.scrollToEnd({ animated: false })
-          }
-        >
-          {jobs.map((job) => {
-            const image =
-              job.prepared?.thumbnail ?? job.region?.cutout ?? job.source;
-            const flying = job.id === lift?.id;
-            return (
-              <View
-                key={job.id}
-                ref={flying ? slotView : undefined}
-                style={[styles.thumb, flying && styles.hidden]}
-                accessible
-                accessibilityLabel={job.name ?? t("capture.jobPhoto")}
-              >
-                <Image
-                  source={{ uri: photoUri(image) }}
-                  style={styles.image}
-                  contentFit="contain"
-                  recyclingKey={`${job.id}-${image}`}
-                />
-              </View>
-            );
-          })}
-        </ScrollView>
-        <View style={styles.row}>
-          {(
-            [
-              { id: "auto", label: t("scan.auto") },
-              { id: "manual", label: t("scan.manual") },
-            ] as const
-          ).map((option) => (
-            <Chip
-              key={option.id}
-              label={option.label}
-              selected={mode === option.id}
-              onPress={() => choose(option.id)}
+            <ScrollView
+              ref={strip}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.tray}
+              onContentSizeChange={() =>
+                strip.current?.scrollToEnd({ animated: false })
+              }
+            >
+              {shelf.map((job, index) => (
+                <Animated.View
+                  key={job.id}
+                  entering={thumbIn}
+                  testID={`tray-slot-${index + 1}`}
+                  style={[styles.slot, { backgroundColor: colors.canvas }]}
+                >
+                  <Tile
+                    size="thumb"
+                    raw
+                    image={{
+                      uri: photoUri(
+                        job.prepared?.thumbnail ??
+                          job.region?.cutout ??
+                          job.source,
+                      ),
+                    }}
+                    accessibilityLabel={
+                      job.name ?? t("scan.traySlot", { number: index + 1 })
+                    }
+                  />
+                </Animated.View>
+              ))}
+            </ScrollView>
+          </View>
+        }
+        controls={
+          <View style={styles.controls}>
+            <Segmented
+              media
+              options={[
+                { id: "auto", label: t("scan.auto") },
+                { id: "manual", label: t("scan.manual") },
+              ]}
+              value={mode}
+              onChange={choose}
             />
-          ))}
-          <Button
-            label={t("scan.switch")}
-            secondary
-            compact
-            onPress={() => {
-              setFacing((current) => (current === "back" ? "front" : "back"));
-              restart();
-            }}
-          />
-          <Button label={t("scan.again")} secondary compact onPress={restart} />
+          </View>
+        }
+      >
+        <View
+          style={StyleSheet.absoluteFill}
+          onLayout={(event) => setSize(event.nativeEvent.layout)}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        >
+          {fixtures.scan ? (
+            <FixtureScanView
+              ref={view}
+              style={StyleSheet.absoluteFill}
+              facing={facing}
+              active={allowed}
+              frozen={Boolean(lift)}
+              fps={scanFps}
+              onFrame={(event) => onFrame(event.nativeEvent)}
+              onCamera={(event) => setCamera(event.nativeEvent.state)}
+            />
+          ) : (
+            <LiveScanView
+              ref={view}
+              style={StyleSheet.absoluteFill}
+              facing={facing}
+              active={allowed}
+              frozen={Boolean(lift)}
+              fps={scanFps}
+              onFrame={(event) => onFrame(event.nativeEvent)}
+              onCamera={(event) => setCamera(event.nativeEvent.state)}
+            />
+          )}
         </View>
-      </SafeAreaView>
-      {lift ? (
-        <ScanLift
-          key={lift.id}
-          camera={size}
-          box={lift.box}
-          done={lift.done}
-          sticker={lift.sticker}
-          slot={slot}
-          onLanded={landed}
-        />
-      ) : null}
-    </View>
+        {box && found ? (
+          <View
+            testID="moment-found"
+            pointerEvents="none"
+            style={[
+              styles.marker,
+              {
+                left: box.x,
+                top: box.y,
+                width: box.width,
+                height: box.height,
+              },
+            ]}
+          />
+        ) : null}
+        {lift?.sticker ? (
+          <ScanLift
+            key={lift.id}
+            sticker={lift.sticker}
+            onSettle={() => settle(lift.id)}
+            onLanded={() => landed(lift.id, lift.file)}
+          />
+        ) : null}
+        {readout && speedText ? (
+          <View
+            testID="scan-readout"
+            accessible
+            accessibilityLabel={t("scan.speedLabel", speed ?? {})}
+            style={[styles.readout, { backgroundColor: colors.scrimPill }]}
+          >
+            <Text role="mark" tone="onMedia">
+              {speedText}
+            </Text>
+          </View>
+        ) : null}
+        <View style={styles.guideSlot}>
+          <Pressable
+            testID="scan-guide"
+            accessible
+            accessibilityLabel={guideText}
+            accessibilityActions={[
+              {
+                name: "readout",
+                label: t(readout ? "scan.speedHide" : "scan.speedShow"),
+              },
+            ]}
+            onAccessibilityAction={toggleReadout}
+            onLongPress={toggleReadout}
+            hitSlop={theme.space.md}
+            style={[styles.pill, { backgroundColor: colors.scrimPill }]}
+          >
+            <Text role="mark" tone="onMedia" style={styles.centred}>
+              {guideText}
+            </Text>
+          </Pressable>
+        </View>
+      </CameraFrame>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: theme.colors.canvas },
-  camera: { flex: 1, backgroundColor: theme.colors.ink },
-  panel: {
-    gap: theme.space.sm,
-    paddingHorizontal: theme.space.xl,
-    paddingTop: theme.space.md,
-    paddingBottom: theme.space.md,
-    backgroundColor: theme.colors.canvas,
-    borderTopWidth: 1,
-    borderColor: theme.colors.line,
-  },
-  shutter: {
-    position: "absolute",
-    alignSelf: "center",
-    bottom: theme.space.xl,
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    borderWidth: 4,
-    borderColor: theme.colors.onPlum,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  shutterButton: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: theme.colors.onPlum,
-  },
-  pressed: { opacity: 0.6 },
-  stripBox: { height: 64, flexGrow: 0 },
-  strip: { gap: theme.space.sm },
-  thumb: {
-    width: 64,
-    height: 64,
-    borderRadius: theme.radius.md,
+  trayBox: { minHeight: 56 },
+  tray: { gap: theme.space.sm },
+  slot: {
+    width: 56,
+    height: 56,
+    borderRadius: theme.radius.sm,
     borderCurve: "continuous",
-    borderWidth: 1,
-    borderColor: theme.colors.line,
     overflow: "hidden",
-    padding: 4,
-    backgroundColor: theme.colors.surface,
   },
-  hidden: { opacity: 0 },
-  image: { width: "100%", height: "100%" },
-  row: { flexDirection: "row", flexWrap: "wrap", gap: theme.space.sm },
+  controls: { alignItems: "center" },
+  marker: { position: "absolute" },
+  readout: {
+    position: "absolute",
+    top: theme.space.sm,
+    left: theme.space.sm,
+    paddingHorizontal: theme.space.sm,
+    paddingVertical: theme.space.xs,
+    borderRadius: theme.radius.full,
+  },
+  guideSlot: {
+    position: "absolute",
+    left: theme.space.lg,
+    right: theme.space.lg,
+    bottom: theme.space.lg,
+    alignItems: "center",
+  },
+  pill: {
+    paddingHorizontal: theme.space.md,
+    paddingVertical: theme.space.sm,
+    borderRadius: theme.radius.full,
+  },
+  centred: { textAlign: "center" },
 });
