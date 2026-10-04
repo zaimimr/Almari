@@ -30,8 +30,8 @@ test("the seven occasions carry their formality levels and phrases", () => {
       ["dinner", "Dinner or dawat", 3],
       ["eid", "Eid", 4],
       ["party", "Party or mehndi", 4],
-      ["wedding", "Wedding guest, nikah or walima", 5],
-      ["barat", "Barat or formal wedding", 6],
+      ["wedding", "Wedding or nikah", 5],
+      ["barat", "Barat", 6],
     ],
   );
   assert.equal(occasionPhrase("party"), "a party or mehndi");

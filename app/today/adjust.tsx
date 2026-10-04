@@ -1,357 +1,247 @@
-import { useState } from "react";
-import { StyleSheet, View } from "react-native";
-import { Stack, router, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import {
   occasionOptions,
   styleOptions,
   type GarmentKind,
-  type OutfitRequest,
-  type Weather,
+  type Occasion,
+  type Style,
 } from "../../src/domain/closet";
-import {
-  activeSession,
-  applyRequest,
-  clockFor,
-  saveEverydayStyle,
-  startOccasion,
-} from "../../src/domain/today";
-import { forecastWeather } from "../../src/domain/weather";
 import { kindName, t } from "../../src/i18n";
-import { useCloset } from "../../src/state/closet";
-import { useDiscardChanges } from "../../src/navigation/useDiscardChanges";
+import { useAdjust, type Exposure } from "../../src/features/adjust/useAdjust";
+import { WhenRow } from "../../src/features/adjust/WhenRow";
 import {
-  AppText,
-  Button,
-  ChoiceGroup,
-  ErrorMessage,
-  FormScreen,
-  Message,
+  ChipRow,
+  EmptyState,
+  Footer,
+  Row,
   Screen,
-} from "../../src/ui/legacy";
-import { now } from "../../src/state/clock";
+  Section,
+  Segmented,
+} from "../../src/ui";
 
-const garmentOptions = [
-  {
-    id: "any",
-    get label() {
-      return t("adjust.any");
-    },
-  },
-  {
-    id: "blazer",
-    get label() {
-      return kindName("blazer");
-    },
-  },
-  {
-    id: "dress",
-    get label() {
-      return kindName("dress");
-    },
-  },
-  {
-    id: "kurta",
-    get label() {
-      return kindName("kurta");
-    },
-  },
-  {
-    id: "trousers",
-    get label() {
-      return kindName("trousers");
-    },
-  },
-] as const;
+type Garment = GarmentKind | "any";
+type WeatherChoice = "forecast" | "unset" | "warm" | "mild" | "cold";
 
-const warmthOptions = [
-  {
-    id: "unset",
-    get label() {
-      return t("adjust.notSet");
-    },
-  },
-  {
-    id: "warm",
-    get label() {
-      return t("weather.warm");
-    },
-  },
-  {
-    id: "mild",
-    get label() {
-      return t("weather.mild");
-    },
-  },
-  {
-    id: "cold",
-    get label() {
-      return t("weather.cold");
-    },
-  },
-] as const;
+const garments = (): { id: Garment; label: string }[] => [
+  { id: "any", label: t("adjust.any") },
+  { id: "hijab", label: t("today.garment.hijab") },
+  { id: "sweater", label: t("today.garment.knit") },
+  { id: "blazer", label: kindName("blazer") },
+  { id: "dress", label: kindName("dress") },
+  { id: "kurta", label: kindName("kurta") },
+  { id: "trousers", label: kindName("trousers") },
+];
 
-const precipitationOptions = [
-  {
-    id: "dry",
-    get label() {
-      return t("adjust.dry");
-    },
-  },
-  {
-    id: "rain",
-    get label() {
-      return t("adjust.rain");
-    },
-  },
-  {
-    id: "snow",
-    get label() {
-      return t("adjust.snow");
-    },
-  },
-] as const;
+export default function Adjust() {
+  const { keep } = useLocalSearchParams<{ keep?: string; focus?: string }>();
+  const adjust = useAdjust(keep);
+  const { closet, request, set } = adjust;
 
-const exposureOptions = [
-  {
-    id: "mostly-indoors",
-    get label() {
-      return t("adjust.indoors");
-    },
-  },
-  {
-    id: "time-outside",
-    get label() {
-      return t("adjust.outside");
-    },
-  },
-] as const;
-
-type Manual = Extract<Weather, { source: "manual" }>;
-
-export default function AdjustToday() {
-  const { target } = useLocalSearchParams<{ target?: string }>();
-  const { closet, update } = useCloset();
-  const today = closet.styling.today;
-  const session = today ? activeSession(today) : null;
-  const newOccasion = target === "occasion" && today?.active !== "occasion";
-  const [initial] = useState<OutfitRequest | null>(() =>
-    session ? session.request : null,
-  );
-  const [request, setRequest] = useState(initial);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const dirty =
-    newOccasion || JSON.stringify(request) !== JSON.stringify(initial);
-  const allowClose = useDiscardChanges(dirty, busy);
-
-  if (!today || !session || !request)
+  if (!adjust.today || !request)
     return (
-      <Screen centered>
-        <Message
+      <Screen title={t("title.adjust")}>
+        <EmptyState
           title={t("common.setEverydayFirst")}
-          description={t("common.everydayFirstBody")}
-          action={
-            <Button label={t("common.goBack")} onPress={() => router.back()} />
-          }
+          action={{ label: t("common.goBack"), onPress: () => router.back() }}
         />
       </Screen>
     );
 
   const weather = request.weather;
-  const manual: Manual | null = weather.source === "manual" ? weather : null;
-  const fresh = forecastWeather(
-    closet.styling.forecast,
-    today.localDate,
-    today.timeZone,
-  );
-  const weatherChoices: {
-    id: "forecast" | (typeof warmthOptions)[number]["id"];
-    label: string;
-  }[] = fresh
-    ? [{ id: "forecast", label: t("adjust.useForecast") }, ...warmthOptions]
-    : [...warmthOptions];
-  const set = (changes: Partial<OutfitRequest>) =>
-    setRequest((current) => (current ? { ...current, ...changes } : current));
-  const setManual = (changes: Partial<Manual>) =>
-    set({
-      weather: {
-        source: "manual",
-        warmth: "mild",
-        precipitation: "dry",
-        exposure: null,
-        ...manual,
-        ...changes,
-      },
-    });
+  const manual = weather.source === "manual" ? weather : null;
+  const weatherValue: WeatherChoice =
+    weather.source === "forecast"
+      ? "forecast"
+      : manual
+        ? manual.warmth
+        : "unset";
+  const weatherOptions: { id: WeatherChoice; label: string }[] = [
+    ...(adjust.forecast
+      ? [{ id: "forecast" as const, label: t("adjust.useForecast") }]
+      : []),
+    { id: "unset", label: t("adjust.notSet") },
+    { id: "warm", label: t("weather.warm") },
+    { id: "mild", label: t("weather.mild") },
+    { id: "cold", label: t("weather.cold") },
+  ];
+  const chooseWeather = (value: WeatherChoice) =>
+    value === "unset"
+      ? set({ weather: { source: "unknown" } })
+      : value === "forecast"
+        ? adjust.forecast && set({ weather: adjust.forecast })
+        : set({
+            weather: {
+              source: "manual",
+              warmth: value,
+              precipitation: manual?.precipitation ?? "dry",
+              exposure: adjust.exposure,
+            },
+          });
 
-  async function submit(saveAsEveryday: boolean) {
-    if (!request || !session || busy) return;
-    setBusy(true);
-    setError(null);
-    try {
-      await update((current) => {
-        const preset = current.styling.everyday;
-        const withPreset =
-          saveAsEveryday && preset
-            ? saveEverydayStyle(
-                current,
-                {
-                  occasion: request.occasion,
-                  style: request.style,
-                  hijab: preset.hijab,
-                  sample: false,
-                  coverage: preset.coverage,
-                },
-                clockFor(now()),
-                false,
-              )
-            : current;
-        return newOccasion
-          ? startOccasion(withPreset, request)
-          : applyRequest(
-              withPreset,
-              request,
-              activeSession(withPreset.styling.today!).revision,
-            );
-      });
-      allowClose();
-      router.back();
-    } catch {
-      setError(t("error.choicesSave"));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  const kept = request.keptIds.length;
+  const kept = request.keptIds.flatMap((id) => {
+    const piece = closet.pieces.find((item) => item.id === id);
+    return piece ? [piece] : [];
+  });
+  const keeping =
+    kept.length === 1
+      ? t("adjust.keepingOne")
+      : t("adjust.keepingMany", { count: kept.length });
 
   return (
-    <FormScreen>
-      <Stack.Screen
-        options={{
-          title:
-            newOccasion || today.active === "occasion"
-              ? t("today.forOccasion")
-              : t("title.adjustToday"),
-        }}
-      />
-      <AppText muted>
-        {newOccasion || today.active === "occasion"
-          ? t("adjust.occasionNote")
-          : t("adjust.todayNote")}
-      </AppText>
-      <ChoiceGroup
-        label={t("adjust.occasion")}
-        options={occasionOptions()}
-        value={request.occasion}
-        disabled={busy}
-        onChange={(occasion) => set({ occasion })}
-      />
-      <ChoiceGroup
-        label={t("adjust.style")}
-        options={styleOptions}
-        value={request.style}
-        disabled={busy}
-        onChange={(style) => set({ style })}
-      />
-      <ChoiceGroup
-        label={t("adjust.wear")}
-        options={garmentOptions}
-        value={request.garmentType ?? "any"}
-        disabled={busy}
-        onChange={(value) =>
-          set({ garmentType: value === "any" ? null : (value as GarmentKind) })
-        }
-      />
-      <View style={styles.group}>
-        <ChoiceGroup
+    <Screen
+      title={t("title.adjust")}
+      leading="cancel"
+      onCancel={() => router.back()}
+      testID="adjust"
+      footer={
+        <Footer
+          primary={{
+            label: t("adjust.find"),
+            onPress: () => void adjust.submit(),
+            busy: adjust.busy,
+            disabled: !adjust.dirty,
+            testID: "adjust-find",
+          }}
+          error={adjust.error}
+        />
+      }
+    >
+      <Section title={t("adjust.occasion")}>
+        <ChipRow
+          label={t("adjust.occasion")}
+          options={occasionOptions()}
+          value={request.occasion}
+          onChange={(next) => next && set({ occasion: next as Occasion })}
+          testID="adjust-occasion"
+        />
+      </Section>
+      <Section title={t("adjust.day")}>
+        <WhenRow
+          date={adjust.date}
+          today={adjust.localDate}
+          tomorrow={adjust.tomorrow}
+          onChange={adjust.chooseDate}
+        />
+      </Section>
+      <Section title={t("adjust.style")}>
+        <Segmented<Style>
+          label={t("adjust.style")}
+          options={styleOptions.map((option) => ({
+            id: option.id,
+            label: option.label,
+          }))}
+          value={request.style}
+          onChange={(style) => set({ style })}
+        />
+      </Section>
+      <Section title={t("adjust.garment")}>
+        <ChipRow<Garment>
+          label={t("adjust.garment")}
+          options={garments()}
+          value={request.garmentType ?? "any"}
+          onChange={(next) =>
+            set({
+              garmentType:
+                !next || next === "any" ? null : (next as GarmentKind),
+            })
+          }
+          testID="adjust-garment"
+        />
+        {kept.length ? (
+          <Row
+            title={`${keeping}, ${kept.map((piece) => piece.name).join(", ")}`}
+            leading={
+              kept[0] && kept.length === 1 ? { thumb: kept[0] } : { lay: kept }
+            }
+            trailing={{
+              action: {
+                label: t("adjust.stopKeeping"),
+                onPress: () => set({ keptIds: [] }),
+                variant: "quiet",
+                size: "small",
+              },
+            }}
+            testID="adjust-kept"
+          />
+        ) : (
+          <Row
+            title={t("today.startWithPiece")}
+            trailing="chevron"
+            onPress={() =>
+              router.push({
+                pathname: "/today/pieces",
+                params: { from: "adjust" },
+              })
+            }
+            testID="adjust-start-with"
+          />
+        )}
+      </Section>
+      <Section title={t("adjust.weather")}>
+        <ChipRow<WeatherChoice>
           label={t("adjust.weather")}
-          options={weatherChoices}
-          value={
-            manual
-              ? manual.warmth
-              : weather.source === "forecast"
-                ? "forecast"
-                : "unset"
-          }
-          disabled={busy}
-          onChange={(value) =>
-            value === "unset"
-              ? set({ weather: { source: "unknown" } })
-              : value === "forecast"
-                ? fresh && set({ weather: fresh })
-                : setManual({ warmth: value })
-          }
+          options={weatherOptions}
+          value={weatherValue}
+          onChange={(next) => next && chooseWeather(next as WeatherChoice)}
+          testID="adjust-weather"
         />
         {manual ? (
-          <>
-            <ChoiceGroup
-              label={t("adjust.conditions")}
-              options={precipitationOptions}
-              value={manual.precipitation}
-              disabled={busy}
-              onChange={(precipitation) => setManual({ precipitation })}
-            />
-            <ChoiceGroup
-              label={t("adjust.day")}
-              options={exposureOptions}
-              value={manual.exposure}
-              disabled={busy}
-              onChange={(exposure) => setManual({ exposure })}
-            />
-          </>
-        ) : null}
-        <AppText variant="footnote" muted>
-          {t("adjust.notForecast")}
-        </AppText>
-      </View>
-      {kept ? (
-        <View style={styles.group}>
-          <AppText>
-            {kept === 1
-              ? t("adjust.keepingOne")
-              : t("adjust.keepingMany", { count: kept })}
-          </AppText>
-          <Button
-            label={t("adjust.stopKeeping")}
-            secondary
-            compact
-            disabled={busy}
-            onPress={() => set({ keptIds: [] })}
+          <Segmented<"dry" | "rain" | "snow">
+            label={t("adjust.conditions")}
+            options={[
+              { id: "dry", label: t("adjust.dry") },
+              { id: "rain", label: t("adjust.rain") },
+              { id: "snow", label: t("adjust.snow") },
+            ]}
+            value={manual.precipitation}
+            onChange={(precipitation) =>
+              set({ weather: { ...manual, precipitation } })
+            }
           />
-        </View>
-      ) : null}
-      {request.excludedIds.length ? (
-        <Button
-          label={t("adjust.includeAgain")}
-          secondary
-          compact
-          disabled={busy}
-          onPress={() => set({ excludedIds: [] })}
+        ) : null}
+      </Section>
+      <Section title={t("adjust.yourDay")}>
+        <Segmented<Exposure>
+          label={t("adjust.yourDay")}
+          options={[
+            { id: "mostly-indoors", label: t("adjust.indoors") },
+            { id: "time-outside", label: t("adjust.outside") },
+          ]}
+          value={adjust.exposure}
+          onChange={adjust.setExposure}
         />
-      ) : null}
-      <ErrorMessage message={error} />
-      <Button
-        label={t("adjust.find")}
-        busy={busy}
-        onPress={() => {
-          void submit(false);
-        }}
-      />
-      {!newOccasion && today.active === "everyday" ? (
-        <Button
-          label={t("adjust.alsoEveryday")}
-          secondary
-          disabled={busy}
-          onPress={() => {
-            void submit(true);
+      </Section>
+      <Section title={t("adjust.closet")}>
+        <Segmented<"sample" | "owned">
+          label={t("adjust.closet")}
+          options={[
+            { id: "sample", label: t("today.wardrobeSample") },
+            { id: "owned", label: t("today.wardrobeOwned") },
+          ]}
+          value={request.wardrobe}
+          onChange={(wardrobe) => set({ wardrobe, keptIds: [] })}
+        />
+        {request.excludedIds.length ? (
+          <Row
+            title={t("today.includeSetAside")}
+            trailing={{
+              toggle: adjust.includeSetAside,
+              onToggle: adjust.setIncludeSetAside,
+            }}
+            testID="adjust-include"
+          />
+        ) : null}
+      </Section>
+      {adjust.isToday ? (
+        <Row
+          title={t("adjust.makeEveryday")}
+          trailing={{
+            toggle: adjust.makeEveryday,
+            onToggle: adjust.setMakeEveryday,
           }}
+          testID="adjust-make-everyday"
         />
       ) : null}
-    </FormScreen>
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  group: { gap: 12 },
-});

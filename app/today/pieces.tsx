@@ -1,240 +1,107 @@
 import { useState } from "react";
-import { FlatList, StyleSheet, View, useWindowDimensions } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Stack, router } from "expo-router";
-import { isAvailable, type Category } from "../../src/domain/closet";
-import { activeSession, applyRequest } from "../../src/domain/today";
-import { useCloset } from "../../src/state/closet";
-import { useDiscardChanges } from "../../src/navigation/useDiscardChanges";
+import { router, useLocalSearchParams } from "expo-router";
+import { isAvailable } from "../../src/domain/closet";
 import {
-  AppText,
-  Button,
-  ErrorMessage,
-  Filters,
-  HeaderAction,
-  Message,
-  OutfitCollage,
-  PieceTile,
-  Screen,
-} from "../../src/ui/legacy";
-import { theme } from "../../src/ui/theme";
+  activeSession,
+  applyRequest,
+  startOccasion,
+} from "../../src/domain/today";
 import { t } from "../../src/i18n";
+import { useCloset } from "../../src/state/closet";
+import { addPiecesRoute } from "../../src/state/imports";
+import { PiecePicker } from "../../src/features/PiecePicker";
+import { pickPieces } from "../../src/features/adjust/useAdjust";
+import { Footer, Screen } from "../../src/ui";
 
-export default function ChoosePieces() {
-  const { width, fontScale } = useWindowDimensions();
-  const wide = width >= 900;
+export default function StartWithPiece() {
+  const { from } = useLocalSearchParams<{ from?: string }>();
+  const fromAdjust = from === "adjust";
   const { closet, update } = useCloset();
   const today = closet.styling.today;
   const session = today ? activeSession(today) : null;
-  const [initial] = useState(() => session?.request.keptIds ?? []);
+  const request = session?.request ?? null;
+  const [initial] = useState(() =>
+    fromAdjust ? [] : (request?.keptIds ?? []),
+  );
   const [selected, setSelected] = useState(initial);
-  const [category, setCategory] = useState<Category | "all">("all");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const dirty = selected.join() !== initial.join();
-  const allowClose = useDiscardChanges(dirty, busy);
-
-  if (!today || !session)
-    return (
-      <Screen centered>
-        <Message
-          title={t("common.setEverydayFirst")}
-          description={t("common.everydayFirstBody")}
-          action={
-            <Button label={t("common.goBack")} onPress={() => router.back()} />
-          }
-        />
-      </Screen>
-    );
 
   const pool = closet.pieces.filter(
-    (piece) => piece.source === session.request.wardrobe && isAvailable(piece),
+    (piece) =>
+      isAvailable(piece) && (!request || piece.source === request.wardrobe),
   );
-  const options = pool.filter(
-    (piece) => category === "all" || piece.category === category,
-  );
-  const pieces = selected.flatMap((id) => {
-    const piece = pool.find((item) => item.id === id);
-    return piece ? [piece] : [];
-  });
+  const chosen = selected.filter((id) => pool.some((piece) => piece.id === id));
+  const releasing = !chosen.length && initial.length > 0;
 
   async function submit() {
-    if (!session || busy) return;
+    if (busy) return;
+    if (fromAdjust) {
+      pickPieces(chosen);
+      router.back();
+      return;
+    }
+    if (!request) return;
     setBusy(true);
     setError(null);
     try {
       await update((current) =>
-        applyRequest(
-          current,
-          {
-            ...session.request,
-            keptIds: selected.filter((id) =>
-              pool.some((piece) => piece.id === id),
-            ),
-            excludedIds: session.request.excludedIds.filter(
-              (id) => !selected.includes(id),
-            ),
-          },
-          session.revision,
-        ),
+        (releasing && session
+          ? (next: typeof current, changed: typeof request) =>
+              applyRequest(next, changed, session.revision)
+          : startOccasion)(current, {
+          ...request,
+          garmentType: null,
+          keptIds: chosen,
+          excludedIds: request.excludedIds.filter((id) => !chosen.includes(id)),
+        }),
       );
-      allowClose();
       router.back();
     } catch {
-      setError(t("error.piecesSave"));
+      setError(t("common.error.save"));
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <View style={styles.screen}>
-      <Stack.Screen
-        options={{
-          headerRight: () =>
-            selected.length ? (
-              <HeaderAction
-                label={t("common.clear")}
-                onPress={() => setSelected([])}
-              />
-            ) : null,
-        }}
-      />
-      <View style={[styles.workspace, wide && styles.workspaceWide]}>
-        <View style={styles.preview}>
-          <OutfitCollage pieces={pieces} fill testID="kept-preview" />
-          <AppText
-            variant="footnote"
-            muted
-            style={styles.summary}
-            accessibilityLiveRegion="polite"
-          >
-            {selected.length
-              ? selected.length === 1
-                ? t("pieces.keepingOne")
-                : t("pieces.keepingMany", { count: selected.length })
-              : t("pieces.intro")}
-          </AppText>
-        </View>
-        <View
-          style={[
-            styles.wardrobe,
-            wide
-              ? styles.wardrobeWide
-              : { height: 256 + Math.max(0, fontScale - 1) * 68 },
-          ]}
-        >
-          <View style={styles.filters}>
-            <Filters value={category} onChange={setCategory} />
-          </View>
-          <FlatList
-            key={wide ? "grid" : "strip"}
-            data={options}
-            horizontal={!wide}
-            numColumns={wide ? 2 : 1}
-            keyExtractor={(piece) => piece.id}
-            contentInsetAdjustmentBehavior="never"
-            style={styles.picker}
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={wide ? styles.grid : styles.strip}
-            columnWrapperStyle={wide ? styles.row : undefined}
-            ListEmptyComponent={
-              <View style={[styles.empty, !wide && { width: width - 48 }]}>
-                <AppText muted>
-                  {pool.length
-                    ? t("common.noPiecesInCategory")
-                    : t("pieces.noneInCloset")}
-                </AppText>
-                {pool.length ? (
-                  <Button
-                    label={t("common.showAllPieces")}
-                    secondary
-                    onPress={() => setCategory("all")}
-                  />
-                ) : null}
-              </View>
-            }
-            renderItem={({ item }) => (
-              <View style={wide ? styles.cell : styles.stripCell}>
-                <PieceTile
-                  piece={item}
-                  compact={!wide}
-                  selected={selected.includes(item.id)}
-                  selectedLabel={t("outfit.kept")}
-                  onPress={() => {
-                    if (!busy)
-                      setSelected((current) =>
-                        current.includes(item.id)
-                          ? current.filter((id) => id !== item.id)
-                          : [...current, item.id],
-                      );
-                  }}
-                />
-              </View>
-            )}
-          />
-        </View>
-      </View>
-      <SafeAreaView edges={["bottom"]} style={styles.footer}>
-        <View style={styles.footerContent}>
-          <ErrorMessage message={error} />
-          <Button
-            label={
-              selected.length
-                ? t("pieces.styleAround")
-                : initial.length
-                  ? t("pieces.stopKeeping")
-                  : t("common.done")
-            }
-            busy={busy}
-            disabled={!dirty && !selected.length}
-            onPress={() => {
-              void submit();
+    <Screen
+      title={t("today.startWithPiece")}
+      testID="pieces"
+      footer={
+        pool.length ? (
+          <Footer
+            waiting={!chosen.length && !releasing}
+            primary={{
+              label: releasing
+                ? t("adjust.stopKeeping")
+                : t("pieces.startWithThese"),
+              onPress: () => void submit(),
+              busy,
+              testID: "pieces-start",
             }}
+            error={error}
           />
-        </View>
-      </SafeAreaView>
-    </View>
+        ) : undefined
+      }
+    >
+      <PiecePicker
+        pieces={pool}
+        selectedIds={chosen}
+        onToggle={(id) =>
+          setSelected((current) =>
+            current.includes(id)
+              ? current.filter((item) => item !== id)
+              : [...current, id],
+          )
+        }
+        onClear={() => setSelected([])}
+        preview
+        columns={3}
+        onAddPieces={() => router.push(addPiecesRoute)}
+        testID="pieces-picker"
+        countTestID="pieces-count"
+      />
+    </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: theme.colors.canvas },
-  workspace: {
-    flex: 1,
-    minHeight: 0,
-    width: "100%",
-    maxWidth: 1120,
-    alignSelf: "center",
-  },
-  workspaceWide: { flexDirection: "row" },
-  preview: { flex: 1, minHeight: 0, paddingHorizontal: 24, paddingTop: 8 },
-  summary: { textAlign: "center", paddingTop: 4, paddingBottom: 12 },
-  wardrobe: {
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderColor: theme.colors.line,
-  },
-  wardrobeWide: { width: 400, borderTopWidth: 0, paddingTop: 16 },
-  filters: { paddingHorizontal: 24, paddingBottom: 12 },
-  picker: { flex: 1 },
-  strip: { paddingHorizontal: 24, gap: 12 },
-  stripCell: { width: 116 },
-  grid: { paddingHorizontal: 24, paddingBottom: 24 },
-  row: { gap: 12 },
-  cell: { width: "48%" },
-  empty: { gap: 12 },
-  footer: {
-    backgroundColor: theme.colors.canvas,
-    borderTopWidth: 1,
-    borderColor: theme.colors.line,
-  },
-  footerContent: {
-    width: "100%",
-    maxWidth: 1120,
-    alignSelf: "center",
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    gap: 12,
-  },
-});
