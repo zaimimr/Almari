@@ -1,0 +1,12 @@
+appId: com.zaimimran.almari
+# Task 41: xLarge
+# seed: seed-owned-everyday.sh,xl.sh
+---
+- launchApp:
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
+    timeout: 60000
+- takeScreenshot: docs/redesign/screens/after/today/today-xl

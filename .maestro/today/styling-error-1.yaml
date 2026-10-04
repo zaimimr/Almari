@@ -1,0 +1,10 @@
+appId: com.zaimimran.almari
+# UC-F06-13
+# seed: seed-owned.sh,seed-first-run.sh
+---
+- launchApp:
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible: "Try the sample closet"
+    timeout: 60000

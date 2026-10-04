@@ -1,0 +1,12 @@
+appId: com.zaimimran.almari
+# UC-F06-02
+# seed: seed-owned-everyday.sh,fixture.sh now=2026-10-05T15:00:00+02:00
+---
+- launchApp:
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
+    timeout: 60000
+- assertVisible: "Good afternoon, Sara"

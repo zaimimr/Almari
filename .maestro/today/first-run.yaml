@@ -1,0 +1,17 @@
+appId: com.zaimimran.almari
+# UC-F06-01
+# seed: seed-owned.sh,seed-first-run.sh
+---
+- launchApp:
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible: "Set your style"
+    timeout: 60000
+- assertVisible: "Try the sample closet"
+- takeScreenshot: docs/redesign/screens/after/today/first-run
+- tapOn: "Try the sample closet"
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
+    timeout: 60000

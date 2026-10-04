@@ -1,0 +1,49 @@
+appId: com.zaimimran.almari
+# UC-F06-23
+# seed: seed-owned-everyday.sh,fixture.sh now=2026-10-04T21:00:00+02:00 launchDay=tomorrow
+---
+- launchApp:
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible: "Tomorrow's outfit"
+    timeout: 60000
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
+    timeout: 60000
+- assertVisible: "Back to today"
+- assertNotVisible: "Wear this"
+- scrollUntilVisible:
+    element:
+      id: "today-another"
+    direction: DOWN
+    centerElement: true
+- waitForAnimationToEnd
+- tapOn: "Another"
+- scrollUntilVisible:
+    element:
+      id: "today-undo"
+    direction: DOWN
+    centerElement: true
+    timeout: 60000
+- copyTextFrom:
+    id: "today-title"
+- evalScript: ${output.tomorrow = maestro.copiedText}
+- scrollUntilVisible:
+    element:
+      id: "today-back"
+    direction: UP
+- waitForAnimationToEnd
+- tapOn:
+    id: "today-back"
+- extendedWaitUntil:
+    visible: "Show.*"
+    timeout: 60000
+- assertVisible: "Wear this"
+- tapOn: "Show.*"
+- extendedWaitUntil:
+    visible:
+      id: "today-title"
+      text: ${output.tomorrow}
+    timeout: 60000

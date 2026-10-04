@@ -1,0 +1,31 @@
+appId: com.zaimimran.almari
+# UC-F08-02
+---
+- runFlow: ../lib/sample-closet.yaml
+- tapOn:
+    id: "outfit-piece-sample-.*-hijab"
+- extendedWaitUntil:
+    visible: "Change hijab.*"
+    timeout: 10000
+- assertVisible:
+    id: "change-strip"
+- assertVisible:
+    id: "strip-piece-.*"
+    index: 0
+    selected: true
+- takeScreenshot: docs/redesign/screens/after/change-piece/change-hijab
+- tapOn:
+    id: "strip-piece-.*"
+    index: 1
+- scrollUntilVisible:
+    element:
+      id: "today-undo"
+    direction: DOWN
+    centerElement: true
+    timeout: 60000
+- tapOn:
+    id: "today-undo"
+- extendedWaitUntil:
+    notVisible:
+      id: "today-undo"
+    timeout: 10000

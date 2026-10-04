@@ -1,0 +1,9 @@
+appId: com.zaimimran.almari
+# Task 41: reset text size and Bold Text
+# seed: default-size.sh,bold.sh false
+---
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "today"
+    timeout: 60000

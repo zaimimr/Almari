@@ -1,0 +1,40 @@
+appId: com.zaimimran.almari
+# UC-F06-02
+# seed: seed-owned-everyday.sh,fixture.sh now=2026-10-05T08:00:00+02:00
+---
+- launchApp:
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
+    timeout: 60000
+- assertVisible: "Good morning, Sara"
+- assertVisible:
+    id: "today-like"
+- assertVisible:
+    id: "today-not-for-me"
+- assertVisible:
+    id: "today-save"
+- assertVisible:
+    id: "today-reason"
+- assertVisible: "Wear this"
+- assertVisible: "Another"
+- takeScreenshot: docs/redesign/screens/after/today/today
+- copyTextFrom:
+    id: "today-title"
+- evalScript: ${output.title = maestro.copiedText}
+- scrollUntilVisible:
+    element:
+      id: "today-start-with"
+    direction: DOWN
+- takeScreenshot: docs/redesign/screens/after/today/today-scrolled
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
+    timeout: 60000
+- assertVisible:
+    id: "today-title"
+    text: ${output.title}

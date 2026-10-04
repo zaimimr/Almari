@@ -1,0 +1,9 @@
+appId: com.zaimimran.almari
+# Task 42: reset Reduce Motion
+# seed: reduce-motion-off.sh
+---
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "today"
+    timeout: 60000

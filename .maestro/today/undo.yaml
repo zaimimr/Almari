@@ -1,0 +1,29 @@
+appId: com.zaimimran.almari
+# UC-F06-14
+---
+- runFlow: ../lib/sample-closet.yaml
+- copyTextFrom:
+    id: "today-title"
+- evalScript: ${output.first = maestro.copiedText}
+- scrollUntilVisible:
+    element:
+      id: "today-another"
+    direction: DOWN
+    centerElement: true
+- waitForAnimationToEnd
+- tapOn: "Another"
+- scrollUntilVisible:
+    element:
+      id: "today-undo"
+    direction: DOWN
+    centerElement: true
+    timeout: 60000
+- tapOn:
+    id: "today-undo"
+- extendedWaitUntil:
+    notVisible:
+      id: "today-undo"
+    timeout: 10000
+- assertVisible:
+    id: "today-title"
+    text: ${output.first}

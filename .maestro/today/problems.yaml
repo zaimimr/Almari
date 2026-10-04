@@ -1,0 +1,19 @@
+appId: com.zaimimran.almari
+# UC-F06-11
+# seed: seed-owned-everyday.sh,seed-two-pieces.sh
+---
+- launchApp:
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible:
+      id: "today-problem"
+    timeout: 60000
+- assertVisible: ".*Add shoes.*"
+- assertNotVisible:
+    id: "today-outfit"
+- tapOn: "Add pieces"
+- extendedWaitUntil:
+    notVisible:
+      id: "today-problem"
+    timeout: 10000

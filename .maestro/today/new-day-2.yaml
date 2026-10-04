@@ -1,0 +1,12 @@
+appId: com.zaimimran.almari
+# UC-F06-18
+# seed: fixture.sh now=2026-10-05T08:00:00+02:00
+---
+- launchApp:
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
+    timeout: 60000
+- assertNotVisible: "Started with Navy blazer.*"

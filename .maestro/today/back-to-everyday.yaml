@@ -1,0 +1,25 @@
+appId: com.zaimimran.almari
+# UC-F06-12
+# seed: seed-owned-everyday.sh
+---
+- launchApp:
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
+    timeout: 60000
+- openLink: almari://piece/seed-blazer
+- scrollUntilVisible:
+    element: "Style this piece"
+    direction: DOWN
+- tapOn: "Style this piece"
+- extendedWaitUntil:
+    visible: "Started with Navy blazer.*"
+    timeout: 60000
+- takeScreenshot: docs/redesign/screens/after/today/started
+- tapOn:
+    id: "session-chip"
+- extendedWaitUntil:
+    notVisible: "Started with Navy blazer.*"
+    timeout: 60000

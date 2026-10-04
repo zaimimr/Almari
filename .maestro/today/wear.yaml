@@ -1,0 +1,20 @@
+appId: com.zaimimran.almari
+# UC-F06-04
+---
+- runFlow: ../lib/sample-closet.yaml
+- tapOn: "Wear this"
+- assertVisible: "Worn today"
+- assertVisible:
+    id: "today-worn-undo"
+- tapOn: "Looks"
+- extendedWaitUntil:
+    visible: "Looks"
+    timeout: 10000
+- tapOn: "Today"
+- extendedWaitUntil:
+    visible: "Worn today"
+    timeout: 10000
+- tapOn:
+    id: "today-worn-undo"
+- assertNotVisible: "Worn today"
+- assertVisible: "Wear this"

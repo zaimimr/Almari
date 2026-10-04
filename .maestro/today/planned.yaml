@@ -1,0 +1,17 @@
+appId: com.zaimimran.almari
+# UC-F06-17
+# seed: seed-owned-everyday.sh,seed-looks.sh,fixture.sh now=2026-10-11T08:00:00+02:00
+---
+- launchApp:
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible: "Planned for today: Eid lunch"
+    timeout: 60000
+- tapOn: "Show on Today"
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
+    timeout: 60000
+- assertNotVisible: "Planned for today: Eid lunch"
+- assertVisible: "Wear this"

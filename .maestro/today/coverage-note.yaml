@@ -1,0 +1,14 @@
+appId: com.zaimimran.almari
+# UC-F06-19
+# seed: seed-owned-everyday.sh
+---
+- launchApp:
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
+    timeout: 60000
+- assertVisible:
+    id: "today-reason"
+    text: ".*(covers the arms|reach(es)? the ankle|Long sleeves|Sleeves to the elbow).*"

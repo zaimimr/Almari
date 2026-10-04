@@ -1,0 +1,37 @@
+appId: com.zaimimran.almari
+# UC-F08-05
+---
+- runFlow: ../lib/sample-closet.yaml
+- tapOn:
+    id: "outfit-piece-sample-.*-hijab"
+- extendedWaitUntil:
+    visible: "Change hijab.*"
+    timeout: 10000
+- tapOn:
+    id: "strip-piece-.*"
+    index: 1
+- scrollUntilVisible:
+    element:
+      id: "today-undo"
+    direction: DOWN
+    centerElement: true
+    timeout: 60000
+- copyTextFrom:
+    id: "today-title"
+- evalScript: ${output.picked = maestro.copiedText}
+- scrollUntilVisible:
+    element:
+      id: "change-strip-header"
+    direction: UP
+    centerElement: true
+- tapOn:
+    id: "change-strip-header"
+- assertNotVisible: "Change hijab.*"
+- scrollUntilVisible:
+    element:
+      id: "today-undo"
+    direction: DOWN
+    centerElement: true
+- assertVisible:
+    id: "today-title"
+    text: ${output.picked}

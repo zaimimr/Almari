@@ -1,0 +1,13 @@
+appId: com.zaimimran.almari
+# UC-F06-22
+# seed: seed-owned-everyday.sh,fixture.sh launchDay=today
+---
+- launchApp:
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
+    timeout: 60000
+- assertNotVisible: "Profile and settings"
+- assertNotVisible: "Tomorrow's outfit"

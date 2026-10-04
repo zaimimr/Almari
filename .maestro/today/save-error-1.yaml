@@ -1,0 +1,11 @@
+appId: com.zaimimran.almari
+# UC-F06-15
+# seed: seed-owned-everyday.sh,seed-no-wears.sh
+---
+- launchApp:
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
+    timeout: 60000

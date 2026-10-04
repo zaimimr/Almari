@@ -1,0 +1,32 @@
+appId: com.zaimimran.almari
+# UC-F06-08
+# seed: seed-owned-everyday.sh,seed-looks.sh,seed-look-everyday.sh
+---
+- launchApp:
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
+    timeout: 60000
+- scrollUntilVisible:
+    element:
+      id: "today-start-with"
+    direction: DOWN
+- scrollUntilVisible:
+    element:
+      id: "start-look-.*"
+    direction: DOWN
+- tapOn:
+    id: "start-look-.*"
+- extendedWaitUntil:
+    visible:
+      id: "today-undo"
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      id: "start-look-.*"
+    direction: DOWN
+- assertVisible:
+    id: "start-look-.*"
+    selected: true

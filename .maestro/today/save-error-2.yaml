@@ -1,0 +1,16 @@
+appId: com.zaimimran.almari
+# UC-F06-15
+# seed: fixture.sh failWrite=true
+---
+- launchApp:
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
+    timeout: 60000
+- tapOn: "Wear this"
+- extendedWaitUntil:
+    visible: "Could not save. Try again."
+    timeout: 10000
+- assertNotVisible: "Worn today"

@@ -1,0 +1,53 @@
+appId: com.zaimimran.almari
+# Task 41: AX5
+# seed: seed-owned-everyday.sh,ax5.sh
+---
+- launchApp:
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
+    timeout: 60000
+- takeScreenshot: docs/redesign/screens/after/today/today-ax5
+- tapOn:
+    id: "outfit-piece-seed-.*hijab"
+- extendedWaitUntil:
+    visible: "Change hijab.*"
+    timeout: 10000
+- takeScreenshot: docs/redesign/screens/after/change-piece/change-ax5
+- tapOn:
+    id: "change-strip-header"
+- scrollUntilVisible:
+    element:
+      id: "today-another"
+    direction: DOWN
+    centerElement: true
+- waitForAnimationToEnd
+- tapOn:
+    id: "today-another"
+- scrollUntilVisible:
+    element:
+      id: "today-undo"
+    direction: DOWN
+    centerElement: true
+    timeout: 60000
+- takeScreenshot: docs/redesign/screens/after/today/another-ax5
+- scrollUntilVisible:
+    element:
+      id: "today-start-with"
+    direction: DOWN
+- takeScreenshot: docs/redesign/screens/after/today/today-scrolled-ax5
+- tapOn: "Wear this"
+- extendedWaitUntil:
+    visible: "Worn today"
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      id: "today-rediscover"
+    direction: UP
+- scrollUntilVisible:
+    element:
+      id: "rediscover-.*"
+    direction: DOWN
+- takeScreenshot: docs/redesign/screens/after/today/rediscover-ax5

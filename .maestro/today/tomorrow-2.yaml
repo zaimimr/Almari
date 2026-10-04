@@ -1,0 +1,13 @@
+appId: com.zaimimran.almari
+# UC-F06-23
+# seed: fixture.sh now=2026-10-05T07:00:00+02:00
+---
+- launchApp:
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
+    timeout: 60000
+- assertNotVisible: "Tomorrow's outfit"
+- assertVisible: "Wear this"

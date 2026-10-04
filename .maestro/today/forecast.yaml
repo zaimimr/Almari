@@ -1,0 +1,16 @@
+appId: com.zaimimran.almari
+# UC-F06-10
+# seed: seed-owned-everyday.sh,seed-place.sh,fixture.sh now=2026-10-05T08:00:00+02:00,fixture-forecast.sh 2026-10-05
+---
+- launchApp:
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible:
+      id: "weather-chip"
+      text: ".*Oslo 4 to 9 degrees"
+    timeout: 60000
+- scrollUntilVisible:
+    element:
+      id: "forecast-mark"
+    direction: DOWN

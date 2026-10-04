@@ -1,0 +1,38 @@
+appId: com.zaimimran.almari
+# Task 42
+# seed: reduce-motion.sh
+---
+- runFlow: ../lib/sample-closet.yaml
+- scrollUntilVisible:
+    element:
+      id: "today-another"
+    direction: DOWN
+    centerElement: true
+- waitForAnimationToEnd
+- tapOn:
+    id: "today-another"
+- extendedWaitUntil:
+    visible:
+      id: "moment-generating"
+    timeout: 5000
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
+    timeout: 60000
+- assertVisible:
+    id: "today-undo"
+- tapOn:
+    id: "outfit-piece-sample-.*-hijab"
+- extendedWaitUntil:
+    visible: "Change hijab.*"
+    timeout: 10000
+- tapOn:
+    id: "strip-piece-.*"
+    index: 1
+- scrollUntilVisible:
+    element:
+      id: "today-undo"
+    direction: DOWN
+    centerElement: true
+    timeout: 60000

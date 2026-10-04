@@ -1,0 +1,14 @@
+appId: com.zaimimran.almari
+# UC-F06-16
+---
+- runFlow: ../lib/sample-closet.yaml
+- tapOn:
+    id: "header-profile"
+- extendedWaitUntil:
+    visible: "Profile.*"
+    timeout: 10000
+- tapOn: "Back"
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
+    timeout: 10000

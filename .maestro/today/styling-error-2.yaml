@@ -1,0 +1,20 @@
+appId: com.zaimimran.almari
+# UC-F06-13
+# seed: fixture.sh failWrite=true
+---
+- launchApp:
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible: "Try the sample closet"
+    timeout: 60000
+- tapOn: "Try the sample closet"
+- extendedWaitUntil:
+    visible: "Could not style today"
+    timeout: 10000
+- tapOn: "Try again"
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
+    timeout: 60000
+- assertNotVisible: "Could not style today"

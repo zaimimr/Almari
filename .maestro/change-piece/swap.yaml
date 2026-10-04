@@ -1,0 +1,27 @@
+appId: com.zaimimran.almari
+# UC-F08-01
+---
+- runFlow: ../lib/sample-closet.yaml
+- tapOn:
+    id: "outfit-piece-sample-.*-(trousers|salwar)"
+- extendedWaitUntil:
+    visible: "Change bottoms.*"
+    timeout: 10000
+- tapOn:
+    id: "strip-piece-.*"
+    index: 1
+- scrollUntilVisible:
+    element:
+      id: "today-undo"
+    direction: DOWN
+    centerElement: true
+    timeout: 60000
+- scrollUntilVisible:
+    element:
+      id: "change-strip-header"
+    direction: UP
+    centerElement: true
+- takeScreenshot: docs/redesign/screens/after/change-piece/changed
+- tapOn:
+    id: "change-strip-header"
+- assertNotVisible: "Change bottoms.*"

@@ -1,0 +1,29 @@
+appId: com.zaimimran.almari
+# UC-F06-06
+---
+- runFlow: ../lib/sample-closet.yaml
+- copyTextFrom:
+    id: "today-title"
+- evalScript: ${output.title = maestro.copiedText}
+- tapOn:
+    id: "today-save"
+- extendedWaitUntil:
+    visible:
+      id: "today-save-saved"
+    timeout: 10000
+- tapOn:
+    id: "today-save-saved"
+- extendedWaitUntil:
+    visible: ${output.title}
+    timeout: 10000
+- assertNotVisible:
+    id: "today-outfit"
+- tapOn: "Back"
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
+    timeout: 10000
+- tapOn: "Looks"
+- extendedWaitUntil:
+    visible: ${output.title}
+    timeout: 10000
