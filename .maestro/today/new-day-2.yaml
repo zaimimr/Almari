@@ -9,4 +9,6 @@ appId: com.zaimimran.almari
     visible:
       id: "today-outfit"
     timeout: 60000
-- assertNotVisible: "Started with Navy blazer.*"
+- runFlow: ../lib/open-adjust.yaml
+- assertNotVisible: "Keeping 1 piece, Navy blazer"
+- assertVisible: "Start with a piece"

@@ -11,24 +11,32 @@ appId: com.zaimimran.almari
     timeout: 60000
 - assertVisible: "Good morning, Sara"
 - assertVisible:
+    id: "today-intent"
+- assertVisible:
     id: "today-like"
-- assertVisible:
+- assertNotVisible:
     id: "today-not-for-me"
-- assertVisible:
+- assertNotVisible:
     id: "today-save"
 - assertVisible:
     id: "today-reason"
 - assertVisible: "Wear this"
 - assertVisible: "Another"
+- assertVisible: "Adjust"
+- assertNotVisible:
+    id: "today-start-with"
 - takeScreenshot: docs/redesign/screens/after/today/today
+- tapOn:
+    id: "today-like"
+- assertVisible:
+    id: "today-like-on"
+- tapOn:
+    id: "today-like-on"
+- assertVisible:
+    id: "today-like"
 - copyTextFrom:
     id: "today-title"
 - evalScript: ${output.title = maestro.copiedText}
-- scrollUntilVisible:
-    element:
-      id: "today-start-with"
-    direction: DOWN
-- takeScreenshot: docs/redesign/screens/after/today/today-scrolled
 - stopApp
 - launchApp
 - extendedWaitUntil:

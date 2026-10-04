@@ -15,6 +15,9 @@ appId: com.zaimimran.almari
     direction: DOWN
 - tapOn: "Style this piece"
 - extendedWaitUntil:
-    visible: "Started with Navy blazer.*"
+    visible:
+      id: "today-outfit"
     timeout: 60000
+- runFlow: ../lib/open-adjust.yaml
+- assertVisible: "Keeping 1 piece, Navy blazer"
 - stopApp

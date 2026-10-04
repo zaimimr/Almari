@@ -21,15 +21,13 @@ appId: com.zaimimran.almari
     centerElement: true
 - waitForAnimationToEnd
 - tapOn: "Another"
-- scrollUntilVisible:
-    element:
-      id: "today-undo"
-    direction: DOWN
-    centerElement: true
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
     timeout: 60000
-- copyTextFrom:
-    id: "today-title"
-- evalScript: ${output.tomorrow = maestro.copiedText}
+- assertVisible: "Save for.*"
+- assertNotVisible:
+    id: "today-intent"
 - scrollUntilVisible:
     element:
       id: "today-back"
@@ -38,12 +36,8 @@ appId: com.zaimimran.almari
 - tapOn:
     id: "today-back"
 - extendedWaitUntil:
-    visible: "Show.*"
+    visible:
+      id: "today-intent"
     timeout: 60000
 - assertVisible: "Wear this"
-- tapOn: "Show.*"
-- extendedWaitUntil:
-    visible:
-      id: "today-title"
-      text: ${output.tomorrow}
-    timeout: 60000
+- assertNotVisible: "Show.*"

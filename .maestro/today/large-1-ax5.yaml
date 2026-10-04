@@ -20,7 +20,7 @@ appId: com.zaimimran.almari
     id: "change-strip-header"
 - scrollUntilVisible:
     element:
-      id: "today-start-with"
+      id: "today-adjust"
     direction: DOWN
 - waitForAnimationToEnd
 - swipe:
@@ -32,26 +32,12 @@ appId: com.zaimimran.almari
     id: "today-another"
 - scrollUntilVisible:
     element:
-      id: "today-undo"
+      id: "today-another"
     direction: DOWN
     timeout: 60000
 - takeScreenshot: docs/redesign/screens/after/today/another-ax5
-- scrollUntilVisible:
-    element:
-      id: "today-start-with"
-    direction: DOWN
 - takeScreenshot: docs/redesign/screens/after/today/today-scrolled-ax5
 - tapOn: "Wear this"
 - extendedWaitUntil:
     visible: "Worn today"
     timeout: 10000
-- scrollUntilVisible:
-    element:
-      id: "today-rediscover"
-    direction: DOWN
-    visibilityPercentage: 10
-- scrollUntilVisible:
-    element:
-      id: "rediscover-.*"
-    direction: DOWN
-- takeScreenshot: docs/redesign/screens/after/today/rediscover-ax5

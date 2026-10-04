@@ -1,25 +1,10 @@
 appId: com.zaimimran.almari
 # UC-F10-03
+# seed: seed-looks-clean.sh,seed-looks.sh
 ---
-- launchApp:
-    clearState: true
-    permissions:
-      all: allow
-- runFlow: ../lib/sample-closet.yaml
-- extendedWaitUntil:
-    visible: "Looks"
-    timeout: 60000
-- tapOn: "Looks"
+- runFlow: ../lib/open-build.yaml
 - tapOn:
-    id: "header-new"
-- extendedWaitUntil:
-    visible: "New look"
-    timeout: 20000
-- tapOn:
-    id: "build-piece-sample-.*hijab.*"
-    index: 0
-- tapOn:
-    id: "outfit-piece-sample-.*hijab.*"
+    id: "outfit-piece-seed-hijab"
 - assertVisible: "Change hijab"
 - tapOn:
     id: "strip-piece-.*"

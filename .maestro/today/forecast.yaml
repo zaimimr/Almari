@@ -7,8 +7,8 @@ appId: com.zaimimran.almari
       all: allow
 - extendedWaitUntil:
     visible:
-      id: "weather-chip"
-      text: ".*Oslo 4 to 9 degrees"
+      id: "today-reason"
+      text: "Oslo 4 to 9°.*"
     timeout: 60000
 - scrollUntilVisible:
     element:

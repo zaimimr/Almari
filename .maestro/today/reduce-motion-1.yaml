@@ -20,7 +20,7 @@ appId: com.zaimimran.almari
     visible:
       id: "today-outfit"
     timeout: 60000
-- assertVisible:
+- assertNotVisible:
     id: "today-undo"
 - tapOn:
     id: "outfit-piece-sample-.*-hijab"
@@ -32,7 +32,7 @@ appId: com.zaimimran.almari
     index: 1
 - scrollUntilVisible:
     element:
-      id: "today-undo"
+      id: "today-another"
     direction: DOWN
     centerElement: true
     timeout: 60000

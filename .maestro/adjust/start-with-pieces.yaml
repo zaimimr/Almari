@@ -9,9 +9,7 @@ appId: com.zaimimran.almari
     visible:
       id: "today-outfit"
     timeout: 60000
-- scrollUntilVisible:
-    element: "Start with a piece"
-    timeout: 60000
+- runFlow: ../lib/open-adjust.yaml
 - tapOn: "Start with a piece"
 - tapOn: "Rose tunic"
 - tapOn: "Grey trousers"
@@ -22,8 +20,9 @@ appId: com.zaimimran.almari
 - tapOn: "Rose tunic"
 - tapOn: "Grey trousers"
 - tapOn: "Start with these"
+- assertVisible: "Keeping.*Rose tunic, Grey trousers"
+- tapOn: "Show outfit"
 - extendedWaitUntil:
     visible:
       id: "today-outfit"
     timeout: 60000
-- assertVisible: "Started with Rose tunic and Grey trousers"

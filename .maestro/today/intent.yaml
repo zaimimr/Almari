@@ -1,0 +1,23 @@
+appId: com.zaimimran.almari
+# seed: seed-owned-everyday.sh,fixture.sh now=2026-10-05T08:00:00+02:00
+---
+- launchApp:
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
+    timeout: 60000
+- assertVisible: "Everyday"
+- assertVisible: "Work"
+- assertVisible: "Gym"
+- assertVisible: "Party or mehndi"
+- tapOn:
+    id: "today-intent-gym"
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
+    timeout: 60000
+- takeScreenshot: docs/redesign/screens/after/today/intent
+- tapOn: "Wear this"
+- assertVisible: "Worn today"

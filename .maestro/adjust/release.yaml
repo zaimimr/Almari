@@ -6,13 +6,7 @@ appId: com.zaimimran.almari
     element: "Keep.*"
     timeout: 60000
 - tapOn: "Keep.*"
-- scrollUntilVisible:
-    element:
-      id: "occasion-chip"
-    direction: UP
-    timeout: 60000
-- tapOn:
-    id: "occasion-chip"
+- runFlow: ../lib/open-adjust.yaml
 - scrollUntilVisible:
     element: "Stop keeping"
     timeout: 60000

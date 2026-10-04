@@ -7,8 +7,10 @@ appId: com.zaimimran.almari
       all: allow
 - extendedWaitUntil:
     visible:
-      id: "weather-chip"
-      text: ".*Weather unavailable"
+      id: "today-outfit"
     timeout: 60000
+- assertNotVisible:
+    id: "today-reason"
+    text: "Oslo.*"
 - assertNotVisible:
     id: "forecast-mark"

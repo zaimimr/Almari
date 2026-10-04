@@ -1,6 +1,4 @@
 appId: com.zaimimran.almari
-# UC-F09-01
-# seed: seed-looks-clean.sh
 ---
 - launchApp:
     permissions:
@@ -9,8 +7,11 @@ appId: com.zaimimran.almari
     visible: "Looks"
     timeout: 30000
 - tapOn: "Looks"
+- tapOn: "Office navy.*"
 - extendedWaitUntil:
-    visible: "No looks yet"
+    visible: "Change"
     timeout: 10000
-- assertVisible: "Make an outfit"
-- takeScreenshot: docs/redesign/screens/after/looks/empty
+- tapOn: "Change"
+- extendedWaitUntil:
+    visible: "Edit your look"
+    timeout: 20000

@@ -1,6 +1,5 @@
 appId: com.zaimimran.almari
-# UC-F06-08
-# seed: seed-owned-everyday.sh,seed-looks.sh,seed-look-everyday.sh
+# seed: seed-owned-everyday.sh,fixture.sh now=2026-10-05T07:15:00+02:00
 ---
 - launchApp:
     permissions:
@@ -9,12 +8,11 @@ appId: com.zaimimran.almari
     visible:
       id: "today-outfit"
     timeout: 60000
-- tapOn: "Looks"
 - tapOn:
-    id: "look-.*"
-- tapOn: "Show on Today"
+    id: "today-intent-work"
 - extendedWaitUntil:
     visible:
       id: "today-outfit"
     timeout: 60000
-- assertVisible: "Wear this"
+- tapOn: "Wear this"
+- assertVisible: "Worn today"

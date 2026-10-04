@@ -1,0 +1,14 @@
+appId: com.zaimimran.almari
+---
+- scrollUntilVisible:
+    element:
+      id: "today-adjust"
+    direction: DOWN
+    centerElement: true
+- waitForAnimationToEnd
+- tapOn:
+    id: "today-adjust"
+- extendedWaitUntil:
+    visible:
+      id: "adjust"
+    timeout: 10000

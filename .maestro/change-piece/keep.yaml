@@ -27,7 +27,7 @@ appId: com.zaimimran.almari
 - tapOn: "Another"
 - scrollUntilVisible:
     element:
-      id: "today-undo"
+      id: "today-another"
     direction: DOWN
     centerElement: true
     timeout: 60000

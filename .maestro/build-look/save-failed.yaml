@@ -1,18 +1,11 @@
 appId: com.zaimimran.almari
 # UC-F10-06
-# seed: seed-closet.sh,fixture.sh failWrite=true
+# seed: seed-looks-clean.sh,seed-looks.sh,fixture.sh failWrite=true
 ---
-- runFlow: ../lib/open-closet.yaml
+- runFlow: ../lib/open-build.yaml
 - tapOn:
-    id: "header-select"
-- tapOn:
-    id: "tile-seed-hijab"
-- tapOn:
-    id: "select-new-look"
-- extendedWaitUntil:
-    visible: "New look"
-    timeout: 20000
-- tapOn: "Save look"
+    id: "build-piece-seed-chiffon-hijab"
+- tapOn: "Save changes"
 - extendedWaitUntil:
     visible: "Could not save. Try again."
     timeout: 20000

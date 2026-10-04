@@ -3,8 +3,7 @@ appId: com.zaimimran.almari
 # seed: fixture.sh now=2026-10-07T09:00:00+02:00
 ---
 - runFlow: ../lib/sample-closet.yaml
-- tapOn:
-    id: "occasion-chip"
+- runFlow: ../lib/open-adjust.yaml
 - assertVisible: "Adjust"
 - tapOn: "Eid"
 - tapOn: "Choose a date"
@@ -20,14 +19,15 @@ appId: com.zaimimran.almari
 - assertVisible: "Sat 11 Oct"
 - assertVisible: "Back to today"
 - assertNotVisible: "Wear this"
-- assertVisible: "Save look"
+- assertVisible: "Save for.*"
 - takeScreenshot: docs/redesign/screens/after/adjust/planning
 - tapOn: "Another"
 - extendedWaitUntil:
     visible:
       id: "today-outfit"
     timeout: 60000
-- tapOn: "Save look"
+- tapOn: "Save for.*"
+- assertVisible: "Open look"
 - tapOn: "Back to today"
 - assertVisible: "Wear this"
 - tapOn: "Looks"

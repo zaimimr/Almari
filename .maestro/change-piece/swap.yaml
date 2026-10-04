@@ -12,7 +12,7 @@ appId: com.zaimimran.almari
     index: 1
 - scrollUntilVisible:
     element:
-      id: "today-undo"
+      id: "today-another"
     direction: DOWN
     centerElement: true
     timeout: 60000

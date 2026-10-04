@@ -2,39 +2,9 @@ appId: com.zaimimran.almari
 # UC-F06-03
 ---
 - runFlow: ../lib/sample-closet.yaml
-- assertVisible: "Another"
-- assertNotVisible: "Not for me, previous outfit"
-- scrollUntilVisible:
-    element:
-      id: "today-another"
-    direction: DOWN
-    centerElement: true
-- waitForAnimationToEnd
-- tapOn: "Another"
-- extendedWaitUntil:
-    visible:
-      id: "moment-generating"
-    timeout: 5000
-    optional: true
-- extendedWaitUntil:
-    visible:
-      id: "today-outfit"
-    timeout: 60000
-- scrollUntilVisible:
-    element:
-      id: "today-undo"
-    direction: DOWN
-    centerElement: true
-- assertVisible: "Undo"
-- assertVisible: "Not for me, previous outfit"
-- takeScreenshot: docs/redesign/screens/after/today/another
-- scrollUntilVisible:
-    element:
-      id: "today-another"
-    direction: DOWN
-    centerElement: true
-- waitForAnimationToEnd
-- tapOn: "Another"
+- copyTextFrom:
+    id: "today-title"
+- evalScript: ${output.first = maestro.copiedText}
 - scrollUntilVisible:
     element:
       id: "today-another"
@@ -46,23 +16,10 @@ appId: com.zaimimran.almari
     visible:
       id: "today-outfit"
     timeout: 60000
-- scrollUntilVisible:
-    element:
-      id: "today-not-for-me"
-    direction: DOWN
-    centerElement: true
-- tapOn:
+- assertNotVisible:
+    id: "today-undo"
+- assertNotVisible:
     id: "today-not-for-me"
-- assertVisible: "Too formal.*"
-- assertVisible: "Hijab does not match.*"
-- takeScreenshot: docs/redesign/screens/after/today/not-for-me
-- scrollUntilVisible:
-    element: "Too plain.*"
-    direction: DOWN
-    centerElement: true
-- tapOn: "Too plain.*"
-- scrollUntilVisible:
-    element: "Noted for next time"
-    direction: DOWN
-    centerElement: true
-- assertVisible: "Noted for next time"
+- assertVisible:
+    id: "today-adjust"
+- takeScreenshot: docs/redesign/screens/after/today/another

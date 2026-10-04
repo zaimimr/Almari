@@ -19,9 +19,4 @@ appId: com.zaimimran.almari
     direction: DOWN
     centerElement: true
 - assertVisible: "No other hijab works with this outfit"
-- scrollUntilVisible:
-    element: "Show all.*"
-    direction: DOWN
-    centerElement: true
-- tapOn: "Show all.*"
 - assertNotVisible: "Show all.*"
