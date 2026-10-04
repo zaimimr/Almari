@@ -26,7 +26,6 @@ import { photoSource } from "./photos";
 import { theme } from "./theme";
 
 export { OutfitCollage } from "./OutfitCollage";
-export { OutfitView } from "./OutfitView";
 
 export function AppText({
   variant = "body",

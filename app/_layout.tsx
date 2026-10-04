@@ -88,32 +88,8 @@ function Screens() {
           options={{ title: t("title.adjustToday") }}
         />
         <Stack.Screen
-          name="today/everyday"
-          options={{ title: t("title.everyday") }}
-        />
-        <Stack.Screen
           name="today/pieces"
           options={{ title: t("title.choosePieces") }}
-        />
-        <Stack.Screen
-          name="today/replace"
-          options={{ title: t("title.changePiece") }}
-        />
-        <Stack.Screen
-          name="today/check"
-          options={{ title: t("check.title") }}
-        />
-        <Stack.Screen
-          name="today/hijab"
-          options={{ title: t("hijabs.title") }}
-        />
-        <Stack.Screen
-          name="today/style"
-          options={{ title: t("style.title") }}
-        />
-        <Stack.Screen
-          name="today/stylist-results"
-          options={{ title: t("stylist.results") }}
         />
       </Stack>
     </View>

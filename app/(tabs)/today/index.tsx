@@ -1,834 +1,452 @@
-import { useState } from "react";
-import { Pressable, ScrollView, StyleSheet, View } from "react-native";
-import { Stack, router } from "expo-router";
-import { randomUUID } from "expo-crypto";
+import { useMemo, useState } from "react";
+import { Linking, StyleSheet, View } from "react-native";
+import { router } from "expo-router";
+import { colourNames, mainColourName } from "../../../src/domain/color";
+import { setColour } from "../../../src/domain/facts";
+import { plannedPieces } from "../../../src/domain/looks";
+import { replacementsFor, roleOf } from "../../../src/domain/styling";
 import {
-  isAvailable,
-  occasionPhrase,
-  type GarmentKind,
-  type OutfitRequest,
-  type Piece,
-} from "../../../src/domain/closet";
-import {
-  chips,
-  giveFeedback,
-  undoFeedback,
-  woreThis,
-  wornNow,
-} from "../../../src/domain/feedback";
-import { outfitName } from "../../../src/domain/outfitName";
-import {
-  coverageChecks,
-  outfitTip,
-  tipText,
-} from "../../../src/domain/outfitView";
-import { kindName, locale, styleName, t } from "../../../src/i18n";
-import {
-  evaluateOutfit,
-  roleOf,
-  type ProblemAction,
-} from "../../../src/domain/styling";
-import { rulesScorer } from "../../../src/domain/scoring/rulesScorer";
-import { scoreContext } from "../../../src/domain/scoring/taste";
-import {
-  applyRequest,
   backToEveryday,
   clockFor,
-  saveEverydayStyle,
-  setWardrobe,
-  startOver,
+  discardPlan,
+  dropFromToday,
+  resumePlan,
   toggleKeep,
-  tryAnother,
-  undoChange,
 } from "../../../src/domain/today";
+import { hijabAlternatives } from "../../../src/domain/wardrobe";
+import { ChangeStrip } from "../../../src/features/ChangeStrip";
+import { ColourChips } from "../../../src/features/ColourChips";
+import { ActionArea } from "../../../src/features/today/ActionArea";
+import { ContextRow } from "../../../src/features/today/ContextRow";
+import { FirstRun } from "../../../src/features/today/FirstRun";
+import { OutfitCard } from "../../../src/features/today/OutfitCard";
 import {
-  contextText,
-  coverageText,
-  pieceCount,
+  ProblemBanner,
+  StaleBanner,
+} from "../../../src/features/today/ProblemBanner";
+import { Rediscover } from "../../../src/features/today/Rediscover";
+import { StartWith } from "../../../src/features/today/StartWith";
+import {
   useToday,
+  type TodayModel,
 } from "../../../src/features/today/useToday";
-import {
-  AppText,
-  Button,
-  Chip,
-  ChoiceGroup,
-  ErrorMessage,
-  HeaderAction,
-  Message,
-  OutfitCollage,
-  OutfitView,
-  PiecePhoto,
-} from "../../../src/ui/legacy";
-import { addPiecesRoute } from "../../../src/state/imports";
-import { ForecastNote } from "../../../src/features/today/ForecastNote";
-import { SavedLooks } from "../../../src/features/today/SavedLooks";
-import { theme } from "../../../src/ui/theme";
-import { HeaderItem } from "../../../src/ui/HeaderItem";
-import { useLargeText } from "../../../src/ui/useLargeText";
-import { largeTitleOptions } from "../../../src/navigation/options";
+import { locale, t } from "../../../src/i18n";
 import { now } from "../../../src/state/clock";
+import {
+  Banner,
+  Button,
+  FlatLay,
+  Footer,
+  HeaderItem,
+  ResultBar,
+  Screen,
+  Silk,
+  Text,
+} from "../../../src/ui";
+import { fullDate, shortWeekday, spokenDate } from "../../../src/ui/dates";
+import { theme } from "../../../src/ui/theme";
+import { useGreeting } from "../../../src/features/today/useGreeting";
 
-const shortcuts: GarmentKind[] = ["blazer", "dress", "kurta", "trousers"];
+function Strip({ model }: { model: TodayModel }) {
+  const { closet, request, session, open, setOpen, pieces } = model;
+  const [all, setAll] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [colourId, setColourId] = useState<string | null>(null);
+  const colourFor = closet.pieces.find((piece) => piece.id === colourId);
+  const target =
+    open?.kind === "strip"
+      ? (pieces.find((piece) => piece.id === open.pieceId) ?? null)
+      : null;
+  const role = target ? roleOf(target) : null;
 
-const wardrobeOptions = [
-  {
-    id: "sample",
-    get label() {
-      return t("today.wardrobeSample");
-    },
-  },
-  {
-    id: "owned",
-    get label() {
-      return t("today.wardrobeOwned");
-    },
-  },
-] as const;
+  const strip = useMemo(() => {
+    if (!target || !request || !session) return null;
+    if (role === "hijab") {
+      const comparison = hijabAlternatives(
+        closet,
+        request,
+        session.pieceIds,
+        model.score,
+        { all },
+      );
+      const marks = plannedPieces(closet, clockFor(now()));
+      const options = comparison
+        ? [comparison.current, ...comparison.options]
+        : [{ piece: target, reason: null }];
+      const partner = pieces.find((piece) => roleOf(piece) === "main");
+      return {
+        alternatives: options.map(({ piece, reason }) => ({
+          piece,
+          reason,
+          planned: marks[piece.id]
+            ? shortWeekday(marks[piece.id]!, locale)
+            : undefined,
+        })),
+        value: partner
+          ? t("change.reason.with", { piece: partner.name })
+          : undefined,
+      };
+    }
+    const replacements = replacementsFor(
+      closet.pieces,
+      request,
+      session.pieceIds,
+      target.id,
+      model.scorer,
+      model.context,
+    );
+    return {
+      alternatives: [
+        { piece: target, reason: null },
+        ...replacements
+          .filter((item) => item.piece.id !== target.id)
+          .map((item) => ({ piece: item.piece, reason: null })),
+      ],
+      value: undefined,
+    };
+  }, [target, role, request, session, closet, pieces, all, model]);
 
-export default function TodayScreen() {
-  const { fontScale, bold } = useLargeText();
+  if (!target || !role || !request || !strip) return null;
+
+  const close = () => {
+    setAll(false);
+    setEditing(false);
+    setColourId(null);
+    setOpen(null);
+  };
+
   return (
-    <View style={styles.screen}>
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={styles.content}
-      >
-        <Stack.Screen
-          options={{
-            ...largeTitleOptions(fontScale, bold),
-            title: t("nav.today"),
-            headerRight: () => (
-              <View style={styles.headerItems}>
-                <HeaderAction
-                  label={t("title.everyday")}
-                  onPress={() => router.push("/today/everyday")}
-                />
-                <HeaderItem
-                  label={t("nav.profile")}
-                  icon="person.crop.circle"
-                  onPress={() => router.push("/profile")}
-                />
-              </View>
-            ),
-          }}
+    <ChangeStrip
+      role={role}
+      pieceId={target.id}
+      alternatives={strip.alternatives}
+      currentId={target.id}
+      open
+      onClose={close}
+      onPick={(piece) => {
+        setEditing(false);
+        setColourId(null);
+        model.pick(target, piece);
+        setOpen({ kind: "strip", pieceId: piece.id });
+      }}
+      keep={{
+        kept: request.keptIds.includes(target.id),
+        onToggle: () =>
+          void model.run((current) => toggleKeep(current, target.id)),
+      }}
+      value={strip.value}
+      onShowAll={role === "hijab" && !all ? () => setAll(true) : undefined}
+      onAnotherWithout={
+        role === "hijab"
+          ? undefined
+          : () => {
+              close();
+              void model.restyle(
+                (current) => dropFromToday(current, target.id),
+                null,
+              );
+            }
+      }
+      onEditColour={() => {
+        setEditing(true);
+        setColourId(null);
+      }}
+      loading={model.styling}
+      testID="change-strip"
+    >
+      {editing && !colourFor ? (
+        <Button
+          label={t("common.editColour")}
+          variant="quiet"
+          size="small"
+          onPress={() => setColourId(target.id)}
+          testID="change-edit-colour"
         />
-        <TodayContent />
-      </ScrollView>
+      ) : null}
+      {colourFor ? (
+        <ColourChips
+          value={
+            colourNames.find(
+              (name) => name.toLowerCase() === mainColourName(colourFor.colors),
+            ) ?? null
+          }
+          onPick={(name) =>
+            void model.run((current) => setColour(current, colourFor.id, name))
+          }
+          inSurface
+        />
+      ) : null}
+    </ChangeStrip>
+  );
+}
+
+function TitleRow({ model }: { model: TodayModel }) {
+  const date = model.session?.date;
+  const tomorrow = model.mode === "tomorrow";
+  return (
+    <View style={styles.titleRow}>
+      <Text role="title" accessibilityRole="header" style={styles.titleText}>
+        {tomorrow
+          ? t("today.tomorrow")
+          : date
+            ? fullDate(date, locale)
+            : t("nav.today")}
+      </Text>
+      <Button
+        label={t("today.backToToday")}
+        variant="quiet"
+        size="small"
+        disabled={model.busy}
+        onPress={() =>
+          tomorrow
+            ? model.leaveTomorrow()
+            : void model.restyle(backToEveryday, null)
+        }
+        testID="today-back"
+      />
     </View>
   );
 }
 
-function TodayContent() {
-  const {
-    closet,
-    today,
-    session,
-    result,
-    pieces,
-    lostPieces,
-    run,
-    busy,
-    error,
-    forecastFailed,
-  } = useToday();
-  const [asking, setAsking] = useState(false);
-  const [noted, setNoted] = useState<number | null>(null);
-  const preset = closet.styling.everyday;
-  const hasOwned = closet.pieces.some((piece) => piece.source === "owned");
-
-  if (!preset)
-    return (
-      <>
-        <Message
-          title={t("today.startTitle")}
-          description={t("today.startBody")}
-          action={
-            <View style={styles.actions}>
-              <Button
-                label={t("today.setEveryday")}
-                onPress={() => router.push("/today/everyday")}
-              />
-              <Button
-                label={t("today.trySample")}
-                secondary
-                busy={busy}
-                onPress={() => {
-                  void run((current) =>
-                    saveEverydayStyle(
-                      setWardrobe(current, "sample", clockFor(now())),
-                      {
-                        occasion: "work",
-                        style: "western",
-                        hijab: "always",
-                        sample: true,
-                      },
-                      clockFor(now()),
-                      true,
-                    ),
-                  );
-                }}
-              />
-              <AppText variant="footnote" muted>
-                {t("today.sampleNote")}
-              </AppText>
-              <ErrorMessage message={error} />
-            </View>
-          }
-        />
-      </>
-    );
-
-  if (!today || !session || !result)
-    return <AppText muted>{t("today.styling")}</AppText>;
-
-  const request = session.request;
-  const revision = session.revision;
-  const change = (next: Partial<OutfitRequest>) =>
-    run((current) => applyRequest(current, { ...request, ...next }, revision));
-  const nameOf = (id: string) =>
-    closet.pieces.find((piece) => piece.id === id)?.name ??
-    t("today.thisPiece");
-
-  function act(action: ProblemAction) {
-    switch (action.type) {
-      case "release":
-        return change({
-          keptIds: request.keptIds.filter((id) => id !== action.id),
-        });
-      case "clear-type":
-        return change({ garmentType: null });
-      case "set-style":
-        return change({ style: action.style });
-      case "clear-weather":
-        return change({ weather: { source: "unknown" } });
-      case "clear-excluded":
-        return change({ excludedIds: [] });
-      case "choose-pieces":
-        return router.push("/today/pieces");
-      case "add-pieces":
-        return router.push(addPiecesRoute);
-      case "use-samples":
-        return run((current) =>
-          setWardrobe(current, "sample", clockFor(now())),
-        );
-      case "check-piece":
-        return router.push({
-          pathname: "/today/check",
-          params: { id: action.id, ask: action.ask },
-        });
-      case "edit-piece":
-        return router.push({
-          pathname: "/piece/[id]",
-          params: { id: action.id },
-        });
-    }
-  }
-
-  function actionLabel(action: ProblemAction) {
-    switch (action.type) {
-      case "release":
-        return t("today.stopKeeping", { name: nameOf(action.id) });
-      case "clear-type":
-        return t("today.anyType");
-      case "set-style":
-        return t("today.switchTo", { style: styleName(action.style) });
-      case "clear-weather":
-        return t("today.clearWeather");
-      case "clear-excluded":
-        return t("today.includeSetAside");
-      case "choose-pieces":
-        return t("title.choosePieces");
-      case "add-pieces":
-        return t("capture.addPiece");
-      case "use-samples":
-        return t("today.useSample");
-      case "check-piece":
-        return t("check.action");
-      case "edit-piece":
-        return t("today.openPiece", { name: nameOf(action.id) });
-    }
-  }
-
-  const showOutfit =
-    lostPieces === 0 &&
-    pieces.length > 0 &&
-    result.status !== "conflict" &&
-    result.status !== "missing";
-  const kept = request.keptIds.flatMap((id) => {
-    const piece = closet.pieces.find((item) => item.id === id);
-    return piece ? [piece] : [];
-  });
-  const pool = closet.pieces.filter(
-    (piece) => piece.source === request.wardrobe && isAvailable(piece),
-  );
-  const reviewProblems = showOutfit
-    ? evaluateOutfit(pieces, request, pool)
-    : [];
-  const reasons = showOutfit
-    ? rulesScorer.score(pieces, request, scoreContext(closet)).reasons
-    : [];
-  const checks = reviewProblems.filter(
-    (problem) => problem.severity === "review",
-  );
-  const broken = reviewProblems.filter(
-    (problem) => problem.severity !== "review",
-  );
-  const worn = wornNow(closet);
-  const tip = showOutfit
-    ? outfitTip(
-        pieces,
-        closet.pieces.filter((piece) => piece.source === request.wardrobe),
-        request,
-        closet.styling.profile,
-      )
-    : null;
-  const name = outfitName(pieces, request.occasion, locale);
-  const last =
-    result.outfits.length > 0 && session.cursor >= result.outfits.length - 1;
-  const source =
-    request.wardrobe === "sample"
-      ? t("today.sourceSample")
-      : t("today.sourceOwned");
-
+function Banners({ model }: { model: TodayModel }) {
+  const { result, showOutfit } = model;
   return (
     <>
-      <AppText variant="title">
-        {today.active === "occasion"
-          ? t("today.styledFor", {
-              occasion: occasionPhrase(request.occasion),
-            })
-          : t("today.inspiration")}
-      </AppText>
-      <View style={styles.context}>
-        <AppText muted style={styles.contextText} testID="today-context">
-          {contextText(request)}
-          {request.weather.source === "manual" ? t("today.enteredByYou") : ""}
-          {request.weather.source === "forecast" ? t("forecast.suffix") : ""}
-        </AppText>
-        <Chip
-          label={t("today.adjust")}
-          accessibilityLabel={t("today.adjustHint")}
-          onPress={() => router.push("/today/adjust")}
+      {model.tomorrowWaiting ? (
+        <Banner
+          tone="notice"
+          text={t("today.tomorrow")}
+          actions={[
+            {
+              label: t("today.showTomorrow"),
+              accessibilityLabel: t("today.showTomorrowLabel"),
+              onPress: model.showTomorrow,
+            },
+          ]}
+          testID="today-tomorrow-waiting"
         />
-      </View>
-      <ForecastNote closet={closet} request={request} failed={forecastFailed} />
-      {today.active === "occasion" ? (
-        <View style={styles.banner}>
-          <AppText variant="footnote">{t("today.justForNow")}</AppText>
-          <Button
-            label={t("today.backToLook")}
-            secondary
-            compact
-            disabled={busy}
-            onPress={() => {
-              void run(backToEveryday);
-            }}
-          />
-        </View>
       ) : null}
-      {hasOwned || request.wardrobe === "owned" ? (
-        <ChoiceGroup
-          label={t("today.styleFrom")}
-          options={wardrobeOptions}
-          value={request.wardrobe}
-          disabled={busy}
-          onChange={(wardrobe) => {
-            if (wardrobe !== request.wardrobe)
-              void run((current) =>
-                setWardrobe(current, wardrobe, clockFor(now())),
-              );
-          }}
+      {model.planned ? (
+        <Banner
+          tone="notice"
+          text={t("today.planned", { name: model.planned.name })}
+          actions={[
+            {
+              label: t("looks.showOnToday"),
+              onPress: () => void model.showLook(model.planned!.pieceIds),
+            },
+          ]}
+          testID="today-planned"
         />
-      ) : (
-        <AppText variant="footnote" muted>
-          {t("today.sampleOnly")}
-        </AppText>
-      )}
-
-      {showOutfit ? (
-        <View style={styles.outfit}>
-          <OutfitView
-            pieces={pieces}
-            name={name}
-            reasons={reasons}
-            checks={coverageChecks(pieces, request, closet.styling.profile)}
-            tip={tip ? tipText(tip, locale) : null}
-            layout={closet.styling.layout}
-            keptIds={request.keptIds}
-            testID="today-outfit"
-          >
-            <View style={styles.row}>
-              <View style={styles.grow}>
-                <Button
-                  label={t("outfit.change")}
-                  secondary
-                  disabled={busy || result.outfits.length < 2}
-                  onPress={() => {
-                    void run((closetNow) =>
-                      last
-                        ? startOver(closetNow)
-                        : tryAnother(closetNow, revision),
-                    );
-                  }}
-                />
-              </View>
-              <View style={styles.grow}>
-                <Button
-                  label={t("outfit.notForMe")}
-                  secondary
-                  disabled={busy || result.outfits.length < 2}
-                  onPress={() => setAsking((open) => !open)}
-                />
-              </View>
-              {worn ? null : (
-                <View style={styles.grow}>
-                  <Button
-                    label={t("outfit.wear")}
-                    disabled={busy}
-                    onPress={() => {
-                      void run((current) =>
-                        woreThis(
-                          current,
-                          revision,
-                          now().toISOString(),
-                          randomUUID(),
-                        ),
-                      );
-                    }}
-                  />
-                </View>
-              )}
-            </View>
-            {worn ? (
-              <View style={styles.row}>
-                <AppText style={styles.grow} accessibilityLiveRegion="polite">
-                  {t("outfit.worn")}
-                </AppText>
-                <Button
-                  label={t("outfit.undo")}
-                  secondary
-                  compact
-                  disabled={busy}
-                  onPress={() => {
-                    void run((current) => undoFeedback(current, worn.id));
-                  }}
-                />
-              </View>
-            ) : null}
-            {asking ? (
-              <View style={styles.section}>
-                <AppText style={styles.label}>{t("outfit.why")}</AppText>
-                <View style={styles.chips}>
-                  {chips.map((chip) => (
-                    <Chip
-                      key={chip.id}
-                      label={t(`feedback.${chip.id}`)}
-                      disabled={busy}
-                      accessibilityLabel={t("outfit.chipHint", {
-                        chip: t(`feedback.${chip.id}`),
-                      })}
-                      onPress={() => {
-                        void run((current) =>
-                          giveFeedback(
-                            current,
-                            chip.id,
-                            revision,
-                            now().toISOString(),
-                            randomUUID(),
-                          ),
-                        ).then((saved) => {
-                          setAsking(false);
-                          setNoted(saved ? revision + 1 : null);
-                        });
-                      }}
-                    />
-                  ))}
-                </View>
-              </View>
-            ) : null}
-            {noted === revision ? (
-              <AppText
-                variant="footnote"
-                muted
-                accessibilityLiveRegion="polite"
-              >
-                {t("outfit.thanks")}
-              </AppText>
-            ) : null}
-          </OutfitView>
-          {pieces.some((piece) => roleOf(piece) === "hijab") ? (
-            <Button
-              label={t("hijabs.title")}
-              secondary
-              compact
-              disabled={busy}
-              onPress={() => router.push("/today/hijab")}
-            />
-          ) : null}
-          <AppText variant="footnote" muted accessibilityLiveRegion="polite">
-            {t("today.countFrom", { pieces: pieceCount(pieces), source })}
-            {kept.length ? t("today.keptSuffix", { count: kept.length }) : ""}
-          </AppText>
-          {broken.length ? (
-            <ProblemCard
-              message={t("today.noLongerFits", {
-                problems: broken.map((problem) => problem.message).join(" "),
-              })}
-              busy={busy}
-              actions={[
-                {
-                  label: t("today.findNew"),
-                  onPress: () => {
-                    void run(startOver);
-                  },
-                },
-              ]}
-            />
-          ) : null}
-          {checks.length ? (
-            <View style={styles.review}>
-              <AppText style={styles.label}>
-                {t("today.checkBeforeWearing")}
-              </AppText>
-              {checks.map((problem) => (
-                <View key={problem.message} style={styles.check}>
-                  <AppText>{problem.message}</AppText>
-                  {problem.actions
-                    .filter(
-                      (action) =>
-                        action.type === "check-piece" ||
-                        action.type === "edit-piece",
-                    )
-                    .map((action) => (
-                      <Button
-                        key={actionLabel(action)}
-                        label={actionLabel(action)}
-                        secondary
-                        compact
-                        disabled={busy}
-                        onPress={() => {
-                          void act(action);
-                        }}
-                      />
-                    ))}
-                </View>
-              ))}
-            </View>
-          ) : null}
-          <Button
-            label={t("common.saveLook")}
-            secondary
-            disabled={busy}
-            onPress={() =>
-              router.push({
-                pathname: "/look/build",
-                params: {
-                  pieces: session.pieceIds.join(","),
-                  name,
-                  occasion: request.occasion,
-                },
-              })
-            }
-          />
-          {today.active === "everyday" ? (
-            <Button
-              label={t("today.forOccasion")}
-              secondary
-              disabled={busy}
-              onPress={() =>
-                router.push({
-                  pathname: "/today/adjust",
-                  params: { target: "occasion" },
-                })
-              }
-            />
-          ) : null}
-          {result.outfits.length === 1 ? (
-            <AppText variant="footnote" muted>
-              {t("today.onlyCombination")}
-            </AppText>
-          ) : last ? (
-            <AppText variant="footnote" muted>
-              {t("today.lastCombination")}
-            </AppText>
-          ) : null}
-          {session.previousPieceIds ? (
-            <Button
-              label={t("today.undo")}
-              secondary
-              compact
-              disabled={busy}
-              onPress={() => {
-                void run(undoChange);
-              }}
-            />
-          ) : null}
-        </View>
-      ) : (
-        <View style={styles.outfit}>
-          {kept.length ? <OutfitCollage pieces={kept} /> : null}
-          {lostPieces > 0 &&
-          result.status !== "conflict" &&
-          result.status !== "missing" ? (
-            <ProblemCard
-              message={t("today.pieceUnavailable")}
-              actions={[
-                {
-                  label: t("today.findNew"),
-                  onPress: () => {
-                    void run(startOver);
-                  },
-                },
-              ]}
-              busy={busy}
-            />
-          ) : (
-            result.problems.map((problem) => (
-              <ProblemCard
-                key={problem.message}
-                message={problem.message}
-                busy={busy}
-                actions={problem.actions.map((action) => ({
-                  label: actionLabel(action),
-                  onPress: () => {
-                    void act(action);
-                  },
-                }))}
+      ) : null}
+      {model.unsaved?.date ? (
+        <Banner
+          tone="notice"
+          text={t("today.unsavedPlan", {
+            day: spokenDate(model.unsaved.date, locale),
+          })}
+          actions={[
+            {
+              label: t("today.openPlan"),
+              onPress: () => void model.restyle(resumePlan, null),
+            },
+            {
+              label: t("common.discard"),
+              onPress: () => void model.run(discardPlan),
+            },
+          ]}
+          testID="today-unsaved"
+        />
+      ) : null}
+      {model.stylingFailed ? (
+        <Banner
+          tone="notice"
+          text={t("today.stylingFailed")}
+          actions={[
+            { label: t("common.tryAgain"), onPress: model.stylingFailed },
+          ]}
+          testID="today-styling-failed"
+        />
+      ) : null}
+      {result && !showOutfit && model.lostPieces === 0
+        ? result.problems
+            .slice(0, 1)
+            .map((problem) => (
+              <ProblemBanner
+                key={problem.code}
+                model={model}
+                problem={problem}
               />
             ))
-          )}
-        </View>
-      )}
-
-      <SavedLooks closet={closet} session={session} busy={busy} run={run} />
-      <View style={styles.section}>
-        <AppText style={styles.label}>{t("today.startWith")}</AppText>
-        <View style={styles.chips}>
-          {shortcuts.map((kind) => (
-            <Chip
-              key={kind}
-              label={kindName(kind)}
-              selected={request.garmentType === kind}
-              disabled={busy}
-              accessibilityLabel={t("today.wearKind", {
-                kind: kindName(kind).toLowerCase(),
-              })}
-              onPress={() => {
-                void change({
-                  garmentType: request.garmentType === kind ? null : kind,
-                });
-              }}
-            />
-          ))}
-          <Chip
-            label={
-              kept.length
-                ? t("today.choosePiecesCount", { count: kept.length })
-                : t("title.choosePieces")
-            }
-            disabled={busy}
-            onPress={() => router.push("/today/pieces")}
-          />
-        </View>
-      </View>
-
-      {showOutfit ? (
-        <View style={styles.section}>
-          <AppText style={styles.label}>{t("today.inThisOutfit")}</AppText>
-          {pieces.map((piece) => (
-            <PieceRow
-              key={piece.id}
-              piece={piece}
-              kept={request.keptIds.includes(piece.id)}
-              disabled={busy}
-              onKeep={() => {
-                void run((closetNow) => toggleKeep(closetNow, piece.id));
-              }}
-              onChange={() =>
-                roleOf(piece) === "hijab"
-                  ? router.push("/today/hijab")
-                  : router.push({
-                      pathname: "/today/replace",
-                      params: { id: piece.id },
-                    })
-              }
-            />
-          ))}
-        </View>
+        : null}
+      {model.lostPieces > 0 || model.broken.length > 0 ? (
+        <StaleBanner model={model} />
       ) : null}
-
-      <Button
-        label={t("style.title")}
-        secondary
-        compact
-        disabled={busy}
-        onPress={() => router.push("/today/style")}
-      />
-      <View style={styles.notes}>
-        {request.hijab === null ? (
-          <AppText variant="footnote" muted>
-            {t("today.hijabUnset")}
-          </AppText>
-        ) : null}
-        {closet.styling.layout !== "full" ? (
-          <AppText variant="footnote" muted testID="coverage-note">
-            {coverageText(request)} {t("today.layoutNote")}
-          </AppText>
-        ) : null}
-      </View>
-      <ErrorMessage message={error} />
     </>
   );
 }
 
-function ProblemCard({
-  message,
-  actions,
-  busy,
-}: {
-  message: string;
-  actions: { label: string; onPress: () => void }[];
-  busy: boolean;
-}) {
+function WeatherMark({ model }: { model: TodayModel }) {
+  const forecast = model.closet.styling.forecast;
+  const date = model.session?.date ?? model.today?.localDate;
+  if (
+    !forecast ||
+    forecast.date !== date ||
+    model.request?.weather.source !== "forecast"
+  )
+    return null;
   return (
-    <View style={styles.problem} accessibilityRole="summary">
-      <AppText>{message}</AppText>
-      {actions.map((action) => (
-        <Button
-          key={action.label}
-          label={action.label}
-          secondary
-          compact
-          disabled={busy}
-          onPress={action.onPress}
-        />
-      ))}
-    </View>
+    <Button
+      label={t("forecast.mark")}
+      accessibilityLabel={t("forecast.markLabel")}
+      variant="quiet"
+      size="small"
+      onPress={() => void Linking.openURL(forecast.attribution.url)}
+      testID="forecast-mark"
+    />
   );
 }
 
-function PieceRow({
-  piece,
-  kept,
-  disabled,
-  onKeep,
-  onChange,
-}: {
-  piece: Piece;
-  kept: boolean;
-  disabled: boolean;
-  onKeep: () => void;
-  onChange: () => void;
-}) {
+function TodayFooter({ model }: { model: TodayModel }) {
+  const planning = model.mode === "planning" || model.mode === "tomorrow";
+  if (!model.showOutfit) return null;
+  if (planning) {
+    const saved = model.savedLook;
+    return (
+      <Footer
+        primary={{
+          label: t(saved ? "today.openLook" : "common.saveLook"),
+          disabled: model.busy,
+          onPress: () => {
+            if (saved)
+              router.push({ pathname: "/look/[id]", params: { id: saved.id } });
+            else void model.saveLook();
+          },
+          testID: "today-save-look",
+        }}
+        error={model.error}
+      />
+    );
+  }
+  return model.worn ? (
+    <Footer error={model.error}>
+      <ResultBar
+        text={t("outfit.worn")}
+        action={{
+          label: t("common.undo"),
+          onPress: model.unwear,
+          disabled: model.busy,
+          testID: "today-worn-undo",
+        }}
+        testID="today-worn"
+      />
+    </Footer>
+  ) : (
+    <Footer
+      primary={{
+        label: t("outfit.wear"),
+        disabled: model.busy,
+        onPress: () => void model.wear(),
+        testID: "today-wear",
+      }}
+      error={model.error}
+    />
+  );
+}
+
+export default function TodayScreen() {
+  const model = useToday();
+  const { closet, today, mode, request, open, setOpen } = model;
+  const [title, measure] = useGreeting(closet.styling.name, model.hour);
+  const inline = mode === "planning" || mode === "tomorrow";
+  const first = !closet.styling.everyday;
+
+  const header = (
+    <HeaderItem
+      label={t("nav.profile")}
+      icon="person.crop.circle"
+      onPress={() => router.push("/profile")}
+      testID="header-profile"
+    />
+  );
+
+  if (first)
+    return (
+      <Screen large title={title} actions={header} testID="today">
+        {measure}
+        <FirstRun model={model} />
+      </Screen>
+    );
+
+  const openId = open?.kind === "strip" ? open.pieceId : null;
+
   return (
-    <View style={styles.pieceRow}>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={t("today.changePiece", { name: piece.name })}
-        onPress={onChange}
-        disabled={disabled}
-        style={styles.pieceThumb}
-      >
-        <PiecePhoto piece={piece} />
-      </Pressable>
-      <View style={styles.pieceText}>
-        <AppText>{piece.name}</AppText>
-        {kept ? (
-          <AppText variant="footnote" style={styles.keptText}>
-            {t("today.keptEverywhere")}
-          </AppText>
+    <Screen
+      large={!inline}
+      title={inline ? t("nav.today") : title}
+      headerTitleVisible={!inline}
+      actions={header}
+      footer={<TodayFooter model={model} />}
+      testID="today"
+    >
+      {measure}
+      <View style={styles.content}>
+        {inline ? <TitleRow model={model} /> : null}
+        <ContextRow model={model} />
+        <Banners model={model} />
+        {!today ? (
+          <Silk
+            kind="placeholder"
+            shape="lay"
+            label={t("common.loading")}
+            style={styles.placeholder}
+          />
+        ) : model.showOutfit ? (
+          <View style={styles.outfit}>
+            <View style={styles.hero}>
+              <FlatLay
+                pieces={model.pieces}
+                size="hero"
+                maxSize={236}
+                swapMark
+                keptIds={request?.keptIds}
+                openId={openId}
+                revision={model.revision}
+                state={model.styling ? "arranging" : undefined}
+                onPiecePress={(piece) =>
+                  setOpen(
+                    openId === piece.id
+                      ? null
+                      : { kind: "strip", pieceId: piece.id },
+                  )
+                }
+                testID="today-outfit"
+              />
+            </View>
+            <Strip key={openId ?? "closed"} model={model} />
+            <OutfitCard model={model} />
+            <ActionArea model={model} />
+          </View>
         ) : null}
+        {today ? <StartWith model={model} /> : null}
+        {today ? <Rediscover model={model} /> : null}
+        <WeatherMark model={model} />
       </View>
-      <View style={styles.pieceActions}>
-        <Chip
-          label={kept ? t("outfit.kept") : t("today.keep")}
-          selected={kept}
-          disabled={disabled}
-          accessibilityLabel={
-            kept
-              ? t("today.stopKeeping", { name: piece.name })
-              : t("today.keepPiece", { name: piece.name })
-          }
-          onPress={onKeep}
-        />
-        <Chip
-          label={t("outfit.change")}
-          disabled={disabled}
-          accessibilityLabel={t("today.changePiece", { name: piece.name })}
-          onPress={onChange}
-        />
-      </View>
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: theme.colors.canvas },
-  headerItems: { flexDirection: "row", alignItems: "center" },
-  content: {
-    padding: 24,
-    paddingBottom: 120,
-    gap: 20,
-    width: "100%",
-    maxWidth: 720,
-    alignSelf: "center",
-  },
-  actions: { gap: 12 },
-  context: {
+  content: { gap: theme.space.xl },
+  outfit: { gap: theme.space.md },
+  hero: { width: "100%", maxWidth: 236, alignSelf: "center" },
+  placeholder: { alignSelf: "center", width: 236, height: 236 },
+  titleRow: {
     flexDirection: "row",
-    alignItems: "center",
     flexWrap: "wrap",
-    gap: 12,
-  },
-  contextText: { flexShrink: 1, flexGrow: 1 },
-  banner: {
-    gap: 8,
-    padding: 12,
-    borderRadius: theme.radius.md,
-    borderCurve: "continuous",
-    backgroundColor: theme.colors.plumSoft,
-  },
-  outfit: { gap: 12 },
-  check: { gap: 8 },
-  review: {
-    gap: 6,
-    padding: 12,
-    borderRadius: theme.radius.md,
-    borderCurve: "continuous",
-    borderWidth: 1,
-    borderColor: theme.colors.line,
-  },
-  label: { fontWeight: "600" },
-  row: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
-  grow: { flexGrow: 1, flexBasis: 140 },
-  section: { gap: 12 },
-  chips: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  problem: {
-    gap: 12,
-    padding: 16,
-    borderRadius: theme.radius.md,
-    borderCurve: "continuous",
-    backgroundColor: theme.colors.surface,
-  },
-  pieceRow: {
-    flexDirection: "row",
     alignItems: "center",
-    flexWrap: "wrap",
-    gap: 12,
-    paddingVertical: 4,
+    justifyContent: "space-between",
+    gap: theme.space.sm,
   },
-  pieceThumb: {
-    width: 64,
-    height: 64,
-    borderRadius: theme.radius.md,
-    borderCurve: "continuous",
-    borderWidth: 1,
-    borderColor: theme.colors.line,
-    overflow: "hidden",
-    padding: 4,
-  },
-  pieceText: { flex: 1, minWidth: 96, gap: 2 },
-  keptText: { color: theme.colors.plum, fontWeight: "600" },
-  pieceActions: { flexDirection: "row", gap: 8 },
-  notes: { gap: 8 },
+  titleText: { flexShrink: 1 },
 });
