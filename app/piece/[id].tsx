@@ -226,13 +226,6 @@ export default function PieceDetail() {
         </Section>
       ) : null}
       <View style={styles.actions}>
-        <Button
-          variant="quiet"
-          icon="plus"
-          label={t("piece.addToLook")}
-          testID="piece-add-to-look"
-          onPress={() => router.push(`/look/build?pieces=${pieceId}` as Href)}
-        />
         {putAway ? (
           <ResultBar
             text={t("result.putAway")}

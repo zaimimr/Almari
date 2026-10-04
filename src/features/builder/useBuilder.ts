@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { randomUUID } from "expo-crypto";
 import { router } from "expo-router";
-import { type Occasion, type Piece, saveLook } from "../../domain/closet";
+import { type Piece, saveLook } from "../../domain/closet";
 import {
   builderRequest,
   fillOutfit,
@@ -18,8 +18,7 @@ import { useCloset } from "../../state/closet";
 import { now } from "../../state/clock";
 import { announce } from "../../ui/announce";
 
-export type Mode =
-  { kind: "picker" } | { kind: "occasion" } | { kind: "swap"; pieceId: string };
+export type Mode = { kind: "picker" } | { kind: "swap"; pieceId: string };
 
 function countLine(count: number) {
   return count === 1
@@ -27,23 +26,18 @@ function countLine(count: number) {
     : t("common.pieceCountMany", { count });
 }
 
-export function useBuilder(params: { id?: string; pieces?: string }) {
+export function useBuilder(params: { id?: string }) {
   const { closet, update } = useCloset();
   const [source] = useState(() =>
     params.id ? closet.looks.find((look) => look.id === params.id) : undefined,
   );
-  const gone = Boolean(params.id && !source);
-  const [lookId] = useState(() => source?.id ?? randomUUID());
-  const [startIds] = useState(
-    () => source?.pieceIds ?? params.pieces?.split(",").filter(Boolean) ?? [],
-  );
+  const gone = !source;
+  const [startIds] = useState(() => source?.pieceIds ?? []);
   const [initial] = useState(() =>
     startIds.filter((id) => closet.pieces.some((piece) => piece.id === id)),
   );
   const [selected, setSelected] = useState(initial);
-  const [occasion, setOccasion] = useState<Occasion>(
-    source?.occasion ?? "everyday",
-  );
+  const occasion = source?.occasion ?? "everyday";
   const [category, setCategory] = useState<string>("all");
   const [mode, setMode] = useState<Mode>({ kind: "picker" });
   const [line, setLine] = useState<{ text: string; error: boolean } | null>(
@@ -99,10 +93,7 @@ export function useBuilder(params: { id?: string; pieces?: string }) {
     closet.pieces.filter((piece) => piece.id === id),
   );
 
-  const dirty = source
-    ? source.pieceIds.join() !== selected.join() ||
-      (source.occasion ?? "everyday") !== occasion
-    : selected.join() !== initial.join() || occasion !== "everyday";
+  const dirty = !!source && source.pieceIds.join() !== selected.join();
   const allowClose = useDiscardChanges(dirty, saving);
 
   function apply(next: string[]) {
@@ -174,25 +165,17 @@ export function useBuilder(params: { id?: string; pieces?: string }) {
     }, 0);
   }
 
-  function chooseOccasion(next: Occasion) {
-    setOccasion(next);
-    setLine(null);
-    setMode({ kind: "picker" });
-  }
-
   async function save() {
-    if (saving || !selected.length) return;
+    if (saving || !selected.length || !source) return;
     setSaving(true);
     setLine(null);
     try {
       await update((current) =>
         recordSaved(
           saveLook(current, {
-            id: lookId,
+            ...source,
             name: name || outfitName(pieces, occasion, locale),
             pieceIds: selected,
-            createdAt: source?.createdAt ?? now().toISOString(),
-            occasion,
           }),
           selected,
           now().toISOString(),
@@ -211,7 +194,6 @@ export function useBuilder(params: { id?: string; pieces?: string }) {
 
   return {
     closet,
-    editing: Boolean(source),
     gone,
     pieces,
     selected,
@@ -233,7 +215,6 @@ export function useBuilder(params: { id?: string; pieces?: string }) {
     undoSwap,
     alternatives,
     fill,
-    chooseOccasion,
     save,
   };
 }

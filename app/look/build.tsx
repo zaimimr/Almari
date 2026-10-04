@@ -3,13 +3,12 @@ import { ScrollView, StyleSheet, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import type { Piece } from "../../src/domain/closet";
 import { roleOf } from "../../src/domain/styling";
-import { categories, occasions } from "../../src/domain/taxonomy";
+import { categories } from "../../src/domain/taxonomy";
 import { ChangeStrip, tileLabel } from "../../src/features/ChangeStrip";
 import { useBuilder } from "../../src/features/builder/useBuilder";
-import { t, type Key } from "../../src/i18n";
+import { t } from "../../src/i18n";
 import {
   Button,
-  Chip,
   ChipRow,
   FlatLay,
   Footer,
@@ -24,16 +23,15 @@ import { useColors } from "../../src/ui/useColors";
 import { useLargeText } from "../../src/ui/useLargeText";
 
 export default function BuildLook() {
-  const params = useLocalSearchParams<{ id?: string; pieces?: string }>();
+  const params = useLocalSearchParams<{ id?: string }>();
   const builder = useBuilder(params);
   const colors = useColors();
   const { ax } = useLargeText();
-  const title = builder.editing ? t("build.edit") : t("looks.new");
+  const title = t("build.edit");
 
   if (builder.gone)
     return <Screen title={title} gone={{ title: t("look.goneTitle") }} />;
 
-  const occasionLabel = t(`occasion.${builder.occasion}` as Key);
   const hasPieces = builder.closet.pieces.length > 0;
   const shown = new Set(builder.closet.pieces.map((piece) => piece.category));
   const swapPiece =
@@ -43,27 +41,6 @@ export default function BuildLook() {
             builder.mode.kind === "swap" && piece.id === builder.mode.pieceId,
         )
       : undefined;
-
-  const occasionChip = hasPieces ? (
-    <Chip
-      kind="control"
-      opens="expander"
-      label={occasionLabel}
-      expanded={builder.mode.kind === "occasion"}
-      accessibilityLabel={t("adjust.chipLabel", {
-        adjust: t("adjust.occasion"),
-        value: occasionLabel,
-      })}
-      onPress={() =>
-        builder.setMode(
-          builder.mode.kind === "occasion"
-            ? { kind: "picker" }
-            : { kind: "occasion" },
-        )
-      }
-      testID="build-occasion"
-    />
-  ) : null;
 
   const pick = (piece: Piece) => {
     if (!builder.filling) builder.toggle(piece);
@@ -129,32 +106,6 @@ export default function BuildLook() {
     </View>
   );
 
-  const occasionBody = (
-    <View
-      style={[
-        styles.region,
-        styles.surface,
-        { backgroundColor: colors.surface },
-      ]}
-    >
-      <ChipRow
-        label={t("adjust.occasion")}
-        layout="wrap"
-        inSurface
-        options={occasions.map((item) => ({
-          id: item.id,
-          label: t(`occasion.${item.id}` as Key),
-        }))}
-        value={builder.occasion}
-        onChange={(next) => {
-          if (typeof next === "string")
-            builder.chooseOccasion(next as typeof builder.occasion);
-        }}
-        testID="build-occasions"
-      />
-    </View>
-  );
-
   const swapBody = swapPiece ? (
     <ChangeStrip
       role={roleOf(swapPiece)}
@@ -190,8 +141,6 @@ export default function BuildLook() {
         />
       </View>
     </View>
-  ) : builder.mode.kind === "occasion" ? (
-    occasionBody
   ) : swapBody ? (
     swapBody
   ) : (
@@ -253,7 +202,6 @@ export default function BuildLook() {
         >
           {builder.name}
         </Text>
-        {occasionChip}
       </View>
     </View>
   );
@@ -268,14 +216,10 @@ export default function BuildLook() {
       footer={
         <Footer
           primary={{
-            label: builder.editing
-              ? t("common.saveChanges")
-              : t("common.saveLook"),
+            label: t("common.saveChanges"),
             onPress: () => void builder.save(),
             disabled:
-              !builder.selected.length ||
-              builder.filling ||
-              (builder.editing && !builder.dirty),
+              !builder.selected.length || builder.filling || !builder.dirty,
             busy: builder.saving,
             testID: "build-save",
           }}
@@ -329,7 +273,6 @@ const styles = StyleSheet.create({
   line: { flexShrink: 1 },
   dock: { minHeight: 304 },
   region: { gap: theme.space.md, paddingBottom: theme.space.md },
-  surface: { padding: theme.space.lg, borderRadius: theme.radius.md },
   scroller: { marginRight: -theme.space.lg },
   tiles: { flexDirection: "row", gap: theme.space.md },
   tile: { width: 112 },

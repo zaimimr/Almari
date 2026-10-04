@@ -1371,6 +1371,7 @@ export const en = {
   "look.removeBodyWorn": "The pieces and the days you wore it stay.",
   "look.rename": "Rename",
   "looks.clearPlan": "Clear date",
+  "looks.makeOutfit": "Make an outfit",
   "looks.new": "New look",
   "looks.plan": "Plan a day",
   "looks.planCleared": "Plan cleared",

@@ -20,12 +20,6 @@ export default function LooksScreen() {
       actions={
         <View style={styles.actions}>
           <HeaderItem
-            label={t("looks.new")}
-            icon="plus"
-            onPress={() => router.push("/look/build")}
-            testID="header-new"
-          />
-          <HeaderItem
             label={t("calendar.title")}
             icon="calendar"
             onPress={() => router.push("/looks/calendar")}
@@ -61,8 +55,8 @@ export default function LooksScreen() {
           action={
             closet.pieces.length
               ? {
-                  label: t("looks.new"),
-                  onPress: () => router.push("/look/build"),
+                  label: t("looks.makeOutfit"),
+                  onPress: () => router.navigate("/(tabs)/today"),
                 }
               : {
                   label: t("closet.addPieces"),

@@ -1389,6 +1389,7 @@ export const nb: Record<Key, string> = {
   "look.removeBodyWorn": "Plaggene og dagene du brukte den blir.",
   "look.rename": "Endre navn",
   "looks.clearPlan": "Fjern dato",
+  "looks.makeOutfit": "Lag et antrekk",
   "looks.new": "Ny look",
   "looks.plan": "Planlegg en dag",
   "looks.planCleared": "Planen er fjernet",
