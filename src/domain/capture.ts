@@ -42,10 +42,15 @@ export function categoryForRegion(kind: GarmentRegionKind): Category | null {
   return kind === "head" ? "hijab" : null;
 }
 
+export const minPartialShare = 0.08;
+
 export function proposalsFromRegions(
-  regions: GarmentRegion[],
+  found: GarmentRegion[],
   people: number,
 ): CapturePlan {
+  const regions = found.filter(
+    (region) => !region.partial || region.share >= minPartialShare,
+  );
   const notice = people > 1 ? "others-ignored" : null;
   if (!regions.length || (people === 0 && regions.length === 1))
     return { proposals: [], people, notice, checkWhole: people > 1 };

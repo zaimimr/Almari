@@ -3,6 +3,9 @@ import { findDuplicate } from "./duplicates";
 import {
   attributeKeys,
   confirmAttribute,
+  fabrics,
+  patterns,
+  type Attributes,
   mergeProposal,
   withDetails,
   type AttributeKey,
@@ -38,19 +41,104 @@ import { missingRoles } from "./styling";
 export type CheckReason =
   "uncertain" | "no-cutout" | "several" | "attribute" | "partial";
 
-export function nameFor(kind: GarmentKind, palette: Swatch[]) {
-  const top = palette[0];
-  if (!top) return kindLabel(kind);
-  return `${colorName(top.rgb)} ${kindLabel(kind).toLowerCase()}`;
+export type RejectReason = "no-clothing";
+
+export const minKindScore = 0.12;
+export const flatBelow = 10;
+export const smallerThan = 64;
+
+function nameSlots(
+  kind: GarmentKind,
+  palette: Swatch[],
+  attributes?: Attributes,
+): (string | null)[] {
+  const noun = kindLabel(kind).toLowerCase();
+  const colour = palette[0] ? colorName(palette[0].rgb) : null;
+  const second =
+    palette[1] && palette[1].share >= 0.2 ? colorName(palette[1].rgb) : null;
+  const fabric = fabrics.find((item) => item.id === attributes?.fabric);
+  const pattern = patterns.find(
+    (item) => item.id !== "solid" && item.id === attributes?.pattern,
+  );
+  return [
+    colour && fabric ? `${colour} ${fabric.label.toLowerCase()} ${noun}` : null,
+    colour ? `${colour} ${noun}` : null,
+    colour && pattern
+      ? `${colour} ${pattern.label.toLowerCase()} ${noun}`
+      : null,
+    colour && second && second !== colour
+      ? `${colour} and ${second.toLowerCase()} ${noun}`
+      : null,
+    kindLabel(kind),
+  ];
 }
 
-function withColour(palette: Swatch[], colour: string | undefined) {
+export function nameOptions(
+  kind: GarmentKind,
+  palette: Swatch[],
+  attributes?: Attributes,
+): string[] {
+  return [
+    ...new Set(
+      nameSlots(kind, palette, attributes).filter(
+        (name): name is string => name !== null,
+      ),
+    ),
+  ];
+}
+
+export function nameFor(
+  kind: GarmentKind,
+  palette: Swatch[],
+  attributes?: Attributes,
+) {
+  return nameOptions(kind, palette, attributes)[0]!;
+}
+
+export function renameAuto(
+  name: string,
+  before: { kind: GarmentKind; palette: Swatch[]; attributes?: Attributes },
+  after: { kind: GarmentKind; palette: Swatch[]; attributes?: Attributes },
+): string {
+  const slot = nameSlots(
+    before.kind,
+    before.palette,
+    before.attributes,
+  ).indexOf(name);
+  if (slot < 0) return name;
+  return (
+    nameSlots(after.kind, after.palette, after.attributes)[slot] ??
+    nameFor(after.kind, after.palette)
+  );
+}
+
+export function rejectReason(
+  prepared: Prepared,
+  size?: { width: number; height: number },
+): RejectReason | null {
+  if (size && Math.min(size.width, size.height) < smallerThan)
+    return "no-clothing";
+  if (
+    !prepared.cutout &&
+    (prepared.quality?.sharpness ?? flatBelow) < flatBelow
+  )
+    return "no-clothing";
+  const kinds = prepared.labels.filter((label) => label.group === "kind");
+  if (
+    kinds.length &&
+    Math.max(...kinds.map((label) => label.score)) < minKindScore
+  )
+    return "no-clothing";
+  return null;
+}
+
+export function withColour(palette: Swatch[], colour: string | undefined) {
   return colour ? [namedSwatch(colour), ...palette.slice(1)] : palette;
 }
 
 export function queueImport(
   closet: Closet,
-  job: Pick<ImportJob, "id" | "source" | "createdAt">,
+  job: Pick<ImportJob, "id" | "source" | "createdAt" | "linkName">,
 ): Closet {
   if (closet.imports.some((item) => item.id === job.id)) return closet;
   return {
@@ -90,7 +178,7 @@ export function startImport(closet: Closet, id: string): Closet {
 
 function reviewCapture(closet: Closet, id: string): Closet {
   return updateJob(closet, id, (job) => {
-    if (!job.prepared) return job;
+    if (!job.prepared || job.state === "failed") return job;
     const reason = adviceReason(job.prepared.quality);
     const advice =
       reason && !job.adviceShown?.includes(reason) ? reason : undefined;
@@ -109,6 +197,7 @@ export function finishImport(
   closet: Closet,
   id: string,
   read: Prepared,
+  size?: { width: number; height: number },
 ): Closet {
   const next = updateJob(closet, id, (job) => {
     if (job.state !== "preparing") return job;
@@ -158,12 +247,17 @@ export function finishImport(
     };
     if (job.region?.partial && !checks.includes("partial"))
       checks.push("partial");
+    const rejected = rejectReason(prepared, size);
+    const fabric = details.uncertain.includes("fabric")
+      ? undefined
+      : (described.attributes as Attributes | undefined)?.fabric;
     return {
       ...job,
-      state: checks.length ? "review" : "ready",
+      state: rejected ? "failed" : checks.length ? "review" : "ready",
       prepared,
       kind: recognition.kind,
-      name: nameFor(recognition.kind, prepared.palette),
+      name:
+        job.linkName ?? nameFor(recognition.kind, prepared.palette, { fabric }),
       styles,
       question: recognition.question ?? undefined,
       sources,
@@ -171,10 +265,26 @@ export function finishImport(
       attributeSources: described.sources,
       attributeCheck: asked ?? undefined,
       checks,
-      error: undefined,
+      error: rejected ?? undefined,
     };
   });
   return next === closet ? closet : reviewCapture(next, id);
+}
+
+export function keepRejected(closet: Closet, id: string): Closet {
+  return updateJob(closet, id, (job) =>
+    job.state === "failed" && job.error === "no-clothing" && job.prepared
+      ? {
+          ...job,
+          state: "review",
+          error: undefined,
+          checks: [
+            "uncertain",
+            ...(job.checks ?? []).filter((check) => check !== "uncertain"),
+          ],
+        }
+      : job,
+  );
 }
 
 export function dismissAdvice(closet: Closet, id: string): Closet {
@@ -203,7 +313,9 @@ export function keepDuplicate(closet: Closet, id: string): Closet {
 
 export function failImport(closet: Closet, id: string, error: string): Closet {
   return updateJob(closet, id, (job) =>
-    job.state === "preparing" ? { ...job, state: "failed", error } : job,
+    job.state === "preparing" || job.state === "queued"
+      ? { ...job, state: "failed", error }
+      : job,
   );
 }
 
@@ -292,9 +404,16 @@ export function correctImport(
     const palette = withColour(job.prepared!.palette, change.colour);
     const renamed =
       change.name ??
-      ((change.kind || change.colour) &&
-      job.name === nameFor(job.kind!, job.prepared!.palette)
-        ? nameFor(kind, palette)
+      (change.kind || change.colour
+        ? renameAuto(
+            job.name!,
+            {
+              kind: job.kind!,
+              palette: job.prepared!.palette,
+              attributes: job.attributes,
+            },
+            { kind, palette, attributes: job.attributes },
+          )
         : job.name!);
     const sources: Sources = {
       kind: change.kind ? "confirmed" : (job.sources?.kind ?? "proposed"),
@@ -415,6 +534,7 @@ export function splitCapture(
         attempts: 0,
         captureId: id,
         region: proposal.region,
+        ...(index || !job.linkName ? {} : { linkName: job.linkName }),
         ...people,
       }))
     : [

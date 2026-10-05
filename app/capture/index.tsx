@@ -7,6 +7,7 @@ import {
   CaptureTips,
 } from "../../src/features/capture/CaptureSources";
 import { JobTile } from "../../src/features/capture/JobTile";
+import { Lookalikes } from "../../src/features/capture/Lookalikes";
 import { jobColour } from "../../src/features/capture/jobs";
 import {
   useCaptureGrid,
@@ -16,7 +17,15 @@ import {
 import { ColourChips } from "../../src/features/ColourChips";
 import { useRetake } from "../../src/features/Retake";
 import { categoryName, t } from "../../src/i18n";
-import { Expander, Footer, HeaderItem, Screen, Section } from "../../src/ui";
+import {
+  Banner,
+  Button,
+  Expander,
+  Footer,
+  HeaderItem,
+  Screen,
+  Section,
+} from "../../src/ui";
 import { theme } from "../../src/ui/theme";
 import { useLargeText } from "../../src/ui/useLargeText";
 
@@ -60,6 +69,12 @@ export default function AddPieces() {
   function open(job: ImportJob) {
     setColourFor(null);
     router.push({ pathname: "/capture/[id]", params: { id: job.id } });
+  }
+
+  async function retakeJob(job: ImportJob) {
+    const result = await retake(job, "camera");
+    if (result !== "done" && result !== "cancelled")
+      grid.report(result, "camera");
   }
 
   async function add() {
@@ -106,7 +121,7 @@ export default function AddPieces() {
                 onSelect={(job) => grid.toggleSelect(job.id)}
                 onStartSelect={(job) => grid.startSelect(job.id)}
                 onRetry={(job) => void grid.retry(job.id)}
-                onRetake={(job) => void retake(job, "camera")}
+                onRetake={(job) => void retakeJob(job)}
                 onRemove={(job) => void grid.remove(job.id)}
                 onUndo={(job) => void grid.undoRemove(job.id)}
               />
@@ -231,7 +246,46 @@ export default function AddPieces() {
               : grid.choosePhotos())
           }
         />
+        {grid.cleaning ? (
+          <Banner
+            tone="progress"
+            text={t("capture.cleaning", {
+              n: grid.cleaning.done,
+              total: grid.cleaning.total,
+            })}
+            progress={{
+              value: (grid.cleaning.done - 1) / grid.cleaning.total,
+            }}
+            testID="capture-cleaning"
+          />
+        ) : grid.preparing ? (
+          <Banner
+            tone="progress"
+            text={t("capture.preparingCount", grid.preparing)}
+            progress={{
+              value: (grid.preparing.n - 1) / grid.preparing.total,
+            }}
+            testID="capture-preparing"
+          />
+        ) : null}
+        <Lookalikes
+          pairs={grid.lookalikes}
+          onOpen={open}
+          onKeepBoth={(job) => void grid.keepBoth(job.id)}
+          onKeepOne={(job) => void grid.remove(job.id)}
+        />
         {grid.sections.map(renderSection)}
+        {grid.cleanable > 1 && !grid.cleaning && !grid.selecting ? (
+          <View style={styles.start}>
+            <Button
+              label={t("capture.cleanAll")}
+              variant="quiet"
+              icon="wand.and.stars"
+              onPress={() => void grid.cleanAll()}
+              testID="capture-clean-all"
+            />
+          </View>
+        ) : null}
       </View>
     </Screen>
   );
@@ -242,5 +296,6 @@ const styles = StyleSheet.create({
   group: { gap: theme.space.lg },
   row: { flexDirection: "row", gap: theme.space.md },
   cell: { flex: 1 },
+  start: { alignSelf: "flex-start", marginLeft: -theme.space.sm },
   actions: { flexDirection: "row", alignItems: "center", gap: theme.space.sm },
 });

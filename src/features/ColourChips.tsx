@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { colourNames, namedSwatch } from "../domain/color";
 import { t, type Key } from "../i18n";
 import { ChipRow } from "../ui";
@@ -10,30 +11,42 @@ const hex = (name: string) =>
     .rgb.map((part) => part.toString(16).padStart(2, "0"))
     .join("")}`;
 
+const more = "more-colours";
+
 export function ColourChips({
   value,
   onPick,
   inSurface,
   label,
+  first,
   testID,
 }: {
   value: string | null;
   onPick: (name: string) => void;
   inSurface?: boolean;
   label?: string;
+  first?: string[];
   testID?: string;
 }) {
+  const [all, setAll] = useState(!first?.length);
+  const shown = all
+    ? colourNames
+    : [...new Set([...(value ? [value] : []), ...(first ?? [])])];
   return (
     <ChipRow
       label={label}
-      options={colourNames.map((name) => ({
-        id: name,
-        label: colourLabel(name),
-        swatch: hex(name),
-      }))}
+      options={[
+        ...shown.map((name) => ({
+          id: name,
+          label: colourLabel(name),
+          swatch: hex(name),
+        })),
+        ...(all ? [] : [{ id: more, label: t("colour.more") }]),
+      ]}
       value={value}
       onChange={(next) => {
-        if (typeof next === "string") onPick(next);
+        if (next === more) setAll(true);
+        else if (typeof next === "string") onPick(next);
       }}
       inSurface={inSurface}
       testID={testID}

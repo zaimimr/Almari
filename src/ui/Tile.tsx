@@ -181,16 +181,11 @@ export function Tile({
     >
       <Animated.View style={[StyleSheet.absoluteFill, styles.frame, fill]} />
       {state === "removed" ? null : state === "queued" ? (
-        <Silk
-          kind="placeholder"
-          shape="tile"
-          label={spoken}
-          style={StyleSheet.absoluteFill}
-        />
+        <View style={[StyleSheet.absoluteFill, styles.dim]}>{picture}</View>
       ) : (
         picture
       )}
-      {state === "preparing" ? (
+      {waiting ? (
         <Silk
           kind="sheen"
           label={spoken}
@@ -423,6 +418,7 @@ export function Tile({
 }
 
 const styles = StyleSheet.create({
+  dim: { opacity: 0.45 },
   strip: { width: 112 },
   grid: { flex: 1, minWidth: 0 },
   thumb: {

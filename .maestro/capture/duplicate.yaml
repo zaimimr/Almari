@@ -3,12 +3,9 @@ appId: com.zaimimran.almari
 # seed: fresh.sh,seed-owned.sh,seed-duplicate.sh
 ---
 - runFlow: ../lib/open-add.yaml
+- assertVisible: "These look alike"
 - tapOn:
+    id: "lookalike-keep-both"
+- assertNotVisible: "These look alike"
+- assertVisible:
     id: "job-confirm-1"
-- assertVisible: "Already in your closet?"
-- tapOn: "Different piece"
-- assertNotVisible: "Already in your closet?"
-- tapOn: "Back|Cancel"
-- tapOn:
-    text: "Discard"
-    optional: true

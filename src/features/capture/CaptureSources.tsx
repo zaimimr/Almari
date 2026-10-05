@@ -86,6 +86,13 @@ export function CaptureSources({
           testID="source-scan"
         />
         <Row
+          title={t("capture.fromLink")}
+          leading={{ icon: "link" }}
+          trailing="chevron"
+          onPress={() => router.push("/capture/link")}
+          testID="source-link"
+        />
+        <Row
           title={t("capture.byHand")}
           leading={{ icon: "pencil" }}
           trailing="chevron"
@@ -97,7 +104,13 @@ export function CaptureSources({
       {problem ? (
         <Banner
           tone="notice"
-          text={t(problemText[problem.kind])}
+          text={
+            problem.count
+              ? problem.count === 1
+                ? t("capture.notAddedOne")
+                : t("capture.notAddedMany", { count: problem.count })
+              : t(problemText[problem.kind])
+          }
           actions={
             problem.kind === "camera-off"
               ? [

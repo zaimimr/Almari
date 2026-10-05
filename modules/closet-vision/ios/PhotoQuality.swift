@@ -14,7 +14,8 @@ struct PhotoQuality {
 
   func measure(photo: CIImage, mask: CIImage?) -> QualityMeasure {
     var result = QualityMeasure()
-    let picture = enhancer.bitmap(photo, longEdge: 512)
+    let flat = photo.composited(over: CIImage(color: .white).cropped(to: photo.extent))
+    let picture = enhancer.bitmap(flat, longEdge: 512)
     let width = picture.width
     let height = picture.height
     let cover = mask.map { enhancer.bitmap($0, longEdge: 512) }

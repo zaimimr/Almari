@@ -78,6 +78,10 @@ function Screens() {
           options={{ title: t("scan.title") }}
         />
         <Stack.Screen
+          name="capture/link"
+          options={{ title: t("link.title") }}
+        />
+        <Stack.Screen
           name="capture/group/[id]"
           options={{ title: t("capture.group.title") }}
         />

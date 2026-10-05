@@ -1,4 +1,9 @@
-import { colourNames, mainColourName, namedSwatch } from "../../domain/color";
+import {
+  colorName,
+  colourNames,
+  mainColourName,
+  namedSwatch,
+} from "../../domain/color";
 import { categoryOf, type ImportJob, type Piece } from "../../domain/closet";
 import { t } from "../../i18n";
 import type { TileState } from "../../ui";
@@ -15,11 +20,19 @@ export function jobColour(job: ImportJob): string | null {
   return colourNames.find((name) => name.toLowerCase() === main) ?? null;
 }
 
+export function jobColours(job: ImportJob): string[] {
+  return [
+    ...new Set(
+      (job.prepared?.palette ?? []).map((swatch) => colorName(swatch.rgb)),
+    ),
+  ].slice(0, 5);
+}
+
 export function jobPhoto(job: ImportJob): { photo: string; raw: boolean } {
   const prepared = job.prepared;
   if (!prepared)
     return { photo: job.region?.cutout ?? job.source, raw: !job.region };
-  if (!prepared.cutout || job.keepOriginal)
+  if (!prepared.cutout || job.keepOriginal || job.state === "failed")
     return { photo: prepared.original, raw: true };
   const enhanced = prepared.enhanced ?? null;
   const photo =

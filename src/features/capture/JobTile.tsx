@@ -123,6 +123,7 @@ export function JobTile({
     );
   const state = tileState(job);
   const colour = jobColour(job);
+  const rejected = job.error === "no-clothing";
   const confirm = state === "needsAnswers";
   const opens = state === "ready" || confirm || state === "failed";
   const actions = [
@@ -135,7 +136,7 @@ export function JobTile({
           },
         ]
       : []),
-    ...(state === "failed"
+    ...(state === "failed" && !rejected
       ? [
           {
             name: "retry",
@@ -166,7 +167,13 @@ export function JobTile({
       size="grid"
       state={state}
       label={state === "failed" ? undefined : job.name}
-      meta={state === "failed" ? t("capture.stateFailed") : undefined}
+      meta={
+        state === "failed"
+          ? t(rejected ? "capture.noClothing" : "capture.stateFailed")
+          : job.advice
+            ? t(`advice.${job.advice}`)
+            : undefined
+      }
       selected={selecting && selected}
       colour={
         state === "ready" && colour && !selecting
@@ -191,7 +198,7 @@ export function JobTile({
       actions={selecting ? undefined : actions}
       accessibilityLabel={jobLabel(job, number)}
       busyLabel={jobLabel(job, number)}
-      onRetry={selecting ? undefined : () => onRetry(job)}
+      onRetry={selecting || rejected ? undefined : () => onRetry(job)}
       testID={testID}
     />
   );
