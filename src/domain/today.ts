@@ -5,6 +5,7 @@ import {
   type EverydayStyle,
   type Forecast,
   type ForecastWeather,
+  type Occasion,
   type OutfitRequest,
   type Session,
   type TodayState,
@@ -440,6 +441,32 @@ export function applyLook(
           previousPieceIds: session.pieceIds,
         },
   );
+}
+
+export function showLook(
+  closet: Closet,
+  look: { pieceIds: string[]; occasion?: Occasion | null },
+): Closet {
+  const today = closet.styling.today;
+  if (!today) return closet;
+  const everyday = today.everyday.request;
+  const occasion = look.occasion ?? everyday.occasion;
+  const base =
+    occasion === everyday.occasion
+      ? backToEveryday(closet)
+      : withOccasion(closet, {
+          ...everyday,
+          occasion,
+          keptIds: [],
+          garmentType: null,
+        });
+  return withActive(base, (session) => ({
+    ...session,
+    revision: session.revision + 1,
+    pieceIds: look.pieceIds,
+    previousPieceIds: session.pieceIds,
+    shown: true,
+  }));
 }
 
 export function dropFromToday(closet: Closet, id: string): Closet {

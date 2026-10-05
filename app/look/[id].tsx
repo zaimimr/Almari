@@ -21,12 +21,13 @@ import {
 import { spokenDate, monthTitle } from "../../src/ui/dates";
 import { theme } from "../../src/ui/theme";
 import { useLook } from "../../src/features/looks/useLook";
+import { useShareCard } from "../../src/features/share/useShareCard";
+import { useLargeText } from "../../src/ui/useLargeText";
 import {
   lastWornText,
   occasionText,
   plannedText,
   todayDate,
-  tomorrowDate,
 } from "../../src/features/looks/format";
 
 function shiftMonth(month: string, delta: number): string {
@@ -46,6 +47,8 @@ export default function LookDetail() {
     setBody,
     worn,
     setWorn,
+    notice,
+    setNotice,
     error,
     rename,
     markWorn,
@@ -53,8 +56,15 @@ export default function LookDetail() {
     plan,
     save,
     showOnToday,
+    wearAgain,
     remove,
   } = useLook(id);
+  const { ax } = useLargeText();
+  const shareCard = useShareCard({
+    pieces,
+    name: entry?.name ?? "",
+    caption: occasionText(entry?.occasion ?? null),
+  });
   const [draft, setDraft] = useState<string | null>(null);
   const plannedFor = look?.plannedFor ?? null;
   const [month, setMonth] = useState((plannedFor ?? todayDate()).slice(0, 7));
@@ -71,6 +81,13 @@ export default function LookDetail() {
     .filter(Boolean)
     .join(" · ");
   const missing = entry.missing;
+  const taken = Object.fromEntries(
+    closet.looks.flatMap((item) =>
+      item.id !== look?.id && item.plannedFor && item.plannedFor >= today
+        ? [[item.plannedFor, true]]
+        : [],
+    ),
+  );
 
   const commit = () => {
     if (draft === null) return;
@@ -82,18 +99,21 @@ export default function LookDetail() {
     if (draft !== null) return commit();
     setBody(null);
     setWorn(null);
+    setNotice(null);
     setDraft(entry.name);
   };
 
   const before = (action: () => void) => () => {
     commit();
     if (worn) setWorn(null);
+    setNotice(null);
     action();
   };
 
   const toggle = (next: "worn" | "plan") => {
     commit();
     setWorn(null);
+    setNotice(null);
     if (next === "plan") setMonth((plannedFor ?? today).slice(0, 7));
     setBody(body === next ? null : next);
   };
@@ -104,11 +124,19 @@ export default function LookDetail() {
       headerTitleVisible={false}
       keyboardFooter="stay"
       actions={
-        <HeaderItem
-          label={t("look.rename")}
-          onPress={startRename}
-          testID="look-rename"
-        />
+        <View style={styles.header}>
+          <HeaderItem
+            label={t("looks.share")}
+            icon="square.and.arrow.up"
+            onPress={before(() => void shareCard.share())}
+            testID="look-share"
+          />
+          <HeaderItem
+            label={t("look.rename")}
+            onPress={startRename}
+            testID="look-rename"
+          />
+        </View>
       }
       footer={
         <Footer
@@ -129,11 +157,17 @@ export default function LookDetail() {
         />
       }
     >
-      <FlatLay
-        pieces={pieces}
-        size="hero"
-        onPiecePress={(piece) => router.push(`/piece/${piece.id}`)}
-      />
+      {shareCard.card}
+      <View pointerEvents={ax ? "none" : "auto"}>
+        <FlatLay
+          pieces={pieces}
+          size="hero"
+          maxSize={ax ? 240 : undefined}
+          onPiecePress={
+            ax ? undefined : (piece) => router.push(`/piece/${piece.id}`)
+          }
+        />
+      </View>
       <View style={styles.head}>
         {draft !== null ? (
           <Field
@@ -212,91 +246,119 @@ export default function LookDetail() {
           />
         ))}
       </Section>
-      {look ? (
-        <View style={styles.acts}>
-          {worn ? (
-            <ResultBar
-              text={t(worn.yesterday ? "looks.wornYesterday" : "outfit.worn")}
-              action={{
-                label: t("common.undo"),
-                onPress: () => void undoWorn(),
-              }}
-            />
-          ) : (
-            <View>
-              <View style={styles.start}>
-                <Button
-                  label={t("look.markWorn")}
-                  variant="quiet"
-                  icon="checkmark"
-                  expanded={body === "worn"}
-                  onPress={() => toggle("worn")}
-                  testID="look-worn"
-                />
-              </View>
-              <Expander
-                id="look-worn"
-                headless
-                open={body === "worn"}
-                onToggle={() => toggle("worn")}
-              >
-                <View style={styles.chips}>
-                  <Chip
-                    kind="action"
-                    label={t("adjust.today")}
-                    accessibilityLabel={t("outfit.worn")}
-                    onPress={() => void markWorn(false)}
-                    testID="worn-today"
-                  />
-                  <Chip
-                    kind="action"
-                    label={t("looks.yesterday")}
-                    accessibilityLabel={t("looks.wornYesterday")}
-                    onPress={() => void markWorn(true)}
-                    testID="worn-yesterday"
-                  />
-                </View>
-              </Expander>
-            </View>
-          )}
+      <View style={styles.acts}>
+        {notice ? (
+          <ResultBar
+            text={notice.text}
+            announce
+            action={
+              notice.undo
+                ? { label: t("common.undo"), onPress: notice.undo }
+                : undefined
+            }
+            testID="look-notice"
+          />
+        ) : null}
+        {entry.lastWorn ? (
           <View style={styles.start}>
             <Button
-              label={t("looks.plan")}
+              label={t("looks.wearAgain")}
               variant="quiet"
-              icon="calendar"
-              expanded={body === "plan"}
-              onPress={() => toggle("plan")}
-              testID="look-plan"
+              icon="arrow.counterclockwise"
+              onPress={before(() => void wearAgain())}
+              testID="look-wear-again"
             />
           </View>
-          <Expander
-            id="look-plan"
-            headless
-            open={body === "plan"}
-            onToggle={() => toggle("plan")}
-          >
-            <MonthGrid
-              mode="pick"
-              month={month}
-              today={today}
-              from={tomorrowDate()}
-              selected={plannedFor}
-              onSelect={(date) => void plan(date)}
-              onMonth={(delta) => setMonth(shiftMonth(month, delta))}
-              monthLabel={monthTitle(month, locale)}
-              dayLabel={(date) => spokenDate(date, locale)}
-            />
-            {plannedFor ? (
-              <View style={styles.start}>
-                <Button
-                  label={t("looks.clearPlan")}
-                  variant="quiet"
-                  onPress={() => void plan(null)}
-                  testID="look-clear-plan"
+        ) : null}
+        {worn ? (
+          <ResultBar
+            text={t(worn.yesterday ? "looks.wornYesterday" : "outfit.worn")}
+            action={{
+              label: t("common.undo"),
+              onPress: () => void undoWorn(),
+            }}
+          />
+        ) : (
+          <View>
+            <View style={styles.start}>
+              <Button
+                label={t("look.markWorn")}
+                variant="quiet"
+                icon="checkmark"
+                expanded={body === "worn"}
+                onPress={() => toggle("worn")}
+                testID="look-worn"
+              />
+            </View>
+            <Expander
+              id="look-worn"
+              headless
+              open={body === "worn"}
+              onToggle={() => toggle("worn")}
+            >
+              <View style={styles.chips}>
+                <Chip
+                  kind="action"
+                  label={t("adjust.today")}
+                  accessibilityLabel={t("outfit.worn")}
+                  onPress={() => void markWorn(false)}
+                  testID="worn-today"
+                />
+                <Chip
+                  kind="action"
+                  label={t("looks.yesterday")}
+                  accessibilityLabel={t("looks.wornYesterday")}
+                  onPress={() => void markWorn(true)}
+                  testID="worn-yesterday"
                 />
               </View>
-            ) : null}
-          </Expander>
+            </Expander>
+          </View>
+        )}
+        <View style={styles.start}>
+          <Button
+            label={t("looks.plan")}
+            variant="quiet"
+            icon="calendar"
+            expanded={body === "plan"}
+            onPress={() => toggle("plan")}
+            testID="look-plan"
+          />
+        </View>
+        <Expander
+          id="look-plan"
+          headless
+          open={body === "plan"}
+          onToggle={() => toggle("plan")}
+        >
+          <MonthGrid
+            mode="pick"
+            month={month}
+            today={today}
+            from={today}
+            selected={plannedFor}
+            dots={taken}
+            onSelect={(date) => void plan(date)}
+            onMonth={(delta) => setMonth(shiftMonth(month, delta))}
+            monthLabel={monthTitle(month, locale)}
+            dayLabel={(date) =>
+              taken[date]
+                ? t("calendar.planned", { date: spokenDate(date, locale) })
+                : spokenDate(date, locale)
+            }
+          />
+          {plannedFor ? (
+            <View style={styles.start}>
+              <Button
+                label={t("looks.clearPlan")}
+                variant="quiet"
+                onPress={() => void plan(null)}
+                testID="look-clear-plan"
+              />
+            </View>
+          ) : null}
+        </Expander>
+        {look ? (
           <View style={styles.start}>
             <Button
               label={t("look.remove")}
@@ -305,13 +367,14 @@ export default function LookDetail() {
               testID="look-remove"
             />
           </View>
-        </View>
-      ) : null}
+        ) : null}
+      </View>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  header: { flexDirection: "row", alignItems: "center" },
   head: { gap: theme.space.xs },
   acts: { gap: theme.space.xs, marginLeft: -theme.space.sm },
   start: { alignItems: "flex-start" },

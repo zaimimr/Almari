@@ -20,7 +20,7 @@ import type { SFSymbol } from "expo-symbols";
 import type { Piece } from "../domain/closet";
 import { locale, t } from "../i18n";
 import { announce } from "./announce";
-import { monthTitle, shortDate, weekdayLetters } from "./dates";
+import { monthTitle, shortDate, spokenDate, weekdayLetters } from "./dates";
 import { Expander } from "./Expander";
 import { motion, timing, useReduceMotion } from "./motion";
 import { photoSource } from "./photos";
@@ -40,6 +40,9 @@ export type MonthGridProps = {
   onSelect: (date: string) => void;
   onMonth: (delta: -1 | 1) => void;
   days?: Record<string, Piece>;
+  planned?: Record<string, Piece>;
+  dots?: Record<string, boolean>;
+  last?: string;
   from?: string;
   first?: string;
   monthLabel: string;
@@ -134,6 +137,9 @@ function Day({
   today,
   selected,
   piece,
+  planned,
+  dot,
+  tall,
   pressable,
   loading,
   label,
@@ -144,6 +150,9 @@ function Day({
   today: boolean;
   selected: boolean;
   piece?: Piece;
+  planned: boolean;
+  dot: boolean;
+  tall: boolean;
   pressable: boolean;
   loading: boolean;
   label: string;
@@ -202,6 +211,12 @@ function Day({
       >
         {String(Number(date.slice(8)))}
       </Text>
+      {dot ? (
+        <View
+          style={[styles.dot, { backgroundColor: colors.blushStrong }]}
+          {...hidden}
+        />
+      ) : null}
     </View>
   );
 
@@ -214,18 +229,26 @@ function Day({
       }
       onPressIn={() => press.set(timing(1, "quick", "silk"))}
       onPressOut={() => press.set(timing(0, "quick", "silk"))}
-      accessible={pressable}
+      accessible
       accessibilityRole={pressable ? "button" : undefined}
-      accessibilityLabel={pressable ? label : undefined}
-      accessibilityState={pressable ? { selected } : undefined}
-      {...(pressable ? null : hidden)}
-      style={[styles.cell, wear ? styles.wearCell : styles.pickCell]}
+      accessibilityLabel={pressable ? label : spokenDate(date, locale)}
+      accessibilityState={
+        pressable ? { selected } : wear ? undefined : { disabled: true }
+      }
+      style={[
+        styles.cell,
+        wear ? (tall ? styles.wearCell : styles.shortCell) : styles.pickCell,
+      ]}
     >
       {number}
       {wear && piece ? (
         <Animated.View
           accessibilityIgnoresInvertColors
-          style={[styles.bed, fill]}
+          style={[
+            styles.bed,
+            fill,
+            planned && [styles.planned, { borderColor: colors.lineField }],
+          ]}
           {...hidden}
         >
           {loading ? (
@@ -257,6 +280,9 @@ export function MonthGrid({
   onSelect,
   onMonth,
   days = {},
+  planned = {},
+  dots = {},
+  last,
   from = today,
   first,
   monthLabel,
@@ -277,10 +303,10 @@ export function MonthGrid({
   const previous = wear
     ? month > (first ?? today).slice(0, 7)
     : month > from.slice(0, 7);
-  const next = !wear || month < current;
+  const next = !wear || month < (last ?? current);
   const dates = monthDates(month);
   const pressable = (date: string) =>
-    wear ? date in days && date <= today : date >= from;
+    wear ? (date in days && date <= today) || date in planned : date >= from;
 
   useEffect(() => {
     if (shownMonth.current === month) return;
@@ -323,17 +349,25 @@ export function MonthGrid({
           </Text>
         ))}
       </View>
-      {[0, 1, 2, 3, 4, 5].map((week) => (
-        <View key={week} style={styles.week}>
-          {dates
-            .slice(week * 7, week * 7 + 7)
-            .map((date, index) =>
+      {[0, 1, 2, 3, 4, 5].map((week) => {
+        const row = dates.slice(week * 7, week * 7 + 7);
+        const tall = row.some(
+          (date) => date !== null && (date in days || date in planned),
+        );
+        if (row.every((date) => date === null)) return null;
+        return (
+          <View key={week} style={styles.week}>
+            {row.map((date, index) =>
               date === null ? (
                 <View
                   key={index}
                   style={[
                     styles.cell,
-                    wear ? styles.wearCell : styles.pickCell,
+                    wear
+                      ? tall
+                        ? styles.wearCell
+                        : styles.shortCell
+                      : styles.pickCell,
                   ]}
                 />
               ) : (
@@ -343,7 +377,10 @@ export function MonthGrid({
                   mode={mode}
                   today={date === today}
                   selected={date === selected}
-                  piece={days[date]}
+                  piece={days[date] ?? planned[date]}
+                  planned={!(date in days) && date in planned}
+                  dot={!!dots[date]}
+                  tall={tall}
                   pressable={pressable(date)}
                   loading={loading}
                   label={dayLabel(date)}
@@ -351,8 +388,9 @@ export function MonthGrid({
                 />
               ),
             )}
-        </View>
-      ))}
+          </View>
+        );
+      })}
     </View>
   );
 
@@ -462,6 +500,15 @@ const styles = StyleSheet.create({
   letter: { flex: 1, textAlign: "center", paddingBottom: 6 },
   cell: { flex: 1, minWidth: 0, alignItems: "center" },
   wearCell: { minHeight: 72, gap: theme.space.xs },
+  shortCell: { minHeight: theme.size.touch },
+  dot: {
+    position: "absolute",
+    bottom: -3,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+  },
+  planned: { borderWidth: 1, borderStyle: "dashed", opacity: 0.7 },
   pickCell: { minHeight: theme.size.touch, justifyContent: "center" },
   today: { fontWeight: "600" },
   bed: {

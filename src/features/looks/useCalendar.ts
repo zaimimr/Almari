@@ -1,6 +1,12 @@
 import { useState } from "react";
 import type { Piece } from "../../domain/closet";
-import { firstWearMonth, wearCalendar } from "../../domain/looks";
+import {
+  firstWearMonth,
+  lastPlannedMonth,
+  lookMark,
+  plannedDays,
+  wearCalendar,
+} from "../../domain/looks";
 import { monthWearStats } from "../../domain/profileStats";
 import { clockFor } from "../../domain/today";
 import { locale } from "../../i18n";
@@ -21,8 +27,17 @@ export function useCalendar() {
   const [selected, setSelected] = useState<string | null>(null);
   const days = wearCalendar(closet, month, locale);
   const marks: Record<string, Piece> = {};
-  for (const day of Object.values(days))
+  const dots: Record<string, boolean> = {};
+  for (const day of Object.values(days)) {
     if (day.mark) marks[day.date] = day.mark;
+    if (day.pieceWorn && !day.wears.length) dots[day.date] = true;
+  }
+  const plans = plannedDays(closet, month, clock.localDate);
+  const planned: Record<string, Piece> = {};
+  for (const [date, look] of Object.entries(plans)) {
+    const mark = lookMark(closet, look.pieceIds);
+    if (mark) planned[date] = mark;
+  }
   const stats = monthWearStats(closet, month, clock);
 
   return {
@@ -30,9 +45,13 @@ export function useCalendar() {
     today: clock.localDate,
     month,
     first: firstWearMonth(closet) ?? current,
+    last: lastPlannedMonth(closet, clock.localDate),
     days,
     marks,
-    wornCount: Object.keys(days).length,
+    dots,
+    plans,
+    planned,
+    wornCount: Object.values(days).filter((day) => day.wears.length).length,
     selected,
     select: (date: string) =>
       setSelected((open) => (open === date ? null : date)),

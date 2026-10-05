@@ -28,7 +28,6 @@ import { scoreContext } from "../../domain/scoring/taste";
 import { evaluateOutfit } from "../../domain/styling";
 import {
   activeSession,
-  applyLook,
   applyRequest,
   backToEveryday,
   backToToday,
@@ -38,6 +37,7 @@ import {
   prepareTomorrow,
   resultFor,
   saveForecast,
+  showLook,
   startOccasion,
   startOver,
   tryAnother,
@@ -148,7 +148,10 @@ export function useToday() {
     showOutfit && request
       ? coverageNote(pieces, request.coverage, locale)
       : null;
-  const reasonLine = [reasons[0], coverageLine].filter(Boolean).join(" ");
+  const note = session?.shown ? broken[0]?.message : undefined;
+  const reasonLine = [note ?? reasons[0], coverageLine]
+    .filter(Boolean)
+    .join(" ");
 
   const run = useCallback(
     async (
@@ -375,14 +378,17 @@ export function useToday() {
       [...(session?.pieceIds ?? [])].sort().join()
       ? `${clock.localDate}:${planned.id}`
       : null;
-  const stale = !!today && !!session && (lostPieces > 0 || broken.length > 0);
+  const stale =
+    !!today &&
+    !!session &&
+    (lostPieces > 0 || (broken.length > 0 && !session.shown));
   const staleKey = stale ? `${today.active}:${revision}` : null;
   useEffect(() => {
     if (!plannedKey || !planned || busy || shownPlan.current === plannedKey)
       return;
     shownPlan.current = plannedKey;
-    void restyle((current) => applyLook(current, planned.pieceIds, revision));
-  }, [plannedKey, planned, busy, revision, restyle]);
+    void restyle((current) => showLook(current, planned));
+  }, [plannedKey, planned, busy, restyle]);
   useEffect(() => {
     if (!staleKey || plannedKey || busy || handledStale.current === staleKey)
       return;

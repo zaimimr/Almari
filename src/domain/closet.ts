@@ -459,6 +459,7 @@ export type Session = {
   previousPieceIds: string[] | null;
   engine?: Engine;
   date?: string;
+  shown?: boolean;
 };
 
 export type TodayState = {
@@ -1043,7 +1044,8 @@ function isSession(value: unknown): value is Session {
     isUniqueStrings(value.pieceIds) &&
     (value.previousPieceIds === null ||
       isUniqueStrings(value.previousPieceIds)) &&
-    optional(value.date, isString)
+    optional(value.date, isString) &&
+    optional(value.shown, isBoolean)
   );
 }
 
