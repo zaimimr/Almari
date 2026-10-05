@@ -199,7 +199,7 @@ export function SeasonChoice({
                 size={size}
                 width={card}
                 height={tall}
-                diameter={Math.round(card * 0.78)}
+                diameter={Math.round(card * (ax ? 0.5 : 0.78))}
               />
               <View
                 style={[styles.strip, { width: card }]}
@@ -211,11 +211,10 @@ export function SeasonChoice({
                   .map((colour) => (
                     <View
                       key={colour.hex}
-                      style={{
-                        width: chip,
-                        height: chip,
-                        backgroundColor: colour.hex,
-                      }}
+                      style={[
+                        ax ? styles.grow : { width: chip },
+                        { height: chip, backgroundColor: colour.hex },
+                      ]}
                     />
                   ))}
               </View>
