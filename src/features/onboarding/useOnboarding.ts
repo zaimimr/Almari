@@ -7,8 +7,10 @@ import {
   answersFrom,
   applyAnswer,
   finishOnboarding,
+  hasAnswer,
   placeFrom,
   previousStep,
+  resumeStep,
   skipStep,
   stepsFor,
   type Answers,
@@ -38,7 +40,10 @@ export function useOnboarding(single: OnboardingStep | null = null) {
     setProfile({ colour, colourLean });
     setAnswers((current) => ({ ...current, colours: { colour, colourLean } }));
   }
-  const [step, setStep] = useState<OnboardingStep>(single ?? "name");
+  const [step, setStep] = useState<OnboardingStep>(
+    () => single ?? resumeStep(answers),
+  );
+  const [welcome, setWelcome] = useState(() => !single && step === "name");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [finishing, setFinishing] = useState<"add" | "sample" | null>(null);
@@ -48,6 +53,8 @@ export function useOnboarding(single: OnboardingStep | null = null) {
   const [notifyDenied, setNotifyDenied] = useState(false);
 
   const steps = stepsFor(answers).filter((item) => item !== "done");
+  const wearsHijab =
+    answers.hijab.hijab === "always" || answers.hijab.hijab === "sometimes";
   const total = steps.length;
   const position = step === "done" ? total : steps.indexOf(step) + 1;
 
@@ -75,6 +82,10 @@ export function useOnboarding(single: OnboardingStep | null = null) {
     const saved = await write(step);
     setBusy(false);
     if (!saved) return;
+    if (single === "hijab" && step === "hijab" && wearsHijab) {
+      setStep("hijabStyles");
+      return;
+    }
     if (single) {
       router.back();
       return;
@@ -123,7 +134,7 @@ export function useOnboarding(single: OnboardingStep | null = null) {
         announce(place.name);
       }
     } catch {
-      setPlaceMessage("notFound");
+      setPlaceMessage("offline");
     } finally {
       setSearching(false);
     }
@@ -168,6 +179,9 @@ export function useOnboarding(single: OnboardingStep | null = null) {
 
   return {
     step,
+    welcome,
+    start: () => setWelcome(false),
+    answered: hasAnswer(step, answers),
     steps,
     position,
     total,

@@ -1,9 +1,6 @@
 export { default } from "./ClosetVisionModule";
 export { LiveScanView, type LiveScanProps } from "./LiveScanView";
-export {
-  CutoutEditorView,
-  type CutoutEditorProps,
-} from "./CutoutEditorView";
+export { CutoutEditorView, type CutoutEditorProps } from "./CutoutEditorView";
 export type {
   City,
   CutoutEdit,

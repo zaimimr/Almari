@@ -4,6 +4,7 @@ import {
   captureProgress,
   type CaptureProgress,
 } from "../../../src/domain/importing";
+import { ProfileButton } from "../../../src/features/profile/ProfileButton";
 import { categoryName, t, type Key } from "../../../src/i18n";
 import { addPiecesRoute, canPrepareOnDevice } from "../../../src/state/imports";
 import { AddedBanner } from "../../../src/features/closet/AddedBanner";
@@ -108,6 +109,7 @@ export default function ClosetScreen() {
           testID="header-select"
         />
       )}
+      {selecting ? null : <ProfileButton testID="closet-profile" />}
     </View>
   );
 

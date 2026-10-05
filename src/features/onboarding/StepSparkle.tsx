@@ -12,7 +12,7 @@ export function StepSparkle({
 }) {
   return (
     <ChoiceCardGroup<Sparkle>
-      options={sparkleOptions()}
+      options={sparkleOptions(answers.hijab.hijab === "no")}
       value={answers.sparkle.sparkle}
       onChange={(next) =>
         onChange({ sparkle: typeof next === "string" ? next : null })

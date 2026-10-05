@@ -13,5 +13,9 @@ appId: com.zaimimran.almari
 - assertVisible: "Profil"
 - assertVisible:
     id: "profile"
-- tapOn: "Språk"
+- runFlow:
+    when:
+      notVisible: "Følg telefonen"
+    commands:
+      - tapOn: "Språk.*"
 - tapOn: "Følg telefonen"

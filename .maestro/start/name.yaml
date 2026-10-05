@@ -6,6 +6,12 @@ appId: com.zaimimran.almari
     permissions:
       all: allow
 - extendedWaitUntil:
+    visible:
+      id: "welcome-start"
+    timeout: 20000
+- tapOn:
+    id: "welcome-start"
+- extendedWaitUntil:
     visible: "What is your name\\?"
     timeout: 20000
 - tapOn:
@@ -18,9 +24,7 @@ appId: com.zaimimran.almari
 - tapOn:
     id: "name-field"
 - eraseText: 10
-- waitForAnimationToEnd
-- tapOn:
-    id: "onboarding-next"
+- pressKey: Enter
 - extendedWaitUntil:
     visible: "Do you wear a hijab\\?"
     timeout: 10000

@@ -7,7 +7,7 @@ appId: com.zaimimran.almari
     id: "header-profile"
 - assertVisible:
     id: "profile"
-- tapOn: "I'll never wear"
+- tapOn: "I'll never wear.*"
 - assertVisible:
     id: "never-wear"
 - tapOn: "Skirt.*"

@@ -30,6 +30,10 @@ export async function discardPhoto(_photo: string) {}
 
 export async function discardAllPhotos() {}
 
+export async function exportFolder(_json: string): Promise<string> {
+  throw new Error("unavailable");
+}
+
 export function lowOnSpace() {
   return false;
 }

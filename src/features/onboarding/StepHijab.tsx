@@ -1,6 +1,6 @@
 import type { Answers } from "../../domain/onboarding";
-import { t } from "../../i18n";
-import { ChipRow } from "../../ui";
+import { ChoiceCardGroup } from "../../ui";
+import { hijabOptions } from "./illustrations";
 
 type Hijab = NonNullable<Answers["hijab"]["hijab"]>;
 
@@ -12,14 +12,12 @@ export function StepHijab({
   onChange: (next: Answers["hijab"]) => void;
 }) {
   return (
-    <ChipRow<Hijab>
-      options={[
-        { id: "always", label: t("hijab.always") },
-        { id: "sometimes", label: t("hijab.sometimes") },
-        { id: "no", label: t("onboarding.hijab.no") },
-      ]}
+    <ChoiceCardGroup<Hijab>
+      options={hijabOptions()}
       value={answers.hijab.hijab}
-      onChange={(hijab) => onChange({ hijab: hijab as Hijab })}
+      onChange={(hijab) => {
+        if (typeof hijab === "string") onChange({ hijab });
+      }}
       testID="hijab"
     />
   );

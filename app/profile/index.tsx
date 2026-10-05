@@ -1,13 +1,15 @@
-import { Pressable, StyleSheet, View } from "react-native";
+import { useState } from "react";
+import { Pressable, StyleSheet, useWindowDimensions, View } from "react-native";
 import Constants from "expo-constants";
 import { router } from "expo-router";
-import type { Language } from "../../src/domain/closet";
+import type { Language, Units } from "../../src/domain/closet";
 import { resetCloset } from "../../src/domain/onboarding";
 import { MorningOutfit } from "../../src/features/profile/MorningOutfit";
 import { StyleBoard } from "../../src/features/profile/StyleBoard";
 import { profileSummary } from "../../src/features/profile/useProfile";
 import { t, useLocale } from "../../src/i18n";
 import { useCloset } from "../../src/state/closet";
+import { shareData } from "../../src/state/export";
 import { syncSchedule } from "../../src/state/notifications";
 import { discardAllPhotos } from "../../src/storage/local";
 import {
@@ -23,8 +25,9 @@ import { confirmAction } from "../../src/ui/confirm";
 import { theme } from "../../src/ui/theme";
 
 const languages = ["system", "en", "nb"] as const;
+const unitOptions = ["metric", "imperial"] as const;
 
-type Open = "morning" | "language";
+type Open = "morning" | "language" | "units";
 
 export default function Profile() {
   useLocale();
@@ -32,12 +35,19 @@ export default function Profile() {
   const { open, toggle } = useOneExpander<Open>();
   const summary = profileSummary(closet);
   const { name, place } = closet.styling;
+  const [exportFailed, setExportFailed] = useState(false);
+  const { fontScale } = useWindowDimensions();
 
-  const setLanguage = (language: Language) =>
+  const setStyling = (change: { language: Language } | { units: Units }) =>
     void update((current) => ({
       ...current,
-      styling: { ...current.styling, language },
+      styling: { ...current.styling, ...change },
     })).catch(() => undefined);
+
+  async function exportData() {
+    setExportFailed(false);
+    await shareData(closet).catch(() => setExportFailed(true));
+  }
 
   async function wipe() {
     const confirmed = await confirmAction(
@@ -54,7 +64,7 @@ export default function Profile() {
 
   return (
     <Screen title={t("profile.title")} testID="profile">
-      <View style={styles.page}>
+      <View key={fontScale} style={styles.page}>
         <View style={styles.head}>
           <Pressable
             accessibilityRole="button"
@@ -119,19 +129,52 @@ export default function Profile() {
               }))}
               value={closet.styling.language}
               onChange={(language) => {
-                if (typeof language === "string") setLanguage(language);
+                if (typeof language === "string") setStyling({ language });
+              }}
+              inSurface
+            />
+          </Expander>
+          <Expander
+            id="profile-units"
+            title={t("onboarding.units.question")}
+            value={t(`onboarding.units.${closet.styling.units}`)}
+            open={open === "units"}
+            onToggle={() => toggle("units")}
+            testID="profile-units"
+          >
+            <ChipRow<Units>
+              options={unitOptions.map((id) => ({
+                id,
+                label: t(`onboarding.units.${id}`),
+              }))}
+              value={closet.styling.units}
+              onChange={(units) => {
+                if (typeof units === "string") setStyling({ units });
               }}
               inSurface
             />
           </Expander>
           <Rows>
             <Row
-              title={t("settings.reset")}
-              onPress={() => void wipe()}
-              testID="settings-reset"
+              title={t("settings.export")}
+              onPress={() => void exportData()}
+              testID="settings-export"
             />
           </Rows>
+          {exportFailed ? (
+            <Text role="footnote" tone="error" announce>
+              {t("settings.export.failed")}
+            </Text>
+          ) : null}
         </View>
+        <Rows>
+          <Row
+            title={t("settings.reset")}
+            tone="error"
+            onPress={() => void wipe()}
+            testID="settings-reset"
+          />
+        </Rows>
         <View style={styles.foot}>
           <Text role="footnote" tone="muted" testID="app-privacy">
             {t("settings.privacy")}

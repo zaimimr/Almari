@@ -7,7 +7,7 @@ appId: com.zaimimran.almari
 - assertVisible:
     id: "profile"
 - tapOn:
-    id: "tile-coverage"
+    id: "tile-finish"
 - tapOn:
     id: "card-full"
 - assertVisible:

@@ -6,6 +6,12 @@ appId: com.zaimimran.almari
     permissions:
       all: allow
 - extendedWaitUntil:
+    visible:
+      id: "welcome-start"
+    timeout: 20000
+- tapOn:
+    id: "welcome-start"
+- extendedWaitUntil:
     visible: "What is your name\\?"
     timeout: 20000
 - assertVisible: "What is your name?"
@@ -17,26 +23,28 @@ appId: com.zaimimran.almari
 - tapOn:
     id: "name-field"
 - inputText: "Sara"
-- waitForAnimationToEnd
-- tapOn:
-    id: "onboarding-next"
+- pressKey: Enter
 - assertVisible: "Do you wear a hijab?"
 - assertVisible:
     id: "step-2-of-7"
-- assertNotVisible: "Skip"
-- tapOn: "Sometimes"
+- assertVisible: "Skip"
+- tapOn:
+    id: "hijab-sometimes"
 - takeScreenshot: docs/redesign/screens/after/start/hijab
-- tapOn: "Next"
+- tapOn:
+    id: "onboarding-next"
 - assertVisible: "Which styles do you wear?"
 - tapOn:
     id: "card-hijab"
 - tapOn:
     id: "card-shayla"
-- tapOn: "Next"
+- tapOn:
+    id: "onboarding-next"
 - assertVisible: "How covered do you like your everyday outfits?"
 - tapOn:
     id: "card-moderate"
-- tapOn: "Next"
+- tapOn:
+    id: "onboarding-next"
 - assertVisible: "What do you wear most days?"
 - tapOn:
     id: "style-both"
@@ -45,20 +53,24 @@ appId: com.zaimimran.almari
 - assertVisible:
     id: "card-moderate"
     selected: true
-- tapOn: "Next"
+- tapOn:
+    id: "onboarding-next"
 - assertVisible: "What do you wear most days?"
 - assertVisible:
     id: "style-both"
     selected: true
-- tapOn: "Next"
+- tapOn:
+    id: "onboarding-next"
 - assertVisible: "For Eid and parties, how much sparkle?"
 - tapOn:
     id: "sparkle-little"
-- tapOn: "Next"
+- tapOn:
+    id: "onboarding-next"
 - assertVisible: "Where are you?"
 - assertVisible:
     id: "step-7-of-7"
-- tapOn: "Next"
+- tapOn:
+    id: "onboarding-next"
 - assertVisible: "You are set"
 - assertNotVisible:
     id: "onboarding-next"

@@ -12,6 +12,7 @@ import { hijabAlternatives } from "../../../src/domain/wardrobe";
 import { ChangeStrip } from "../../../src/features/ChangeStrip";
 import { ActionArea } from "../../../src/features/today/ActionArea";
 import { DressyMeter } from "../../../src/features/today/DressyMeter";
+import { ProfileButton } from "../../../src/features/profile/ProfileButton";
 import { FirstRun } from "../../../src/features/today/FirstRun";
 import { IntentRow } from "../../../src/features/today/IntentRow";
 import { OutfitCard } from "../../../src/features/today/OutfitCard";
@@ -263,12 +264,7 @@ export default function TodayScreen() {
           testID="today-share"
         />
       ) : null}
-      <HeaderItem
-        label={t("nav.profile")}
-        icon="person.crop.circle"
-        onPress={() => router.push("/profile")}
-        testID="header-profile"
-      />
+      <ProfileButton testID="header-profile" />
     </View>
   );
 

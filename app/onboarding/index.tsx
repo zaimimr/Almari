@@ -4,6 +4,7 @@ import {
   StyleSheet,
   View,
   findNodeHandle,
+  useWindowDimensions,
   type ScrollView,
 } from "react-native";
 import Animated, { LayoutAnimationConfig } from "react-native-reanimated";
@@ -20,6 +21,7 @@ import { StepNotifications } from "../../src/features/onboarding/StepNotificatio
 import { StepPlace } from "../../src/features/onboarding/StepPlace";
 import { StepSparkle } from "../../src/features/onboarding/StepSparkle";
 import { StepStyle } from "../../src/features/onboarding/StepStyle";
+import { StepWelcome } from "../../src/features/onboarding/StepWelcome";
 import { stepEnter, stepExit } from "../../src/features/onboarding/stepChange";
 import { useOnboarding } from "../../src/features/onboarding/useOnboarding";
 import { t, type Key } from "../../src/i18n";
@@ -40,6 +42,19 @@ const questions: Record<Exclude<OnboardingStep, "done">, Key> = {
   colours: "onboarding.colours.question",
 };
 
+const labels: Record<Exclude<OnboardingStep, "done">, Key> = {
+  name: "profile.name",
+  hijab: "style.hijab",
+  hijabStyles: "style.hijabStyles",
+  coverage: "profile.tile.coverage",
+  style: "style.style",
+  fit: "style.fit",
+  sparkle: "profile.tile.sparkle",
+  place: "profile.location",
+  notifications: "profile.morning",
+  colours: "profile.colours",
+};
+
 const isStep = (value: unknown): value is OnboardingStep =>
   answerSteps.includes(value as OnboardingStep);
 
@@ -53,6 +68,8 @@ export default function Onboarding() {
   const title = useRef<View>(null);
   const content = useRef<ScrollView>(null);
   const first = useRef(true);
+  const { height } = useWindowDimensions();
+  const centered = flow.welcome || step === "done";
 
   useEffect(() => {
     if (first.current) {
@@ -151,6 +168,7 @@ export default function Onboarding() {
       case "done":
         return (
           <StepDone
+            answers={answers}
             onAddPieces={() => void flow.finish("add")}
             onSample={() => void flow.finish("sample")}
             busy={flow.finishing}
@@ -159,18 +177,55 @@ export default function Onboarding() {
     }
   };
 
+  if (flow.welcome)
+    return (
+      <Screen headerTitleVisible={false}>
+        <Stack.Screen
+          options={{
+            gestureEnabled: false,
+            headerBackVisible: false,
+            headerLeft: () => null,
+          }}
+        />
+        <View style={[styles.centered, { minHeight: height * 0.7 }]}>
+          <StepWelcome
+            onStart={flow.start}
+            onSkip={() => void flow.finish("sample")}
+            busy={flow.finishing !== null}
+          />
+        </View>
+        {flow.error ? (
+          <Text role="footnote" tone="error" style={styles.center}>
+            {flow.error}
+          </Text>
+        ) : null}
+      </Screen>
+    );
+
+  const ready = single !== null || flow.answered;
+
   return (
     <Screen
-      headerTitleVisible={false}
+      title={single && step !== "done" ? t(labels[step]) : undefined}
+      headerTitleVisible={Boolean(single)}
       progress={
-        single ? undefined : { step: position, total, label: progressLabel }
+        single || step === "done"
+          ? undefined
+          : { step: position, total, label: progressLabel }
       }
       contentRef={content}
       footer={
         step === "done" ? undefined : (
           <Footer
             primary={{
-              label: t(single ? "onboarding.save" : "onboarding.next"),
+              label: t(
+                single
+                  ? "onboarding.save"
+                  : ready
+                    ? "onboarding.next"
+                    : "onboarding.skip",
+              ),
+              variant: ready ? "primary" : "secondary",
               onPress: () => void next(),
               busy: flow.busy,
               testID: "onboarding-next",
@@ -188,7 +243,7 @@ export default function Onboarding() {
             ? null
             : {
                 headerLeft: () =>
-                  position > 1 || step === "done" ? (
+                  position > 1 && step !== "done" ? (
                     <HeaderItem
                       label={t("common.back")}
                       icon="chevron.left"
@@ -204,7 +259,10 @@ export default function Onboarding() {
           key={step}
           entering={stepEnter(reduce)}
           exiting={stepExit(reduce)}
-          style={styles.step}
+          style={[
+            styles.step,
+            centered && [styles.centered, { minHeight: height * 0.7 }],
+          ]}
         >
           {step === "done" ? null : (
             <View testID={`step-${position}-of-${total}`}>
@@ -237,4 +295,5 @@ export default function Onboarding() {
 const styles = StyleSheet.create({
   step: { gap: theme.space.lg, paddingTop: theme.space.xs },
   center: { textAlign: "center" },
+  centered: { justifyContent: "center" },
 });

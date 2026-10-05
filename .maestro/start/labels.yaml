@@ -6,6 +6,12 @@ appId: com.zaimimran.almari
     permissions:
       all: allow
 - extendedWaitUntil:
+    visible:
+      id: "welcome-start"
+    timeout: 20000
+- tapOn:
+    id: "welcome-start"
+- extendedWaitUntil:
     visible: "What is your name\\?"
     timeout: 20000
 - assertVisible:
@@ -41,10 +47,6 @@ appId: com.zaimimran.almari
 - assertVisible:
     id: "step-title"
     text: "Where are you?"
-- tapOn:
-    id: "onboarding-next"
-- assertVisible: "You are set"
-- tapOn: "Back"
 - tapOn: "Back"
 - assertVisible: "For Eid and parties, how much sparkle?"
 - tapOn:

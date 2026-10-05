@@ -138,6 +138,7 @@ export function ChoiceCardGroup<T extends string>({
   onChange,
   multi = false,
   exclusive,
+  plainFirst = false,
   testID,
 }: {
   label?: string;
@@ -147,6 +148,7 @@ export function ChoiceCardGroup<T extends string>({
   onChange: (next: T | T[] | null) => void;
   multi?: boolean;
   exclusive?: T;
+  plainFirst?: boolean;
   testID?: string;
 }) {
   const { ax } = useLargeText();
@@ -192,6 +194,23 @@ export function ChoiceCardGroup<T extends string>({
     />
   );
 
+  const chips =
+    plain && plain.length > 0 ? (
+      <View style={styles.chips}>
+        {plain.map((option) => (
+          <View key={option.id} style={styles.chip}>
+            <Chip
+              label={option.label}
+              selected={chosen.includes(option.id)}
+              role={multi ? "checkbox" : "radio"}
+              onPress={() => pick(option.id)}
+              testID={testID ? `${testID}-${option.id}` : undefined}
+            />
+          </View>
+        ))}
+      </View>
+    ) : null;
+
   const rows = ax
     ? options.map((option) => [option])
     : options.flatMap((option, index) =>
@@ -205,6 +224,7 @@ export function ChoiceCardGroup<T extends string>({
       testID={testID}
     >
       {label ? <Text role="headline">{label}</Text> : null}
+      {plainFirst ? chips : null}
       <View style={styles.grid}>
         {rows.map((row) => (
           <View key={row.map(({ id }) => id).join()} style={styles.row}>
@@ -213,21 +233,7 @@ export function ChoiceCardGroup<T extends string>({
           </View>
         ))}
       </View>
-      {plain && plain.length > 0 ? (
-        <View style={styles.chips}>
-          {plain.map((option) => (
-            <View key={option.id} style={styles.chip}>
-              <Chip
-                label={option.label}
-                selected={chosen.includes(option.id)}
-                role={multi ? "checkbox" : "radio"}
-                onPress={() => pick(option.id)}
-                testID={testID ? `${testID}-${option.id}` : undefined}
-              />
-            </View>
-          ))}
-        </View>
-      ) : null}
+      {plainFirst ? null : chips}
     </View>
   );
 }

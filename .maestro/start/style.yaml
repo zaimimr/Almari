@@ -6,6 +6,12 @@ appId: com.zaimimran.almari
     permissions:
       all: allow
 - extendedWaitUntil:
+    visible:
+      id: "welcome-start"
+    timeout: 20000
+- tapOn:
+    id: "welcome-start"
+- extendedWaitUntil:
     visible: "What is your name\\?"
     timeout: 20000
 - repeat:
@@ -21,8 +27,9 @@ appId: com.zaimimran.almari
     id: "style-desi"
     selected: true
 - takeScreenshot: docs/redesign/screens/after/start/style
-- tapOn: "Next"
-- assertVisible: "How do you like your clothes to sit?"
+- tapOn:
+    id: "onboarding-next"
+- assertVisible: "For Eid and parties, how much sparkle?"
 - repeat:
     times: 10
     while:

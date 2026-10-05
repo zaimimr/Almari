@@ -11,10 +11,16 @@ appId: com.zaimimran.almari
       id: "profile-morning"
 - tapOn:
     id: "profile-morning"
-- tapOn: "08:00.*"
+- tapOn:
+    id: "morning-on-toggle"
+- tapOn:
+    id: "morning-weekdays-toggle"
 - tapOn:
     id: "profile-morning"
-- assertVisible: "08:00"
+- assertVisible: ".*07:00.*"
 - tapOn:
     id: "profile-morning"
-- tapOn: "Off.*"
+- tapOn:
+    id: "morning-on-toggle"
+- assertNotVisible:
+    id: "morning-weekdays"

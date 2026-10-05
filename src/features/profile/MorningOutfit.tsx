@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { useFocusEffect } from "expo-router";
-import { notificationTimes, type NotificationTime } from "../../domain/closet";
+import {
+  clockTime,
+  type NotificationTime,
+  type Styling,
+} from "../../domain/closet";
 import { notificationPlan } from "../../domain/notifications";
 import { locale, t } from "../../i18n";
 import { useCloset } from "../../state/closet";
@@ -11,11 +16,16 @@ import {
   openSettings,
   syncSchedule,
 } from "../../state/notifications";
-import { Button, ChipRow, Expander, Text } from "../../ui";
+import { Button, Expander, Row, Rows, Text } from "../../ui";
 import { theme } from "../../ui/theme";
 import { notifyLabel } from "../onboarding/StepNotifications";
 
-type Option = NotificationTime | "off";
+const fallback: NotificationTime = "07:00";
+
+function dateOf(time: NotificationTime) {
+  const [hour, minute] = time.split(":").map(Number) as [number, number];
+  return new Date(2000, 0, 1, hour, minute);
+}
 
 export function MorningOutfit({
   open,
@@ -26,7 +36,9 @@ export function MorningOutfit({
 }) {
   const { closet, update } = useCloset();
   const time = closet.styling.notification ?? null;
+  const weekdaysOnly = closet.styling.weekdaysOnly ?? false;
   const [denied, setDenied] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   const refresh = useCallback(() => {
     void notificationPermission().then((status) => {
@@ -44,50 +56,77 @@ export function MorningOutfit({
     );
   }, [closet.styling]);
 
-  async function pick(next: Option) {
-    const notification = next === "off" ? null : next;
-    await update((current) => {
-      const { notification: _old, ...styling } = current.styling;
+  const save = (change: Partial<Styling>) =>
+    update((current) => {
+      const { notification, ...styling } = { ...current.styling, ...change };
       return {
         ...current,
         styling: notification ? { ...styling, notification } : styling,
       };
     }).catch(() => undefined);
-    if (!notification) {
+
+  async function turn(on: boolean) {
+    if (!on) {
       setDenied(false);
+      await save({ notification: null });
       return;
     }
-    setDenied((await askNotificationPermission()) === "denied");
+    setBusy(true);
+    const status = await askNotificationPermission().catch(
+      () => "denied" as const,
+    );
+    setBusy(false);
+    setDenied(status === "denied");
+    if (status === "granted") await save({ notification: fallback });
   }
 
-  const value = denied ? t("notify.denied") : notifyLabel(time);
   return (
     <Expander
       id="profile-morning"
       title={t("profile.morning")}
-      value={value}
+      value={notifyLabel(time)}
       open={open}
       onToggle={onToggle}
       testID="profile-morning"
     >
-      <ChipRow<Option>
-        options={[
-          { id: "off" as Option, label: t("notify.off") },
-          ...notificationTimes.map((id) => ({ id, label: notifyLabel(id) })),
-        ].map((option) => ({
-          ...option,
-          accessibilityLabel: t("common.optionInGroup", {
-            option: option.label,
-            group: t("profile.morning"),
-          }),
-        }))}
-        value={time ?? "off"}
-        onChange={(next) => {
-          if (typeof next === "string") void pick(next);
-        }}
-        inSurface
-        testID="morning-chips"
-      />
+      <Rows>
+        <Row
+          title={t("notify.remind")}
+          trailing={{
+            toggle: Boolean(time),
+            onToggle: (next) => void turn(next),
+            busy,
+          }}
+          testID="morning-on"
+        />
+        {time ? (
+          <Row
+            title={t("notify.weekdays")}
+            trailing={{
+              toggle: weekdaysOnly,
+              onToggle: (next) => void save({ weekdaysOnly: next }),
+            }}
+            testID="morning-weekdays"
+          />
+        ) : null}
+      </Rows>
+      {time ? (
+        <DateTimePicker
+          mode="time"
+          display="spinner"
+          value={dateOf(time)}
+          minuteInterval={5}
+          locale={locale === "nb" ? "nb-NO" : "en-GB"}
+          themeVariant="light"
+          onValueChange={(_event, date) =>
+            void save({
+              notification: clockTime(date.getHours(), date.getMinutes()),
+            })
+          }
+          accessibilityLabel={t("profile.morning")}
+          testID="morning-time"
+        />
+      ) : null}
       {denied ? (
         <View style={styles.denied}>
           <Text role="footnote" tone="muted" announce testID="notify-denied">

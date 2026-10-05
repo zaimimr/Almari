@@ -11,6 +11,12 @@ appId: com.zaimimran.almari
       all: allow
 - extendedWaitUntil:
     visible:
+      id: "welcome-start"
+    timeout: 20000
+- tapOn:
+    id: "welcome-start"
+- extendedWaitUntil:
+    visible:
       id: "step-1-of-10"
     timeout: 20000
 - tapOn:

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { emptyCloset } from "./closet";
+import { clockTime, emptyCloset, isClockTime } from "./closet";
 import { notificationPlan, notificationSchedule } from "./notifications";
 import { resetCloset, replayOnboarding } from "./onboarding";
 
@@ -75,4 +75,44 @@ test("the schedule names planned looks and adds an evening reminder before them"
     "I morgen: Eid lunch",
   );
   assert.deepEqual(notificationSchedule(null, looks, "2026-10-05", "en"), []);
+});
+
+test("weekdays only fires on school and work days", () => {
+  const morning = notificationPlan(
+    { notification: "06:45", name: "Sara", weekdaysOnly: true },
+    "en",
+  )!;
+  assert.deepEqual(
+    [morning.hour, morning.minute, morning.weekdays],
+    [6, 45, [2, 3, 4, 5, 6]],
+  );
+  const night = notificationPlan(
+    { notification: "21:30", name: "Sara", weekdaysOnly: true },
+    "en",
+  )!;
+  assert.deepEqual(night.weekdays, [1, 2, 3, 4, 5]);
+  assert.equal(
+    notificationPlan({ notification: "07:00", name: "Sara" }, "en")!.weekdays,
+    undefined,
+  );
+});
+
+test("any clock time is kept, broken ones are dropped", () => {
+  assert.equal(isClockTime("06:45"), true);
+  assert.equal(isClockTime("24:00"), false);
+  assert.equal(isClockTime("7:00"), false);
+  assert.equal(clockTime(6, 5), "06:05");
+});
+
+test("weekdays only skips weekend mornings in the schedule", () => {
+  const morning = notificationPlan(
+    { notification: "07:00", name: "Sara", weekdaysOnly: true },
+    "en",
+  );
+  const days = notificationSchedule(morning, [], "2026-10-05", "en");
+  assert.equal(days.length, 10);
+  assert.equal(
+    days.some((item) => item.date === "2026-10-10"),
+    false,
+  );
 });

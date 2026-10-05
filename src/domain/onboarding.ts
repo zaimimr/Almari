@@ -94,6 +94,39 @@ export function previousStep(
   );
 }
 
+export function hasAnswer(step: OnboardingStep, answers: Answers): boolean {
+  switch (step) {
+    case "name":
+      return Boolean(answers.name.name?.trim());
+    case "hijab":
+      return answers.hijab.hijab !== null;
+    case "hijabStyles":
+      return answers.hijabStyles.hijabStyles !== null;
+    case "coverage":
+      return answers.coverage.answered || answers.coverage.coverage !== null;
+    case "style":
+      return answers.style.styleLean !== null;
+    case "fit":
+      return answers.fit.fit !== null;
+    case "sparkle":
+      return answers.sparkle.sparkle !== null;
+    case "place":
+      return answers.place.place !== null;
+    case "notifications":
+      return answers.notifications.notification !== null;
+    case "colours":
+      return answers.colours.colour !== null;
+    case "done":
+      return false;
+  }
+}
+
+export function resumeStep(answers: Answers): OnboardingStep {
+  const steps = stepsFor(answers);
+  const last = steps.findLastIndex((step) => hasAnswer(step, answers));
+  return steps[last + 1] ?? "done";
+}
+
 export function answersFrom(closet: Closet): Answers {
   const { everyday, profile, units, place, name, notification } =
     closet.styling;
@@ -202,8 +235,12 @@ export function applyAnswer<S extends AnswerStep>(
   if (step === "hijab") {
     const { hijab } = answer as Answers["hijab"];
     if (hijab === null) return closet;
+    const answered = withProfile(closet, { hijabAnswered: true });
+    const { hijabStyles: _old, ...profile } = answered.styling.profile;
     return withPreset(
-      withProfile(closet, { hijabAnswered: true }),
+      hijab === "no"
+        ? { ...answered, styling: { ...answered.styling, profile } }
+        : answered,
       { hijab: hijabPreference[hijab] },
       clock,
     );
@@ -236,7 +273,9 @@ export function applyAnswer<S extends AnswerStep>(
     const style =
       styleLean === "both"
         ? (closet.styling.everyday?.style ?? "western")
-        : styleLean;
+        : styleLean === "abaya"
+          ? "western"
+          : styleLean;
     return style === null ? saved : withPreset(saved, { style }, clock);
   }
   if (step === "place") {
@@ -293,7 +332,11 @@ export function finishOnboarding(closet: Closet, clock: Clock): Closet {
 }
 
 export function replayOnboarding(closet: Closet): Closet {
-  const { notification: _notification, ...styling } = closet.styling;
+  const {
+    notification: _notification,
+    weekdaysOnly: _weekdaysOnly,
+    ...styling
+  } = closet.styling;
   return { ...closet, styling: { ...styling, onboarded: false } };
 }
 

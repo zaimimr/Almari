@@ -719,6 +719,10 @@ public class ClosetVisionModule: Module {
       true
     }
 
+    AsyncFunction("zipFolder") { (folderUri: String) throws -> String in
+      try DataExport.zip(folderUri: folderUri)
+    }
+
     AsyncFunction("prepare") { (sourceUri: String, id: String, options: PrepareOptions?) throws -> PreparedGarment in
       try GarmentPipeline.shared.prepare(sourceUri: sourceUri, id: id, options: options)
     }

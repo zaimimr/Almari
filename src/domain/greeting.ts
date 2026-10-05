@@ -7,7 +7,8 @@ export function greeting(
   hour: number,
   locale: Locale,
 ): string {
-  const part = hour < 12 ? "morning" : hour < 18 ? "afternoon" : "evening";
+  const part =
+    hour < 5 || hour >= 18 ? "evening" : hour < 12 ? "morning" : "afternoon";
   return name
     ? translate({ en, nb }, locale, `today.greeting.${part}`, { name })
     : translate({ en, nb }, locale, `today.greeting.${part}Plain`);

@@ -11,6 +11,7 @@ export type NotificationPlan = {
   title: string;
   body: string;
   data: { day: "today" | "tomorrow"; lookId?: string };
+  weekdays?: number[];
 };
 
 export type ScheduledNotification = NotificationPlan & { date: string };
@@ -42,9 +43,12 @@ export function notificationSchedule(
         }
       : { ...plan, date };
     const ahead = day === "today" ? plannedOn(planned, next) : null;
+    const weekday = new Date(`${date}T12:00:00Z`).getUTCDay() + 1;
+    const mains =
+      !plan.weekdays || plan.weekdays.includes(weekday) ? [main] : [];
     return ahead && plan.hour < evening
       ? [
-          main,
+          ...mains,
           {
             date,
             hour: evening,
@@ -54,12 +58,12 @@ export function notificationSchedule(
             data: { day: "tomorrow" as const, lookId: ahead.id },
           },
         ]
-      : [main];
+      : mains;
   }).flat();
 }
 
 export function notificationPlan(
-  styling: Pick<Styling, "notification" | "name">,
+  styling: Pick<Styling, "notification" | "name" | "weekdaysOnly">,
   locale: Locale,
 ): NotificationPlan | null {
   if (!styling.notification) return null;
@@ -74,5 +78,8 @@ export function notificationPlan(
     title: greeting(styling.name, hour, locale),
     body: translate({ en, nb }, locale, `notify.${day}`),
     data: { day },
+    ...(styling.weekdaysOnly
+      ? { weekdays: day === "today" ? [2, 3, 4, 5, 6] : [1, 2, 3, 4, 5] }
+      : {}),
   };
 }

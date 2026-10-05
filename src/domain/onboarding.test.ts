@@ -10,9 +10,11 @@ import {
   answersFrom,
   applyAnswer,
   finishOnboarding,
+  hasAnswer,
   onboardingSteps,
   placeFrom,
   previousStep,
+  resumeStep,
   setName,
   skipStep,
   stepsFor,
@@ -124,6 +126,20 @@ test("hijab no maps to not needed and keeps her occasion and style", () => {
   assert.equal(closet.styling.everyday?.version, 2);
 });
 
+test("hijab no clears the saved hijab styles", () => {
+  const styled = applyAnswer(
+    withPreset("always"),
+    "hijabStyles",
+    { hijabStyles: ["shayla", "khimar"] },
+    clock,
+  );
+  const no = applyAnswer(styled, "hijab", { hijab: "no" }, clock);
+  assert.equal(no.styling.profile.hijabStyles, undefined);
+  assert.equal(answersFrom(no).hijabStyles.hijabStyles, null);
+  const sometimes = applyAnswer(styled, "hijab", { hijab: "sometimes" }, clock);
+  assert.deepEqual(sometimes.styling.profile.hijabStyles, ["shayla", "khimar"]);
+});
+
 test("hijab sometimes clears the preset hijab and never creates a preset", () => {
   assert.equal(
     applyAnswer(withPreset("always"), "hijab", { hijab: "sometimes" }, clock)
@@ -231,6 +247,11 @@ test("style Desi sets the everyday style, and Both keeps it", () => {
     applyAnswer(desi, "style", { styleLean: "both" }, clock).styling.everyday
       ?.style,
     "desi",
+  );
+  const abaya = applyAnswer(desi, "style", { styleLean: "abaya" }, clock);
+  assert.deepEqual(
+    [abaya.styling.everyday?.style, abaya.styling.profile.styleLean],
+    ["western", "abaya"],
   );
   const first = applyAnswer(fresh(), "style", { styleLean: "both" }, clock);
   assert.equal(first.styling.everyday?.style, "western");
@@ -402,6 +423,8 @@ test("the name is trimmed and the greeting follows the hour", () => {
   assert.equal(greeting("Sara", 20, "nb"), "God kveld, Sara");
   assert.equal(greeting(null, 9, "en"), "Good morning");
   assert.equal(greeting("Sara", 15, "nb"), "Hei, Sara");
+  assert.equal(greeting("Sara", 2, "en"), "Good evening, Sara");
+  assert.equal(greeting("Sara", 5, "en"), "Good morning, Sara");
   assert.equal(greetingShort("Sara", "en"), "Hi, Sara");
 });
 
@@ -415,4 +438,25 @@ test("a place is trimmed, rounded and validated", () => {
   assert.equal(placeFrom("Oslo", Number.NaN, 10, "search"), null);
   assert.equal(placeFrom("Oslo", 91, 10, "search"), null);
   assert.equal(placeFrom("   ", 59.9, 10.7, "search"), null);
+});
+
+test("a relaunch resumes after the last answered step", () => {
+  const empty = answersFrom(emptyCloset);
+  assert.equal(resumeStep(empty), "name");
+  assert.equal(hasAnswer("name", { ...empty, name: { name: "  " } }), false);
+  let closet = setName(emptyCloset, "Sara");
+  assert.equal(resumeStep(answersFrom(closet)), "hijab");
+  closet = applyAnswer(closet, "hijab", { hijab: "no" }, clock);
+  assert.equal(resumeStep(answersFrom(closet)), "coverage");
+  closet = applyAnswer(
+    closet,
+    "coverage",
+    { coverage: null, answered: true },
+    clock,
+  );
+  closet = applyAnswer(closet, "sparkle", { sparkle: "little" }, clock);
+  assert.equal(resumeStep(answersFrom(closet)), "place");
+  const place = placeFrom("Oslo", 59.91, 10.75, "search");
+  closet = applyAnswer(closet, "place", { place }, clock);
+  assert.equal(resumeStep(answersFrom(closet)), "done");
 });

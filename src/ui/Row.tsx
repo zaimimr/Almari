@@ -57,6 +57,7 @@ export type RowProps = {
   user?: boolean;
   radio?: boolean;
   last?: boolean;
+  tone?: "error";
   testID?: string;
 };
 
@@ -134,6 +135,7 @@ export function Row({
   user = false,
   radio = false,
   last = false,
+  tone: titleTone,
   testID,
 }: RowProps) {
   const colors = useColors();
@@ -227,7 +229,7 @@ export function Row({
       accessibilityLabel={pressable || toggle ? undefined : spoken}
       {...(toggle ? hidden : null)}
     >
-      <Text tone={tone} user={user}>
+      <Text tone={titleTone ?? tone} user={user}>
         {title}
       </Text>
       {meta ? (
