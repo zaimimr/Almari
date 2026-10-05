@@ -11,10 +11,14 @@ appId: com.zaimimran.almari
 - assertVisible:
     id: "never-wear"
 - tapOn: "Skirt.*"
+- scrollUntilVisible:
+    element: "Black, Colours"
 - tapOn: "Black, Colours"
 - scrollUntilVisible:
     element: "Stripe.*"
 - tapOn: "Stripe.*"
 - takeScreenshot: docs/redesign/screens/after/profile/never
 - tapOn: "Back"
-- assertVisible: "3"
+- assertVisible:
+    id: "profile-never"
+    text: "I'll never wear, 3"

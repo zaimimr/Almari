@@ -17,7 +17,7 @@ appId: com.zaimimran.almari
     id: "welcome-start"
 - extendedWaitUntil:
     visible:
-      id: "step-1-of-10"
+      id: "step-1-of-7"
     timeout: 20000
 - tapOn:
     id: "onboarding-next"
@@ -26,30 +26,41 @@ appId: com.zaimimran.almari
 - tapOn:
     id: "onboarding-next"
 - assertVisible:
-    id: "step-3-of-10"
+    id: "step-3-of-7"
 - takeScreenshot: docs/redesign/screens/after/start/ax-hijab-styles
 - tapOn:
     id: "onboarding-next"
 - assertVisible:
-    id: "step-4-of-10"
+    id: "step-4-of-7"
 - takeScreenshot: docs/redesign/screens/after/start/ax-coverage
 - repeat:
     while:
       notVisible:
-        id: "step-8-of-10"
+        id: "step-7-of-7"
     commands:
       - tapOn:
           id: "onboarding-next"
 - takeScreenshot: docs/redesign/screens/after/start/ax-place
 - tapOn:
     id: "onboarding-next"
-- assertVisible:
-    id: "step-9-of-10"
-- takeScreenshot: docs/redesign/screens/after/start/ax-notify
+- scrollUntilVisible:
+    element:
+      id: "done-sample"
 - tapOn:
-    id: "onboarding-next"
-- assertVisible:
-    id: "step-10-of-10"
+    id: "done-sample"
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
+    timeout: 60000
+- tapOn:
+    id: "header-profile"
+- scrollUntilVisible:
+    element:
+      id: "tile-colours"
+    visibilityPercentage: 50
+    centerElement: true
+- tapOn:
+    id: "tile-colours"
 - tapOn:
     id: "colours-selfie"
 - tapOn:

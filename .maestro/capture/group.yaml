@@ -35,10 +35,10 @@ appId: com.zaimimran.almari
 - tapOn: "Use"
 - extendedWaitUntil:
     visible:
-      id: "group-card-1"
+      id: "group-card-2"
     timeout: 60000
 - tapOn:
-    id: "group-card-1"
+    id: "group-card-2"
 - extendedWaitUntil:
     visible: "1 of .*"
     timeout: 10000
@@ -50,7 +50,7 @@ appId: com.zaimimran.almari
 - tapOn:
     id: "confirm-previous"
 - assertVisible: "1 of .*"
-- tapOn: "Back"
+- tapOn: "Cancel"
 - extendedWaitUntil:
     visible:
       id: "group-done"

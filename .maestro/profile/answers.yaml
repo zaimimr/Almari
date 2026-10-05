@@ -25,11 +25,19 @@ appId: com.zaimimran.almari
 - scrollUntilVisible:
     direction: UP
     element:
-      id: "tile-colours"
+      id: "tile-hijab"
 - tapOn:
-    id: "tile-colours"
-- tapOn: "Bold"
+    id: "tile-hijab"
+- tapOn:
+    id: "hijab-always"
 - tapOn: "Save"
+- assertVisible: "Which styles do you wear?"
+- tapOn:
+    id: "card-hijab"
+- tapOn: "Save"
+- assertVisible:
+    id: "tile-hijab"
+    text: "Hijab, Hijab"
 - scrollUntilVisible:
     direction: UP
     element:
@@ -37,5 +45,5 @@ appId: com.zaimimran.almari
 - tapOn:
     id: "profile-name"
 - inputText: "x"
-- tapOn: "Cancel"
+- tapOn: "Back"
 - takeScreenshot: docs/redesign/screens/after/profile/answer
