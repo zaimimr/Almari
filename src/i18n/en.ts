@@ -1428,6 +1428,8 @@ export const en = {
   "looks.wearAgain": "Wear again today",
   "looks.replaceTitle": "Replace {name} on {date}?",
   "looks.replace": "Replace",
+  "looks.moveTitle": "Move {name} from {date}?",
+  "looks.move": "Move",
   "looks.share": "Share",
   "looks.sameAs": "Same as {name}",
   "calendar.planned": "{date}, planned",
