@@ -55,6 +55,15 @@ export async function discardAllPhotos() {
   if (photos.exists) photos.delete();
 }
 
+export async function exportFolder(json: string): Promise<string> {
+  const folder = new Directory(Paths.cache, "Almari");
+  if (folder.exists) folder.delete();
+  folder.create({ intermediates: true });
+  new File(folder, "closet.json").write(json);
+  if (photos.exists) photos.copy(folder);
+  return folder.uri;
+}
+
 export function lowOnSpace() {
   return Paths.availableDiskSpace < 300 * 1024 * 1024;
 }

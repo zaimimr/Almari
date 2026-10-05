@@ -13,6 +13,7 @@ import type {
 
 declare class ClosetVisionModule extends NativeModule {
   isAvailable(): boolean;
+  zipFolder(folderUri: string): Promise<string>;
   prepare(
     sourceUri: string,
     id: string,
@@ -38,6 +39,8 @@ const native = requireOptionalNativeModule<ClosetVisionModule>("ClosetVision");
 
 export default native ?? {
   isAvailable: () => false,
+  zipFolder: (_folderUri: string): Promise<string> =>
+    Promise.reject(new Error("unavailable")),
   prepare: (
     _sourceUri: string,
     _id: string,
