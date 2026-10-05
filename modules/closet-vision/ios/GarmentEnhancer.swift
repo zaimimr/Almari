@@ -74,7 +74,7 @@ struct GarmentEnhancer {
       let pixel = picture.rgb(index)
       if pixel.alpha < 0.99 { continue }
       let lab = Self.lab(red: pixel.red, green: pixel.green, blue: pixel.blue)
-      if lab.l > 30 && (lab.a * lab.a + lab.b * lab.b).squareRoot() < 20 {
+      if lab.l > 30 && (lab.a * lab.a + lab.b * lab.b).squareRoot() < 12 {
         result.append(Neutral(red: pixel.red, green: pixel.green, blue: pixel.blue, lab: lab))
       }
     }
@@ -93,7 +93,7 @@ struct GarmentEnhancer {
     let grey = means.reduce(0, +) / 3
     let lightness = neutral.reduce(0) { $0 + $1.lab.l } / count / 100
     return LightCorrection(
-      gains: means.map { CGFloat(min(1.12, max(0.88, grey / max($0, 1)))) },
+      gains: means.map { CGFloat(min(1.06, max(0.94, grey / max($0, 1)))) },
       exposure: lightness < 0.45 ? CGFloat(min(0.4, log2(0.45 / lightness))) : 0
     )
   }
