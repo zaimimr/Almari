@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { StyleSheet, View } from "react-native";
+import { useEffect, useMemo, useRef } from "react";
+import { ScrollView, StyleSheet, View } from "react-native";
 import { router } from "expo-router";
 import { plannedPieces } from "../../../src/domain/looks";
 import { replacementsFor, roleOf } from "../../../src/domain/styling";
@@ -232,6 +232,15 @@ function TodayFooter({ model }: { model: TodayModel }) {
 export default function TodayScreen() {
   const model = useToday();
   const { closet, today, mode, request, openId, setOpenId } = model;
+  const scroll = useRef<ScrollView>(null);
+  useEffect(() => {
+    if (!openId) return;
+    const timer = setTimeout(
+      () => scroll.current?.scrollToEnd({ animated: true }),
+      100,
+    );
+    return () => clearTimeout(timer);
+  }, [openId]);
   const [title, measure] = useGreeting(closet.styling.name, model.hour);
   const inline = mode === "planning" || mode === "tomorrow";
   const first = !closet.styling.everyday;
@@ -261,6 +270,7 @@ export default function TodayScreen() {
       headerTitleVisible={!inline}
       actions={header}
       footer={<TodayFooter model={model} />}
+      contentRef={scroll}
       testID="today"
     >
       {measure}
