@@ -18,7 +18,12 @@ export function paletteOf(profile: Pick<ColourProfile, "season" | "palette">) {
   const { best, goEasy } = paletteFor(profile);
   return {
     best: best.map(named),
-    goEasy: goEasy.map(named),
+    goEasy: goEasy
+      .map(named)
+      .filter(
+        (colour, index, all) =>
+          all.findIndex(({ name }) => name === colour.name) === index,
+      ),
     neutrals: seasonNeutrals(profile.season).map(named),
     metals: seasonMetals[profile.season].map((metal) => ({
       hex: metalHex[metal],
