@@ -59,6 +59,34 @@ test("everyday adds no occasion word and a piece without colours has no colour w
   assert.equal(outfitName([], "eid", "en"), "");
 });
 
+test("a piece without colours is named by its own name, not its category", () => {
+  const kameez = {
+    ...piece("kameez", "top", "blouse", null),
+    name: "Green embroidered kameez",
+  };
+  assert.equal(
+    outfitName([kameez, shalwar], "party", "en"),
+    "Green embroidered kameez",
+  );
+  assert.equal(
+    outfitName([kameez, shalwar], "everyday", "nb"),
+    "Green embroidered kameez",
+  );
+});
+
+test("a colour in the piece's own name wins over the photo colour", () => {
+  const tunic = {
+    ...piece("tunic", "tunic", "tunic", [230, 170, 180]),
+    name: "Ivory linen tunic",
+  };
+  assert.equal(outfitName([tunic, shalwar], "work", "en"), "Ivory linen tunic");
+  const unnamed = piece("tunic", "tunic", "tunic", [230, 170, 180]);
+  assert.equal(
+    outfitName([unnamed, shalwar], "work", "en"),
+    "Blush work tunic",
+  );
+});
+
 test("every palette colour has an English and a bokmål word", () => {
   const names = [
     "black",

@@ -48,6 +48,19 @@ function mainColour(piece: Piece): Rgb | null {
   return first?.rgb ?? null;
 }
 
+const colourWords = (locale: NameLocale) =>
+  Object.entries(catalogs[locale])
+    .filter(([key]) => key.startsWith("outfitName.colour."))
+    .map(([, word]) => word.toLowerCase());
+
+const otherColour = (name: string, rgb: Rgb, locale: NameLocale) => {
+  const words = name.toLowerCase().split(/\s+/);
+  return (
+    !words.includes(colourWord(rgb, locale).toLowerCase()) &&
+    colourWords(locale).some((word) => words.includes(word))
+  );
+};
+
 export function outfitName(
   pieces: Piece[],
   occasion: Occasion,
@@ -56,6 +69,13 @@ export function outfitName(
   const main = mainPiece(pieces);
   if (!main) return "";
   const rgb = mainColour(main);
+  const own = main.name.trim();
+  if (
+    own &&
+    own.toLowerCase() !== garmentWord(main, locale) &&
+    (!rgb || otherColour(own, rgb, locale))
+  )
+    return own.charAt(0).toUpperCase() + own.slice(1);
   const occasionWord =
     occasion === "everyday"
       ? ""
