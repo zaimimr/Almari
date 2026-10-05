@@ -13,18 +13,21 @@ appId: com.zaimimran.almari
     element:
       id: "tile-seed-blouse"
     direction: DOWN
+    centerElement: true
 - tapOn:
     id: "tile-seed-blouse"
 - scrollUntilVisible:
     element:
       id: "tile-seed-tunic"
     direction: DOWN
+    centerElement: true
 - tapOn:
     id: "tile-seed-tunic"
 - scrollUntilVisible:
     element:
       id: "tile-seed-trousers"
     direction: DOWN
+    centerElement: true
 - tapOn:
     id: "tile-seed-trousers"
 - assertVisible: "5 selected"

@@ -84,7 +84,9 @@ export default function ClosetScreen() {
   const putAwayShown = filter.availability === "archived";
   const showFooter =
     selecting || Boolean(screen.result && "text" in screen.result);
-  const count = screen.visible.length;
+  const count =
+    screen.visible.filter((piece) => piece.source === "owned").length ||
+    screen.visible.length;
 
   const header = (
     <View style={styles.header}>
