@@ -29,6 +29,7 @@ export default function BuildLook() {
   const colors = useColors();
   const { ax } = useLargeText();
   const [room, setRoom] = useState(0);
+  const lay = ax ? 240 : room > 0 ? room - 64 : undefined;
   const title = t("build.edit");
 
   if (builder.gone)
@@ -205,22 +206,24 @@ export default function BuildLook() {
           {builder.name}
         </Text>
       </View>
-      <FlatLay
-        pieces={builder.pieces}
-        size="hero"
-        maxSize={ax ? 240 : room > 0 ? room - 64 : undefined}
-        emptyRoles={builder.empty}
-        state={builder.filling ? "arranging" : undefined}
-        openId={swapPiece?.id ?? null}
-        onPiecePress={(piece) =>
-          builder.setMode(
-            swapPiece?.id === piece.id
-              ? { kind: "picker" }
-              : { kind: "swap", pieceId: piece.id },
-          )
-        }
-        testID="build-collage"
-      />
+      <View style={[styles.lay, { width: lay ?? "100%" }]}>
+        <FlatLay
+          pieces={builder.pieces}
+          size="hero"
+          maxSize={lay}
+          emptyRoles={builder.empty}
+          state={builder.filling ? "arranging" : undefined}
+          openId={swapPiece?.id ?? null}
+          onPiecePress={(piece) =>
+            builder.setMode(
+              swapPiece?.id === piece.id
+                ? { kind: "picker" }
+                : { kind: "swap", pieceId: piece.id },
+            )
+          }
+          testID="build-collage"
+        />
+      </View>
     </View>
   );
 
@@ -286,6 +289,7 @@ const styles = StyleSheet.create({
     gap: theme.space.sm,
   },
   name: { flexShrink: 1 },
+  lay: { maxWidth: "100%", alignSelf: "center" },
   hair: { height: StyleSheet.hairlineWidth },
   status: {
     flexDirection: "row",

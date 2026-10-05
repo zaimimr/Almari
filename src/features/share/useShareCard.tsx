@@ -21,8 +21,8 @@ const mark = require("../../../assets/brand/mark.png");
 export type ShareFormat = "story" | "post";
 
 const frames = {
-  story: { width: 360, height: 640, lay: 300, output: [1080, 1920] },
-  post: { width: 360, height: 450, lay: 200, output: [1080, 1350] },
+  story: { width: 360, height: 640, lay: 312, output: [1080, 1920] },
+  post: { width: 360, height: 450, lay: 260, output: [1080, 1350] },
 } as const;
 
 const hidden = {
@@ -135,7 +135,9 @@ export function useShareCard(content: ShareContent) {
           </Text>
         </View>
         <View style={[styles.paper, { backgroundColor: colors.canvas }]}>
-          <FlatLay pieces={content.pieces} size="hero" maxSize={frame.lay} />
+          <View style={{ width: frame.lay }}>
+            <FlatLay pieces={content.pieces} size="hero" maxSize={frame.lay} />
+          </View>
         </View>
         <View style={styles.brand}>
           <Image source={mark} style={styles.mark} contentFit="contain" />
