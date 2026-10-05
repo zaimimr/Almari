@@ -261,20 +261,28 @@ export function rediscover(closet: Closet, clock: Clock, limit = 6): Piece[] {
   ].slice(0, limit);
 }
 
+const notWashed: readonly Category[] = ["shoes", "bag", "accessory"];
+
 export function laundryLoad(closet: Closet, day: string): Piece[] {
-  const worn = new Set(
-    closet.feedback.flatMap((event) =>
+  const worn = new Map<string, string>();
+  for (const event of closet.feedback)
+    if (
       event.kind === "wore" &&
       !event.undone &&
       wearDate(closet, event.at) === day
-        ? event.pieceIds
-        : [],
-    ),
-  );
-  return closet.pieces.filter(
-    (piece) =>
-      piece.source === "owned" && isAvailable(piece) && worn.has(piece.id),
-  );
+    )
+      for (const id of event.pieceIds)
+        if (event.at > (worn.get(id) ?? "")) worn.set(id, event.at);
+  return closet.pieces.filter((piece) => {
+    const at = worn.get(piece.id);
+    return (
+      piece.source === "owned" &&
+      isAvailable(piece) &&
+      !notWashed.includes(piece.category) &&
+      at !== undefined &&
+      !(piece.washedAt && piece.washedAt >= at)
+    );
+  });
 }
 
 export const inWash = (closet: Closet): Piece[] =>
@@ -283,14 +291,24 @@ export const inWash = (closet: Closet): Piece[] =>
 export const intoWash = (closet: Closet, ids: string[]): Closet =>
   ids.reduce((next, id) => setAway(next, id, "wash"), closet);
 
-export const laundryDone = (closet: Closet, ids: string[]): Closet =>
-  ids.reduce(
-    (next, id) =>
-      next.pieces.find((piece) => piece.id === id)?.away === "wash"
-        ? setAway(next, id, null)
-        : next,
-    closet,
-  );
+export const laundryDone = (
+  closet: Closet,
+  ids: string[],
+  at?: string,
+): Closet =>
+  ids.reduce((next, id) => {
+    if (next.pieces.find((piece) => piece.id === id)?.away !== "wash")
+      return next;
+    const back = setAway(next, id, null);
+    return at
+      ? {
+          ...back,
+          pieces: back.pieces.map((piece) =>
+            piece.id === id ? { ...piece, washedAt: at } : piece,
+          ),
+        }
+      : back;
+  }, closet);
 
 export const defaultCurrency = "NOK";
 

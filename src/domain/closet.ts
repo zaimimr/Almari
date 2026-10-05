@@ -128,6 +128,7 @@ export type Piece = {
   variants?: Variants;
   cutoutArea?: Frame;
   setId?: string;
+  washedAt?: string;
   price?: Price;
 };
 
@@ -690,6 +691,7 @@ function isPiece(value: unknown): value is Piece {
     optional(value.variants, isVariants) &&
     optional(value.cutoutArea, isFrame) &&
     optional(value.setId, isString) &&
+    optional(value.washedAt, isString) &&
     optional(value.price, isPrice)
   );
 }

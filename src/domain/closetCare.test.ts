@@ -104,7 +104,7 @@ test("search matches kind and category names in English and Norwegian", () => {
 test("laundry sends what was worn today to the wash and brings it back", () => {
   const closet = woreLately(
     ownedCloset([piece("a", "top"), piece("b", "bottom"), piece("c", "shoes")]),
-    ["a", "b"],
+    ["a", "b", "c"],
     "2026-10-05T10:00:00Z",
     (id) => `w-${id}`,
   );
@@ -126,6 +126,24 @@ test("laundry sends what was worn today to the wash and brings it back", () => {
   );
   assert.deepEqual(inWash(done), []);
   assert.equal(done.pieces.find((item) => item.id === "c")?.away, "lent");
+});
+
+test("laundry done the same day does not ask to wash the same pieces again", () => {
+  const worn = woreLately(
+    ownedCloset([piece("a", "top")]),
+    ["a"],
+    "2026-10-05T10:00:00Z",
+    (id) => `w-${id}`,
+  );
+  const day = at("2026-10-05T10:00:00Z").localDate;
+  const washed = laundryDone(
+    intoWash(worn, ["a"]),
+    ["a"],
+    "2026-10-05T12:00:00.000Z",
+  );
+  assert.deepEqual(laundryLoad(washed, day), []);
+  const reopened = decodeCloset(JSON.stringify(washed));
+  assert.equal(reopened.pieces[0]?.washedAt, "2026-10-05T12:00:00.000Z");
 });
 
 test("cost per wear divides the price by wears and survives a save", () => {

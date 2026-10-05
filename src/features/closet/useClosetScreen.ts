@@ -276,7 +276,10 @@ export function useClosetScreen() {
   const laundry = (done: boolean) => {
     const ids = (done ? washing : load).map((piece) => piece.id);
     run(
-      (current) => (done ? laundryDone(current, ids) : intoWash(current, ids)),
+      (current) =>
+        done
+          ? laundryDone(current, ids, new Date(now()).toISOString())
+          : intoWash(current, ids),
       () =>
         setResult({
           text: t(done ? "result.backInCloset" : "piece.away.wash"),
