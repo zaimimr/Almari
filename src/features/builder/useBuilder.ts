@@ -20,6 +20,8 @@ import { announce } from "../../ui/announce";
 
 export type Mode = { kind: "picker" } | { kind: "swap"; pieceId: string };
 
+const setKey = (ids: string[]) => [...ids].sort().join();
+
 function countLine(count: number) {
   return count === 1
     ? t("common.pieceCountOne")
@@ -66,12 +68,12 @@ export function useBuilder(params: { id?: string }) {
   const pieces = selected.flatMap((id) =>
     closet.pieces.filter((piece) => piece.id === id),
   );
-  const name =
-    source && source.pieceIds.join() === selected.join()
-      ? source.name
-      : pieces.length
-        ? outfitName(pieces, occasion, locale)
-        : "";
+  const name = source?.name ?? "";
+  const same =
+    closet.looks.find(
+      (look) =>
+        look.id !== source?.id && setKey(look.pieceIds) === setKey(selected),
+    ) ?? null;
   const empty = missingRoles(pieces, request);
   const rankKey = `${category}|${occasion}|${closet.pieces.map((piece) => piece.id).join()}`;
   const [ranked, setRanked] = useState<{ key: string; ids: string[] }>({
@@ -93,7 +95,17 @@ export function useBuilder(params: { id?: string }) {
     closet.pieces.filter((piece) => piece.id === id),
   );
 
-  const dirty = !!source && source.pieceIds.join() !== selected.join();
+  const dirty = !!source && setKey(source.pieceIds) !== setKey(selected);
+  const swapId = mode.kind === "swap" ? mode.pieceId : null;
+  const [swapOrder, setSwapOrder] = useState<string[]>([]);
+  if (swapId && !swapOrder.includes(swapId)) {
+    setSwapOrder([
+      swapId,
+      ...swapOptions(closet, request, selected, swapId, localDate).map(
+        (piece) => piece.id,
+      ),
+    ]);
+  }
   const allowClose = useDiscardChanges(dirty, saving);
 
   function apply(next: string[]) {
@@ -143,12 +155,12 @@ export function useBuilder(params: { id?: string }) {
   }
 
   function alternatives(pieceId: string) {
-    const current = closet.pieces.find((piece) => piece.id === pieceId);
-    if (!current) return [];
-    return [
-      current,
-      ...swapOptions(closet, request, selected, pieceId, localDate),
-    ].map((piece) => ({ piece, reason: null }));
+    const ids = swapOrder.includes(pieceId) ? swapOrder : [pieceId];
+    return ids.flatMap((id) =>
+      closet.pieces
+        .filter((piece) => piece.id === id)
+        .map((piece) => ({ piece, reason: null })),
+    );
   }
 
   function fill() {
@@ -166,7 +178,7 @@ export function useBuilder(params: { id?: string }) {
   }
 
   async function save() {
-    if (saving || !selected.length || !source) return;
+    if (saving || !selected.length || !source || same) return;
     setSaving(true);
     setLine(null);
     try {
@@ -198,6 +210,7 @@ export function useBuilder(params: { id?: string }) {
     pieces,
     selected,
     name,
+    same,
     empty,
     occasion,
     category,

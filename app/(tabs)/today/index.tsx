@@ -14,6 +14,7 @@ import { ActionArea } from "../../../src/features/today/ActionArea";
 import { FirstRun } from "../../../src/features/today/FirstRun";
 import { IntentRow } from "../../../src/features/today/IntentRow";
 import { OutfitCard } from "../../../src/features/today/OutfitCard";
+import { useShareCard } from "../../../src/features/share/useShareCard";
 import { ProblemBanner } from "../../../src/features/today/ProblemBanner";
 import {
   useToday,
@@ -233,14 +234,29 @@ export default function TodayScreen() {
   const [title, measure] = useGreeting(closet.styling.name, model.hour);
   const inline = mode === "planning" || mode === "tomorrow";
   const first = !closet.styling.everyday;
+  const shareCard = useShareCard({
+    pieces: model.pieces,
+    name: model.name,
+    caption: model.session?.date ? fullDate(model.session.date, locale) : null,
+  });
 
   const header = (
-    <HeaderItem
-      label={t("nav.profile")}
-      icon="person.crop.circle"
-      onPress={() => router.push("/profile")}
-      testID="header-profile"
-    />
+    <View style={styles.header}>
+      {model.showOutfit && !first ? (
+        <HeaderItem
+          label={t("looks.share")}
+          icon="square.and.arrow.up"
+          onPress={() => void shareCard.share()}
+          testID="today-share"
+        />
+      ) : null}
+      <HeaderItem
+        label={t("nav.profile")}
+        icon="person.crop.circle"
+        onPress={() => router.push("/profile")}
+        testID="header-profile"
+      />
+    </View>
   );
 
   if (first)
@@ -261,6 +277,7 @@ export default function TodayScreen() {
       testID="today"
     >
       {measure}
+      {shareCard.card}
       <View style={styles.content}>
         {inline ? <TitleRow model={model} /> : <IntentRow model={model} />}
         <Banners model={model} />
@@ -300,6 +317,7 @@ export default function TodayScreen() {
 }
 
 const styles = StyleSheet.create({
+  header: { flexDirection: "row", alignItems: "center" },
   content: { gap: theme.space.xl },
   outfit: { gap: theme.space.md },
   hero: { width: "100%", maxWidth: heroSize, alignSelf: "center" },

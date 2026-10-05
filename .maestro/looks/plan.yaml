@@ -27,8 +27,13 @@ appId: com.zaimimran.almari
 - tapOn:
     id: "pick-2026-10-11"
 - extendedWaitUntil:
+    visible: "Replace Eid lunch on Sun 11 Oct?"
+    timeout: 10000
+- tapOn: "Replace"
+- extendedWaitUntil:
     visible: "Work, Planned for Sunday 11 October"
     timeout: 10000
+- assertVisible: "Planned for Sun 11 Oct"
 - scrollUntilVisible:
     element:
       id: "look-plan"

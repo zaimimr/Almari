@@ -6,10 +6,14 @@ import { locale, t } from "../../../src/i18n";
 import { addPiecesRoute } from "../../../src/state/imports";
 import { EmptyState, HeaderItem, Screen, Section } from "../../../src/ui";
 import { LookRow } from "../../../src/features/looks/LookRow";
+import { LookGrid } from "../../../src/features/looks/LookGrid";
+import { WeekStrip } from "../../../src/features/looks/WeekStrip";
+import { todayDate } from "../../../src/features/looks/format";
 
 export default function LooksScreen() {
   const { closet } = useCloset();
-  const entries = lookEntries(closet, locale);
+  const today = todayDate();
+  const entries = lookEntries(closet, locale, today);
   const saved = entries.filter((entry) => entry.saved);
   const worn = entries.filter((entry) => !entry.saved);
 
@@ -30,24 +34,24 @@ export default function LooksScreen() {
     >
       {entries.length ? (
         <>
-          {saved.map((entry, index) => (
-            <LookRow
-              key={entry.id}
-              closet={closet}
-              entry={entry}
-              last={index === saved.length - 1}
-            />
-          ))}
-          <Section title={t("looks.worn")}>
-            {worn.map((entry, index) => (
-              <LookRow
-                key={entry.id}
-                closet={closet}
-                entry={entry}
-                last={index === worn.length - 1}
-              />
-            ))}
-          </Section>
+          {saved.length ? <WeekStrip closet={closet} today={today} /> : null}
+          {saved.length ? (
+            <Section title={t("looks.saved")}>
+              <LookGrid closet={closet} entries={saved} />
+            </Section>
+          ) : null}
+          {worn.length ? (
+            <Section title={t("looks.worn")}>
+              {worn.map((entry, index) => (
+                <LookRow
+                  key={entry.id}
+                  closet={closet}
+                  entry={entry}
+                  last={index === worn.length - 1}
+                />
+              ))}
+            </Section>
+          ) : null}
         </>
       ) : (
         <EmptyState

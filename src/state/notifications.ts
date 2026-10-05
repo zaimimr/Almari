@@ -1,13 +1,22 @@
 import * as Notifications from "expo-notifications";
 import { Linking } from "react-native";
+import type { Look } from "../domain/closet";
+import {
+  notificationSchedule,
+  type NotificationPlan,
+} from "../domain/notifications";
+import { clockFor } from "../domain/today";
+import { locale } from "../i18n";
+import { now } from "./clock";
 
-export type NotificationPlan = {
-  hour: number;
-  minute: number;
-  title: string;
-  body: string;
-  data: { day: "today" | "tomorrow" };
+let context: { looks: Look[]; name: string | null } = {
+  looks: [],
+  name: null,
 };
+
+export function setScheduleContext(next: typeof context) {
+  context = next;
+}
 
 export async function askNotificationPermission(): Promise<
   "granted" | "denied"
@@ -35,15 +44,27 @@ export async function syncSchedule(plan: NotificationPlan | null) {
 async function schedule(plan: NotificationPlan | null) {
   await Notifications.cancelAllScheduledNotificationsAsync();
   if (!plan || (await notificationPermission()) !== "granted") return;
-  await Notifications.scheduleNotificationAsync({
-    content: { title: plan.title, body: plan.body, data: plan.data },
-    trigger: {
-      type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
-      hour: plan.hour,
-      minute: plan.minute,
-      repeats: true,
-    },
-  });
+  const start = now();
+  const items = notificationSchedule(
+    plan,
+    context.looks,
+    clockFor(start).localDate,
+    locale,
+    context.name,
+  );
+  for (const item of items) {
+    const [year, month, day] = item.date.split("-").map(Number) as [
+      number,
+      number,
+      number,
+    ];
+    const date = new Date(year, month - 1, day, item.hour, item.minute);
+    if (date <= start) continue;
+    await Notifications.scheduleNotificationAsync({
+      content: { title: item.title, body: item.body, data: item.data },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date },
+    });
+  }
 }
 
 export function openSettings() {

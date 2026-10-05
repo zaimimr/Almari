@@ -8,9 +8,23 @@ let header: RefObject<View | null> | null = null;
 let handedOff = false;
 let lastAdded: string[] = [];
 const listeners = new Set<() => void>();
+const intentListeners = new Set<() => void>();
+const seen = new Set<string>();
 
 export function setLaunchIntent(next: LaunchIntent): void {
   intent = next;
+  intentListeners.forEach((listener) => listener());
+}
+
+export function onLaunchIntent(listener: () => void): () => void {
+  intentListeners.add(listener);
+  return () => intentListeners.delete(listener);
+}
+
+export function firstSeen(id: string): boolean {
+  if (seen.has(id)) return false;
+  seen.add(id);
+  return true;
 }
 
 export function takeLaunchIntent(): LaunchIntent {

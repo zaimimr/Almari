@@ -28,7 +28,6 @@ import { scoreContext } from "../../domain/scoring/taste";
 import { evaluateOutfit } from "../../domain/styling";
 import {
   activeSession,
-  applyLook,
   applyRequest,
   backToEveryday,
   backToToday,
@@ -38,6 +37,7 @@ import {
   prepareTomorrow,
   resultFor,
   saveForecast,
+  showLook,
   startOccasion,
   startOver,
   tryAnother,
@@ -47,7 +47,7 @@ import { locale, t } from "../../i18n";
 import { useCloset } from "../../state/closet";
 import { now } from "../../state/clock";
 import { fetchForecast } from "../../state/forecast";
-import { takeLaunchIntent } from "../../state/launch";
+import { onLaunchIntent, takeLaunchIntent } from "../../state/launch";
 import { announce } from "../../ui/announce";
 
 export type Mode = "everyday" | "occasion" | "planning" | "tomorrow";
@@ -148,7 +148,10 @@ export function useToday() {
     showOutfit && request
       ? coverageNote(pieces, request.coverage, locale)
       : null;
-  const reasonLine = [reasons[0], coverageLine].filter(Boolean).join(" ");
+  const note = session?.shown ? broken[0]?.message : undefined;
+  const reasonLine = [note ?? reasons[0], coverageLine]
+    .filter(Boolean)
+    .join(" ");
 
   const run = useCallback(
     async (
@@ -192,37 +195,37 @@ export function useToday() {
     announce(t("today.announce.outfit", { name }), { queue: true });
   }, [pieceKey, name]);
 
-  useFocusEffect(
-    useCallback(() => {
-      setHour(now().getHours());
-      const intent = takeLaunchIntent();
-      if (intent?.day !== "tomorrow") return;
-      const date = nextLocalDate(clockFor(now()).localDate);
-      const place = closet.styling.place;
-      const weatherFor = async (): Promise<Weather> => {
-        if (!place) return { source: "unknown" };
-        try {
-          const found = await fetchForecast(place.latitude, place.longitude);
-          const forecast = found
-            ? forecastFor(found, date, at(), clockFor(now()).timeZone)
-            : null;
-          return forecast
-            ? {
-                ...forecast.weather,
-                exposure: closet.styling.everyday?.exposure ?? null,
-              }
-            : { source: "unknown" };
-        } catch {
-          return { source: "unknown" };
-        }
-      };
-      void weatherFor().then((weather) =>
-        update((current) =>
-          prepareTomorrow(current, clockFor(now()), weather),
-        ).catch(() => undefined),
-      );
-    }, [closet.styling.place, closet.styling.everyday, update]),
-  );
+  const takeIntent = useCallback(() => {
+    setHour(now().getHours());
+    const intent = takeLaunchIntent();
+    if (intent?.day !== "tomorrow") return;
+    const date = nextLocalDate(clockFor(now()).localDate);
+    const place = closet.styling.place;
+    const weatherFor = async (): Promise<Weather> => {
+      if (!place) return { source: "unknown" };
+      try {
+        const found = await fetchForecast(place.latitude, place.longitude);
+        const forecast = found
+          ? forecastFor(found, date, at(), clockFor(now()).timeZone)
+          : null;
+        return forecast
+          ? {
+              ...forecast.weather,
+              exposure: closet.styling.everyday?.exposure ?? null,
+            }
+          : { source: "unknown" };
+      } catch {
+        return { source: "unknown" };
+      }
+    };
+    void weatherFor().then((weather) =>
+      update((current) =>
+        prepareTomorrow(current, clockFor(now()), weather),
+      ).catch(() => undefined),
+    );
+  }, [closet.styling.place, closet.styling.everyday, update]);
+  useFocusEffect(takeIntent);
+  useEffect(() => onLaunchIntent(takeIntent), [takeIntent]);
 
   useEffect(() => {
     const refresh = () => {
@@ -375,14 +378,17 @@ export function useToday() {
       [...(session?.pieceIds ?? [])].sort().join()
       ? `${clock.localDate}:${planned.id}`
       : null;
-  const stale = !!today && !!session && (lostPieces > 0 || broken.length > 0);
+  const stale =
+    !!today &&
+    !!session &&
+    (lostPieces > 0 || (broken.length > 0 && !session.shown));
   const staleKey = stale ? `${today.active}:${revision}` : null;
   useEffect(() => {
     if (!plannedKey || !planned || busy || shownPlan.current === plannedKey)
       return;
     shownPlan.current = plannedKey;
-    void restyle((current) => applyLook(current, planned.pieceIds, revision));
-  }, [plannedKey, planned, busy, revision, restyle]);
+    void restyle((current) => showLook(current, planned));
+  }, [plannedKey, planned, busy, restyle]);
   useEffect(() => {
     if (!staleKey || plannedKey || busy || handledStale.current === staleKey)
       return;

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { router } from "expo-router";
 import { randomUUID } from "expo-crypto";
+import * as Haptics from "expo-haptics";
 import { saveLook, type Closet } from "../../domain/closet";
 import { undoFeedback, woreLook } from "../../domain/feedback";
 import {
@@ -9,17 +10,15 @@ import {
   removeLook,
   renameSet,
   setPlannedFor,
+  type LookEntry,
 } from "../../domain/looks";
-import {
-  activeSession,
-  applyLook,
-  clockFor,
-  ensureToday,
-} from "../../domain/today";
+import { clockFor, ensureToday } from "../../domain/today";
 import { locale, t } from "../../i18n";
 import { useCloset } from "../../state/closet";
 import { now } from "../../state/clock";
 import { confirmAction } from "../../ui/confirm";
+import { confirmReplace, showOn, wearAgain as wearAgainOn } from "./actions";
+import { plannedText, todayDate } from "./format";
 
 export type Body = "worn" | "plan" | null;
 
@@ -28,7 +27,7 @@ function resolve(closet: Closet, id: string) {
   const look = pieceIds
     ? lookForPieces(closet, pieceIds)
     : (closet.looks.find((item) => item.id === id) ?? null);
-  const entry = lookEntries(closet, locale).find((item) =>
+  const entry = lookEntries(closet, locale, todayDate()).find((item) =>
     look ? item.lookId === look.id : item.id === id,
   );
   return { look, entry: entry ?? null };
@@ -38,6 +37,27 @@ function today(closet: Closet): Closet {
   return ensureToday(closet, clockFor(now()));
 }
 
+function withSaved(closet: Closet, entry: LookEntry, id: string) {
+  const found = lookForPieces(closet, entry.pieceIds);
+  if (found) return { closet, id: found.id };
+  return {
+    id,
+    closet: saveLook(closet, {
+      id,
+      name: entry.name,
+      pieceIds: entry.pieceIds,
+      createdAt: now().toISOString(),
+      ...(entry.occasion ? { occasion: entry.occasion } : null),
+    }),
+  };
+}
+
+function success() {
+  void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+}
+
+export type Notice = { text: string; undo?: () => void };
+
 export function useLook(id: string) {
   const { closet, update } = useCloset();
   const { look, entry } = resolve(closet, id);
@@ -46,6 +66,7 @@ export function useLook(id: string) {
     eventId: string;
     yesterday: boolean;
   } | null>(null);
+  const [notice, setNotice] = useState<Notice | null>(null);
   const [error, setError] = useState<string | null>(null);
   const pieces = (entry?.pieceIds ?? []).flatMap((pieceId) => {
     const piece = closet.pieces.find((item) => item.id === pieceId);
@@ -81,18 +102,22 @@ export function useLook(id: string) {
   };
 
   const markWorn = async (yesterday: boolean) => {
-    if (!look) return;
+    if (!entry) return;
     const eventId = randomUUID();
+    const lookId = randomUUID();
     const at = new Date(
       now().getTime() - (yesterday ? 24 * 60 * 60 * 1000 : 0),
     ).toISOString();
     if (
-      await run(
-        (current) => woreLook(today(current), look.id, at, eventId),
-        t("common.error.save"),
-      )
-    )
+      await run((current) => {
+        const saved = withSaved(today(current), entry, lookId);
+        return woreLook(saved.closet, saved.id, at, eventId);
+      }, t("common.error.save"))
+    ) {
+      success();
+      setNotice(null);
       setWorn({ eventId, yesterday });
+    }
   };
 
   const undoWorn = async () => {
@@ -109,43 +134,58 @@ export function useLook(id: string) {
   };
 
   const plan = async (date: string | null) => {
-    if (!look) return;
-    if (
-      await run(
-        (current) => setPlannedFor(current, look.id, date),
-        t("common.error.save"),
-      )
-    )
-      setBody(null);
+    if (!entry) return;
+    if (date && !(await confirmReplace(closet, date, look?.id ?? null))) return;
+    const previous = look?.plannedFor ?? null;
+    const lookId = randomUUID();
+    const isToday = date === todayDate();
+    const done = await run((current) => {
+      const saved = withSaved(current, entry, lookId);
+      const planned = setPlannedFor(saved.closet, saved.id, date);
+      return isToday ? showOn(entry)(planned) : planned;
+    }, t("common.error.save"));
+    if (!done) return;
+    success();
+    setBody(null);
+    if (isToday) return router.dismissTo("/(tabs)/today");
+    setWorn(null);
+    setNotice({
+      text: date ? plannedText(date) : t("looks.planCleared"),
+      undo: () => {
+        setNotice(null);
+        void run((current) => {
+          const target = lookForPieces(current, entry.pieceIds);
+          return target ? setPlannedFor(current, target.id, previous) : current;
+        }, t("common.error.save"));
+      },
+    });
   };
 
   const save = async () => {
     if (!entry || look) return;
-    await run(
-      (current) =>
-        lookForPieces(current, entry.pieceIds)
-          ? current
-          : saveLook(current, {
-              id: randomUUID(),
-              name: entry.name,
-              pieceIds: entry.pieceIds,
-              createdAt: now().toISOString(),
-              ...(entry.occasion ? { occasion: entry.occasion } : null),
-            }),
-      t("common.error.save"),
-    );
+    if (
+      await run(
+        (current) => withSaved(current, entry, randomUUID()).closet,
+        t("common.error.save"),
+      )
+    ) {
+      success();
+      setNotice({ text: t("looks.saved") });
+    }
   };
 
   const showOnToday = async () => {
     if (!entry) return;
-    const shown = await run((current) => {
-      const ready = today(current);
-      const state = ready.styling.today;
-      return state
-        ? applyLook(ready, entry.pieceIds, activeSession(state).revision)
-        : ready;
-    }, t("common.error.save"));
-    if (shown) router.dismissTo("/(tabs)/today");
+    if (await run(showOn(entry), t("common.error.save")))
+      router.dismissTo("/(tabs)/today");
+  };
+
+  const wearAgain = async () => {
+    if (!entry) return;
+    if (await run(wearAgainOn(entry, randomUUID()), t("common.error.save"))) {
+      success();
+      router.dismissTo("/(tabs)/today");
+    }
   };
 
   const remove = async () => {
@@ -181,6 +221,8 @@ export function useLook(id: string) {
     setBody,
     worn,
     setWorn,
+    notice,
+    setNotice,
     error,
     rename,
     markWorn,
@@ -188,6 +230,7 @@ export function useLook(id: string) {
     plan,
     save,
     showOnToday,
+    wearAgain,
     remove,
   };
 }

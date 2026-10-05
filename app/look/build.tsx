@@ -7,6 +7,7 @@ import { categories } from "../../src/domain/taxonomy";
 import { ChangeStrip, tileLabel } from "../../src/features/ChangeStrip";
 import { useBuilder } from "../../src/features/builder/useBuilder";
 import { t } from "../../src/i18n";
+import { addPiecesRoute } from "../../src/state/imports";
 import {
   Button,
   ChipRow,
@@ -137,7 +138,7 @@ export default function BuildLook() {
           label={t("closet.addPieces")}
           variant="secondary"
           size="small"
-          onPress={() => router.push("/capture")}
+          onPress={() => router.push(addPiecesRoute)}
         />
       </View>
     </View>
@@ -146,6 +147,12 @@ export default function BuildLook() {
   ) : (
     picker
   );
+
+  const hint = builder.same
+    ? t("looks.sameAs", { name: builder.same.name })
+    : builder.pieces.length && builder.empty.includes("shoes")
+      ? t("build.slotEmpty", { role: t("role.one.shoes") })
+      : null;
 
   const status = (
     <View style={styles.status}>
@@ -170,27 +177,21 @@ export default function BuildLook() {
         >
           {builder.line.text}
         </Text>
+      ) : hint ? (
+        <Text
+          role="footnote"
+          tone="muted"
+          style={styles.line}
+          testID="build-hint"
+        >
+          {hint}
+        </Text>
       ) : null}
     </View>
   );
 
   const collage = (
     <View style={styles.upper}>
-      <FlatLay
-        pieces={builder.pieces}
-        size="hero"
-        emptyRoles={builder.empty}
-        state={builder.filling ? "arranging" : undefined}
-        openId={swapPiece?.id ?? null}
-        onPiecePress={(piece) =>
-          builder.setMode(
-            swapPiece?.id === piece.id
-              ? { kind: "picker" }
-              : { kind: "swap", pieceId: piece.id },
-          )
-        }
-        testID="build-collage"
-      />
       <View style={styles.titleLine}>
         <Text
           role="title"
@@ -203,6 +204,22 @@ export default function BuildLook() {
           {builder.name}
         </Text>
       </View>
+      <FlatLay
+        pieces={builder.pieces}
+        size="hero"
+        maxSize={ax ? 240 : undefined}
+        emptyRoles={builder.empty}
+        state={builder.filling ? "arranging" : undefined}
+        openId={swapPiece?.id ?? null}
+        onPiecePress={(piece) =>
+          builder.setMode(
+            swapPiece?.id === piece.id
+              ? { kind: "picker" }
+              : { kind: "swap", pieceId: piece.id },
+          )
+        }
+        testID="build-collage"
+      />
     </View>
   );
 
@@ -219,7 +236,10 @@ export default function BuildLook() {
             label: t("common.saveChanges"),
             onPress: () => void builder.save(),
             disabled:
-              !builder.selected.length || builder.filling || !builder.dirty,
+              !builder.selected.length ||
+              builder.filling ||
+              !builder.dirty ||
+              !!builder.same,
             busy: builder.saving,
             testID: "build-save",
           }}
@@ -259,7 +279,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     gap: theme.space.sm,
-    minHeight: 64,
   },
   name: { flexShrink: 1 },
   hair: { height: StyleSheet.hairlineWidth },

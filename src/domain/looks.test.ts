@@ -5,12 +5,16 @@ import { undoFeedback, woreLately, woreLook, woreThis } from "./feedback";
 import {
   firstWearMonth,
   lookEntries,
+  lastPlannedMonth,
   lookForPieces,
+  plannedDays,
+  plannedOn,
   plannedPieces,
   plannedToday,
   removeLook,
   setPlannedFor,
   wearCalendar,
+  weekPlan,
 } from "./looks";
 import { monthWearStats } from "./profileStats";
 import { addSampleWardrobe } from "./samples";
@@ -174,12 +178,17 @@ test("planned looks come first and surface on their day", () => {
   assert.equal(lookForPieces(planned, ids.slice(1)), null);
 });
 
-test("the calendar holds outfit wears only and variety plus not worn lately is the whole closet", () => {
+test("the calendar holds outfit wears, marks piece wears with a dot, and variety plus not worn lately is the whole closet", () => {
   const { closet, ids } = sample();
   let worn = woreLately(closet, ids, "2026-10-01T12:00:00Z", (id) => `w-${id}`);
   worn = woreLook(worn, "eid", "2026-10-02T18:00:00Z", "w-eid");
   const month = wearCalendar(worn, "2026-10", "en");
-  assert.deepEqual(Object.keys(month), ["2026-10-02"]);
+  assert.deepEqual(Object.keys(month).sort(), ["2026-10-01", "2026-10-02"]);
+  assert.deepEqual(
+    [month["2026-10-01"]!.wears.length, month["2026-10-01"]!.pieceWorn],
+    [0, true],
+  );
+  assert.equal(month["2026-10-02"]!.pieceWorn, false);
   assert.equal(month["2026-10-02"]!.wears[0]!.name, "Eid lunch");
   assert.equal(month["2026-10-02"]!.wears[0]!.occasion, "eid");
   assert.notEqual(month["2026-10-02"]!.mark?.category, "hijab");
@@ -229,4 +238,51 @@ test("wearing a saved look moves it to the top", () => {
   const worn = woreLook(two, "eid", "2026-10-02T09:00:00Z", "w-eid");
   assert.equal(lookEntries(worn, "en")[0]?.lookId, "eid");
   assert.equal(lookEntries(worn, "en")[0]?.lastWorn, "2026-10-02T09:00:00Z");
+});
+
+test("one look per day, past plans expire, and the week shows each day", () => {
+  const { closet, ids } = sample();
+  const both = setPlannedFor(
+    setPlannedFor(
+      {
+        ...closet,
+        looks: [
+          ...closet.looks,
+          {
+            id: "office",
+            name: "Office",
+            pieceIds: ids.slice(0, 3),
+            createdAt: "2026-10-01T00:00:00Z",
+          },
+        ],
+      },
+      "eid",
+      "2026-10-11",
+    ),
+    "office",
+    "2026-10-11",
+  );
+  assert.equal(plannedOn(both, "2026-10-11")?.id, "office");
+  assert.equal(
+    both.looks.find((look) => look.id === "eid")?.plannedFor,
+    undefined,
+  );
+  const entries = (today: string) =>
+    lookEntries(both, "en", today).find((entry) => entry.lookId === "office")
+      ?.plannedFor;
+  assert.equal(entries("2026-10-05"), "2026-10-11");
+  assert.equal(entries("2026-10-12"), null);
+  const week = weekPlan(both, "2026-10-05");
+  assert.equal(week.length, 7);
+  assert.deepEqual(
+    week.map((day) => day.look?.id ?? null),
+    [null, null, null, null, null, null, "office"],
+  );
+  assert.deepEqual(Object.keys(plannedDays(both, "2026-10", "2026-10-05")), [
+    "2026-10-11",
+  ]);
+  assert.deepEqual(plannedDays(both, "2026-10", "2026-10-12"), {});
+  const later = setPlannedFor(both, "eid", "2026-12-02");
+  assert.equal(lastPlannedMonth(later, "2026-10-05"), "2026-12");
+  assert.equal(lastPlannedMonth(closet, "2026-10-05"), "2026-10");
 });

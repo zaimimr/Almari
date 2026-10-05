@@ -32,6 +32,7 @@ export type CalendarDay = {
     occasion: Occasion | null;
   }[];
   mark: Piece | null;
+  pieceWorn: boolean;
 };
 
 const setKey = (ids: string[]) => [...ids].sort().join(",");
@@ -74,7 +75,11 @@ function setName(
   );
 }
 
-export function lookEntries(closet: Closet, locale: NameLocale): LookEntry[] {
+export function lookEntries(
+  closet: Closet,
+  locale: NameLocale,
+  today: string = closet.styling.today?.localDate ?? "",
+): LookEntry[] {
   const wears = lastWears(closet);
   const saved: LookEntry[] = closet.looks.map((look) => {
     const lastWorn = wears.get(setKey(look.pieceIds))?.at ?? null;
@@ -87,7 +92,8 @@ export function lookEntries(closet: Closet, locale: NameLocale): LookEntry[] {
       saved: true,
       lookId: look.id,
       lastWorn,
-      plannedFor: look.plannedFor ?? null,
+      plannedFor:
+        look.plannedFor && look.plannedFor >= today ? look.plannedFor : null,
       missing: look.pieceIds.length - piecesOf(closet, look.pieceIds).length,
     };
   });
@@ -110,11 +116,8 @@ export function lookEntries(closet: Closet, locale: NameLocale): LookEntry[] {
       },
     ];
   });
-  const today = closet.styling.today?.localDate ?? "";
-  const ahead = (entry: LookEntry) =>
-    entry.plannedFor && entry.plannedFor >= today ? entry.plannedFor : null;
   return [...worn, ...saved].sort((a, b) => {
-    const [first, second] = [ahead(a), ahead(b)];
+    const [first, second] = [a.plannedFor, b.plannedFor];
     if (first || second)
       return !first ? 1 : !second ? -1 : first.localeCompare(second);
     return b.at.localeCompare(a.at);
@@ -157,18 +160,64 @@ export function setPlannedFor(
   return {
     ...closet,
     looks: closet.looks.map((look) => {
-      if (look.id !== lookId) return look;
+      const mine = look.id === lookId;
+      if (!mine && (!date || look.plannedFor !== date)) return look;
       const { plannedFor: _, ...rest } = look;
-      return date ? { ...rest, plannedFor: date } : rest;
+      return mine && date ? { ...rest, plannedFor: date } : rest;
     }),
   };
+}
+
+export function plannedOn(
+  closet: Pick<Closet, "looks">,
+  date: string,
+): Look | null {
+  return closet.looks.find((look) => look.plannedFor === date) ?? null;
+}
+
+export function weekPlan(
+  closet: Closet,
+  today: string,
+): { date: string; look: Look | null }[] {
+  return Array.from({ length: 7 }, (_, index) => {
+    const date = addDays(today, index);
+    return { date, look: plannedOn(closet, date) };
+  });
+}
+
+export function plannedDays(
+  closet: Closet,
+  month: string,
+  today: string,
+): Record<string, Look> {
+  const days: Record<string, Look> = {};
+  for (const look of closet.looks) {
+    const date = look.plannedFor;
+    if (date && date >= today && date.startsWith(`${month}-`))
+      days[date] = look;
+  }
+  return days;
+}
+
+export function lastPlannedMonth(closet: Closet, today: string): string {
+  return closet.looks.reduce(
+    (last, look) =>
+      look.plannedFor && look.plannedFor >= today
+        ? later(last, look.plannedFor.slice(0, 7))
+        : last,
+    today.slice(0, 7),
+  );
 }
 
 export function plannedToday(closet: Closet, clock: Clock): Look[] {
   return closet.looks.filter((look) => look.plannedFor === clock.localDate);
 }
 
-function addDays(date: string, days: number): string {
+export function lookMark(closet: Closet, pieceIds: string[]): Piece | null {
+  return markOf(piecesOf(closet, pieceIds));
+}
+
+export function addDays(date: string, days: number): string {
   const next = new Date(`${date}T00:00:00Z`);
   next.setUTCDate(next.getUTCDate() + days);
   return next.toISOString().slice(0, 10);
@@ -224,6 +273,7 @@ export function wearCalendar(
       date,
       wears: [],
       mark: markOf(piecesOf(closet, event.pieceIds)),
+      pieceWorn: false,
     });
     day.wears.push({
       eventId: event.id,
@@ -234,6 +284,20 @@ export function wearCalendar(
         setName(closet, event.pieceIds, event.request.occasion, locale),
       occasion: look ? (look.occasion ?? null) : event.request.occasion,
     });
+  }
+  for (const event of closet.feedback) {
+    if (event.kind !== "wore" || event.undone || event.scope !== "piece")
+      continue;
+    if (!piecesOf(closet, event.pieceIds).length) continue;
+    const date = wearDate(closet, event.at);
+    if (!date.startsWith(`${month}-`)) continue;
+    const day = (days[date] ??= {
+      date,
+      wears: [],
+      mark: null,
+      pieceWorn: false,
+    });
+    day.pieceWorn = true;
   }
   return days;
 }
