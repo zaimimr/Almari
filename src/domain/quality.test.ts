@@ -73,6 +73,10 @@ test("several problems still give one message, the most useful first", () => {
       brightness: 0.05,
       lightSpread: 20,
     }),
+    "dark",
+  );
+  assert.equal(
+    adviceReason({ ...clear, sharpness: 10, lightSpread: 20 }),
     "blur",
   );
   assert.equal(

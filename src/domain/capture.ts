@@ -38,8 +38,17 @@ const regionOrder: GarmentRegionKind[] = [
   "sunglasses",
 ];
 
+const regionCategories: Partial<Record<GarmentRegionKind, Category>> = {
+  head: "hijab",
+  skirt: "bottom",
+  pants: "bottom",
+  belt: "accessory",
+  shoes: "shoes",
+  bag: "bag",
+};
+
 export function categoryForRegion(kind: GarmentRegionKind): Category | null {
-  return kind === "head" ? "hijab" : null;
+  return regionCategories[kind] ?? null;
 }
 
 export const minPartialShare = 0.08;

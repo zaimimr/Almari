@@ -88,6 +88,14 @@ test("weak garment labels are rejected and can still be added", () => {
   assert.equal(kept.checks?.[0], "uncertain");
 });
 
+test("a region found as a bag stays a bag even with weak labels", () => {
+  const weak = prepared({
+    labels: [{ group: "kind", value: "t-shirt", score: 0.08 }],
+  });
+  assert.equal(rejectReason(weak, undefined, "bag"), null);
+  assert.equal(rejectReason(weak), "no-clothing");
+});
+
 test("a waiting job can fail before it starts", () => {
   const failed = failImport(queued(), "job", "failed").imports[0]!;
   assert.equal(failed.state, "failed");
