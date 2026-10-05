@@ -35,6 +35,8 @@ import {
   finishRefresh,
   importFailure,
   isSettled,
+  nameOptions,
+  namingAttributes,
   keepDuplicate,
   jobStem,
   orphanedFiles,
@@ -1357,4 +1359,31 @@ test("two loafers of the same colour in one photo become one piece", () => {
   assert.equal(pair(brown, brown).length, 1);
   assert.equal(pair(brown, brown)[0]!.kind, "loafers");
   assert.equal(pair(brown, black).length, 2);
+});
+
+test("name ideas leave out a fabric the app is unsure of", () => {
+  const dress: LabelScore[] = [
+    { group: "kind", value: "dress", score: 0.6 },
+    { group: "fabric", value: "velvet", score: 0.1 },
+    { group: "fabric", value: "chiffon", score: 0.099 },
+  ];
+  const black = [{ rgb: [20, 20, 20], share: 1 }] as Swatch[];
+  const job = finishImport(
+    startImport(queued(), "job"),
+    "job",
+    prepared({ labels: dress, palette: black }),
+  ).imports[0]!;
+  assert.equal(job.attributes?.fabric, "velvet");
+  const names = nameOptions("dress", black, namingAttributes(job));
+  assert.ok(!names.some((name) => /velvet/i.test(name)));
+  const sure = {
+    ...job,
+    attributes: { ...job.attributes, fabric: "velvet" as const },
+    attributeSources: { ...job.attributeSources, fabric: "confirmed" as const },
+  };
+  assert.ok(
+    nameOptions("dress", black, namingAttributes(sure)).some((name) =>
+      /velvet/i.test(name),
+    ),
+  );
 });

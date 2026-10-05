@@ -23,6 +23,7 @@ import {
   keepDuplicate,
   keepRejected,
   nameOptions,
+  namingAttributes,
   renameAuto,
   setImportStudio,
   withColour,
@@ -489,12 +490,12 @@ function ConfirmForm({
   const naming = (k: GarmentKind, c: string | null) => ({
     kind: k,
     palette: withColour(prepared.palette, c ?? undefined),
-    attributes: job.attributes,
+    attributes: namingAttributes(job),
   });
   const suggestions = nameOptions(
     kind,
     naming(kind, colour).palette,
-    job.attributes,
+    namingAttributes(job),
   );
 
   function chooseColour(next: string) {

@@ -95,6 +95,23 @@ export function nameFor(
   return nameOptions(kind, palette, attributes)[0]!;
 }
 
+export function namingAttributes(job: ImportJob): Attributes | undefined {
+  const source = job.attributeSources?.fabric;
+  if (
+    !job.attributes?.fabric ||
+    source === "confirmed" ||
+    source === "label" ||
+    !job.prepared ||
+    !job.kind
+  )
+    return job.attributes;
+  const unsure = proposeAttributes(job.prepared.labels, {
+    category: categoryOf(job.kind),
+    kind: job.kind,
+  }).uncertain.includes("fabric");
+  return unsure ? { ...job.attributes, fabric: undefined } : job.attributes;
+}
+
 export function renameAuto(
   name: string,
   before: { kind: GarmentKind; palette: Swatch[]; attributes?: Attributes },
@@ -436,9 +453,9 @@ export function correctImport(
             {
               kind: job.kind!,
               palette: job.prepared!.palette,
-              attributes: job.attributes,
+              attributes: namingAttributes(job),
             },
-            { kind, palette, attributes: job.attributes },
+            { kind, palette, attributes: namingAttributes(job) },
           )
         : job.name!);
     const sources: Sources = {
