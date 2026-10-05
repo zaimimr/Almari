@@ -4,6 +4,7 @@ import { t } from "../../i18n";
 import { Symbol, Text, Tile } from "../../ui";
 import { theme } from "../../ui/theme";
 import { colourLabel } from "../ColourChips";
+import { FoundMarks } from "./FoundMarks";
 import type { Group, Slot } from "./useCaptureGrid";
 import {
   hexOf,
@@ -44,6 +45,12 @@ function GroupTile({
   onOpen: () => void;
 }) {
   const failed = group.jobs.every((job) => job.state === "failed");
+  const waiting = group.jobs.some(
+    (job) => job.state === "queued" || job.state === "preparing",
+  );
+  const frames = group.jobs.flatMap((job) =>
+    job.region ? [job.region.frame] : [],
+  );
   const label = failed
     ? t(
         group.jobs.every((job) => job.error === "no-clothing")
@@ -71,8 +78,17 @@ function GroupTile({
           image={{ ...jobPiece(group.jobs[0]!), photo: group.thumbnail }}
           raw
           size="grid"
+          state={waiting ? "preparing" : "ready"}
+          scan
           accessibilityLabel={label}
         />
+        {waiting && frames.length ? (
+          <FoundMarks
+            id={group.captureId}
+            photo={group.thumbnail}
+            frames={frames}
+          />
+        ) : null}
       </View>
       <View
         style={styles.groupLabel}
@@ -176,6 +192,7 @@ export function JobTile({
       raw={raw}
       size="grid"
       state={state}
+      scan
       label={state === "failed" ? undefined : job.name}
       meta={
         state === "failed"

@@ -8,7 +8,7 @@ import {
 } from "../../src/features/capture/CaptureSources";
 import { JobTile } from "../../src/features/capture/JobTile";
 import { Lookalikes } from "../../src/features/capture/Lookalikes";
-import { jobColour } from "../../src/features/capture/jobs";
+import { isGrouped, jobColour } from "../../src/features/capture/jobs";
 import {
   useCaptureGrid,
   type GridSection,
@@ -68,7 +68,12 @@ export default function AddPieces() {
 
   function open(job: ImportJob) {
     setColourFor(null);
-    router.push({ pathname: "/capture/[id]", params: { id: job.id } });
+    if (job.error === "no-clothing" && job.captureId && !isGrouped(job))
+      router.push({
+        pathname: "/capture/group/[id]",
+        params: { id: job.captureId, add: "1" },
+      });
+    else router.push({ pathname: "/capture/[id]", params: { id: job.id } });
   }
 
   async function retakeJob(job: ImportJob) {
@@ -257,15 +262,6 @@ export default function AddPieces() {
               value: (grid.cleaning.done - 1) / grid.cleaning.total,
             }}
             testID="capture-cleaning"
-          />
-        ) : grid.preparing ? (
-          <Banner
-            tone="progress"
-            text={t("capture.preparingCount", grid.preparing)}
-            progress={{
-              value: (grid.preparing.n - 1) / grid.preparing.total,
-            }}
-            testID="capture-preparing"
           />
         ) : null}
         <Lookalikes

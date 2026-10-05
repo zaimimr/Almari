@@ -15,6 +15,7 @@ import { t } from "../i18n";
 import { Button } from "./Button";
 import { motion, timing } from "./motion";
 import { photoSource } from "./photos";
+import { ScanSweep } from "./ScanSweep";
 import { Silk } from "./Silk";
 import { Symbol } from "./symbol";
 import { Text } from "./Text";
@@ -54,6 +55,7 @@ export type TileProps = {
   selectedLabel?: string;
   busyLabel?: string;
   raw?: boolean;
+  scan?: boolean;
   testID?: string;
   onRetry?: () => void;
   onUndoRemove?: () => void;
@@ -99,6 +101,7 @@ export function Tile({
   selectedLabel,
   busyLabel,
   raw = false,
+  scan = false,
   testID,
   onRetry,
   onUndoRemove,
@@ -180,12 +183,21 @@ export function Tile({
       ]}
     >
       <Animated.View style={[StyleSheet.absoluteFill, styles.frame, fill]} />
-      {state === "removed" ? null : state === "queued" ? (
+      {state === "removed" ? null : state === "queued" && !scan ? (
         <View style={[StyleSheet.absoluteFill, styles.dim]}>{picture}</View>
       ) : (
         picture
       )}
-      {waiting ? (
+      {waiting && scan ? (
+        <View
+          accessible
+          accessibilityLabel={spoken}
+          accessibilityState={{ busy: true }}
+          style={[StyleSheet.absoluteFill, styles.frame]}
+        >
+          <ScanSweep />
+        </View>
+      ) : waiting ? (
         <Silk
           kind="sheen"
           label={spoken}
@@ -264,7 +276,7 @@ export function Tile({
   const words =
     thumb || cell ? null : waiting ? (
       <View style={{ minHeight: lineHeight + theme.size.controlSmall }}>
-        <Silk kind="placeholder" shape="text" label={spoken} />
+        {scan ? null : <Silk kind="placeholder" shape="text" label={spoken} />}
       </View>
     ) : state === "removed" ? null : (
       <>
