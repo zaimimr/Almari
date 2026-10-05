@@ -23,9 +23,28 @@ Reviews agree: one verdict from one photo in random light is right about half th
 ## Technical notes
 
 - White balance: a white reference in the same light beats grey world. Eye whites work without extra props. We already balance on the sclera plus neutral background and reject mixed light.
-- Skin: cheeks below the eyes, trimmed by lightness to drop shine and shadow. Avoid nose, lips, under eyes.
+- Skin: lower outer cheeks placed from Vision landmarks, clear of the nose, under eyes and lips, plus chin and forehead when they agree with the cheeks within Delta E 12. Hijab fabric drops out through a skin hue and chroma gate. Pixels between the 20th and 60th lightness percentile, averaged in Lab, to drop shine and shadow. When one cheek is in shade the lit cheek is used alone.
+- Depth: individual typology angle, ITA = atan2(L - 50, b). Light above 41, deep below 12. Lightness alone failed because phone exposure brightens deep skin.
+- Undertone: Lab hue angle. Cool below 33, warm from 40, neutral between. Olive (hue 62 or more with a below 11) counts as neutral.
+- Season: depth first. Deep is always deep autumn or deep winter. Summer needs a cool undertone, or light depth that is not warm.
 - Stability: average several frames and drop outliers.
-- Light: reject too dark, clipped, or one side much brighter than the other.
+- Light: reject too dark, clipped, a colour cast over 30 percent on a channel, or cheeks more than 25 L apart.
+
+## Accuracy
+
+`sh scripts/colour-eval/run.sh` runs the Swift face reader on 40 openly licensed Commons portraits (Fitzpatrick I to VI, 15 in hijab) plus the app fixture and scores the labels in `scripts/colour-eval/labels.json`.
+
+| | Before | After |
+|---|---|---|
+| Measured (no retake) | 22/40 | 37/40 |
+| Depth | 9/22 (41%) | 22/37 (59%) |
+| Deep skin read as deep | 2/12 | 12/16 |
+| Undertone | 9/22 (41%) | 26/37 (70%) |
+| Season in label family | 5/22 | 19/37 |
+| Deep skin in a light or summer season | 4 | 0 |
+| Fixture | soft summer, medium, neutral | deep autumn, deep, neutral |
+
+Light and medium faces in warm or dim photos still read deeper than labelled. Web portraits have uncontrolled light, so the guided selfie should do better.
 
 ## What we build
 

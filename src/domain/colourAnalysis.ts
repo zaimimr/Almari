@@ -28,20 +28,26 @@ export type Swatch = {
   lab: Lab;
 };
 
-export const undertoneHue = { cool: 48, warm: 58 };
-export const minWarmYellow = 10;
-export const depthLightness = { light: 65, deep: 48 };
+export const undertoneHue = { cool: 33, warm: 40 };
+export const olive = { hue: 62, redness: 11 };
+export const depthAngle = { light: 41, deep: 12 };
 export const lighterSkin = 57;
+
+export function typologyAngle([lightness, , yellow]: Lab): number {
+  return (Math.atan2(lightness - 50, yellow) * 180) / Math.PI;
+}
 
 export function undertoneOf(skin: Lab): Undertone {
   const [, , hue] = toLch(skin);
-  if (skin[2] < minWarmYellow || hue < undertoneHue.cool) return "cool";
+  if (hue < undertoneHue.cool) return "cool";
+  if (hue >= olive.hue && skin[1] < olive.redness) return "neutral";
   return hue >= undertoneHue.warm ? "warm" : "neutral";
 }
 
-export function depthOf([lightness]: Lab): Depth {
-  if (lightness >= depthLightness.light) return "light";
-  return lightness < depthLightness.deep ? "deep" : "medium";
+export function depthOf(skin: Lab): Depth {
+  const angle = typologyAngle(skin);
+  if (angle > depthAngle.light) return "light";
+  return angle < depthAngle.deep ? "deep" : "medium";
 }
 
 export function contrastOf(colours: (Lab | null)[]): ContrastLevel {
@@ -64,11 +70,11 @@ export function seasonFor(
       ? "deep-winter"
       : "deep-autumn";
   if (contrast === "high") return warm ? "clear-spring" : "clear-winter";
-  if (contrast === "low") return warm ? "soft-autumn" : "soft-summer";
+  if (contrast === "low") return cool ? "soft-summer" : "soft-autumn";
   const lighter = skinLightness === null || skinLightness >= lighterSkin;
   if (warm) return lighter ? "warm-spring" : "warm-autumn";
   if (cool) return lighter ? "cool-summer" : "cool-winter";
-  return lighter ? "soft-summer" : "soft-autumn";
+  return "soft-autumn";
 }
 
 export function analyseColours(
@@ -128,30 +134,30 @@ export function fromSelfie(
 }
 
 export const skinSwatches: Swatch[] = [
-  { id: "light-cool", depth: "light", undertone: "cool", lab: [72, 14, 12] },
+  { id: "light-cool", depth: "light", undertone: "cool", lab: [72, 14, 8] },
   {
     id: "light-neutral",
     depth: "light",
     undertone: "neutral",
-    lab: [70, 12, 15],
+    lab: [70, 13, 10],
   },
-  { id: "light-warm", depth: "light", undertone: "warm", lab: [70, 10, 20] },
-  { id: "medium-cool", depth: "medium", undertone: "cool", lab: [58, 15, 13] },
+  { id: "light-warm", depth: "light", undertone: "warm", lab: [70, 12, 20] },
+  { id: "medium-cool", depth: "medium", undertone: "cool", lab: [56, 15, 9] },
   {
     id: "medium-neutral",
     depth: "medium",
     undertone: "neutral",
-    lab: [56, 13, 17],
+    lab: [56, 14, 11],
   },
-  { id: "medium-warm", depth: "medium", undertone: "warm", lab: [56, 11, 22] },
-  { id: "deep-cool", depth: "deep", undertone: "cool", lab: [40, 14, 12] },
+  { id: "medium-warm", depth: "medium", undertone: "warm", lab: [56, 12, 22] },
+  { id: "deep-cool", depth: "deep", undertone: "cool", lab: [40, 14, 8] },
   {
     id: "deep-neutral",
     depth: "deep",
     undertone: "neutral",
-    lab: [40, 12, 15],
+    lab: [40, 13, 10],
   },
-  { id: "deep-warm", depth: "deep", undertone: "warm", lab: [40, 10, 19] },
+  { id: "deep-warm", depth: "deep", undertone: "warm", lab: [40, 12, 19] },
 ];
 
 export function seasonFromSwatch(swatch: Swatch): ColourProfile {
