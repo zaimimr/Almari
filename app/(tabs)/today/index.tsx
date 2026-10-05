@@ -38,7 +38,7 @@ import { fullDate, shortWeekday, spokenDate } from "../../../src/ui/dates";
 import { theme } from "../../../src/ui/theme";
 import { useGreeting } from "../../../src/features/today/useGreeting";
 
-const heroSize = 360;
+const heroSize = 300;
 
 function Strip({ model }: { model: TodayModel }) {
   const { closet, request, session, openId, setOpenId, pieces } = model;
@@ -324,7 +324,7 @@ export default function TodayScreen() {
 }
 
 const styles = StyleSheet.create({
-  content: { gap: theme.space.xl },
+  content: { gap: theme.space.lg },
   outfit: { gap: theme.space.md },
   hero: { width: "100%", maxWidth: heroSize, alignSelf: "center" },
   placeholder: {

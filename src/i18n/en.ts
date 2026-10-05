@@ -1188,6 +1188,7 @@ export const en = {
   "common.editColourHint": "Opens colour choices",
   "build.slotEmpty": "No {role}",
   "today.addRole": "Add {role}",
+  "today.intent.party": "Party",
   "today.dressy.casual": "Casual",
   "today.dressy.smart": "Smart",
   "today.dressy.festive": "Festive",

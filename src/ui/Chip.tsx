@@ -195,6 +195,7 @@ export function Chip({
           <Text
             role="subhead"
             tone={tone}
+            maxFontSizeMultiplier={2}
             style={styles.label}
             onTextLayout={(event) =>
               setWrapped(event.nativeEvent.lines.length > 1)

@@ -11,7 +11,7 @@ appId: com.zaimimran.almari
 - assertVisible: "Everyday"
 - assertVisible: "Work"
 - assertVisible: "Gym"
-- assertVisible: "Party or mehndi"
+- assertVisible: "Party"
 - tapOn:
     id: "today-intent-work"
 - extendedWaitUntil:

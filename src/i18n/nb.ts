@@ -1206,6 +1206,7 @@ export const nb: Record<Key, string> = {
   "common.editColourHint": "Åpner fargevalg",
   "build.slotEmpty": "Mangler {role}",
   "today.addRole": "Legg til {role}",
+  "today.intent.party": "Fest",
   "today.dressy.casual": "Hverdags",
   "today.dressy.smart": "Pent",
   "today.dressy.festive": "Festlig",
