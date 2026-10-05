@@ -11,6 +11,7 @@ import {
 } from "./taxonomy";
 import {
   attributeKeys,
+  fabrics,
   isAttributes,
   patterns,
   type AttributeKey,
@@ -20,6 +21,7 @@ import {
 } from "./attributes";
 import { isCareLabel, withCareLabel, type CareLabel } from "./careLabel";
 import { colourNames, isSwatches, type Swatch } from "./color";
+import type { ProductLink } from "./productLink";
 import { t } from "../i18n";
 import { withWeatherProposals } from "./pieceWeather";
 
@@ -131,6 +133,7 @@ export type Piece = {
   setId?: string;
   washedAt?: string;
   price?: Price;
+  link?: ProductLink;
 };
 
 export type Price = { amount: number; currency: string };
@@ -184,6 +187,7 @@ export type ImportJob = {
   colour?: string;
   linkName?: string;
   fromLink?: boolean;
+  link?: ProductLink;
 };
 
 export type Look = {
@@ -717,7 +721,53 @@ function isPiece(value: unknown): value is Piece {
     optional(value.studioStale, isBoolean) &&
     optional(value.setId, isString) &&
     optional(value.washedAt, isString) &&
-    optional(value.price, isPrice)
+    optional(value.price, isPrice) &&
+    optional(value.link, isProductLink)
+  );
+}
+
+const isShortText =
+  (max: number) =>
+  (value: unknown): value is string =>
+    typeof value === "string" && value.length > 0 && value.length <= max;
+
+const isTextList =
+  (max: number, count: number) =>
+  (value: unknown): value is string[] =>
+    Array.isArray(value) &&
+    value.length <= count &&
+    value.every(isShortText(max));
+
+function isProductLink(value: unknown): value is ProductLink {
+  return (
+    isRecord(value) &&
+    isShortText(2000)(value.url) &&
+    /^https?:\/\//.test(value.url) &&
+    isString(value.at) &&
+    optional(value.brand, isShortText(60)) &&
+    optional(value.colour, isShortText(40)) &&
+    optional(value.price, isPrice) &&
+    optional(
+      value.materials,
+      (list): list is ProductLink["materials"] =>
+        Array.isArray(list) &&
+        list.every(
+          (item) =>
+            isRecord(item) &&
+            isShortText(40)(item.fibre) &&
+            (item.percent === null ||
+              (typeof item.percent === "number" &&
+                item.percent > 0 &&
+                item.percent <= 100)),
+        ),
+    ) &&
+    optional(value.fabric, (fabric): fabric is ProductLink["fabric"] =>
+      fabrics.some((item) => item.id === fabric),
+    ) &&
+    optional(value.sizes, isTextList(20, 30)) &&
+    optional(value.size, isShortText(20)) &&
+    optional(value.care, isTextList(80, 6)) &&
+    optional(value.photos, isTextList(200, 12))
   );
 }
 
@@ -888,6 +938,7 @@ function isImportJob(value: unknown): value is ImportJob {
     optional(value.keepAsSet, isBoolean) &&
     optional(value.linkName, isString) &&
     optional(value.fromLink, isBoolean) &&
+    optional(value.link, isProductLink) &&
     optional(value.colour, (name): name is string =>
       colourNames.includes(name as string),
     ) &&

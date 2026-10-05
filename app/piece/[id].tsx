@@ -7,6 +7,7 @@ import {
   type Piece,
 } from "../../src/domain/closet";
 import { needsDetails } from "../../src/domain/facts";
+import { linkHost } from "../../src/domain/productLink";
 import { wearCounts } from "../../src/domain/scoring/taste";
 import { setMembers } from "../../src/domain/sets";
 import { clockFor, stylePiece } from "../../src/domain/today";
@@ -54,6 +55,12 @@ function labelMeta(label: CareLabel | undefined): string | undefined {
     label.origin ? t("careLabel.lineOrigin", { origin: label.origin }) : "",
   ].filter(Boolean);
   return parts.length ? parts.join("\n") : undefined;
+}
+
+function linkMeta(link: Piece["link"]): string | undefined {
+  if (!link) return undefined;
+  const host = linkHost(link.url);
+  return link.size ? t("link.meta", { host, size: link.size }) : host;
 }
 
 function costLine(piece: Piece, closet: Closet): string | null {
@@ -250,6 +257,18 @@ export default function PieceDetail() {
             router.push({
               pathname: "/label/[id]",
               params: { id: pieceId, target: "piece" },
+            })
+          }
+        />
+        <Row
+          title={t("link.field")}
+          meta={linkMeta(piece.link)}
+          trailing="chevron"
+          testID="piece-product-link"
+          onPress={() =>
+            router.push({
+              pathname: "/piece/link/[id]",
+              params: { id: pieceId },
             })
           }
         />

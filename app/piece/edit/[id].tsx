@@ -411,7 +411,11 @@ function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
         inUse = filesInUse(next);
         return next;
       });
-      for (const file of new Set([...leftovers(piece), piece.label?.photo]))
+      for (const file of new Set([
+        ...leftovers(piece),
+        piece.label?.photo,
+        ...(piece.link?.photos ?? []),
+      ]))
         if (file && !inUse.has(file))
           void discardPhoto(file).catch(() => undefined);
       allowClose();
@@ -596,6 +600,23 @@ function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
             error={amount === undefined ? t("piece.edit.priceInvalid") : null}
             testID="edit-price"
           />
+        )}
+        {sample ? null : (
+          <View style={styles.leading}>
+            <Button
+              variant="quiet"
+              icon="link"
+              label={t("link.field")}
+              disabled={busy}
+              testID="edit-product-link"
+              onPress={() =>
+                router.replace({
+                  pathname: "/piece/link/[id]",
+                  params: { id: piece.id },
+                })
+              }
+            />
+          </View>
         )}
         {piece.setId ? (
           leaveSet ? (

@@ -1,38 +1,19 @@
 import { useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
 import { randomUUID } from "expo-crypto";
 import { router } from "expo-router";
-import {
-  botPage,
-  imageExtension,
-  productFromPage,
-  productLink,
-} from "../../src/domain/link";
+import { productLink } from "../../src/domain/link";
 import { queueImport } from "../../src/domain/importing";
+import { linkFromPage } from "../../src/domain/productLink";
+import type { ProductPage } from "../../src/domain/productPage";
 import { t } from "../../src/i18n";
 import { useCloset } from "../../src/state/closet";
 import { now } from "../../src/state/clock";
+import { keepShopPhoto, readShop } from "../../src/state/productLink";
 import { isOffline } from "../../src/state/studio";
-import { discardPhoto, keepPhotoBytes } from "../../src/storage/local";
-import { Field, Footer, Screen } from "../../src/ui";
+import { discardPhoto } from "../../src/storage/local";
+import { Field, Footer, Screen, Section, Tile } from "../../src/ui";
 import { theme } from "../../src/ui/theme";
-
-const linkTimeout = 20000;
-
-async function download(url: string, accept: string) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), linkTimeout);
-  try {
-    const response = await fetch(url, {
-      headers: { Accept: accept },
-      signal: controller.signal,
-    });
-    if (!response.ok) throw new Error("failed");
-    return response;
-  } finally {
-    clearTimeout(timer);
-  }
-}
 
 export default function AddFromLink() {
   const { update } = useCloset();
@@ -40,7 +21,25 @@ export default function AddFromLink() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [stuck, setStuck] = useState(false);
+  const [page, setPage] = useState<ProductPage | null>(null);
+  const [cover, setCover] = useState<string | null>(null);
   const link = productLink(text);
+
+  async function read() {
+    if (!link) return null;
+    const result = await readShop(link);
+    if ("error" in result) {
+      setError(t(result.error));
+      setStuck(result.error !== "common.offline");
+      return null;
+    }
+    if (result.page.images.length > 1) {
+      setPage(result.page);
+      setCover(result.page.images[0]!);
+      return null;
+    }
+    return result.page;
+  }
 
   async function add() {
     if (!link || busy) return;
@@ -49,22 +48,11 @@ export default function AddFromLink() {
     setStuck(false);
     let source: string | null = null;
     try {
-      const page = await download(link, "text/html");
-      const html = await page.text();
-      const product = productFromPage(html, page.url || link);
-      if (!product) {
-        setError(t(botPage(html) ? "link.blocked" : "link.failed"));
-        setStuck(true);
-        return;
-      }
-      const image = await download(product.image, "image/*");
-      const bytes = new Uint8Array(await image.arrayBuffer());
-      if (!bytes.length) throw new Error("failed");
+      const product = page ?? (await read());
+      if (!product) return;
+      const image = cover ?? product.images[0]!;
       const id = randomUUID();
-      source = await keepPhotoBytes(
-        bytes,
-        `${id}-original${imageExtension(image.headers.get("content-type"), product.image)}`,
-      );
+      source = await keepShopPhoto(image, `${id}-original`);
       const stored = source;
       await update((current) =>
         queueImport(current, {
@@ -73,6 +61,7 @@ export default function AddFromLink() {
           createdAt: now().toISOString(),
           fromLink: true,
           ...(product.name ? { linkName: product.name } : {}),
+          link: linkFromPage(product, now().toISOString()),
         }),
       );
       router.back();
@@ -120,6 +109,8 @@ export default function AddFromLink() {
             setText(value);
             setError(null);
             setStuck(false);
+            setPage(null);
+            setCover(null);
           }}
           autoCapitalize="none"
           autoCorrect={false}
@@ -129,6 +120,31 @@ export default function AddFromLink() {
           onSubmitEditing={() => void add()}
           testID="link-field"
         />
+        {page ? (
+          <Section title={t("link.piecePhoto")} testID="link-photos">
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.scroller}
+              contentContainerStyle={styles.tiles}
+            >
+              {page.images.map((photo, index) => (
+                <View key={photo} style={styles.tile}>
+                  <Tile
+                    image={{ uri: photo }}
+                    size="strip"
+                    raw
+                    selected={cover === photo}
+                    selectedLabel={t("tile.selected")}
+                    accessibilityLabel={t("link.photo", { number: index + 1 })}
+                    onPress={() => setCover(photo)}
+                    testID={`link-photo-${index}`}
+                  />
+                </View>
+              ))}
+            </ScrollView>
+          </Section>
+        ) : null}
       </View>
     </Screen>
   );
@@ -136,4 +152,7 @@ export default function AddFromLink() {
 
 const styles = StyleSheet.create({
   content: { gap: theme.space.lg },
+  scroller: { marginRight: -theme.space.lg },
+  tiles: { flexDirection: "row", gap: theme.space.md },
+  tile: { width: 112 },
 });

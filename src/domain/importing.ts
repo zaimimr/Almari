@@ -34,6 +34,7 @@ import { categoryForRegion, wholePhoto, type CapturePlan } from "./capture";
 import { withCareLabel, type CareLabel } from "./careLabel";
 import { colorName, namedSwatch, type Swatch } from "./color";
 import { attributeCheck, proposeAttributes, recognize } from "./recognition";
+import { withProductLink } from "./productLink";
 import { isSamplePhoto } from "./samples";
 import { linkSet } from "./sets";
 import { missingRoles } from "./styling";
@@ -157,7 +158,10 @@ export function withColour(palette: Swatch[], colour: string | undefined) {
 
 export function queueImport(
   closet: Closet,
-  job: Pick<ImportJob, "id" | "source" | "createdAt" | "linkName" | "fromLink">,
+  job: Pick<
+    ImportJob,
+    "id" | "source" | "createdAt" | "linkName" | "fromLink" | "link"
+  >,
 ): Closet {
   if (closet.imports.some((item) => item.id === job.id)) return closet;
   return {
@@ -584,6 +588,7 @@ export function splitCapture(
         region: proposal.region,
         ...(index || !job.linkName ? {} : { linkName: job.linkName }),
         ...(job.fromLink ? { fromLink: true } : {}),
+        ...(index || !job.link ? {} : { link: job.link }),
         ...people,
       }))
     : [
@@ -697,6 +702,7 @@ function jobFiles(job: ImportJob): (string | null | undefined)[] {
   return [
     job.source,
     job.label?.photo,
+    ...(job.link?.photos ?? []),
     job.region?.cutout,
     job.prepared?.original,
     job.prepared?.cutout,
@@ -706,11 +712,12 @@ function jobFiles(job: ImportJob): (string | null | undefined)[] {
   ];
 }
 
-function pieceFiles(piece: Piece): (string | null | undefined)[] {
+export function pieceFiles(piece: Piece): (string | null | undefined)[] {
   return [
     piece.photo,
     piece.original,
     piece.label?.photo,
+    ...(piece.link?.photos ?? []),
     piece.variants?.enhanced,
     piece.variants?.plain,
     piece.variants?.studio,
@@ -793,7 +800,8 @@ export function pieceFromImport(job: ImportJob): Piece | null {
     ...(job.prepared.palette.length ? { colors: job.prepared.palette } : {}),
     ...(job.prepared.embedding ? { embedding: job.prepared.embedding } : {}),
   };
-  return job.label ? withCareLabel(accepted, job.label) : accepted;
+  const labelled = job.label ? withCareLabel(accepted, job.label) : accepted;
+  return job.link ? withProductLink(labelled, job.link) : labelled;
 }
 
 export function acceptImports(closet: Closet, only?: string[]): Closet {

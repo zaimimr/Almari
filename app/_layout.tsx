@@ -54,6 +54,10 @@ function Screens() {
           options={{ title: t("piece.edit.title") }}
         />
         <Stack.Screen
+          name="piece/link/[id]"
+          options={{ title: t("link.field") }}
+        />
+        <Stack.Screen
           name="look/build"
           options={{ title: t("title.buildLook") }}
         />
