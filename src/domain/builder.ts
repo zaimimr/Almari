@@ -116,6 +116,29 @@ export function rankPieces(
   return [...picked, ...ranked];
 }
 
+const isWhole = (piece: Piece) =>
+  roleOf(piece) === "main" &&
+  (piece.category === "dress" || piece.kind === "abaya");
+
+const isTailored = (piece: Piece) =>
+  roleOf(piece) === "layer" &&
+  (piece.kind === "blazer" || piece.kind === "jacket");
+
+const isOpenAbaya = (piece: Piece) =>
+  roleOf(piece) === "outer" && piece.kind === "abaya";
+
+function clashes(piece: Piece, other: Piece) {
+  const role = roleOf(piece);
+  const otherRole = roleOf(other);
+  return (
+    otherRole === role ||
+    (isWhole(piece) && otherRole === "bottom") ||
+    (role === "bottom" && isWhole(other)) ||
+    (isTailored(piece) && isOpenAbaya(other)) ||
+    (isOpenAbaya(piece) && isTailored(other))
+  );
+}
+
 export function swapOptions(
   closet: Closet,
   request: OutfitRequest,
@@ -133,7 +156,9 @@ export function swapOptions(
   return allowedPieces(closet, closet.pieces)
     .filter(
       (piece) =>
-        roleOf(piece) === roleOf(target) && !pieceIds.includes(piece.id),
+        roleOf(piece) === roleOf(target) &&
+        !pieceIds.includes(piece.id) &&
+        !outfit.some((item) => item !== target && clashes(piece, item)),
     )
     .map((piece) => ({
       piece,
@@ -143,6 +168,20 @@ export function swapOptions(
     .sort(byFit)
     .slice(0, 3)
     .map(({ piece }) => piece);
+}
+
+export function withPiece(
+  pieces: Piece[],
+  selected: string[],
+  piece: Piece,
+): string[] {
+  return [
+    ...selected.filter((id) => {
+      const other = pieces.find((item) => item.id === id);
+      return !!other && !clashes(piece, other);
+    }),
+    piece.id,
+  ];
 }
 
 export function followName(current: string, previous: string, next: string) {

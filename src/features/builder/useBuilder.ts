@@ -7,10 +7,11 @@ import {
   fillOutfit,
   rankPieces,
   swapOptions,
+  withPiece,
 } from "../../domain/builder";
 import { recordSaved } from "../../domain/feedback";
 import { outfitName } from "../../domain/outfitName";
-import { missingRoles, roleOf } from "../../domain/styling";
+import { missingRoles } from "../../domain/styling";
 import { clockFor } from "../../domain/today";
 import { locale, t } from "../../i18n";
 import { useDiscardChanges } from "../../navigation/useDiscardChanges";
@@ -119,23 +120,7 @@ export function useBuilder(params: { id?: string }) {
       apply(selected.filter((id) => id !== piece.id));
       return;
     }
-    const role = roleOf(piece);
-    const isWhole = (item: Piece) =>
-      roleOf(item) === "main" &&
-      (item.category === "dress" || item.kind === "abaya");
-    const whole = isWhole(piece);
-    apply([
-      ...selected.filter((id) => {
-        const other = closet.pieces.find((item) => item.id === id);
-        if (!other) return false;
-        const otherRole = roleOf(other);
-        if (otherRole === role) return false;
-        if (whole && otherRole === "bottom") return false;
-        if (role === "bottom" && isWhole(other)) return false;
-        return true;
-      }),
-      piece.id,
-    ]);
+    apply(withPiece(closet.pieces, selected, piece));
   }
 
   function swapTo(target: string, piece: Piece) {

@@ -7,6 +7,7 @@ import {
   followName,
   rankPieces,
   swapOptions,
+  withPiece,
 } from "./builder";
 import { colorName } from "./color";
 import { setNeverWear } from "./preferences";
@@ -196,5 +197,25 @@ test("a look built for an occasion keeps it when saved", () => {
   assert.equal(
     saved.looks.find((look) => look.id === "eid-look")!.occasion,
     "eid",
+  );
+});
+
+test("a blazer and an open abaya never sit in the same built look", () => {
+  const base = ["sample-ivory-tunic", "sample-ivory-trousers"];
+  assert.deepEqual(
+    withPiece(
+      samples.pieces,
+      [...base, "sample-navy-blazer"],
+      piece("sample-taupe-abaya"),
+    ),
+    [...base, "sample-taupe-abaya"],
+  );
+  assert.deepEqual(
+    withPiece(
+      samples.pieces,
+      [...base, "sample-taupe-abaya"],
+      piece("sample-navy-blazer"),
+    ),
+    [...base, "sample-navy-blazer"],
   );
 });
