@@ -99,15 +99,16 @@ export function useToday() {
     [closet, today, session],
   );
 
+  const worn = wornNow(closet);
   const pieces = useMemo(
     () =>
       session
         ? session.pieceIds.flatMap((id) => {
             const piece = closet.pieces.find((item) => item.id === id);
-            return piece && isAvailable(piece) ? [piece] : [];
+            return piece && (worn || isAvailable(piece)) ? [piece] : [];
           })
         : [],
-    [closet.pieces, session],
+    [closet.pieces, session, worn],
   );
   const lostPieces = session ? session.pieceIds.length - pieces.length : 0;
 
@@ -121,13 +122,11 @@ export function useToday() {
     [closet.pieces, request],
   );
 
-  const worn = wornNow(closet);
   const showOutfit =
     !!result &&
     lostPieces === 0 &&
     pieces.length > 0 &&
-    result.status !== "conflict" &&
-    result.status !== "missing";
+    (!!worn || (result.status !== "conflict" && result.status !== "missing"));
 
   const review = useMemo(
     () => (showOutfit && request ? evaluateOutfit(pieces, request, pool) : []),
