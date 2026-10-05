@@ -3,19 +3,20 @@
 <style>body{font-family:-apple-system,system-ui,sans-serif;max-width:640px;margin:48px auto;padding:0 16px;color:#2b2622;background:#fdfbf7;line-height:1.6}h2{margin-top:40px}a{color:#6b5468}</style></head>
 <body>
 <h1>Almari privacy</h1>
-<p>Last updated 2 October 2026.</p>
+<p>Last updated 6 October 2026.</p>
 <p>Almari has no account and no login. Your clothes, photos, care labels, style answers, colour analysis, outfits and feedback are stored only on your iPhone. Almari has no server that stores your data, and the developer cannot see it.</p>
 <h2>What leaves your phone</h2>
 <ul>
 <li><strong>Weather.</strong> To show today's forecast, Almari sends the latitude and longitude of the city you chose to Apple Weather (WeatherKit). Nothing else is sent with it.</li>
 <li><strong>City search.</strong> When you type a city, the name you type is sent to Apple's map service to find its position.</li>
 <li><strong>Studio photos.</strong> When you tap Studio on a piece, that photo and the type of piece are sent to Almari's relay on Cloudflare, which makes the studio photo with Cloudflare Workers AI. Cloudflare handles the photo under its Workers AI terms and does not use it to train models. The relay stores nothing except a daily count for a random install ID, used for the daily limit.</li>
+<li><strong>Usage statistics.</strong> Almari sends anonymous usage events and crash reports to PostHog in the EU: which screens are opened, actions such as adding a piece or saving a look (with the type of piece, how it was added and the occasion), the app version and the device model. They are tied to a random ID, not to you. No photos, names, text you type or location are sent.</li>
 </ul>
-<p>You can skip the city step, set the weather by hand and not use Studio. Then nothing leaves your phone.</p>
+<p>You can skip the city step, set the weather by hand and not use Studio. Then only the usage statistics leave your phone.</p>
 <h2>Photos and the camera</h2>
 <p>Photos of clothes, care labels and the selfie for colour analysis are processed on the phone, apart from Studio photos. The selfie is not stored. Clothing photos are kept inside the app until you remove the piece or reset the app.</p>
 <h2>No tracking</h2>
-<p>Almari has no ads, no analytics, no tracking and no third-party SDKs that collect data.</p>
+<p>Almari has no ads and does not track you across other apps or websites. The usage statistics above are used only to improve Almari.</p>
 <h2>Deleting your data</h2>
 <p>Profile and settings, then Reset all data, deletes every photo and everything Almari has saved. Deleting the app does the same.</p>
 <h2>Contact</h2>
@@ -29,12 +30,13 @@
 <li><strong>Vær.</strong> For å vise dagens værmelding sender Almari breddegrad og lengdegrad for byen du valgte til Apple Weather (WeatherKit). Ingenting annet sendes med.</li>
 <li><strong>Bysøk.</strong> Når du skriver inn en by, sendes navnet du skriver til Apples karttjeneste for å finne posisjonen.</li>
 <li><strong>Studiobilder.</strong> Når du trykker på Studio på et plagg, sendes bildet og typen plagg til Almaris mellomtjener hos Cloudflare, som lager studiobildet med Cloudflare Workers AI. Cloudflare behandler bildet etter vilkårene for Workers AI og bruker det ikke til å trene modeller. Mellomtjeneren lagrer ingenting annet enn en daglig telling for en tilfeldig installasjons-ID, som brukes til den daglige grensen.</li>
+<li><strong>Bruksstatistikk.</strong> Almari sender anonyme brukshendelser og krasjrapporter til PostHog i EU: hvilke skjermer som åpnes, handlinger som å legge til et plagg eller lagre et antrekk (med typen plagg, hvordan det ble lagt til og anledningen), appversjon og enhetsmodell. De er knyttet til en tilfeldig ID, ikke til deg. Ingen bilder, navn, tekst du skriver eller posisjon sendes.</li>
 </ul>
-<p>Du kan hoppe over bysteget, velge været selv og la være å bruke Studio. Da sendes ingenting fra telefonen.</p>
+<p>Du kan hoppe over bysteget, velge været selv og la være å bruke Studio. Da sendes bare bruksstatistikken fra telefonen.</p>
 <h2>Bilder og kamera</h2>
 <p>Bilder av klær, vaskelapper og selfien til fargeanalysen behandles på telefonen, bortsett fra studiobilder. Selfien lagres ikke. Klesbilder lagres i appen til du fjerner plagget eller nullstiller appen.</p>
 <h2>Ingen sporing</h2>
-<p>Almari har ingen reklame, ingen analyse, ingen sporing og ingen tredjeparts-SDK-er som samler inn data.</p>
+<p>Almari har ingen reklame og sporer deg ikke på tvers av andre apper eller nettsteder. Bruksstatistikken over brukes bare til å forbedre Almari.</p>
 <h2>Slette dataene dine</h2>
 <p>Profil og innstillinger, deretter Slett alle data, sletter alle bilder og alt Almari har lagret. Å slette appen gjør det samme.</p>
 <h2>Kontakt</h2>
