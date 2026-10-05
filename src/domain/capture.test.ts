@@ -71,7 +71,10 @@ test("a flat lay with several pieces gives one proposal each, larger first", () 
     ],
   );
   assert.equal(plan.notice, null);
-  assert.equal(categoryForRegion("shoes"), null);
+  assert.equal(categoryForRegion("shoes"), "shoes");
+  assert.equal(categoryForRegion("bag"), "bag");
+  assert.equal(categoryForRegion("pants"), "bottom");
+  assert.equal(categoryForRegion("upper"), null);
 });
 
 test("a box drawn in any direction stays inside the photo", () => {

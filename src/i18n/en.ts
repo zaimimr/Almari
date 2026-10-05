@@ -1547,6 +1547,7 @@ export const en = {
   "capture.preparingCount": "Preparing {n} of {total}",
   "capture.cleanAll": "Clean all backgrounds",
   "capture.cleanAllTitle": "Clean all backgrounds?",
+  "capture.cleanAllNote": "Clean all sends these photos to Cloudflare.",
   "capture.cleanAllAction": "Clean",
   "capture.cleaning": "Cleaning {n} of {total}",
   "capture.fromLink": "Add from link",

@@ -18,8 +18,8 @@ export function adviceReason(
   if (!quality) return null;
   if ((quality.coverage ?? 0) > mergedAbove) return "merged";
   if (quality.clipped.length) return "clipped";
-  if (quality.sharpness < blurBelow) return "blur";
   if (quality.brightness < darkBelow) return "dark";
+  if (quality.sharpness < blurBelow) return "blur";
   if ((quality.lightSpread ?? 0) > mixedLightAbove) return "mixed-light";
   return null;
 }

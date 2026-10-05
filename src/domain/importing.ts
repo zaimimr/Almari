@@ -115,6 +115,7 @@ export function renameAuto(
 export function rejectReason(
   prepared: Prepared,
   size?: { width: number; height: number },
+  known?: Category,
 ): RejectReason | null {
   if (size && Math.min(size.width, size.height) < smallerThan)
     return "no-clothing";
@@ -125,6 +126,7 @@ export function rejectReason(
     return "no-clothing";
   const kinds = prepared.labels.filter((label) => label.group === "kind");
   if (
+    !known &&
     kinds.length &&
     Math.max(...kinds.map((label) => label.score)) < minKindScore
   )
@@ -202,10 +204,9 @@ export function finishImport(
   const next = updateJob(closet, id, (job) => {
     if (job.state !== "preparing") return job;
     const prepared = { ...read, palette: withColour(read.palette, job.colour) };
-    const recognition = recognize(
-      prepared.labels,
-      (job.region && categoryForRegion(job.region.kind)) ?? undefined,
-    );
+    const known =
+      (job.region && categoryForRegion(job.region.kind)) ?? undefined;
+    const recognition = recognize(prepared.labels, known);
     const checks: CheckReason[] = [];
     if (recognition.question) checks.push("uncertain");
     if (!prepared.cutout) checks.push("no-cutout");
@@ -247,7 +248,7 @@ export function finishImport(
     };
     if (job.region?.partial && !checks.includes("partial"))
       checks.push("partial");
-    const rejected = rejectReason(prepared, size);
+    const rejected = rejectReason(prepared, size, known);
     const fabric = details.uncertain.includes("fabric")
       ? undefined
       : (described.attributes as Attributes | undefined)?.fabric;

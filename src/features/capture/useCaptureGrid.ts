@@ -151,7 +151,8 @@ export function useCaptureGrid() {
           (job.state === "ready" || job.state === "review") &&
           importStudioSource(job) &&
           !job.prepared?.studio &&
-          !job.keepOriginal,
+          !job.keepOriginal &&
+          job.variant !== "enhanced",
       )
     : [];
 
@@ -159,8 +160,10 @@ export function useCaptureGrid() {
     if (cleaning || !cleanable.length) return;
     const go = await confirmAction(
       t("capture.cleanAllTitle"),
-      t("photo.cleanNote"),
+      t("capture.cleanAllNote"),
       t("capture.cleanAllAction"),
+      t("common.cancel"),
+      false,
     );
     if (!go) return;
     const list = cleanable.map((job) => job.id);

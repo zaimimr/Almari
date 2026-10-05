@@ -150,8 +150,9 @@ export function Banner({
     return (
       <Animated.View exiting={exiting}>
         <Pressable
-          accessibilityRole="button"
+          accessibilityRole={onPress ? "button" : undefined}
           accessibilityLabel={accessibilityLabel ?? text}
+          disabled={!onPress}
           onPress={onPress}
           onPressIn={() => press.set(timing(1, "quick", "silk"))}
           onPressOut={() => press.set(timing(0, "quick", "silk"))}
@@ -181,7 +182,9 @@ export function Banner({
                 ) : null}
               </View>
             </View>
-            <Symbol name="chevron.right" size={13} tone="muted" />
+            {onPress ? (
+              <Symbol name="chevron.right" size={13} tone="muted" />
+            ) : null}
           </Animated.View>
         </Pressable>
       </Animated.View>

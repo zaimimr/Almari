@@ -496,11 +496,21 @@ export default function PiecesFound() {
                   image={jobPiece(job)}
                   label={scanned ? name : `${index + 1} ${name}`}
                   meta={
-                    job.region?.partial ? t("capture.partialShort") : undefined
+                    job.state === "failed"
+                      ? t(
+                          job.error === "no-clothing"
+                            ? "capture.noClothing"
+                            : "capture.stateFailed",
+                        )
+                      : job.region?.partial
+                        ? t("capture.partialShort")
+                        : undefined
                   }
                   size="strip"
                   state={
-                    job.state === "queued" || job.state === "preparing"
+                    job.state === "queued" ||
+                    job.state === "preparing" ||
+                    job.state === "failed"
                       ? job.state
                       : undefined
                   }
