@@ -53,6 +53,11 @@ test("long titles stop at a word", () => {
   assert.ok(name.length <= 80);
   assert.ok(name.endsWith("word"));
   assert.equal(cleanTitle("  "), null);
+  assert.equal(
+    cleanTitle("ASOS DESIGN oversized t-shirt in black | ASOS"),
+    "Oversized t-shirt in black",
+  );
+  assert.equal(cleanTitle("Linen Kurta | Shop"), "Linen Kurta");
 });
 
 test("png images keep their extension", () => {

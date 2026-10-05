@@ -65,7 +65,9 @@ export function cleanTitle(title: string): string | null {
   const first = decode(title)
     .split(/\s[|–—-]\s/)[0]!
     .replace(/\s+/g, " ")
-    .trim();
+    .trim()
+    .replace(/^(?:[A-Z0-9&'.]{2,} )+(?=[a-z])/, "")
+    .replace(/^[a-z]/, (letter) => letter.toUpperCase());
   if (!first) return null;
   return first.length > maxName
     ? first.slice(0, maxName).replace(/\s+\S*$/, "")

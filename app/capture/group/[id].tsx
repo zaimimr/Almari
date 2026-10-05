@@ -500,7 +500,9 @@ export default function PiecesFound() {
                   }
                   size="strip"
                   state={
-                    job.state === "queued" || job.state === "preparing"
+                    job.state === "queued" ||
+                    job.state === "preparing" ||
+                    job.state === "failed"
                       ? job.state
                       : undefined
                   }
