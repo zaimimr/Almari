@@ -18,6 +18,11 @@ appId: com.zaimimran.almari
     timeout: 20000
 - tapOn:
     id: "fact-colour"
+- scrollUntilVisible:
+    element:
+      id: "fact-colour-colour-blush"
+    direction: DOWN
+    centerElement: true
 - tapOn:
     id: "fact-colour-colour-blush"
 - assertVisible: ".*Blush.*"

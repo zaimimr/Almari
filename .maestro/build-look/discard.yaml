@@ -3,6 +3,15 @@ appId: com.zaimimran.almari
 # seed: seed-looks-clean.sh,seed-looks.sh
 ---
 - runFlow: ../lib/open-build.yaml
+- repeat:
+    while:
+      notVisible:
+        id: "build-piece-seed-chiffon-hijab"
+    times: 8
+    commands:
+      - swipe:
+          start: 85%, 68%
+          end: 30%, 68%
 - tapOn:
     id: "build-piece-seed-chiffon-hijab"
 - tapOn: "Cancel"

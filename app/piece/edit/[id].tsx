@@ -36,7 +36,7 @@ import { categoryName, kindName, t } from "../../../src/i18n";
 import { colourLabel } from "../../../src/features/ColourChips";
 import { useCloset } from "../../../src/state/closet";
 import { canPrepareOnDevice, measurePiece } from "../../../src/state/imports";
-import { studioAvailable, useStudioMaker } from "../../../src/state/studio";
+import { studioOffered, useStudioMaker } from "../../../src/state/studio";
 import { discardPhoto, keepPhoto } from "../../../src/storage/local";
 import { FactChips, moreFacts } from "../../../src/features/piece/FactChips";
 import {
@@ -162,7 +162,7 @@ function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
   const shown = newPhoto ? null : shownOf(piece, photo);
   const hasVariants = Boolean(pieceVariant(piece) || piece.original);
   const studioMade = Boolean(piece.variants?.studio);
-  const cleanOffered = studioMade || studioAvailable;
+  const cleanOffered = studioMade || studioOffered();
   const cutout = pieceCutout(piece);
   const cutoutOffered =
     !sample && !newPhoto && canPrepareOnDevice && Boolean(cutout);

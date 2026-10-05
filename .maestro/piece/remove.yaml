@@ -26,6 +26,7 @@ appId: com.zaimimran.almari
     element:
       id: "edit-remove"
     direction: DOWN
+    centerElement: true
 - tapOn:
     id: "edit-remove"
 - assertVisible: "Remove this piece\\?"

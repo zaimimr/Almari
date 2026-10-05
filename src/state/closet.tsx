@@ -56,19 +56,23 @@ export function ClosetProvider({
     loadFixtures()
       .then(() => repository.load())
       .then(async () => {
-        if (repository.getSnapshot().sampleCatalog < sampleCatalogVersion) {
-          await repository.update(addSampleWardrobe);
+        try {
+          if (repository.getSnapshot().sampleCatalog < sampleCatalogVersion) {
+            await repository.update(addSampleWardrobe);
+          }
+          const prepare = (closet: Closet) =>
+            proposeWeatherTraits(withSampleAttributes(closet));
+          const snapshot = repository.getSnapshot();
+          if (prepare(snapshot) !== snapshot) await repository.update(prepare);
+          const language = fixtures.language;
+          if (language)
+            await repository.update((closet) => ({
+              ...closet,
+              styling: { ...closet.styling, language },
+            }));
+        } catch {
+          return;
         }
-        const prepare = (closet: Closet) =>
-          proposeWeatherTraits(withSampleAttributes(closet));
-        const snapshot = repository.getSnapshot();
-        if (prepare(snapshot) !== snapshot) await repository.update(prepare);
-        const language = fixtures.language;
-        if (language)
-          await repository.update((closet) => ({
-            ...closet,
-            styling: { ...closet.styling, language },
-          }));
       })
       .then(() => {
         if (active) setStatus("ready");
