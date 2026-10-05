@@ -286,6 +286,29 @@ final class GarmentPipeline {
       image, from: image.extent, format: .RGBA8, colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
   }
 
+  private func eroded(_ garment: CIImage) -> CIImage {
+    let extent = garment.extent
+    let alpha = garment.applyingFilter(
+      "CIColorMatrix",
+      parameters: [
+        "inputRVector": CIVector(x: 0, y: 0, z: 0, w: 1),
+        "inputGVector": CIVector(x: 0, y: 0, z: 0, w: 1),
+        "inputBVector": CIVector(x: 0, y: 0, z: 0, w: 1),
+        "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 0),
+        "inputBiasVector": CIVector(x: 0, y: 0, z: 0, w: 1),
+      ]
+    ).cropped(to: extent)
+    let shrunk = alpha.applyingFilter("CIMorphologyMinimum", parameters: [kCIInputRadiusKey: 2.0])
+      .cropped(to: extent)
+    return garment.applyingFilter(
+      "CIBlendWithMask",
+      parameters: [
+        kCIInputBackgroundImageKey: CIImage(color: .clear).cropped(to: extent),
+        kCIInputMaskImageKey: shrunk,
+      ]
+    ).cropped(to: extent)
+  }
+
   private func place(
     _ garment: CIImage, correction: LightCorrection, id: String, enhancer: GarmentEnhancer
   ) throws -> PlacedGarment {
@@ -576,7 +599,7 @@ final class GarmentPipeline {
     }
     if found {
       let correction = mask.map { enhancer.correction(photo: image, mask: $0) } ?? LightCorrection()
-      let placed = try place(garment, correction: correction, id: id, enhancer: enhancer)
+      let placed = try place(eroded(garment), correction: correction, id: id, enhancer: enhancer)
       result.cutout = placed.cutout
       result.enhanced = placed.enhanced
       result.thumbnail = placed.thumbnail

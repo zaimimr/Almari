@@ -17,6 +17,7 @@ export function useDiscardChanges(dirty: boolean, busy: boolean) {
       t("common.discardTitle"),
       t("common.discardBody"),
       t("common.discard"),
+      t("common.keepEditing"),
     ).then((confirmed) => {
       if (confirmed) navigation.dispatch(data.action);
     });

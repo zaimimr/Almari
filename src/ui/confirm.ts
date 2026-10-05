@@ -5,6 +5,7 @@ export function confirmAction(
   title: string,
   description: string,
   action: string,
+  cancel = t("common.cancel"),
 ): Promise<boolean> {
   if (Platform.OS === "web")
     return Promise.resolve(window.confirm(`${title}\n\n${description}`));
@@ -14,7 +15,7 @@ export function confirmAction(
       description,
       [
         {
-          text: t("common.cancel"),
+          text: cancel,
           style: "cancel",
           onPress: () => resolve(false),
         },

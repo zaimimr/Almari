@@ -25,6 +25,8 @@ type StudioProblem = "offline" | "limit" | "failed";
 const studioUrl = process.env.EXPO_PUBLIC_STUDIO_URL;
 const studioToken = process.env.EXPO_PUBLIC_STUDIO_TOKEN;
 
+export const studioTimeout = 45000;
+
 export const studioAvailable = Boolean(studioUrl && studioToken);
 
 export function studioOffered() {
@@ -75,26 +77,38 @@ export async function renderStudio(
   if (piece.kind) body.append("kind", piece.kind);
   if (piece.name?.trim()) body.append("name", piece.name.trim());
   if (piece.colour) body.append("colour", piece.colour);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), studioTimeout);
   let response: Response;
+  let bytes: Uint8Array;
   try {
-    response = await fetch(studioUrl!, {
-      method: "post",
-      headers: {
-        "x-app-token": studioToken!,
-        "x-install-id": await installId(),
-      },
-      body,
-    });
-  } catch {
-    throw new Error((await isOffline()) ? "offline" : "failed");
+    try {
+      response = await fetch(studioUrl!, {
+        method: "post",
+        headers: {
+          "x-app-token": studioToken!,
+          "x-install-id": await installId(),
+        },
+        body,
+        signal: controller.signal,
+      });
+    } catch {
+      throw new Error(
+        !controller.signal.aborted && (await isOffline())
+          ? "offline"
+          : "failed",
+      );
+    } finally {
+      if (input) void discardPhoto(input).catch(() => undefined);
+    }
+    if (response.status === 429) throw new Error("limit");
+    if (!response.ok) throw new Error("failed");
+    bytes = new Uint8Array(await response.arrayBuffer());
   } finally {
-    if (input) void discardPhoto(input).catch(() => undefined);
+    clearTimeout(timer);
   }
-  if (response.status === 429) throw new Error("limit");
-  if (!response.ok) throw new Error("failed");
   const type = response.headers.get("content-type") ?? "";
   const extension = type.includes("png") ? ".png" : ".jpg";
-  const bytes = new Uint8Array(await response.arrayBuffer());
   if (!ClosetVision.isAvailable())
     return keepPhotoBytes(bytes, `${id}-studio${extension}`);
   const raw = await keepPhotoBytes(bytes, `${id}-studio-raw${extension}`);

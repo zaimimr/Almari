@@ -16,7 +16,7 @@ appId: com.zaimimran.almari
 - hideKeyboard
 - tapOn: "Cancel"
 - assertVisible: "Discard your changes?"
-- tapOn: "Cancel"
+- tapOn: "Continue editing"
 - assertVisible: "Renamed kurta"
 - tapOn: "Cancel"
 - tapOn: "Discard"

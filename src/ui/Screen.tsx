@@ -191,7 +191,7 @@ export function Screen({
       ? {
           headerRight: () => <HeaderMedia value={media}>{actions}</HeaderMedia>,
         }
-      : null),
+      : { headerRight: undefined }),
     ...(search
       ? {
           headerSearchBarOptions: {

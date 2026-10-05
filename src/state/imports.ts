@@ -122,7 +122,10 @@ export function useImportRunner(repository: ClosetRepository, ready: boolean) {
             .imports.find((item) => item.id === job.id);
           if (current?.state === "preparing")
             await repository.update((closet) =>
-              finishImport(closet, job.id, prepared),
+              finishImport(closet, job.id, prepared, {
+                width: result.width,
+                height: result.height,
+              }),
             );
           else {
             const closet = repository.getSnapshot();
@@ -135,8 +138,12 @@ export function useImportRunner(repository: ClosetRepository, ready: boolean) {
             failImport(closet, job.id, importFailure(error)),
           );
         }
-      } catch {
-        stopped = true;
+      } catch (error) {
+        await repository
+          .update((closet) => failImport(closet, job.id, importFailure(error)))
+          .catch(() => {
+            stopped = true;
+          });
       } finally {
         running = false;
         void tick();
