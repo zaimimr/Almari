@@ -55,7 +55,7 @@ async function studioInput(source: string, id: string) {
   }
 }
 
-async function isOffline() {
+export async function isOffline() {
   try {
     const state = await getNetworkStateAsync();
     return state.isConnected === false || state.isInternetReachable === false;

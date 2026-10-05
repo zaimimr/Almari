@@ -18,10 +18,14 @@ import {
 } from "../../domain/attributes";
 import {
   correctImport,
+  dismissAdvice,
   importStudioSource,
   keepDuplicate,
-  nameFor,
+  keepRejected,
+  nameOptions,
+  renameAuto,
   setImportStudio,
+  withColour,
 } from "../../domain/importing";
 import { importCutout } from "../../domain/cutout";
 import { attributeLabelKey, attributeValueKey } from "../../domain/facts";
@@ -40,15 +44,19 @@ import {
   Footer,
   HeaderItem,
   Screen,
-  Segmented,
   Text,
   Tile,
 } from "../../ui";
+import { confirmAction } from "../../ui/confirm";
 import { theme } from "../../ui/theme";
 import { ColourChips } from "../ColourChips";
 import { useRetake, type CaptureProblem } from "../Retake";
-import { jobColour, jobPhoto, jobPiece } from "./jobs";
-import { PhotoToolbar, type PhotoView } from "./PhotoToolbar";
+import { jobColour, jobColours, jobPhoto, jobPiece } from "./jobs";
+import {
+  PhotoToolbar,
+  type PhotoPreview,
+  type PhotoView,
+} from "./PhotoToolbar";
 import { removeWithUndo } from "./removed";
 
 type StyleChoice = Style | "both";
@@ -165,9 +173,11 @@ function ConfirmForm({
     styles: job.styles ?? (job.kind ? fixedStyles(job.kind) : undefined),
     photo: photoChoiceOf(job),
     colour: jobColour(job),
-    answer: job.attributeCheck
-      ? job.attributes?.[job.attributeCheck]
-      : undefined,
+    answer:
+      job.attributeCheck &&
+      job.attributeSources?.[job.attributeCheck] === "confirmed"
+        ? job.attributes?.[job.attributeCheck]
+        : undefined,
   }));
   const [name, setName] = useState(initial.name);
   const [kind, setKind] = useState(initial.kind);
@@ -193,7 +203,7 @@ function ConfirmForm({
       photo !== initial.photo ||
       colour !== initial.colour ||
       answer !== initial.answer);
-  const allowClose = useDiscardChanges(dirty, busy || studio.making);
+  const allowClose = useDiscardChanges(dirty, busy);
 
   function leave() {
     allowClose();
@@ -232,11 +242,20 @@ function ConfirmForm({
   }
 
   const step = run.indexOf(job.id);
+  const left = run.filter(
+    (other) =>
+      other === job.id ||
+      closet.imports.some(
+        (item) => item.id === other && item.state === "review",
+      ),
+  ).length;
   const title =
     run.length > 1 && step >= 0
       ? walk
         ? t("confirm.step", { n: step + 1, total: run.length })
-        : t("confirm.titleStep", { n: step + 1, total: run.length })
+        : left > 1
+          ? t("confirm.titleLeft", { n: left })
+          : t("confirm.title")
       : t("confirm.title");
   const previous = walk && step > 0 ? run[step - 1] : undefined;
   const following = walk && step >= 0 ? run[step + 1] : undefined;
@@ -259,15 +278,16 @@ function ConfirmForm({
           }
         : null;
 
+  const duplicateJob = job.duplicateOf
+    ? closet.imports.find((item) => item.id === job.duplicateOf)
+    : undefined;
   const duplicate = job.duplicateOf
     ? (closet.pieces.find((item) => item.id === job.duplicateOf) ??
-      (() => {
-        const other = closet.imports.find(
-          (item) => item.id === job.duplicateOf,
-        );
-        return other ? jobPiece(other) : null;
-      })())
+      (duplicateJob ? jobPiece(duplicateJob) : null))
     : null;
+  const duplicateText = duplicateJob
+    ? t("duplicate.batch")
+    : t("duplicate.title");
   const checks = job.checks ?? [];
 
   const banner = problem ? (
@@ -301,11 +321,11 @@ function ConfirmForm({
   ) : job.duplicateOf ? (
     <Banner
       tone="notice"
-      text={t("duplicate.title")}
+      text={duplicateText}
       leading={duplicate ? { thumb: duplicate } : undefined}
       accessibilityLabel={
         duplicate?.name
-          ? `${t("duplicate.title")} ${t("duplicate.named", { name: duplicate.name })}`
+          ? `${duplicateText} ${t("duplicate.named", { name: duplicate.name })}`
           : undefined
       }
       actions={[
@@ -326,6 +346,46 @@ function ConfirmForm({
         },
       ]}
       testID="confirm-duplicate"
+    />
+  ) : failed && job.error === "no-clothing" ? (
+    <Banner
+      tone="notice"
+      text={t("capture.noClothing")}
+      actions={[
+        {
+          label: t("capture.addAnyway"),
+          variant: "secondary",
+          onPress: () =>
+            void act(() =>
+              update((current) => keepRejected(current, job.id)).then(
+                () => undefined,
+              ),
+            ),
+          testID: "confirm-add-anyway",
+        },
+      ]}
+      testID="confirm-rejected"
+    />
+  ) : job.advice && !failed ? (
+    <Banner
+      tone="notice"
+      text={t(`advice.${job.advice}.title`)}
+      actions={[
+        {
+          label: t("capture.retake"),
+          variant: "secondary",
+          onPress: () => void retakeFrom("camera"),
+        },
+        {
+          label: t("advice.useAnyway"),
+          variant: "quiet",
+          onPress: () =>
+            void update((current) => dismissAdvice(current, job.id)).catch(
+              () => undefined,
+            ),
+        },
+      ]}
+      testID="confirm-advice"
     />
   ) : null;
 
@@ -413,10 +473,41 @@ function ConfirmForm({
         "original",
         ...(offerStudio || prepared.studio ? (["studio"] as const) : []),
       ];
+  const previewOf = (view: PhotoView): PhotoPreview => {
+    const preview = jobPhoto({
+      ...job,
+      ...photoChange(view === "studio" && !prepared.studio ? "cutout" : view),
+    });
+    return {
+      image: { ...jobPiece(job), photo: preview.photo },
+      raw: preview.raw,
+    };
+  };
+  const previews = Object.fromEntries(
+    photoOptions.map((view) => [view, previewOf(view)]),
+  );
+  const naming = (k: GarmentKind, c: string | null) => ({
+    kind: k,
+    palette: withColour(prepared.palette, c ?? undefined),
+    attributes: job.attributes,
+  });
+  const suggestions = nameOptions(
+    kind,
+    naming(kind, colour).palette,
+    job.attributes,
+  );
+
+  function chooseColour(next: string) {
+    setName((current) =>
+      renameAuto(current, naming(kind!, colour), naming(kind!, next)),
+    );
+    setColour(next);
+  }
 
   function chooseKind(next: GarmentKind) {
-    if (name === nameFor(kind!, prepared!.palette))
-      setName(nameFor(next, prepared!.palette));
+    setName((current) =>
+      renameAuto(current, naming(kind!, colour), naming(next, colour)),
+    );
     setKind(next);
     const nextFixed = fixedStyles(next);
     if (nextFixed) setStyles(nextFixed);
@@ -456,7 +547,9 @@ function ConfirmForm({
 
   function nextConfirm() {
     if (walk) return following;
-    return run.find(
+    const order =
+      step >= 0 ? [...run.slice(step + 1), ...run.slice(0, step)] : run;
+    return order.find(
       (other) =>
         other !== job.id &&
         closet.imports.some(
@@ -465,18 +558,28 @@ function ConfirmForm({
     );
   }
 
-  function go(to: string) {
-    if (busy || studio.making) return;
+  async function go(to: string) {
+    if (busy) return;
     if (dirty && name.trim()) {
       void save(to);
       return;
     }
+    if (
+      dirty &&
+      !(await confirmAction(
+        t("common.discardTitle"),
+        t("common.discardBody"),
+        t("common.discard"),
+        t("common.keepEditing"),
+      ))
+    )
+      return;
     allowClose();
     router.setParams({ id: to });
   }
 
   async function save(to?: string) {
-    if (!name.trim() || busy || studio.making) return;
+    if (!name.trim() || busy) return;
     const next = to ?? nextConfirm();
     setBusy(true);
     setError(null);
@@ -502,12 +605,15 @@ function ConfirmForm({
     }
   }
 
-  const styleSegmented = (label?: string) => (
-    <Segmented
+  const styleChips = (label?: string) => (
+    <ChipRow
       label={label}
       options={styleChoices()}
-      value={choiceOf(chosenStyles) ?? "western"}
-      onChange={(choice) => setStyles(stylesOf(choice))}
+      value={choiceOf(chosenStyles)}
+      onChange={(choice) => {
+        if (typeof choice === "string") setStyles(stylesOf(choice));
+      }}
+      testID="confirm-style"
     />
   );
 
@@ -569,7 +675,7 @@ function ConfirmForm({
                   {
                     label: t("confirm.previous"),
                     icon: "chevron.left",
-                    onPress: () => previous && go(previous),
+                    onPress: () => void (previous && go(previous)),
                     disabled: !previous || busy,
                     testID: "confirm-previous",
                   },
@@ -577,7 +683,7 @@ function ConfirmForm({
                     label: t("confirm.next"),
                     icon: "chevron.right",
                     iconAfter: true,
-                    onPress: () => following && go(following),
+                    onPress: () => void (following && go(following)),
                     disabled: !following || busy,
                     testID: "confirm-next",
                   },
@@ -588,7 +694,7 @@ function ConfirmForm({
             label: t("common.looksRight"),
             onPress: () => void save(),
             busy,
-            disabled: !name.trim() || studio.making,
+            disabled: !name.trim(),
             testID: "confirm-save",
           }}
         />
@@ -603,14 +709,29 @@ function ConfirmForm({
             raw={shown.raw}
             size="hero"
             state={studio.making ? "preparing" : undefined}
+            busyLabel={t("photo.cleanMaking")}
             accessibilityLabel={name || t("capture.photo")}
+            testID={studio.making ? "moment-generating" : "confirm-hero"}
           />
+          {adjust ? (
+            <View style={styles.adjust}>
+              <Button
+                variant="icon"
+                icon="scissors"
+                label={adjust.label}
+                disabled={busy || studio.making || adjust.disabled}
+                onPress={adjust.onPress}
+                testID={adjust.testID}
+              />
+            </View>
+          ) : null}
         </View>
         <PhotoToolbar
           options={photoOptions}
           value={photo}
           onChange={pickPhoto}
-          adjust={adjust}
+          previews={previews}
+          note={(offerStudio && !prepared.studio) || studio.making}
           making={studio.making}
           disabled={busy}
           testID="confirm-photo"
@@ -645,7 +766,7 @@ function ConfirmForm({
           </View>
         )}
         {question === "style" && !fixed
-          ? styleSegmented(asked ?? t("piece.style"))
+          ? styleChips(asked ?? t("piece.style"))
           : null}
         {attributeAsked ? (
           <ChipRow
@@ -671,7 +792,8 @@ function ConfirmForm({
           <ColourChips
             label={t("fact.colour")}
             value={colour}
-            onPick={setColour}
+            first={jobColours(job)}
+            onPick={chooseColour}
             testID="confirm-colour"
           />
         ) : null}
@@ -683,6 +805,20 @@ function ConfirmForm({
           maxLength={80}
           returnKeyType="done"
         />
+        {suggestions.length > 1 ? (
+          <ChipRow
+            options={suggestions.map((option) => ({
+              id: option,
+              label: option,
+            }))}
+            value={suggestions.includes(name) ? name : null}
+            onChange={(next) => {
+              if (typeof next === "string") setName(next);
+            }}
+            layout="scroll"
+            testID="confirm-name-options"
+          />
+        ) : null}
         {retakeRow}
       </View>
     </Screen>
@@ -700,5 +836,6 @@ const styles = StyleSheet.create({
   content: { gap: theme.space.lg },
   block: { gap: theme.space.md },
   hero: { width: 240, alignSelf: "center" },
+  adjust: { position: "absolute", top: theme.space.sm, right: theme.space.sm },
   bleed: { marginLeft: -theme.space.sm, alignSelf: "flex-start" },
 });

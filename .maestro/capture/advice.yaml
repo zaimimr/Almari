@@ -1,0 +1,10 @@
+appId: com.zaimimran.almari
+# UC-F02-24
+# seed: fresh.sh,seed-advice.sh
+---
+- runFlow: ../lib/open-add.yaml
+- tapOn:
+    id: "job-confirm-1"
+- assertVisible: "This photo looks blurry."
+- tapOn: "Continue anyway"
+- assertNotVisible: "This photo looks blurry."

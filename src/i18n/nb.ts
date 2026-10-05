@@ -1472,7 +1472,6 @@ export const nb: Record<Key, string> = {
   "lookalike.keepBoth": "Behold begge",
   "lookalike.keepOne": "Behold én",
   "duplicate.batch": "Samme som et annet bilde her?",
-  "duplicate.short": "Ser lik ut",
   "confirm.titleLeft": "Nytt plagg, {n} igjen",
   "colour.more": "Flere farger",
   "common.add": "Legg til",

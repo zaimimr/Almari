@@ -1455,7 +1455,6 @@ export const en = {
   "lookalike.keepBoth": "Keep both",
   "lookalike.keepOne": "Keep one",
   "duplicate.batch": "Same as another photo here?",
-  "duplicate.short": "Lookalike",
   "confirm.titleLeft": "New piece, {n} left",
   "colour.more": "More colours",
   "common.add": "Add",

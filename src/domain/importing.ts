@@ -138,7 +138,7 @@ export function withColour(palette: Swatch[], colour: string | undefined) {
 
 export function queueImport(
   closet: Closet,
-  job: Pick<ImportJob, "id" | "source" | "createdAt">,
+  job: Pick<ImportJob, "id" | "source" | "createdAt" | "linkName">,
 ): Closet {
   if (closet.imports.some((item) => item.id === job.id)) return closet;
   return {
@@ -256,7 +256,8 @@ export function finishImport(
       state: rejected ? "failed" : checks.length ? "review" : "ready",
       prepared,
       kind: recognition.kind,
-      name: nameFor(recognition.kind, prepared.palette, { fabric }),
+      name:
+        job.linkName ?? nameFor(recognition.kind, prepared.palette, { fabric }),
       styles,
       question: recognition.question ?? undefined,
       sources,
@@ -533,6 +534,7 @@ export function splitCapture(
         attempts: 0,
         captureId: id,
         region: proposal.region,
+        ...(index || !job.linkName ? {} : { linkName: job.linkName }),
         ...people,
       }))
     : [

@@ -14,6 +14,8 @@ import {
   type GarmentKind,
   type Piece,
 } from "../../domain/closet";
+import { namedSwatch } from "../../domain/color";
+import { nameFor } from "../../domain/importing";
 import { confirmEdits } from "../../domain/recognition";
 import { categoryName, kindName, stylesName, t } from "../../i18n";
 import { useDiscardChanges } from "../../navigation/useDiscardChanges";
@@ -36,7 +38,10 @@ import {
 } from "../../ui";
 import { theme } from "../../ui/theme";
 import { useColors } from "../../ui/useColors";
+import { ColourChips } from "../ColourChips";
 import { styleChoices, stylesOf } from "./ConfirmPiece";
+
+const commonColours = ["Black", "White", "Beige", "Navy", "Red", "Green"];
 
 type StyleChoice = ReturnType<typeof styleChoices>[number]["id"];
 
@@ -48,13 +53,16 @@ export function AddByHand() {
   const [category, setCategory] = useState<Category | null>(null);
   const [kind, setKind] = useState<GarmentKind | null>(null);
   const [style, setStyle] = useState<StyleChoice>("desi");
-  const [name, setName] = useState("");
+  const [colour, setColour] = useState<string | null>(null);
+  const [typed, setTyped] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
   const [cameraOff, setCameraOff] = useState(false);
   const [openFailed, setOpenFailed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const dirty = Boolean(image || category || kind || name);
+  const name =
+    typed ?? (kind ? nameFor(kind, colour ? [namedSwatch(colour)] : []) : "");
+  const dirty = Boolean(image || category || kind || colour || typed);
   const allowClose = useDiscardChanges(dirty, busy);
   const kindOptions = category
     ? kindsIn(category)
@@ -102,7 +110,7 @@ export function AddByHand() {
     try {
       photo = await keepPhoto(image!);
       const styles = fixed ?? stylesOf(style);
-      const piece: Piece = confirmEdits(undefined, {
+      const edited: Piece = confirmEdits(undefined, {
         id,
         name: name.trim(),
         category: category!,
@@ -112,6 +120,13 @@ export function AddByHand() {
         source: "owned",
         styles,
       });
+      const piece: Piece = colour
+        ? {
+            ...edited,
+            colors: [namedSwatch(colour)],
+            sources: { ...edited.sources, colour: "confirmed" },
+          }
+        : edited;
       await update((current) => savePiece(current, piece));
       void measurePiece({ update }, piece);
       setLastAdded([id]);
@@ -256,12 +271,22 @@ export function AddByHand() {
             }}
           />
         )}
+        <ColourChips
+          label={t("fact.colour")}
+          value={colour}
+          first={commonColours}
+          onPick={(next) => {
+            setTouched(true);
+            setColour(next);
+          }}
+          testID="manual-colour"
+        />
         <Field
           label={t("piece.name")}
           value={name}
           onChangeText={(text) => {
             setTouched(true);
-            setName(text);
+            setTyped(text);
           }}
           maxLength={80}
           returnKeyType="done"

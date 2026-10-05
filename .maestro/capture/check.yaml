@@ -5,15 +5,20 @@ appId: com.zaimimran.almari
 - runFlow: ../lib/open-add.yaml
 - tapOn:
     id: "job-confirm-1"
-- assertVisible: "New piece, 1 of 2"
+- assertVisible: "New piece, 2 left"
 - takeScreenshot: docs/redesign/screens/after/capture/confirm
 - tapOn: "Tops"
+- scrollUntilVisible:
+    element: "More colours"
+    centerElement: true
+- tapOn: "More colours"
 - scrollUntilVisible:
     element: "Blush"
     centerElement: true
 - tapOn: "Blush"
 - tapOn: "Looks right"
-- assertVisible: "New piece, 2 of 2"
+- assertVisible: "New piece"
+- assertNotVisible: "New piece, 2 left"
 - tapOn: "Blazer"
 - tapOn: "Looks right"
 - assertVisible:
