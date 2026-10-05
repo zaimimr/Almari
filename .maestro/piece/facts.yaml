@@ -19,6 +19,11 @@ appId: com.zaimimran.almari
 - runFlow: ../lib/open-more-details.yaml
 - tapOn:
     id: "fact-fabric"
+- scrollUntilVisible:
+    element:
+      id: "fact-looks-right"
+    direction: DOWN
+    centerElement: true
 - tapOn:
     id: "fact-looks-right"
 - assertNotVisible:

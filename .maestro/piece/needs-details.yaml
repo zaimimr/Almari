@@ -20,8 +20,18 @@ appId: com.zaimimran.almari
 - assertVisible: ".*Needs details.*"
 - tapOn:
     id: "fact-coverage"
+- scrollUntilVisible:
+    element:
+      id: "fact-coverage-sleeve-long"
+    direction: DOWN
+    centerElement: true
 - tapOn:
     id: "fact-coverage-sleeve-long"
+- scrollUntilVisible:
+    element:
+      id: "fact-coverage-length-ankle"
+    direction: DOWN
+    centerElement: true
 - tapOn:
     id: "fact-coverage-length-ankle"
 - assertVisible: ".*Fully covered.*"

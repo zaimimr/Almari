@@ -19,10 +19,15 @@ appId: com.zaimimran.almari
 - runFlow: ../lib/open-more-details.yaml
 - tapOn:
     id: "fact-warmth"
+- scrollUntilVisible:
+    element:
+      id: "fact-warmth-warmth-warm"
+    direction: DOWN
+    centerElement: true
 - tapOn:
     id: "fact-warmth-warmth-warm"
 - assertVisible: ".*Warm.*"
-- openLink: "almari://piece/seed-hijab"
+- openLink: "almari://piece/seed-chiffon-hijab"
 - runFlow:
     when:
       visible: "Open"
@@ -35,6 +40,11 @@ appId: com.zaimimran.almari
 - runFlow: ../lib/open-more-details.yaml
 - tapOn:
     id: "fact-warmth"
+- scrollUntilVisible:
+    element:
+      id: "fact-warmth-warmth-warm"
+    direction: DOWN
+    centerElement: true
 - tapOn:
     id: "fact-warmth-warmth-warm"
 - assertVisible: ".*Warm.*"
