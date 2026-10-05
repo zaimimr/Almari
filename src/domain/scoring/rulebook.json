@@ -69,6 +69,52 @@
       "reason": true
     },
     {
+      "id": "layer-without-reason",
+      "source": "almari:layers",
+      "layer": "style",
+      "when": {
+        "occasion": [
+          "everyday",
+          "gym",
+          "dinner",
+          "eid",
+          "party",
+          "wedding",
+          "barat"
+        ],
+        "weather": ["unknown", "warm"]
+      },
+      "if": {
+        "any": [
+          { "has": { "role": ["layer"] } },
+          { "has": { "role": ["outer"], "kind": ["coat"] } }
+        ]
+      },
+      "weight": -0.6
+    },
+    {
+      "id": "abaya-without-reason",
+      "source": "almari:layers",
+      "layer": "style",
+      "when": { "minFormality": 3, "weather": ["unknown", "warm"] },
+      "if": { "has": { "role": ["outer"], "kind": ["abaya"] } },
+      "weight": -0.3
+    },
+    {
+      "id": "casual-layer-dressed-up",
+      "source": "almari:layers",
+      "layer": "style",
+      "when": { "minFormality": 4 },
+      "if": {
+        "has": {
+          "role": ["layer", "outer"],
+          "kind": ["cardigan", "jacket", "coat"],
+          "formality": { "max": 2 }
+        }
+      },
+      "weight": -0.8
+    },
+    {
       "id": "blazer-at-work",
       "source": "owner:work",
       "layer": "style",
@@ -986,7 +1032,7 @@
               {
                 "has": {
                   "role": ["bottom"],
-                  "fabric": ["denim", "cotton", "jersey"]
+                  "fabric": ["denim", "cotton", "jersey", "lawn"]
                 }
               }
             ]

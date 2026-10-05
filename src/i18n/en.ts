@@ -701,6 +701,7 @@ export const en = {
   "settings.language.en": "English",
   "settings.language.nb": "Norsk bokmål",
   "settings.export": "Export my data",
+  "settings.sampleCloset": "Sample closet",
   "settings.export.failed": "Could not export. Try again.",
   "settings.reset": "Delete all data",
   "settings.reset.title": "Delete all data?",

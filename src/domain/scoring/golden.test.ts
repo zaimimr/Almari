@@ -45,6 +45,14 @@ test("the sample closet on a fixed day gives a fixed top three with fixed reason
     result.outfits.slice(0, 3).map((outfit) => outfit.ids),
     [
       [
+        "sample-blue-tunic",
+        "sample-charcoal-trousers",
+        "sample-chocolate-hijab",
+        "sample-camel-blazer",
+        "sample-chocolate-loafers",
+        "sample-taupe-bag",
+      ],
+      [
         "sample-ivory-tunic",
         "sample-ivory-trousers",
         "sample-chocolate-hijab",
@@ -55,26 +63,19 @@ test("the sample closet on a fixed day gives a fixed top three with fixed reason
       [
         "sample-olive-maxi-dress",
         "sample-ivory-hijab",
-        "sample-navy-blazer",
-        "sample-chocolate-loafers",
-        "sample-taupe-bag",
-      ],
-      [
-        "sample-ivory-tunic",
-        "sample-charcoal-trousers",
-        "sample-chocolate-hijab",
-        "sample-navy-blazer",
+        "sample-camel-blazer",
         "sample-chocolate-loafers",
         "sample-taupe-bag",
       ],
     ],
   );
   assert.deepEqual(result.outfits[0]!.reasons, [
+    "A neutral chocolate jersey hijab calms a colourful outfit.",
+    "The chocolate jersey hijab frames your face against the dusty blue tunic.",
+  ]);
+  assert.deepEqual(result.outfits[1]!.reasons, [
     "The chocolate jersey hijab frames your face against the ivory longline tunic.",
     "The chocolate jersey hijab ties in with the chocolate leather loafers.",
-  ]);
-  assert.deepEqual(result.outfits[1]!.reasons.slice(0, 1), [
-    "The ivory modal hijab frames your face against the olive maxi dress.",
   ]);
 });
 
@@ -87,14 +88,15 @@ test("a Desi party from the samples is explained by colour and pairing rules", (
     context,
   );
   assert.deepEqual(result.outfits[0]!.ids, [
-    "sample-sage-kurta",
-    "sample-ivory-salwar",
-    "sample-ivory-hijab",
-    "sample-chocolate-loafers",
+    "sample-maroon-kameez",
+    "sample-gold-salwar",
+    "sample-champagne-hijab",
+    "sample-gold-loafers",
+    "sample-gold-bag",
   ]);
   assert.deepEqual(result.outfits[0]!.reasons, [
-    "The ivory modal hijab picks up a colour from the sage embroidered kurta.",
-    "The ivory modal hijab ties in with the ivory cotton shalwar.",
+    "A neutral champagne satin hijab calms a colourful outfit.",
+    "The champagne satin hijab frames your face against the maroon silk kameez.",
   ]);
 });
 

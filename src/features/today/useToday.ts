@@ -34,6 +34,7 @@ import {
   clockFor,
   ensureToday,
   nextLocalDate,
+  dressAgain,
   prepareTomorrow,
   resultFor,
   saveForecast,
@@ -305,6 +306,7 @@ export function useToday() {
 
   const intent = (occasion: Occasion) => {
     if (!request) return;
+    if (worn) return void restyle((current) => dressAgain(current, occasion));
     const anchored = request.keptIds.length > 0 || !!request.garmentType;
     if (occasion === request.occasion && !anchored) return void another();
     if (occasion === request.occasion)

@@ -1568,8 +1568,19 @@ export function savePiece(closet: Closet, piece: Piece): Closet {
   const clean = withWeatherProposals({ ...piece, name: piece.name.trim() });
   if (!isPiece(clean)) throw new Error(t("closet.pieceInvalid"));
   const exists = closet.pieces.some((item) => item.id === piece.id);
+  const leavesSample =
+    !exists && clean.source === "owned" && closet.styling.wardrobe === "sample";
   return {
     ...closet,
+    ...(leavesSample
+      ? {
+          styling: {
+            ...closet.styling,
+            wardrobe: "owned" as const,
+            today: null,
+          },
+        }
+      : {}),
     pieces: exists
       ? closet.pieces.map((item) => (item.id === piece.id ? clean : item))
       : [clean, ...closet.pieces],

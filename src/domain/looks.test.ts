@@ -1,6 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { emptyCloset, saveLook, setAway, type Closet } from "./closet";
+import {
+  emptyCloset,
+  saveLook,
+  savePiece,
+  setAway,
+  type Closet,
+} from "./closet";
 import { undoFeedback, woreLately, woreLook, woreThis } from "./feedback";
 import {
   firstWearMonth,
@@ -20,8 +26,13 @@ import {
 } from "./looks";
 import { monthWearStats } from "./profileStats";
 import { addSampleWardrobe } from "./samples";
-import { activeSession, saveEverydayStyle, stylePiece } from "./today";
-import { at, styledSample } from "./test-helpers";
+import {
+  activeSession,
+  saveEverydayStyle,
+  setWardrobe,
+  stylePiece,
+} from "./today";
+import { at, piece, styledSample } from "./test-helpers";
 
 const clock = { localDate: "2026-10-01", timeZone: "Europe/Oslo" };
 
@@ -60,7 +71,7 @@ test("saved looks and worn outfits are one list with names and occasions", () =>
     [
       [
         `set-${[...session.pieceIds].sort().join(",")}`,
-        "Ivory work tunic",
+        "Dusty blue tunic",
         "work",
         false,
       ],
@@ -297,4 +308,34 @@ test("one look per day, past plans expire, and the week shows each day", () => {
   const later = setPlannedFor(both, "eid", "2026-12-02");
   assert.equal(lastPlannedMonth(later, "2026-10-05"), "2026-12");
   assert.equal(lastPlannedMonth(closet, "2026-10-05"), "2026-10");
+});
+
+test("the sample closet keeps its own looks and wears apart from her own", () => {
+  const closet = styled();
+  const session = activeSession(closet.styling.today!);
+  const worn = saveLook(
+    woreThis(closet, session.revision, "2026-10-01T09:00:00.000Z", "w1"),
+    {
+      id: "look-1",
+      name: "Sample look",
+      pieceIds: ["sample-sage-kurta", "sample-ivory-salwar"],
+      createdAt: "2026-10-01T08:00:00.000Z",
+      plannedFor: "2026-10-01",
+    },
+  );
+  const own = savePiece(worn, piece("my-top", "top"));
+  assert.equal(own.styling.wardrobe, "owned");
+  assert.deepEqual(lookEntries(own, "en"), []);
+  assert.deepEqual(wearCalendar(own, "2026-10", "en"), {});
+  assert.deepEqual(plannedToday(own, clock), []);
+  const back = setWardrobe(own, "sample", clock);
+  assert.equal(lookEntries(back, "en").length, 2);
+  assert.equal(
+    wearCalendar(back, "2026-10", "en")["2026-10-01"]!.wears.length,
+    1,
+  );
+  assert.deepEqual(
+    plannedToday(back, clock).map((look) => look.id),
+    ["look-1"],
+  );
 });

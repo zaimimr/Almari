@@ -1,0 +1,31 @@
+appId: com.zaimimran.almari
+# seed: seed-closet.sh samples
+---
+- launchApp:
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible:
+      id: "header-profile"
+    timeout: 60000
+- tapOn:
+    id: "header-profile"
+- scrollUntilVisible:
+    element:
+      id: "settings-sample-closet"
+    direction: DOWN
+- tapOn:
+    id: "settings-sample-closet-toggle"
+- tapOn: "Back"
+- tapOn: "Closet"
+- extendedWaitUntil:
+    visible:
+      id: "closet-grid"
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      id: "tile-sample-mauve-hijab"
+    direction: DOWN
+    visibilityPercentage: 1
+- assertNotVisible:
+    id: "tile-seed-chiffon-hijab"

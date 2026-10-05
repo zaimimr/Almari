@@ -16,7 +16,6 @@ import {
   categories,
   categoryOf,
   fixedStyles,
-  isAvailable,
   kindLabel,
   savePiece,
   type Category,
@@ -39,7 +38,6 @@ import { attributeCheck, proposeAttributes, recognize } from "./recognition";
 import { withProductLink } from "./productLink";
 import { isSamplePhoto } from "./samples";
 import { linkSet } from "./sets";
-import { missingRoles } from "./styling";
 
 export type CheckReason =
   "uncertain" | "no-cutout" | "several" | "attribute" | "partial";
@@ -908,25 +906,9 @@ export function acceptImports(closet: Closet, only?: string[]): Closet {
   }
   for (const [captureId, ids] of sets)
     if (ids.length > 1) next = linkSet(next, ids, captureId);
-  return settleWardrobe({
+  return {
     ...next,
     imports: next.imports.filter((job) => !accepted.includes(job.id)),
-  });
-}
-
-export function settleWardrobe(closet: Closet): Closet {
-  if (closet.styling.wardrobe !== "sample") return closet;
-  const owned = closet.pieces.filter(
-    (piece) => piece.source === "owned" && isAvailable(piece),
-  );
-  if (
-    missingRoles(owned, { hijab: closet.styling.everyday?.hijab ?? null })
-      .length
-  )
-    return closet;
-  return {
-    ...closet,
-    styling: { ...closet.styling, wardrobe: "owned", today: null },
   };
 }
 

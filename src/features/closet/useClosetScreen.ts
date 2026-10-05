@@ -51,7 +51,16 @@ const errorText = (error: unknown) =>
     : t("common.error.save");
 
 export function useClosetScreen() {
-  const { closet, update, read } = useCloset();
+  const { closet: whole, update, read } = useCloset();
+  const closet = useMemo(
+    () => ({
+      ...whole,
+      pieces: whole.pieces.filter(
+        (piece) => piece.source === whole.styling.wardrobe,
+      ),
+    }),
+    [whole],
+  );
   const searchRef = useRef<SearchBarCommands | null>(null);
   const [raw, setFilter] = useState<ClosetFilter>(noFilter);
   const [panelOpen, setPanelOpen] = useState(false);

@@ -69,8 +69,16 @@ test("most worn lists the top three by wears, ties by name, and ignores undone w
   const stats = closetStats(
     withWear(samples, [
       wore(["sample-ivory-tunic", "sample-ivory-trousers"]),
-      wore(["sample-ivory-tunic", "sample-chocolate-loafers"]),
-      wore(["sample-navy-blazer", "sample-ivory-tunic"]),
+      wore(
+        ["sample-ivory-tunic", "sample-chocolate-loafers"],
+        false,
+        "2026-10-02T08:00:00.000Z",
+      ),
+      wore(
+        ["sample-navy-blazer", "sample-ivory-tunic"],
+        false,
+        "2026-10-03T08:00:00.000Z",
+      ),
       wore(["sample-navy-blazer"], true),
       wore(["sample-mauve-hijab"]),
     ]),
