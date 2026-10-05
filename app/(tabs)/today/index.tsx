@@ -11,6 +11,7 @@ import {
 import { hijabAlternatives } from "../../../src/domain/wardrobe";
 import { ChangeStrip } from "../../../src/features/ChangeStrip";
 import { ActionArea } from "../../../src/features/today/ActionArea";
+import { ProfileButton } from "../../../src/features/profile/ProfileButton";
 import { FirstRun } from "../../../src/features/today/FirstRun";
 import { IntentRow } from "../../../src/features/today/IntentRow";
 import { OutfitCard } from "../../../src/features/today/OutfitCard";
@@ -26,7 +27,6 @@ import {
   Button,
   FlatLay,
   Footer,
-  HeaderItem,
   ResultBar,
   Screen,
   Silk,
@@ -234,14 +234,7 @@ export default function TodayScreen() {
   const inline = mode === "planning" || mode === "tomorrow";
   const first = !closet.styling.everyday;
 
-  const header = (
-    <HeaderItem
-      label={t("nav.profile")}
-      icon="person.crop.circle"
-      onPress={() => router.push("/profile")}
-      testID="header-profile"
-    />
-  );
+  const header = <ProfileButton testID="header-profile" />;
 
   if (first)
     return (

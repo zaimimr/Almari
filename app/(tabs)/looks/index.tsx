@@ -1,6 +1,7 @@
 import { StyleSheet, View } from "react-native";
 import { router } from "expo-router";
 import { useCloset } from "../../../src/state/closet";
+import { ProfileButton } from "../../../src/features/profile/ProfileButton";
 import { lookEntries } from "../../../src/domain/looks";
 import { locale, t } from "../../../src/i18n";
 import { addPiecesRoute } from "../../../src/state/imports";
@@ -25,6 +26,7 @@ export default function LooksScreen() {
             onPress={() => router.push("/looks/calendar")}
             testID="header-calendar"
           />
+          <ProfileButton testID="looks-profile" />
         </View>
       }
     >
