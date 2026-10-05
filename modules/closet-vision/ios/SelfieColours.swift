@@ -19,6 +19,7 @@ struct SelfieResult: Record {
   @Field var gains: [Double] = [1, 1, 1]
   @Field var width: Double = 0
   @Field var height: Double = 0
+  @Field var paper: Bool = false
 }
 
 final class SelfieColours {
@@ -51,12 +52,12 @@ final class SelfieColours {
     return Colour.mean(Colour.trimmed(pixels, from: trim.0, to: trim.1))?.lab
   }
 
-  func analyze(uri: String) throws -> SelfieResult {
+  func analyze(uri: String, paper: Bool = false) throws -> SelfieResult {
     let (bitmap, cgImage, image) = try load(uri)
     lock.lock()
     cached = (uri, bitmap)
     lock.unlock()
-    guard let face = try FaceColours.landmarks(cgImage), let reading = FaceColours.read(bitmap, face: face) else {
+    guard let face = try FaceColours.landmarks(cgImage), let reading = FaceColours.read(bitmap, face: face, paper: paper) else {
       return SelfieResult()
     }
     let size = CGSize(width: bitmap.width, height: bitmap.height)
@@ -69,6 +70,7 @@ final class SelfieColours {
     result.light = reading.light
     guard reading.light == "ok", let skin = reading.skin else { return result }
     result.skin = skin
+    result.paper = reading.paper
     result.eyes = reading.eyes
     let gains = reading.gains
     let faceWidth = reading.face.width * size.width

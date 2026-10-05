@@ -723,8 +723,8 @@ public class ClosetVisionModule: Module {
       try GarmentPipeline.shared.prepare(sourceUri: sourceUri, id: id, options: options)
     }
 
-    AsyncFunction("analyzeSelfie") { (uri: String) throws -> SelfieResult in
-      try SelfieColours.shared.analyze(uri: uri)
+    AsyncFunction("analyzeSelfie") { (uri: String, paper: Bool?) throws -> SelfieResult in
+      try SelfieColours.shared.analyze(uri: uri, paper: paper ?? false)
     }
 
     AsyncFunction("sampleSelfie") { (uri: String, point: SelfiePoint, gains: [Double]) throws -> [Double]? in

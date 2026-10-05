@@ -8,6 +8,7 @@ guard arguments.count > 1 else {
   exit(2)
 }
 let folder = URL(fileURLWithPath: arguments[1], isDirectory: true)
+let paper = arguments.contains("--paper")
 let files = try FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil)
   .filter { ["jpg", "jpeg", "png"].contains($0.pathExtension.lowercased()) }
   .sorted { $0.lastPathComponent < $1.lastPathComponent }
@@ -19,7 +20,7 @@ for file in files {
     readings[name] = ["error": "unreadable"]
     continue
   }
-  guard let face = try FaceColours.landmarks(cgImage), let reading = FaceColours.read(bitmap, face: face) else {
+  guard let face = try FaceColours.landmarks(cgImage), let reading = FaceColours.read(bitmap, face: face, paper: paper) else {
     readings[name] = ["light": "no-face"]
     continue
   }
@@ -31,6 +32,7 @@ for file in files {
     "regions": reading.regions.map { [$0.0.x / CGFloat(bitmap.width), $0.0.y / CGFloat(bitmap.height), $0.1 / CGFloat(bitmap.width)] },
   ]
   if let skin = reading.skin { entry["skin"] = skin }
+  if reading.paper { entry["paper"] = true }
   if let eyes = reading.eyes { entry["eyes"] = eyes }
   readings[name] = entry
 }

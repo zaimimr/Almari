@@ -275,6 +275,7 @@ export type ColourProfile = {
   season: Season;
   source: "measured" | "swatch" | "confirmed" | "professional";
   palette?: [number, number, number][];
+  reference?: "paper";
 };
 
 export type StyleProfile = {

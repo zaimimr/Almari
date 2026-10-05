@@ -42,11 +42,28 @@ test("undertone follows the skin hue angle with an olive band", () => {
 
 test("depth follows the individual typology angle", () => {
   assert.equal(typologyAngle([50, 10, 20]), 0);
-  assert.equal(depthOf([70, 10, 20]), "light");
+  assert.equal(depthOf([76, 10, 18]), "light");
+  assert.equal(depthOf([70, 10, 20]), "medium");
   assert.equal(depthOf([60, 10, 20]), "medium");
-  assert.equal(depthOf([53, 12, 18]), "deep");
+  assert.equal(depthOf([52, 12, 18]), "deep");
   assert.equal(depthOf([45, 26, 18]), "deep");
   assert.equal(depthOf([62, 6, 6]), "light");
+});
+
+test("a white paper reading uses the measured typology angle", () => {
+  assert.equal(depthOf([70, 10, 20], "paper"), "light");
+  assert.equal(depthOf([55, 12, 18], "paper"), "medium");
+  assert.equal(depthOf([52, 12, 18], "paper"), "deep");
+  const outcome = fromSelfie({
+    skin: [70, 10, 20],
+    hair: null,
+    eyes: null,
+    light: "ok",
+    paper: true,
+  });
+  assert.ok("profile" in outcome);
+  assert.equal(outcome.profile.depth, "light");
+  assert.equal(outcome.profile.reference, "paper");
 });
 
 test("deep brown skin in warm light lands in a deep season", () => {
@@ -273,7 +290,7 @@ test("best colours give twelve Lab colours per season with the expected characte
 });
 
 test("moving a sample point re-reads that colour and the season with it", () => {
-  const measured = analyseColours([70, 12, 20], [30, 5, 10], [35, 5, 10]);
+  const measured = analyseColours([76, 12, 19], [30, 5, 10], [35, 5, 10]);
   assert.equal(measured.season, "light-spring");
   const deeper = resampleColours(measured, "skin", [40, 14, 8]);
   assert.deepEqual(deeper.skin, [40, 14, 8]);
@@ -287,7 +304,7 @@ test("moving a sample point re-reads that colour and the season with it", () => 
   assert.equal(
     hair.contrast,
     contrastOf([
-      [70, 12, 20],
+      [76, 12, 19],
       [80, 2, 8],
       [35, 5, 10],
     ]),

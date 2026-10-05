@@ -93,6 +93,7 @@ export type SelfieReading = {
   gains: [number, number, number];
   width: number;
   height: number;
+  paper?: boolean;
 };
 
 export type City = { name: string; latitude: number; longitude: number };

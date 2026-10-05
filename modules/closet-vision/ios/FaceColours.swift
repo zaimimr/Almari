@@ -110,12 +110,14 @@ struct FaceReading {
   var cheekRadius: CGFloat = 0
   var pupil = CGPoint.zero
   var pupilRadius: CGFloat = 0
+  var paper = false
 }
 
 enum FaceColours {
   static let context = CIContext(options: [.workingColorSpace: CGColorSpace(name: CGColorSpace.sRGB)!])
   static let maxGain = 1.3
   static let castLimit = 0.14
+  static let paperWhite = 0.85
 
   static func image(_ url: URL) -> CIImage? {
     guard var image = CIImage(contentsOf: url, options: [.applyOrientationProperty: true]) else { return nil }
@@ -165,7 +167,7 @@ enum FaceColours {
     return Colour(r: grey / max(reference.r, 0.01), g: grey / max(reference.g, 0.01), b: grey / max(reference.b, 0.01))
   }
 
-  static func read(_ bitmap: Bitmap, face: VNFaceObservation) -> FaceReading? {
+  static func read(_ bitmap: Bitmap, face: VNFaceObservation, paper: Bool = false) -> FaceReading? {
     guard
       let landmarks = face.landmarks,
       let leftEye = landmarks.leftEye, let rightEye = landmarks.rightEye,
@@ -257,6 +259,7 @@ enum FaceColours {
       }
     }
     let neutral = neutralPixels.count >= max(200, counted / 20) ? Colour.mean(neutralPixels) : nil
+    let sheet = paper ? whiteSheet(bitmap, face: faceBox.insetBy(dx: faceBox.width * 0.2, dy: faceBox.height * 0.2)) : nil
 
     if (sclera?.luma ?? max(skinLuma * 2, neutral?.luma ?? 0)) < 0.22 || skinLuma < 0.05 {
       reading.light = "dark"
@@ -266,6 +269,14 @@ enum FaceColours {
     if clipped > 0.25 {
       reading.light = "mixed"
       return reading
+    }
+    if let sheet {
+      let gain = gains(sheet)
+      let exposure = pow(paperWhite / max(0.05, linearLuma(sheet)), 1 / 2.2)
+      let scale = min(2.5, max(0.5, exposure))
+      reading.paper = true
+      reading.gains = Colour(r: gain.r * scale, g: gain.g * scale, b: gain.b * scale)
+      return measure(reading, bitmap, rawCheeks: rawCheeks, chin: chin, forehead: forehead, eyes: eyes)
     }
     let references = [sclera, neutral].compactMap { $0 }
     let measured = Colour.mean(references.map(gains)) ?? Colour(r: 1, g: 1, b: 1)
@@ -282,6 +293,41 @@ enum FaceColours {
       return reading
     }
     reading.gains = gain
+    return measure(reading, bitmap, rawCheeks: rawCheeks, chin: chin, forehead: forehead, eyes: eyes)
+  }
+
+  static func linearLuma(_ colour: Colour) -> Double {
+    func linear(_ value: Double) -> Double {
+      value <= 0.04045 ? value / 12.92 : pow((value + 0.055) / 1.055, 2.4)
+    }
+    return 0.2126 * linear(colour.r) + 0.7152 * linear(colour.g) + 0.0722 * linear(colour.b)
+  }
+
+  static func whiteSheet(_ bitmap: Bitmap, face: CGRect) -> Colour? {
+    let search = face.insetBy(dx: -face.width * 1.2, dy: -face.height * 0.4)
+    var found: [Colour] = []
+    var clipped = 0
+    for y in stride(from: max(0, Int(search.minY)), to: min(bitmap.height, Int(search.maxY)), by: 2) {
+      for x in stride(from: max(0, Int(search.minX)), to: min(bitmap.width, Int(search.maxX)), by: 2)
+      where !face.contains(CGPoint(x: x, y: y)) {
+        let colour = bitmap.colour(x, y)
+        guard colour.saturation < 0.25, colour.luma > 0.3 else { continue }
+        if max(colour.r, colour.g, colour.b) >= 0.98 { clipped += 1 } else { found.append(colour) }
+      }
+    }
+    let bright = found.sorted { $0.luma > $1.luma }
+    guard let top = bright.first else { return nil }
+    let sheet = bright.prefix { $0.luma >= top.luma * 0.85 }
+    let needed = Int(face.width * face.height * 0.12 / 4)
+    guard sheet.count >= needed, clipped < sheet.count / 2 else { return nil }
+    return Colour.mean(Array(sheet))
+  }
+
+  static func measure(
+    _ start: FaceReading, _ bitmap: Bitmap, rawCheeks: [[Colour]], chin: [Colour], forehead: [Colour], eyes: [Eye]
+  ) -> FaceReading {
+    var reading = start
+    let gain = reading.gains
     let balance = { (colours: [Colour]) in colours.map { $0.balanced(gain) }.filter(isSkin) }
 
     let cheeks = rawCheeks.map(balance)

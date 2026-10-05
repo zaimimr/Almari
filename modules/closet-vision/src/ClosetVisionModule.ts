@@ -24,7 +24,7 @@ declare class ClosetVisionModule extends NativeModule {
   readLabel(sourceUri: string, id: string): Promise<ReadLabelResult>;
   labelModelAvailable(): Promise<boolean>;
   extractLabel(text: string): Promise<LabelExtraction>;
-  analyzeSelfie(uri: string): Promise<SelfieReading>;
+  analyzeSelfie(uri: string, paper?: boolean): Promise<SelfieReading>;
   sampleSelfie(
     uri: string,
     point: SelfiePoint,
@@ -55,7 +55,7 @@ export default native ?? {
   labelModelAvailable: (): Promise<boolean> => Promise.resolve(false),
   extractLabel: (_text: string): Promise<LabelExtraction> =>
     Promise.resolve({ json: null }),
-  analyzeSelfie: (_uri: string): Promise<SelfieReading> =>
+  analyzeSelfie: (_uri: string, _paper?: boolean): Promise<SelfieReading> =>
     Promise.reject(new Error("unavailable")),
   sampleSelfie: async (
     _uri: string,

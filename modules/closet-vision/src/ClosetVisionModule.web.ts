@@ -28,7 +28,7 @@ export default {
   labelModelAvailable: (): Promise<boolean> => Promise.resolve(false),
   extractLabel: (_text: string): Promise<LabelExtraction> =>
     Promise.resolve({ json: null }),
-  analyzeSelfie: (_uri: string): Promise<SelfieReading> =>
+  analyzeSelfie: (_uri: string, _paper?: boolean): Promise<SelfieReading> =>
     Promise.reject(new Error("unavailable")),
   sampleSelfie: async (
     _uri: string,

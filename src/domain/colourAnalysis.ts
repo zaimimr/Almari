@@ -19,6 +19,7 @@ export type SelfieReading = {
   hair: Lab | null;
   eyes: Lab | null;
   light: "ok" | "dark" | "mixed";
+  paper?: boolean;
 };
 
 export type Swatch = {
@@ -30,7 +31,8 @@ export type Swatch = {
 
 export const undertoneHue = { cool: 33, warm: 40 };
 export const olive = { hue: 62, redness: 11 };
-export const depthAngle = { light: 41, deep: 12 };
+export const depthAngle = { light: 53, deep: 7 };
+export const paperDepthAngle = { light: 41, deep: 10 };
 export const lighterSkin = 57;
 
 export function typologyAngle([lightness, , yellow]: Lab): number {
@@ -44,10 +46,11 @@ export function undertoneOf(skin: Lab): Undertone {
   return hue >= undertoneHue.warm ? "warm" : "neutral";
 }
 
-export function depthOf(skin: Lab): Depth {
+export function depthOf(skin: Lab, reference?: "paper"): Depth {
   const angle = typologyAngle(skin);
-  if (angle > depthAngle.light) return "light";
-  return angle < depthAngle.deep ? "deep" : "medium";
+  const { light, deep } = reference ? paperDepthAngle : depthAngle;
+  if (angle > light) return "light";
+  return angle < deep ? "deep" : "medium";
 }
 
 export function contrastOf(colours: (Lab | null)[]): ContrastLevel {
@@ -81,10 +84,11 @@ export function analyseColours(
   skin: Lab,
   hair: Lab | null,
   eyes: Lab | null,
+  reference?: "paper",
 ): ColourProfile {
   const traits = {
     undertone: undertoneOf(skin),
-    depth: depthOf(skin),
+    depth: depthOf(skin, reference),
     contrast: contrastOf([skin, hair, eyes]),
   };
   return {
@@ -94,6 +98,7 @@ export function analyseColours(
     ...traits,
     season: seasonFor(traits, skin[0]),
     source: "measured",
+    ...(reference ? { reference } : null),
   };
 }
 
@@ -115,7 +120,12 @@ export function resampleColours(
   lab: Lab,
 ): ColourProfile {
   const next = { ...profile, [part]: lab };
-  return analyseColours(next.skin ?? lab, next.hair, next.eyes);
+  return analyseColours(
+    next.skin ?? lab,
+    next.hair,
+    next.eyes,
+    profile.reference,
+  );
 }
 
 export function fromSelfie(
@@ -129,6 +139,7 @@ export function fromSelfie(
       reading.skin,
       hairCovered ? null : reading.hair,
       reading.eyes,
+      reading.paper ? "paper" : undefined,
     ),
   };
 }
@@ -141,7 +152,7 @@ export const skinSwatches: Swatch[] = [
     undertone: "neutral",
     lab: [70, 13, 10],
   },
-  { id: "light-warm", depth: "light", undertone: "warm", lab: [70, 12, 20] },
+  { id: "light-warm", depth: "light", undertone: "warm", lab: [76, 12, 19] },
   { id: "medium-cool", depth: "medium", undertone: "cool", lab: [56, 15, 9] },
   {
     id: "medium-neutral",

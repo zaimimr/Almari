@@ -13,9 +13,18 @@ type Label = {
   hairCovered: boolean;
 };
 
-const labels: Label[] = JSON.parse(
+const half = process.argv.find((arg) => arg.startsWith("--half="))?.slice(7);
+const all: Label[] = JSON.parse(
   readFileSync(join(__dirname, "labels.json"), "utf8"),
 );
+const halfOf = (label: Label) => {
+  const group = all
+    .filter((other) => other.depth === label.depth)
+    .map((other) => other.id)
+    .sort();
+  return group.indexOf(label.id) % 2 === 0 ? "tune" : "test";
+};
+const labels = half ? all.filter((label) => halfOf(label) === half) : all;
 const readings: Record<string, Partial<SelfieReading>> = JSON.parse(
   readFileSync(process.argv[2] ?? 0, "utf8"),
 );
