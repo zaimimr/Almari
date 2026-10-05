@@ -13,6 +13,7 @@ import { Swatches, Text } from "../../ui";
 import { motion, timing, useReduceMotion } from "../../ui/motion";
 import { gutterFor, theme } from "../../ui/theme";
 import { useColors } from "../../ui/useColors";
+import { useLargeText } from "../../ui/useLargeText";
 import { Drape, Drapes } from "./Drapes";
 import type { FaceBox, PhotoSize } from "./FacePhoto";
 import { named, paletteOf, seasonLabel, type Palette } from "./palette";
@@ -67,6 +68,7 @@ function Reveal({
 export function SeasonHeading({ profile }: { profile: ColourProfile }) {
   const colors = useColors();
   const reduce = useReduceMotion();
+  const { ax } = useLargeText();
   const traits = [
     ["colours.undertone", `undertone.${profile.undertone}`],
     ["colours.depth", `depth.${profile.depth}`],
@@ -84,11 +86,17 @@ export function SeasonHeading({ profile }: { profile: ColourProfile }) {
           {seasonLabel(profile.season)}
         </Text>
       </Animated.View>
-      <View style={[styles.traits, { borderColor: colors.line }]}>
+      <View
+        style={[
+          styles.traits,
+          ax && styles.stacked,
+          { borderColor: colors.line },
+        ]}
+      >
         {traits.map(([label, value], index) => (
           <Animated.View
             key={label}
-            style={styles.trait}
+            style={[styles.trait, ax && styles.whole]}
             accessible
             entering={revealAt(reduce, 2 + index)}
           >
@@ -149,11 +157,14 @@ export function SeasonChoice({
 }) {
   const { width, height } = useWindowDimensions();
   const content = width - 2 * gutterFor(width);
-  const card = Math.floor((content - theme.space.md) / 2);
-  const chip = card / 3;
-  const tall = Math.round(
-    Math.max(card * 1.3, Math.min(card * 1.9, height - card - 360)),
-  );
+  const { ax } = useLargeText();
+  const card = ax ? content : Math.floor((content - theme.space.md) / 2);
+  const chip = ax ? card / 9 : card / 3;
+  const tall = ax
+    ? Math.round(card * 0.9)
+    : Math.round(
+        Math.max(card * 1.3, Math.min(card * 1.9, height - card - 360)),
+      );
   const drapes = drapePair(...seasons);
   return (
     <View style={styles.choice} testID="colours-choice">
@@ -163,12 +174,12 @@ export function SeasonChoice({
         </Text>
       </Reveal>
       <View
-        style={styles.close}
+        style={[styles.close, ax && styles.stacked]}
         accessibilityRole="radiogroup"
         accessibilityLabel={t("colours.choose")}
       >
         {seasons.map((season, index) => (
-          <Reveal key={season} index={1 + index} grow>
+          <Reveal key={season} index={1 + index} grow={!ax}>
             <Pressable
               onPress={() => onChoose(season)}
               accessibilityRole="radio"
@@ -270,6 +281,8 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   trait: { flex: 1, gap: 2 },
+  stacked: { flexDirection: "column", gap: theme.space.md },
+  whole: { flex: 0 },
   section: { gap: theme.space.sm },
   close: { flexDirection: "row", gap: theme.space.md },
   closeCard: { gap: theme.space.sm },

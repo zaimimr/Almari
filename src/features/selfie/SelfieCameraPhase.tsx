@@ -257,13 +257,14 @@ export function SelfieCameraPhase({
             testID="colours-paper"
           />
         ) : null}
-        <Button
-          label={t("colours.library")}
-          variant="quiet"
-          disabled={measuring}
-          onPress={onLibrary}
-          testID="colours-library"
-        />
+        {measuring ? null : (
+          <Button
+            label={t("colours.library")}
+            variant="quiet"
+            onPress={onLibrary}
+            testID="colours-library"
+          />
+        )}
       </View>
     </View>
   );
@@ -275,6 +276,7 @@ const styles = StyleSheet.create({
   paper: { textAlign: "center" },
   checks: {
     flexDirection: "row",
+    flexWrap: "wrap",
     justifyContent: "center",
     gap: theme.space.sm,
   },

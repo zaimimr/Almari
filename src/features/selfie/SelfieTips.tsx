@@ -5,6 +5,7 @@ import { t } from "../../i18n";
 import { Symbol, Text } from "../../ui";
 import { theme } from "../../ui/theme";
 import { useColors } from "../../ui/useColors";
+import { useLargeText } from "../../ui/useLargeText";
 
 const tips = [
   ["colours.tip.daylight", "sun.max"],
@@ -51,9 +52,10 @@ function Halo() {
 
 export function SelfieTips() {
   const colors = useColors();
+  const { ax } = useLargeText();
   return (
     <View style={styles.tips} testID="selfie-tips">
-      <Halo />
+      {ax ? null : <Halo />}
       <View style={[styles.card, { backgroundColor: colors.surface }]}>
         {tips.map(([tip, icon]) => (
           <View key={tip} style={styles.tip}>
