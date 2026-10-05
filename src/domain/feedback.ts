@@ -7,6 +7,7 @@ import type {
   StyleProfile,
   Taste,
 } from "./closet";
+import { baseRequest } from "./builder";
 import { factsFor } from "./scoring/rules";
 import { ruleBook } from "./scoring/rulebook";
 import { baseWeights, features } from "./scoring/rulesScorer";
@@ -284,15 +285,28 @@ export function woreLately(
   idFor: (pieceId: string) => string,
 ): Closet {
   const today = closet.styling.today;
-  if (!today || !pieceIds.length) return closet;
+  const zone = today?.timeZone;
+  const day = clockFor(new Date(at), zone).localDate;
+  const wornThatDay = new Set(
+    closet.feedback.flatMap((event) =>
+      event.kind === "wore" &&
+      !event.undone &&
+      clockFor(new Date(event.at), zone).localDate === day
+        ? event.pieceIds
+        : [],
+    ),
+  );
+  const fresh = pieceIds.filter((pieceId) => !wornThatDay.has(pieceId));
+  if (!fresh.length) return closet;
+  const request = today ? today.everyday.request : baseRequest(closet);
   return withFeedback(
     closet,
-    ...pieceIds.map((pieceId): FeedbackEvent => ({
+    ...fresh.map((pieceId): FeedbackEvent => ({
       id: idFor(pieceId),
       at,
       kind: "wore",
       pieceIds: [pieceId],
-      request: today.everyday.request,
+      request,
       scope: "piece",
     })),
   );

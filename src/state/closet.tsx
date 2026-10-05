@@ -23,12 +23,15 @@ import { useAttributeRefresh, useImportRunner } from "./imports";
 type ClosetStatus = {
   status: "loading" | "ready" | "error";
   retry: () => void;
+  restore?: () => void;
+  startOver: () => void;
 };
 
 const Context = createContext<ClosetRepository | null>(null);
 const ClosetStatusContext = createContext<ClosetStatus>({
   status: "loading",
   retry: () => undefined,
+  startOver: () => undefined,
 });
 
 export function ClosetProvider({
@@ -40,6 +43,7 @@ export function ClosetProvider({
     "loading",
   );
   const [attempt, setAttempt] = useState(0);
+  const [backup, setBackup] = useState(false);
   const language = useSyncExternalStore(
     repository.subscribe,
     () => repository.getSnapshot().styling.language,
@@ -69,8 +73,11 @@ export function ClosetProvider({
       .then(() => {
         if (active) setStatus("ready");
       })
-      .catch(() => {
-        if (active) setStatus("error");
+      .catch(async () => {
+        const kept = await repository.hasBackup();
+        if (!active) return;
+        setBackup(kept);
+        setStatus("error");
       });
     return () => {
       active = false;
@@ -82,9 +89,25 @@ export function ClosetProvider({
     setAttempt((value) => value + 1);
   };
 
+  const recover = (step: (stamp: string) => Promise<void>) => {
+    setStatus("loading");
+    step(new Date().toISOString())
+      .catch(() => undefined)
+      .then(() => setAttempt((value) => value + 1));
+  };
+
   if (status === "ready") setLanguage(language);
   return (
-    <ClosetStatusContext.Provider value={{ status, retry }}>
+    <ClosetStatusContext.Provider
+      value={{
+        status,
+        retry,
+        restore: backup
+          ? () => recover((stamp) => repository.restoreBackup(stamp))
+          : undefined,
+        startOver: () => recover((stamp) => repository.startOver(stamp)),
+      }}
+    >
       {status === "ready" ? (
         <Context.Provider value={repository}>
           <LocaleContext.Provider value={locale}>

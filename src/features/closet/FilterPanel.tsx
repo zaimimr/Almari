@@ -7,7 +7,7 @@ import {
 } from "react-native";
 import type { Category, Piece } from "../../domain/closet";
 import { colorName, namedSwatch } from "../../domain/color";
-import type { ClosetFilter } from "../../domain/closetFilters";
+import { closetSorts, type ClosetFilter } from "../../domain/closetFilters";
 import type { WearSeason } from "../../domain/facts";
 import { categoryName, t } from "../../i18n";
 import { Button, Chip, ChipRow, Text } from "../../ui";
@@ -34,7 +34,7 @@ const showLabels: Record<Show, string> = {
 const seasonIds: WearSeason[] = ["summer", "winter", "all-year"];
 
 const showOf = (filter: ClosetFilter): Show | null =>
-  filter.wear ??
+  (filter.wear === "forgotten" ? null : filter.wear) ??
   (filter.availability === "away" || filter.availability === "archived"
     ? filter.availability
     : null);
@@ -51,12 +51,14 @@ export function filterValues(filter: ClosetFilter): string[] {
 export function FilterRow({
   filter,
   offered,
+  forgotten,
   open,
   onToggle,
   onChange,
 }: {
   filter: ClosetFilter;
   offered: Category[];
+  forgotten: number;
   open: boolean;
   onToggle: () => void;
   onChange: (next: Partial<ClosetFilter>) => void;
@@ -72,6 +74,28 @@ export function FilterRow({
       style={{ marginHorizontal: -gutter }}
       contentContainerStyle={[styles.row, { paddingHorizontal: gutter }]}
     >
+      <Chip
+        label={t("closet.filter")}
+        kind="control"
+        opens="expander"
+        expanded={open}
+        selected={values.length > 0}
+        accessibilityValue={values.join(", ")}
+        onPress={onToggle}
+        testID="chip-more"
+      />
+      {forgotten || filter.wear === "forgotten" ? (
+        <Chip
+          label={t("closet.forgotten")}
+          selected={filter.wear === "forgotten"}
+          onPress={() =>
+            onChange({
+              wear: filter.wear === "forgotten" ? null : "forgotten",
+            })
+          }
+          testID="chip-forgotten"
+        />
+      ) : null}
       <View accessibilityRole="radiogroup" style={styles.row}>
         {(["all", ...offered] as const).map((id) => (
           <Chip
@@ -84,16 +108,6 @@ export function FilterRow({
           />
         ))}
       </View>
-      <Chip
-        label={t("closet.filter")}
-        kind="control"
-        opens="expander"
-        expanded={open}
-        selected={values.length > 0}
-        accessibilityValue={values.join(", ")}
-        onPress={onToggle}
-        testID="chip-more"
-      />
     </ScrollView>
   );
 }
@@ -138,7 +152,6 @@ export function FilterPanel({
   onChange: (next: Partial<ClosetFilter>) => void;
   onClear: () => void;
 }) {
-  const { large } = useLargeText();
   const [labelWidth, setLabelWidth] = useState(0);
   const measure = (width: number) =>
     setLabelWidth((current) => Math.max(current, Math.ceil(width)));
@@ -168,7 +181,7 @@ export function FilterPanel({
               optional
               options={names.map((name) => ({
                 id: colourId(name),
-                label: large ? colourLabel(name) : "",
+                label: colourLabel(name),
                 swatch: hex(name),
                 accessibilityLabel: colourLabel(name),
               }))}
@@ -221,8 +234,26 @@ export function FilterPanel({
           testID="show"
         />,
       )}
-      <View style={styles.clear}>
-        {filtered ? (
+      {group(
+        t("closet.sort"),
+        <ChipRow
+          layout="scroll"
+          optional
+          options={closetSorts.map((id) => ({
+            id,
+            label: t(`closet.sort.${id}`),
+          }))}
+          value={filter.sort}
+          onChange={(next) =>
+            onChange({
+              sort: closetSorts.find((id) => id === next) ?? null,
+            })
+          }
+          testID="sort"
+        />,
+      )}
+      {filtered ? (
+        <View style={styles.clear}>
           <Button
             variant="quiet"
             size="small"
@@ -230,8 +261,8 @@ export function FilterPanel({
             onPress={onClear}
             testID="closet-clear"
           />
-        ) : null}
-      </View>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -242,5 +273,5 @@ const styles = StyleSheet.create({
   group: { flexDirection: "row", alignItems: "center", gap: theme.space.md },
   groupStacked: { flexDirection: "column", alignItems: "stretch" },
   chips: { flex: 1 },
-  clear: { minHeight: theme.size.controlSmall, alignItems: "flex-start" },
+  clear: { alignItems: "flex-start" },
 });

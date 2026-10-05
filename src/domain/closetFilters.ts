@@ -8,7 +8,8 @@ import {
   type Piece,
   type Style,
 } from "./closet";
-import { t } from "../i18n";
+import { en } from "../i18n/en";
+import { nb } from "../i18n/nb";
 import { colorName, toLab, toLch } from "./color";
 import {
   colourKeys,
@@ -21,6 +22,15 @@ import {
 
 export type Availability = "available" | "away" | "archived";
 
+export type ClosetSort = "newest" | "most-worn" | "least-worn" | "colour";
+
+export const closetSorts: ClosetSort[] = [
+  "newest",
+  "most-worn",
+  "least-worn",
+  "colour",
+];
+
 export type ClosetFilter = {
   category: Category | "all";
   style: Style | null;
@@ -29,7 +39,8 @@ export type ClosetFilter = {
   colour: string | null;
   coverage: PieceCoverage | "needs-details" | null;
   season: WearSeason | null;
-  wear: "never-worn" | "not-worn-lately" | null;
+  wear: "never-worn" | "not-worn-lately" | "forgotten" | null;
+  sort: ClosetSort | null;
   search: string;
 };
 
@@ -44,12 +55,15 @@ export const noFilter: ClosetFilter = {
   coverage: null,
   season: null,
   wear: null,
+  sort: null,
   search: "",
 };
 
 const noWear: WearContext = { lastWorn: {}, today: "" };
 
 const lateDays = 30;
+
+export const forgottenDays = 60;
 
 export function closetChips(_pieces: readonly Piece[]): (Category | "all")[] {
   return ["all", ...categories.map((category) => category.id)];
@@ -79,11 +93,22 @@ export function lastWorn(closet: Closet): Record<string, string> {
   return last;
 }
 
-function wornLately(worn: string | undefined, today: string) {
-  if (!worn) return false;
+function since(iso: string | undefined, today: string, days: number) {
+  if (!iso) return false;
   const cutoff = new Date(`${today}T00:00:00Z`);
-  cutoff.setUTCDate(cutoff.getUTCDate() - lateDays);
-  return worn.slice(0, 10) >= cutoff.toISOString().slice(0, 10);
+  cutoff.setUTCDate(cutoff.getUTCDate() - days);
+  return iso.slice(0, 10) >= cutoff.toISOString().slice(0, 10);
+}
+
+const wornLately = (worn: string | undefined, today: string) =>
+  since(worn, today, lateDays);
+
+export function isForgotten(piece: Piece, context: WearContext): boolean {
+  return (
+    piece.source === "owned" &&
+    !since(piece.createdAt, context.today, forgottenDays) &&
+    !since(context.lastWorn[piece.id], context.today, forgottenDays)
+  );
 }
 
 function matchesCoverage(
@@ -101,6 +126,7 @@ function matchesWear(
   context: WearContext,
 ): boolean {
   if (!wear) return true;
+  if (wear === "forgotten") return isForgotten(piece, context);
   const worn = context.lastWorn[piece.id];
   return wear === "never-worn" ? !worn : !wornLately(worn, context.today);
 }
@@ -109,10 +135,16 @@ function matchesSearch(piece: Piece, search: string): boolean {
   const query = search.trim().toLowerCase();
   if (!query) return true;
   const colour = colourOf(piece);
-  const key = colour ? colourKeys[colour] : undefined;
-  return [piece.name, colour ?? "", key ? t(key) : ""].some((text) =>
-    text.toLowerCase().includes(query),
-  );
+  const keys = [
+    colour ? colourKeys[colour] : undefined,
+    `category.${piece.category}` as const,
+    piece.kind ? (`kind.${piece.kind}` as const) : undefined,
+  ].filter((key) => key !== undefined);
+  return [
+    piece.name,
+    colour ?? "",
+    ...keys.flatMap((key) => [en[key], nb[key]]),
+  ].some((text) => text.toLowerCase().includes(query));
 }
 
 export function filterPieces<T extends Piece>(
@@ -151,14 +183,33 @@ const byHue = (a: Piece, b: Piece) =>
 const newestFirst = (a: Piece, b: Piece) =>
   time(b.createdAt) - time(a.createdAt);
 
-export function groupByCategory(pieces: readonly Piece[]): ClosetSection[] {
+function sorter(
+  sort: ClosetSort | null,
+  worn: Record<string, number>,
+): ((a: Piece, b: Piece) => number) | null {
+  const count = (piece: Piece) => worn[piece.id] ?? 0;
+  if (sort === "newest") return newestFirst;
+  if (sort === "colour") return byHue;
+  if (sort === "most-worn")
+    return (a, b) => count(b) - count(a) || newestFirst(a, b);
+  if (sort === "least-worn")
+    return (a, b) => count(a) - count(b) || newestFirst(a, b);
+  return null;
+}
+
+export function groupByCategory(
+  pieces: readonly Piece[],
+  sort: ClosetSort | null = null,
+  worn: Record<string, number> = {},
+): ClosetSection[] {
   const owned = pieces.filter((piece) => piece.source !== "sample");
   const samples = pieces.filter((piece) => piece.source === "sample");
+  const chosen = sorter(sort, worn);
   const sections: ClosetSection[] = categories.map(({ id }) => ({
     id,
     pieces: owned
       .filter((piece) => piece.category === id)
-      .sort(id === "hijab" ? byHue : newestFirst),
+      .sort(chosen ?? (id === "hijab" ? byHue : newestFirst)),
   }));
   return [...sections, { id: "samples" as const, pieces: samples }].filter(
     (section) => section.pieces.length > 0,

@@ -1,17 +1,19 @@
 import { useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, useWindowDimensions, View } from "react-native";
 import { router, useLocalSearchParams, type Href } from "expo-router";
 import {
   piecesForLook,
   type Closet,
   type Piece,
 } from "../../src/domain/closet";
+import { needsDetails } from "../../src/domain/facts";
+import { wearCounts } from "../../src/domain/scoring/taste";
 import { setMembers } from "../../src/domain/sets";
 import { clockFor, stylePiece } from "../../src/domain/today";
-import { setArchived } from "../../src/domain/wardrobe";
+import { costPerWear, setArchived } from "../../src/domain/wardrobe";
 import { FactChips } from "../../src/features/piece/FactChips";
 import { usePiece, wearLine } from "../../src/features/piece/usePiece";
-import { locale, t } from "../../src/i18n";
+import { listName, locale, t } from "../../src/i18n";
 import { fibreLabel } from "../../src/state/careLabel";
 import { now } from "../../src/state/clock";
 import {
@@ -32,7 +34,6 @@ type CareLabel = NonNullable<Piece["label"]>;
 function labelMeta(label: CareLabel | undefined): string | undefined {
   if (!label) return undefined;
   const percent = new Intl.NumberFormat(locale, { style: "percent" });
-  const list = new Intl.ListFormat(locale, { type: "unit", style: "narrow" });
   const fibres = label.materials.map((material) =>
     material.percent === null
       ? fibreLabel(material.fibre)
@@ -42,7 +43,7 @@ function labelMeta(label: CareLabel | undefined): string | undefined {
         }),
   );
   const parts = [
-    fibres.length ? list.format(fibres) : "",
+    fibres.length ? listName(fibres) : "",
     label.size ? t("careLabel.lineSize", { size: label.size }) : "",
     label.brand ? t("careLabel.lineBrand", { brand: label.brand }) : "",
     label.origin ? t("careLabel.lineOrigin", { origin: label.origin }) : "",
@@ -50,15 +51,29 @@ function labelMeta(label: CareLabel | undefined): string | undefined {
   return parts.length ? parts.join("\n") : undefined;
 }
 
+function costLine(piece: Piece, closet: Closet): string | null {
+  const cost = costPerWear(piece, wearCounts(closet.feedback)[piece.id] ?? 0);
+  if (cost === null || !piece.price) return null;
+  const price = new Intl.NumberFormat(locale, {
+    style: "currency",
+    currency: piece.price.currency,
+    maximumFractionDigits: cost < 100 ? 2 : 0,
+  }).format(cost);
+  return t("piece.costPerWear", { price });
+}
+
 export default function PieceDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { closet, piece, change, error } = usePiece(id);
   const [busy, setBusy] = useState(false);
+  const { height } = useWindowDimensions();
 
   if (!piece) return <Screen gone={{ title: t("piece.missing.title") }} />;
 
   const pieceId = piece.id;
   const archived = piece.status === "archived";
+  const cost = costLine(piece, closet);
+  const missing = needsDetails(piece).length;
   const away = piece.status === "away";
   const looks = closet.looks.filter((look) => look.pieceIds.includes(pieceId));
   const members = setMembers(closet, piece);
@@ -137,12 +152,14 @@ export default function PieceDetail() {
       footer={<Footer primary={{ ...primary, busy }} error={error} />}
       testID="piece-detail"
     >
-      <Tile
-        image={piece}
-        size="hero"
-        accessibilityLabel={piece.name}
-        testID="piece-hero"
-      />
+      <View style={[styles.hero, { maxWidth: height * 0.36 }]}>
+        <Tile
+          image={piece}
+          size="hero"
+          accessibilityLabel={piece.name}
+          testID="piece-hero"
+        />
+      </View>
       <View style={styles.title}>
         <Text role="title" accessibilityRole="header">
           {piece.name}
@@ -150,6 +167,11 @@ export default function PieceDetail() {
         <Text role="subhead" tone="muted" testID="piece-worn">
           {wearLine(closet, pieceId)}
         </Text>
+        {cost ? (
+          <Text role="subhead" tone="muted" testID="piece-cost">
+            {cost}
+          </Text>
+        ) : null}
       </View>
       <Section title={t("piece.facts.title")} testID="piece-facts">
         <FactChips key={pieceId} piece={piece} onChange={change} />
@@ -175,6 +197,19 @@ export default function PieceDetail() {
         </Section>
       ) : null}
       <Rows>
+        {missing ? (
+          <Row
+            title={t("piece.addDetails", { count: missing })}
+            trailing="chevron"
+            testID="piece-add-details"
+            onPress={() =>
+              router.push({
+                pathname: "/piece/edit/[id]",
+                params: { id: pieceId, more: "1" },
+              })
+            }
+          />
+        ) : null}
         <Row
           title={t("careLabel.title")}
           meta={labelMeta(piece.label)}
@@ -232,5 +267,6 @@ export default function PieceDetail() {
 
 const styles = StyleSheet.create({
   title: { gap: theme.space.xs },
+  hero: { width: "100%", alignSelf: "center" },
   actions: { alignItems: "flex-start" },
 });

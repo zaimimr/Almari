@@ -23,8 +23,8 @@ appId: com.zaimimran.almari
     id: "select-put-away"
 - assertNotVisible:
     id: "tile-seed-hijab"
-- tapOn:
-    id: "header-cancel"
+- assertVisible:
+    id: "header-select"
 - runFlow: ../lib/open-filter.yaml
 - waitForAnimationToEnd
 - swipe:

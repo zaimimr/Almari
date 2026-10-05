@@ -1,4 +1,5 @@
-import type { Closet, Piece } from "./closet";
+import { categories, type Category, type Closet, type Piece } from "./closet";
+import { colorName } from "./color";
 import { filterPieces, lastWorn, noFilter } from "./closetFilters";
 import { needsDetails } from "./facts";
 import { wearDate } from "./looks";
@@ -119,5 +120,67 @@ export function completeness(closet: Closet): {
       .filter(([, done]) => !done)
       .slice(0, 3)
       .map(([key]) => key),
+  };
+}
+
+export type ClosetBreakdown = {
+  pieces: number;
+  colours: { name: string; count: number }[];
+  categories: { id: Category; count: number }[];
+  mostWorn: { piece: Piece; count: number }[];
+  leastWorn: { piece: Piece; count: number }[];
+  wearsThisMonth: number;
+};
+
+export function closetBreakdown(closet: Closet, now: Clock): ClosetBreakdown {
+  const pieces = closet.pieces.filter(
+    (piece) => piece.source === "owned" && piece.status !== "archived",
+  );
+  const wear = wearCounts(closet.feedback);
+  const colourCounts = new Map<string, number>();
+  for (const piece of pieces) {
+    const main = piece.colors?.[0];
+    if (!main) continue;
+    const name = colorName(main.rgb);
+    colourCounts.set(name, (colourCounts.get(name) ?? 0) + 1);
+  }
+  const month = now.localDate.slice(0, 7);
+  const owned = new Set(pieces.map((piece) => piece.id));
+  const wearsThisMonth = closet.feedback
+    .filter(
+      (event) =>
+        event.kind === "wore" &&
+        !event.undone &&
+        wearDate(closet, event.at).startsWith(`${month}-`),
+    )
+    .reduce(
+      (total, event) =>
+        total + event.pieceIds.filter((id) => owned.has(id)).length,
+      0,
+    );
+  const counted = pieces.map((piece) => ({
+    piece,
+    count: wear[piece.id] ?? 0,
+  }));
+  return {
+    pieces: pieces.length,
+    colours: [...colourCounts]
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name)),
+    categories: categories
+      .map(({ id }) => ({
+        id,
+        count: pieces.filter((piece) => piece.category === id).length,
+      }))
+      .filter((entry) => entry.count > 0),
+    mostWorn: ranked(pieces, wear).slice(0, 3),
+    leastWorn: counted
+      .sort(
+        (a, b) =>
+          a.count - b.count ||
+          Date.parse(a.piece.createdAt) - Date.parse(b.piece.createdAt),
+      )
+      .slice(0, 3),
+    wearsThisMonth,
   };
 }

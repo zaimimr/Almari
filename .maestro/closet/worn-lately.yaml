@@ -35,8 +35,8 @@ appId: com.zaimimran.almari
 - tapOn:
     id: "worn-yesterday"
 - assertVisible: "Worn yesterday"
-- tapOn:
-    id: "header-cancel"
+- assertVisible:
+    id: "header-select"
 - scrollUntilVisible:
     element:
       id: "chip-more"

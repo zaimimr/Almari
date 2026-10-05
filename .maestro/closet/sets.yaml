@@ -19,12 +19,12 @@ appId: com.zaimimran.almari
 - tapOn:
     id: "tile-seed-hijab"
 - assertVisible: "2 selected"
+- assertNotVisible:
+    id: "closet-stats"
 - takeScreenshot: docs/redesign/screens/after/closet/select
 - tapOn:
     id: "select-link"
 - assertVisible: "Linked"
-- tapOn:
-    id: "header-cancel"
 - assertVisible:
     id: "header-select"
 - tapOn:

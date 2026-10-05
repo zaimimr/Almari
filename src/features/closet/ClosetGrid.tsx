@@ -1,16 +1,30 @@
-import { useMemo, type ReactElement } from "react";
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  type ReactElement,
+} from "react";
 import { FlatList, StyleSheet, useWindowDimensions, View } from "react-native";
 import type { Piece } from "../../domain/closet";
 import type { ClosetSection } from "../../domain/closetFilters";
 import { mainColourName } from "../../domain/color";
 import { needsDetails } from "../../domain/facts";
-import { t } from "../../i18n";
-import { Symbol, Tile } from "../../ui";
+import { categoryName, t } from "../../i18n";
+import { Symbol, Text, Tile } from "../../ui";
 import { gutterFor, theme } from "../../ui/theme";
+import { useColors } from "../../ui/useColors";
 import { colourLabel } from "../ColourChips";
 
 const columns = 3;
 const gap = 2;
+
+type Item =
+  | { type: "chips" }
+  | { type: "header" }
+  | { type: "section"; section: ClosetSection }
+  | { type: "row"; key: string; pieces: Piece[] };
 
 const metaOf = (piece: Piece) =>
   piece.status === "away"
@@ -32,98 +46,216 @@ function tileLabel(piece: Piece, meta: string | undefined) {
     .join(", ");
 }
 
-export function ClosetGrid({
-  sections,
+const sectionTitle = (section: ClosetSection) =>
+  section.id === "samples"
+    ? t("closet.samples")
+    : t("closet.section", {
+        category: categoryName(section.id),
+        count: section.pieces.length,
+      });
+
+const sectionLabel = (section: ClosetSection) =>
+  section.id === "samples"
+    ? t("closet.samples")
+    : t("closet.sectionLabel", {
+        category: categoryName(section.id),
+        pieces:
+          section.pieces.length === 1
+            ? t("common.pieceCountOne")
+            : t("common.pieceCountMany", { count: section.pieces.length }),
+      });
+
+const Row = memo(function Row({
+  pieces,
+  side,
   selecting,
   selected,
+  onPress,
+  onLongPress,
+}: {
+  pieces: Piece[];
+  side: number;
+  selecting: boolean;
+  selected: string;
+  onPress: (piece: Piece) => void;
+  onLongPress: (piece: Piece) => void;
+}) {
+  const colors = useColors();
+  const chosen = selected.split(",");
+  return (
+    <View style={styles.row}>
+      {pieces.map((piece) => {
+        const meta = metaOf(piece);
+        const isSelected = chosen.includes(piece.id);
+        return (
+          <View key={piece.id} style={{ width: side }}>
+            <View style={meta && !selecting ? styles.away : null}>
+              <Tile
+                image={piece}
+                size="cell"
+                dot={hasDot(piece)}
+                selected={selecting && isSelected}
+                selectedLabel={
+                  selecting && !isSelected ? t("common.notSelected") : undefined
+                }
+                onPress={() => onPress(piece)}
+                onLongPress={() => onLongPress(piece)}
+                accessibilityLabel={tileLabel(piece, meta)}
+                testID={`tile-${piece.id}`}
+              />
+            </View>
+            {meta ? (
+              <View
+                style={[styles.moon, { backgroundColor: colors.scrimPill }]}
+                pointerEvents="none"
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+              >
+                <Symbol name="moon.zzz" size={13} tone="onMedia" />
+              </View>
+            ) : null}
+          </View>
+        );
+      })}
+    </View>
+  );
+});
+
+export function ClosetGrid({
+  sections,
+  headings,
+  selecting,
+  selected,
+  chips,
   header,
   empty,
   onPress,
   onLongPress,
 }: {
   sections: ClosetSection[];
+  headings: boolean;
   selecting: boolean;
   selected: string[];
+  chips: ReactElement;
   header: ReactElement;
   empty?: ReactElement;
   onPress: (piece: Piece) => void;
   onLongPress: (piece: Piece) => void;
 }) {
+  const colors = useColors();
   const { width } = useWindowDimensions();
   const gutter = gutterFor(width);
-  const pieces = useMemo(
-    () => sections.flatMap((section) => section.pieces),
-    [sections],
-  );
   const side = (width - gap * (columns - 1)) / columns;
+  const items = useMemo(() => {
+    const list: Item[] = [{ type: "chips" }, { type: "header" }];
+    const pieces = (section: ClosetSection) => {
+      for (let start = 0; start < section.pieces.length; start += columns) {
+        const row = section.pieces.slice(start, start + columns);
+        list.push({ type: "row", key: row[0]!.id, pieces: row });
+      }
+    };
+    if (headings)
+      for (const section of sections) {
+        list.push({ type: "section", section });
+        pieces(section);
+      }
+    else
+      pieces({
+        id: "samples",
+        pieces: sections.flatMap((section) => section.pieces),
+      });
+    return list;
+  }, [sections, headings]);
+  const handlers = useRef({ onPress, onLongPress });
+  useEffect(() => {
+    handlers.current = { onPress, onLongPress };
+  });
+  const press = useCallback(
+    (piece: Piece) => handlers.current.onPress(piece),
+    [],
+  );
+  const longPress = useCallback(
+    (piece: Piece) => handlers.current.onLongPress(piece),
+    [],
+  );
 
   return (
     <FlatList
-      data={pieces}
-      keyExtractor={(piece) => piece.id}
-      numColumns={columns}
-      extraData={selected}
+      data={items}
+      keyExtractor={(item) =>
+        item.type === "row"
+          ? item.key
+          : item.type === "section"
+            ? `section-${item.section.id}`
+            : item.type
+      }
+      stickyHeaderIndices={[0]}
       style={{ marginHorizontal: -gutter }}
       contentInsetAdjustmentBehavior="automatic"
       keyboardShouldPersistTaps="handled"
       keyboardDismissMode="on-drag"
       automaticallyAdjustKeyboardInsets={false}
-      columnWrapperStyle={styles.row}
       contentContainerStyle={styles.content}
-      ListHeaderComponent={header}
-      ListHeaderComponentStyle={[styles.header, { paddingHorizontal: gutter }]}
-      ListEmptyComponent={
-        empty ? (
+      ListFooterComponent={
+        items.length === 2 && empty ? (
           <View style={{ paddingHorizontal: gutter }}>{empty}</View>
         ) : null
       }
       testID="closet-grid"
-      renderItem={({ item: piece }) => {
-        const meta = metaOf(piece);
-        const isSelected = selected.includes(piece.id);
-        return (
-          <View style={{ width: side }}>
-            <Tile
-              image={piece}
-              size="cell"
-              dot={hasDot(piece)}
-              selected={selecting && isSelected}
-              selectedLabel={
-                selecting && !isSelected ? t("common.notSelected") : undefined
-              }
-              onPress={() => onPress(piece)}
-              onLongPress={() => onLongPress(piece)}
-              accessibilityLabel={tileLabel(piece, meta)}
-              testID={`tile-${piece.id}`}
-            />
-            {meta ? (
-              <View
-                style={styles.away}
-                pointerEvents="none"
-                accessibilityElementsHidden
-                importantForAccessibility="no-hide-descendants"
-              >
-                <Symbol name="moon.zzz" size={13} tone="muted" />
-              </View>
-            ) : null}
+      renderItem={({ item }) =>
+        item.type === "chips" ? (
+          <View
+            style={[
+              styles.chips,
+              { paddingHorizontal: gutter, backgroundColor: colors.canvas },
+            ]}
+          >
+            {chips}
           </View>
-        );
-      }}
+        ) : item.type === "header" ? (
+          <View style={[styles.header, { paddingHorizontal: gutter }]}>
+            {header}
+          </View>
+        ) : item.type === "section" ? (
+          <Text
+            role="headline"
+            accessibilityRole="header"
+            accessibilityLabel={sectionLabel(item.section)}
+            style={[styles.section, { paddingHorizontal: gutter }]}
+            testID={`section-${item.section.id}`}
+          >
+            {sectionTitle(item.section)}
+          </Text>
+        ) : (
+          <Row
+            pieces={item.pieces}
+            side={side}
+            selecting={selecting}
+            selected={item.pieces
+              .filter((piece) => selected.includes(piece.id))
+              .map((piece) => piece.id)
+              .join(",")}
+            onPress={press}
+            onLongPress={longPress}
+          />
+        )
+      }
     />
   );
 }
 
 const styles = StyleSheet.create({
+  chips: { paddingVertical: theme.space.sm },
   header: { gap: theme.space.lg, paddingBottom: theme.space.lg },
-  content: {
-    gap,
-    paddingTop: theme.space.sm,
-    paddingBottom: theme.space.footerInset,
-  },
-  row: { gap },
-  away: {
+  content: { gap, paddingBottom: theme.space.footerInset },
+  section: { paddingTop: theme.space.md, paddingBottom: theme.space.sm },
+  row: { flexDirection: "row", gap },
+  away: { opacity: 0.5 },
+  moon: {
     position: "absolute",
     right: theme.space.sm,
     bottom: theme.space.sm,
+    padding: theme.space.xs,
+    borderRadius: theme.radius.full,
   },
 });

@@ -123,7 +123,7 @@ export function Footer({
     </Text>
   ) : null;
   const row = Boolean(rowActions || actionsContent);
-  const rowContent = actionsContent ?? errorText;
+  const rowContent = actionsContent;
 
   const button = (props: ButtonProps) => (
     <Button size="regular" media={media} {...props} />
@@ -143,14 +143,11 @@ export function Footer({
       <LayoutAnimationConfig skipEntering>
         {pairLayer}
         {actionLayer}
+        {row ? errorText : null}
         {row ? (
           <View style={{ minHeight: rowHeight }}>
             {rowContent ? (
-              <Animated.View
-                key={actionsContent ? "content" : "error"}
-                entering={fadeIn}
-                exiting={exiting}
-              >
+              <Animated.View key="content" entering={fadeIn} exiting={exiting}>
                 {rowContent}
               </Animated.View>
             ) : (

@@ -5,7 +5,7 @@ import {
   type CaptureProgress,
 } from "../../../src/domain/importing";
 import { categoryName, t, type Key } from "../../../src/i18n";
-import { addPiecesRoute } from "../../../src/state/imports";
+import { addPiecesRoute, canPrepareOnDevice } from "../../../src/state/imports";
 import { AddedBanner } from "../../../src/features/closet/AddedBanner";
 import { ClosetGrid } from "../../../src/features/closet/ClosetGrid";
 import {
@@ -14,7 +14,15 @@ import {
 } from "../../../src/features/closet/FilterPanel";
 import { SelectFooter } from "../../../src/features/closet/SelectFooter";
 import { useClosetScreen } from "../../../src/features/closet/useClosetScreen";
-import { Banner, EmptyState, HeaderItem, Screen } from "../../../src/ui";
+import {
+  Banner,
+  Button,
+  Chip,
+  EmptyState,
+  HeaderItem,
+  Screen,
+  Text,
+} from "../../../src/ui";
 import { theme } from "../../../src/ui/theme";
 import { useLargeText } from "../../../src/ui/useLargeText";
 
@@ -73,6 +81,9 @@ export default function ClosetScreen() {
   const progress = captureProgress(closet);
   const empty = closet.pieces.length === 0;
   const putAwayShown = filter.availability === "archived";
+  const showFooter =
+    selecting || Boolean(screen.result && "text" in screen.result);
+  const count = screen.visible.length;
 
   const header = (
     <View style={styles.header}>
@@ -111,6 +122,28 @@ export default function ClosetScreen() {
     />
   ) : null;
 
+  const laundry =
+    !selecting && (screen.load.length || screen.washing.length) ? (
+      <View style={styles.chips}>
+        {screen.load.length ? (
+          <Chip
+            kind="action"
+            label={t("closet.intoWash", { count: screen.load.length })}
+            onPress={() => screen.laundry(false)}
+            testID="closet-into-wash"
+          />
+        ) : null}
+        {screen.washing.length ? (
+          <Chip
+            kind="action"
+            label={t("closet.laundryDone", { count: screen.washing.length })}
+            onPress={() => screen.laundry(true)}
+            testID="closet-laundry-done"
+          />
+        ) : null}
+      </View>
+    ) : null;
+
   return (
     <Screen
       large
@@ -127,20 +160,24 @@ export default function ClosetScreen() {
           ? undefined
           : {
               placeholder: t("closet.search"),
+              ref: screen.searchRef,
               onChangeText: (search) => screen.change({ search }),
             }
       }
       footer={
-        selecting ? (
+        showFooter ? (
           <SelectFooter
+            selecting={selecting}
             canAct={screen.owned.length > 0}
+            canLink={screen.owned.length > 1}
             putAwayShown={putAwayShown}
-            wornOpen={screen.wornOpen}
+            expanded={screen.expanded}
             result={screen.result}
-            onWornToggle={() => screen.setWornOpen(!screen.wornOpen)}
+            onExpand={screen.setExpanded}
             onWorn={screen.markWorn}
             onLink={screen.linkSelected}
             onPutAway={() => screen.putAway(!putAwayShown)}
+            onChange={screen.changeAll}
           />
         ) : undefined
       }
@@ -154,10 +191,25 @@ export default function ClosetScreen() {
               mark
               title={t("closet.firstTitle")}
               action={{
-                label: t("closet.addPieces"),
-                onPress: () => router.push(addPiecesRoute),
+                label: canPrepareOnDevice
+                  ? t("closet.scan")
+                  : t("closet.addPhoto"),
+                icon: canPrepareOnDevice ? "viewfinder" : "camera",
+                onPress: () =>
+                  router.push(
+                    canPrepareOnDevice ? "/capture/scan" : addPiecesRoute,
+                  ),
                 testID: "closet-empty-add",
               }}
+              secondary={
+                canPrepareOnDevice
+                  ? {
+                      label: t("closet.addPhoto"),
+                      onPress: () => router.push(addPiecesRoute),
+                      testID: "closet-empty-photo",
+                    }
+                  : undefined
+              }
               testID="closet-empty"
             />
           )}
@@ -165,17 +217,21 @@ export default function ClosetScreen() {
       ) : (
         <ClosetGrid
           sections={screen.sections}
+          headings={filter.category === "all" && screen.sections.length > 1}
           selecting={selecting}
           selected={selected}
+          chips={
+            <FilterRow
+              filter={filter}
+              offered={screen.offered}
+              forgotten={screen.forgotten}
+              open={screen.panelOpen}
+              onToggle={() => screen.setPanelOpen(!screen.panelOpen)}
+              onChange={screen.change}
+            />
+          }
           header={
             <>
-              <FilterRow
-                filter={filter}
-                offered={screen.offered}
-                open={screen.panelOpen}
-                onToggle={() => screen.setPanelOpen(!screen.panelOpen)}
-                onChange={screen.change}
-              />
               {screen.panelOpen ? (
                 <FilterPanel
                   filter={filter}
@@ -186,18 +242,49 @@ export default function ClosetScreen() {
                 />
               ) : null}
               {banner}
+              {laundry}
+              {count ? (
+                <View style={styles.summary}>
+                  <Text role="subhead" tone="muted" testID="closet-count">
+                    {count === 1
+                      ? t("common.pieceCountOne")
+                      : t("common.pieceCountMany", { count })}
+                  </Text>
+                  {selecting ? null : (
+                    <Button
+                      variant="quiet"
+                      size="small"
+                      label={t("closet.stats")}
+                      onPress={() => router.push("/closet/stats")}
+                      testID="closet-stats"
+                    />
+                  )}
+                </View>
+              ) : null}
             </>
           }
           empty={
-            <EmptyState
-              title={t("closet.noneFoundTitle")}
-              secondary={
-                screen.panelOpen
-                  ? undefined
-                  : { label: t("closet.clearFilters"), onPress: screen.clear }
-              }
-              testID="closet-none"
-            />
+            screen.allPutAway && !putAwayShown ? (
+              <EmptyState
+                title={t("closet.allPutAwayTitle")}
+                secondary={{
+                  label: t("closet.showPutAway"),
+                  onPress: () => screen.change({ availability: "archived" }),
+                  testID: "closet-show-put-away",
+                }}
+                testID="closet-all-put-away"
+              />
+            ) : (
+              <EmptyState
+                title={t("closet.noneFoundTitle")}
+                secondary={
+                  screen.panelOpen
+                    ? undefined
+                    : { label: t("closet.clearFilters"), onPress: screen.clear }
+                }
+                testID="closet-none"
+              />
+            )
           }
           onPress={(piece) =>
             selecting
@@ -217,4 +304,10 @@ export default function ClosetScreen() {
 const styles = StyleSheet.create({
   header: { flexDirection: "row", alignItems: "center", gap: theme.space.sm },
   content: { gap: theme.space.lg },
+  chips: { flexDirection: "row", flexWrap: "wrap", gap: theme.space.sm },
+  summary: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
 });

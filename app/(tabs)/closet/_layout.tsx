@@ -5,6 +5,7 @@ export default function ClosetLayout() {
   return (
     <Stack screenOptions={stackOptions}>
       <Stack.Screen name="index" />
+      <Stack.Screen name="stats" />
     </Stack>
   );
 }

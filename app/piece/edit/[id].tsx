@@ -2,6 +2,7 @@ import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { router, useLocalSearchParams } from "expo-router";
+import { getLocales } from "expo-localization";
 import { fitAttributes } from "../../../src/domain/attributes";
 import {
   categories,
@@ -15,17 +16,24 @@ import {
   usedIn,
   type Category,
   type GarmentKind,
+  type Closet,
   type Piece,
 } from "../../../src/domain/closet";
-import { mainColourName } from "../../../src/domain/color";
+import {
+  colourNames,
+  mainColourName,
+  namedSwatch,
+} from "../../../src/domain/color";
+import { setColour } from "../../../src/domain/facts";
 import { pieceCutout } from "../../../src/domain/cutout";
 import { filesInUse } from "../../../src/domain/importing";
 import { confirmEdits } from "../../../src/domain/recognition";
 import { unlinkPiece } from "../../../src/domain/sets";
 import { dropFromToday } from "../../../src/domain/today";
-import { setArchived } from "../../../src/domain/wardrobe";
+import { defaultCurrency, setArchived } from "../../../src/domain/wardrobe";
 import { useDiscardChanges } from "../../../src/navigation/useDiscardChanges";
 import { categoryName, kindName, t } from "../../../src/i18n";
+import { colourLabel } from "../../../src/features/ColourChips";
 import { useCloset } from "../../../src/state/closet";
 import { canPrepareOnDevice, measurePiece } from "../../../src/state/imports";
 import { studioAvailable, useStudioMaker } from "../../../src/state/studio";
@@ -68,8 +76,28 @@ const leftovers = (piece: Piece) =>
     piece.variants?.studio,
   ].filter((file): file is string => Boolean(file));
 
+const hex = (name: string) =>
+  `#${namedSwatch(name)
+    .rgb.map((part) => part.toString(16).padStart(2, "0"))
+    .join("")}`;
+
+const paletteName = (piece: Piece) => {
+  const main = mainColourName(piece.colors);
+  return colourNames.find((option) => option.toLowerCase() === main) ?? null;
+};
+
+const priceText = (piece: Piece) =>
+  piece.price ? String(piece.price.amount) : "";
+
+const parsePrice = (text: string) => {
+  const trimmed = text.trim().replace(",", ".");
+  if (!trimmed) return null;
+  const amount = Number(trimmed);
+  return Number.isFinite(amount) && amount >= 0 ? amount : undefined;
+};
+
 export default function EditPiece() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, more } = useLocalSearchParams<{ id: string; more?: string }>();
   const { closet } = useCloset();
   const piece = closet.pieces.find((item) => item.id === id);
   if (!piece)
@@ -79,10 +107,10 @@ export default function EditPiece() {
         gone={{ title: t("piece.missing.title") }}
       />
     );
-  return <Editor key={piece.id} piece={piece} />;
+  return <Editor key={piece.id} piece={piece} moreOpen={more === "1"} />;
 }
 
-function Editor({ piece }: { piece: Piece }) {
+function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
   const { closet, update } = useCloset();
   const sample = piece.source === "sample";
   const [name, setName] = useState(piece.name);
@@ -91,14 +119,19 @@ function Editor({ piece }: { piece: Piece }) {
   const [photo, setPhoto] = useState(piece.photo);
   const [newPhoto, setNewPhoto] = useState<string | null>(null);
   const [leaveSet, setLeaveSet] = useState(false);
-  const [more, setMore] = useState(false);
+  const [more, setMore] = useState(moreOpen);
+  const [facts, setFacts] = useState(piece);
+  const [price, setPrice] = useState(priceText(piece));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const studio = useStudioMaker();
 
   const categoryChanged = category !== piece.category;
   const kindMissing = categoryChanged && (!kind || !isOffered(kind));
+  const amount = parsePrice(price);
   const dirty =
+    facts !== piece ||
+    price.trim() !== priceText(piece) ||
     name.trim() !== piece.name ||
     categoryChanged ||
     kind !== piece.kind ||
@@ -106,7 +139,24 @@ function Editor({ piece }: { piece: Piece }) {
     newPhoto !== null ||
     leaveSet;
   const allowClose = useDiscardChanges(dirty, busy);
-  const valid = Boolean(name.trim()) && !kindMissing;
+  const valid = Boolean(name.trim()) && !kindMissing && amount !== undefined;
+
+  const changeFacts = async (transform: (current: Closet) => Closet) => {
+    const next = transform({
+      ...closet,
+      pieces: closet.pieces.map((item) =>
+        item.id === piece.id ? facts : item,
+      ),
+    });
+    setFacts(next.pieces.find((item) => item.id === piece.id) ?? facts);
+  };
+  const colour = paletteName(facts);
+  const [colourOrder] = useState(() => {
+    const first = paletteName(piece);
+    return first
+      ? [first, ...colourNames.filter((option) => option !== first)]
+      : colourNames;
+  });
 
   const variantPiece = { ...piece, photo };
   const shown = newPhoto ? null : shownOf(piece, photo);
@@ -188,16 +238,32 @@ function Editor({ piece }: { piece: Piece }) {
     }
   }
 
-  async function save() {
-    if (!dirty || !valid || busy) return;
+  async function save(archive = false) {
+    if (busy || (!archive && (!dirty || !valid))) return;
+    if (archive && !(dirty && valid)) {
+      await putAway();
+      return;
+    }
     setBusy(true);
     setError(null);
     let copied: string | null = null;
     try {
       const kept = newPhoto ? (copied = await keepPhoto(newPhoto)) : photo;
       const fixed = kind ? fixedStyles(kind) : undefined;
+      const { price: _price, ...rest } = facts;
       const base: Piece = {
-        ...piece,
+        ...rest,
+        ...(amount === null || amount === undefined
+          ? {}
+          : {
+              price: {
+                amount,
+                currency:
+                  piece.price?.currency ??
+                  getLocales()[0]?.currencyCode ??
+                  defaultCurrency,
+              },
+            }),
         name: name.trim(),
         category,
         photo: kept,
@@ -221,8 +287,12 @@ function Editor({ piece }: { piece: Piece }) {
         : confirmed;
       await update((current) => {
         const saved = savePiece(current, next);
-        return leaveSet ? unlinkPiece(saved, piece.id) : saved;
+        const linked = leaveSet ? unlinkPiece(saved, piece.id) : saved;
+        return archive
+          ? dropFromToday(setArchived(linked, piece.id, true), piece.id)
+          : linked;
       });
+      if (archive) announce(t("result.putAway"));
       if (newPhoto) {
         for (const file of new Set(leftovers(piece)))
           void discardPhoto(file).catch(() => undefined);
@@ -306,177 +376,207 @@ function Editor({ piece }: { piece: Piece }) {
       }
       testID="piece-edit-screen"
     >
-      <Tile
-        image={newPhoto ? { uri: newPhoto } : variantPiece}
-        size="hero"
-        raw={Boolean(newPhoto) || shown === "original"}
-        state={studio.making ? "preparing" : undefined}
-        busyLabel={t("photo.cleanMaking")}
-        accessibilityLabel={t("editor.photoPreview")}
-        testID={studio.making ? "moment-generating" : "edit-hero"}
-      />
-      {sample ? (
-        <Text role="subhead" tone="muted">
-          {t("closet.sample")}
-        </Text>
-      ) : (
-        <>
-          {(hasVariants && !newPhoto && options.length) || cutoutOffered ? (
-            <PhotoToolbar
-              options={hasVariants && !newPhoto ? options : []}
-              value={shown ?? "cutout"}
-              onChange={(next) => {
-                if (!busy) pickShown(next);
-              }}
-              adjust={
-                cutoutOffered
-                  ? {
-                      label: cutout?.cutout
-                        ? t("photo.adjust")
-                        : t("cutout.byHand"),
-                      disabled:
-                        busy ||
-                        (Boolean(cutout?.cutout) && shown === "original"),
-                      testID: "edit-cutout",
-                      onPress: () =>
-                        router.push({
-                          pathname: "/cutout/[id]",
-                          params: { id: piece.id, target: "piece" },
-                        }),
-                    }
-                  : null
-              }
-              making={studio.making}
-              testID="edit-photo"
-            />
-          ) : null}
-          <View style={styles.photoRow}>
-            <Button
-              variant="secondary"
-              icon="camera"
-              label={t("common.takePhoto")}
-              disabled={busy}
-              testID="edit-take-photo"
-              onPress={() => void pick("camera")}
-            />
-            <Button
-              variant="secondary"
-              icon="photo.on.rectangle"
-              label={t("common.choosePhoto")}
-              disabled={busy}
-              testID="edit-choose-photo"
-              onPress={() => void pick("library")}
-            />
-          </View>
-        </>
-      )}
-      <Field
-        label={t("piece.name")}
-        placeholder={t("editor.nameHint")}
-        value={name}
-        onChangeText={setName}
-        maxLength={80}
-        editable={!busy}
-        returnKeyType="done"
-        testID="edit-name"
-      />
-      <ChipRow
-        label={t("piece.category")}
-        options={categories.map((option) => ({
-          id: option.id,
-          label: categoryName(option.id),
-        }))}
-        value={category}
-        onChange={(next) => {
-          if (typeof next !== "string" || busy) return;
-          setCategory(next as Category);
-          setKind(next === piece.category ? piece.kind : undefined);
-        }}
-        testID="edit-category"
-      />
-      {categoryChanged ? (
-        <View style={styles.group}>
-          <ChipRow
-            label={t("piece.kind")}
-            options={kindsIn(category).map((option) => ({
-              id: option.id,
-              label: kindName(option.id),
-            }))}
-            value={kind ?? null}
-            optional={sample}
-            onChange={(next) => {
-              if (busy) return;
-              setKind(
-                typeof next === "string" ? (next as GarmentKind) : undefined,
-              );
-            }}
-            testID="edit-kind"
-          />
-          {kindMissing && !sample ? (
-            <Text role="footnote" tone="error">
-              {t("piece.kindRequired")}
-            </Text>
-          ) : null}
-        </View>
-      ) : null}
-      {moreFacts(piece).length ? (
-        <Expander
-          id="edit-more"
-          title={t("editor.moreDetails")}
-          open={more}
-          onToggle={() => setMore((open) => !open)}
-          testID="edit-more"
-        >
-          <FactChips piece={piece} onChange={update} more />
-        </Expander>
-      ) : null}
-      {piece.setId ? (
-        leaveSet ? (
-          <ResultBar
-            text={t("sets.removed")}
-            focus
-            testID="edit-set-removed"
-            action={{
-              label: t("common.undo"),
-              onPress: () => setLeaveSet(false),
-            }}
-          />
+      <View style={styles.content}>
+        <Tile
+          image={newPhoto ? { uri: newPhoto } : variantPiece}
+          size="hero"
+          raw={Boolean(newPhoto) || shown === "original"}
+          state={studio.making ? "preparing" : undefined}
+          busyLabel={t("photo.cleanMaking")}
+          accessibilityLabel={t("editor.photoPreview")}
+          testID={studio.making ? "moment-generating" : "edit-hero"}
+        />
+        {sample ? (
+          <Text role="subhead" tone="muted">
+            {t("closet.sample")}
+          </Text>
         ) : (
-          <View style={styles.leading}>
-            <Button
-              variant="quiet"
-              label={t("sets.remove")}
-              disabled={busy}
-              testID="edit-leave-set"
-              onPress={() => setLeaveSet(true)}
+          <>
+            {(hasVariants && !newPhoto && options.length) || cutoutOffered ? (
+              <PhotoToolbar
+                options={hasVariants && !newPhoto ? options : []}
+                value={shown ?? "cutout"}
+                onChange={(next) => {
+                  if (!busy) pickShown(next);
+                }}
+                adjust={
+                  cutoutOffered
+                    ? {
+                        label: cutout?.cutout
+                          ? t("photo.adjust")
+                          : t("cutout.byHand"),
+                        disabled:
+                          busy ||
+                          (Boolean(cutout?.cutout) && shown === "original"),
+                        testID: "edit-cutout",
+                        onPress: () =>
+                          router.push({
+                            pathname: "/cutout/[id]",
+                            params: { id: piece.id, target: "piece" },
+                          }),
+                      }
+                    : null
+                }
+                making={studio.making}
+                testID="edit-photo"
+              />
+            ) : null}
+            <View style={styles.photoRow}>
+              <Button
+                variant="secondary"
+                icon="camera"
+                label={t("common.takePhoto")}
+                disabled={busy}
+                testID="edit-take-photo"
+                onPress={() => void pick("camera")}
+              />
+              <Button
+                variant="secondary"
+                icon="photo.on.rectangle"
+                label={t("common.choosePhoto")}
+                disabled={busy}
+                testID="edit-choose-photo"
+                onPress={() => void pick("library")}
+              />
+            </View>
+          </>
+        )}
+        <Field
+          label={t("piece.name")}
+          placeholder={t("editor.nameHint")}
+          value={name}
+          onChangeText={setName}
+          maxLength={80}
+          editable={!busy}
+          returnKeyType="done"
+          testID="edit-name"
+        />
+        <ChipRow
+          label={t("fact.colour")}
+          layout="scroll"
+          options={colourOrder.map((option) => ({
+            id: option,
+            label: colourLabel(option),
+            swatch: hex(option),
+          }))}
+          value={colour}
+          onChange={(next) => {
+            if (typeof next !== "string" || busy) return;
+            void changeFacts((current) => setColour(current, piece.id, next));
+          }}
+          testID="edit-colour"
+        />
+        <ChipRow
+          label={t("piece.category")}
+          options={categories.map((option) => ({
+            id: option.id,
+            label: categoryName(option.id),
+          }))}
+          value={category}
+          onChange={(next) => {
+            if (typeof next !== "string" || busy) return;
+            setCategory(next as Category);
+            setKind(next === piece.category ? piece.kind : undefined);
+          }}
+          testID="edit-category"
+        />
+        {categoryChanged ? (
+          <View style={styles.group}>
+            <ChipRow
+              label={t("piece.kind")}
+              options={kindsIn(category).map((option) => ({
+                id: option.id,
+                label: kindName(option.id),
+              }))}
+              value={kind ?? null}
+              optional={sample}
+              onChange={(next) => {
+                if (busy) return;
+                setKind(
+                  typeof next === "string" ? (next as GarmentKind) : undefined,
+                );
+              }}
+              testID="edit-kind"
             />
+            {kindMissing && !sample ? (
+              <Text role="footnote" tone="error">
+                {t("piece.kindRequired")}
+              </Text>
+            ) : null}
           </View>
-        )
-      ) : null}
-      <View style={styles.leading}>
-        {piece.status === "archived" ? null : (
-          <Button
-            variant="quiet"
-            icon="archivebox"
-            label={t("closet.putAwayAction")}
-            disabled={busy}
-            testID="edit-put-away"
-            onPress={() => void putAway()}
+        ) : null}
+        {moreFacts(facts).length ? (
+          <Expander
+            id="edit-more"
+            title={t("editor.moreDetails")}
+            open={more}
+            onToggle={() => setMore((open) => !open)}
+            testID="edit-more"
+          >
+            <FactChips piece={facts} onChange={changeFacts} more />
+          </Expander>
+        ) : null}
+        {sample ? null : (
+          <Field
+            label={t("piece.edit.price")}
+            value={price}
+            onChangeText={setPrice}
+            keyboardType="decimal-pad"
+            maxLength={10}
+            editable={!busy}
+            error={amount === undefined ? t("piece.edit.priceInvalid") : null}
+            testID="edit-price"
           />
         )}
-        <Button
-          variant="destructive"
-          label={t("editor.remove")}
-          disabled={busy}
-          testID="edit-remove"
-          onPress={() => void remove()}
-        />
+        {piece.setId ? (
+          leaveSet ? (
+            <ResultBar
+              text={t("sets.removed")}
+              focus
+              testID="edit-set-removed"
+              action={{
+                label: t("common.undo"),
+                onPress: () => setLeaveSet(false),
+              }}
+            />
+          ) : (
+            <View style={styles.leading}>
+              <Button
+                variant="quiet"
+                label={t("sets.remove")}
+                disabled={busy}
+                testID="edit-leave-set"
+                onPress={() => setLeaveSet(true)}
+              />
+            </View>
+          )
+        ) : null}
+        <View style={styles.leading}>
+          {piece.status === "archived" ? null : (
+            <Button
+              variant="quiet"
+              icon="archivebox"
+              label={t("closet.putAwayAction")}
+              disabled={busy}
+              testID="edit-put-away"
+              onPress={() => void save(true)}
+            />
+          )}
+          <Button
+            variant="destructive"
+            label={t("editor.remove")}
+            disabled={busy}
+            testID="edit-remove"
+            onPress={() => void remove()}
+          />
+        </View>
       </View>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  content: { gap: theme.space.lg },
   leading: { alignItems: "flex-start", gap: theme.space.sm },
   photoRow: { flexDirection: "row", flexWrap: "wrap", gap: theme.space.sm },
   group: { gap: theme.space.sm },

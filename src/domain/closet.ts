@@ -128,7 +128,10 @@ export type Piece = {
   variants?: Variants;
   cutoutArea?: Frame;
   setId?: string;
+  price?: Price;
 };
+
+export type Price = { amount: number; currency: string };
 
 export type Prepared = {
   original: string;
@@ -686,7 +689,19 @@ function isPiece(value: unknown): value is Piece {
     optional(value.captureId, isString) &&
     optional(value.variants, isVariants) &&
     optional(value.cutoutArea, isFrame) &&
-    optional(value.setId, isString)
+    optional(value.setId, isString) &&
+    optional(value.price, isPrice)
+  );
+}
+
+function isPrice(value: unknown): value is Price {
+  return (
+    isRecord(value) &&
+    typeof value.amount === "number" &&
+    Number.isFinite(value.amount) &&
+    value.amount >= 0 &&
+    isString(value.currency) &&
+    /^[A-Z]{3}$/.test(value.currency)
   );
 }
 
