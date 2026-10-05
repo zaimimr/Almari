@@ -1,16 +1,59 @@
+import type { ReactNode } from "react";
 import { Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
+import Animated, {
+  FadeIn,
+  ReduceMotion,
+  withDelay,
+  type EntryExitAnimationFunction,
+} from "react-native-reanimated";
 import type { ColourProfile, Season } from "../../domain/closet";
-import { seasonColours } from "../../domain/colourAnalysis";
+import { drapePair } from "../../domain/seasons";
 import { t } from "../../i18n";
 import { Swatches, Text } from "../../ui";
+import { motion, timing, useReduceMotion } from "../../ui/motion";
 import { gutterFor, theme } from "../../ui/theme";
 import { useColors } from "../../ui/useColors";
 import { Drape, Drapes } from "./Drapes";
 import type { FaceBox, PhotoSize } from "./FacePhoto";
 import { named, seasonLabel, type Palette } from "./palette";
 
+const step = 110;
+
+function revealAt(reduce: boolean, index: number) {
+  if (reduce)
+    return FadeIn.duration(motion.duration.base).reduceMotion(
+      ReduceMotion.Never,
+    );
+  const delay = index * step;
+  const rise: EntryExitAnimationFunction = () => {
+    "worklet";
+    return {
+      initialValues: {
+        opacity: 0,
+        transform: [{ translateY: 18 }, { scale: 0.98 }],
+      },
+      animations: {
+        opacity: withDelay(delay, timing(1, "drape", "silk")),
+        transform: [
+          { translateY: withDelay(delay, timing(0, "drape", "fall")) },
+          { scale: withDelay(delay, timing(1, "drape", "fall")) },
+        ],
+      },
+    };
+  };
+  return rise;
+}
+
+function Reveal({ index, children }: { index: number; children: ReactNode }) {
+  const reduce = useReduceMotion();
+  return (
+    <Animated.View entering={revealAt(reduce, index)}>{children}</Animated.View>
+  );
+}
+
 export function SeasonHeading({ profile }: { profile: ColourProfile }) {
   const colors = useColors();
+  const reduce = useReduceMotion();
   const traits = [
     ["colours.undertone", `undertone.${profile.undertone}`],
     ["colours.depth", `depth.${profile.depth}`],
@@ -18,20 +61,29 @@ export function SeasonHeading({ profile }: { profile: ColourProfile }) {
   ] as const;
   return (
     <View style={styles.heading}>
-      <Text role="eyebrow" tone="muted">
-        {t("colours.yourSeason")}
-      </Text>
-      <Text role="display" accessibilityRole="header" testID="colours-season">
-        {seasonLabel(profile.season)}
-      </Text>
+      <Reveal index={0}>
+        <Text role="eyebrow" tone="muted">
+          {t("colours.yourSeason")}
+        </Text>
+      </Reveal>
+      <Animated.View key={profile.season} entering={revealAt(reduce, 1)}>
+        <Text role="display" accessibilityRole="header" testID="colours-season">
+          {seasonLabel(profile.season)}
+        </Text>
+      </Animated.View>
       <View style={[styles.traits, { borderColor: colors.line }]}>
-        {traits.map(([label, value]) => (
-          <View key={label} style={styles.trait} accessible>
+        {traits.map(([label, value], index) => (
+          <Animated.View
+            key={label}
+            style={styles.trait}
+            accessible
+            entering={revealAt(reduce, 2 + index)}
+          >
             <Text role="footnote" tone="muted">
               {t(label)}
             </Text>
             <Text role="headline">{t(value)}</Text>
-          </View>
+          </Animated.View>
         ))}
       </View>
     </View>
@@ -69,63 +121,61 @@ export function PaletteSections({
   );
 }
 
-function CloseSeasons({
+export function SeasonChoice({
   seasons,
-  current,
   photo,
   face,
   size,
-  width,
-  onPick,
+  onChoose,
 }: {
-  seasons: Season[];
-  current: Season;
+  seasons: [Season, Season];
   photo: string;
   face: FaceBox | null;
   size: PhotoSize | null;
-  width: number;
-  onPick: (season: Season) => void;
+  onChoose: (season: Season) => void;
 }) {
-  const colors = useColors();
-  const card = (width - theme.space.md) / 2;
+  const { width } = useWindowDimensions();
+  const content = width - 2 * gutterFor(width);
+  const card = (content - theme.space.md) / 2;
+  const drapes = drapePair(...seasons);
   return (
-    <View style={styles.section}>
-      <Text role="headline" accessibilityRole="header">
-        {t("colours.alsoClose")}
-      </Text>
-      <View style={styles.close}>
-        {seasons.map((season) => {
-          const selected = season === current;
-          return (
+    <View style={styles.choice} testID="colours-choice">
+      <Reveal index={0}>
+        <Text role="display" accessibilityRole="header">
+          {t("colours.choose")}
+        </Text>
+      </Reveal>
+      <View
+        style={styles.close}
+        accessibilityRole="radiogroup"
+        accessibilityLabel={t("colours.choose")}
+      >
+        {seasons.map((season, index) => (
+          <Reveal key={season} index={1 + index}>
             <Pressable
-              key={season}
-              onPress={() => onPick(season)}
+              onPress={() => onChoose(season)}
               accessibilityRole="radio"
-              accessibilityState={{ selected }}
+              accessibilityState={{ selected: false }}
               accessibilityLabel={seasonLabel(season)}
-              testID={`colours-close-${season}`}
-              style={styles.closeCard}
+              testID={`colours-choose-${season}`}
+              style={({ pressed }) => [
+                styles.closeCard,
+                pressed ? styles.pressed : null,
+              ]}
             >
-              <View
-                style={[
-                  styles.closeFrame,
-                  { borderColor: selected ? colors.plum : "transparent" },
-                ]}
-              >
-                <Drape
-                  colour={named(seasonColours(season)[0]!)}
-                  label={seasonLabel(season)}
-                  photo={photo}
-                  face={face}
-                  size={size}
-                  width={card - 8}
-                  height={card - 8}
-                  diameter={Math.round(card * 0.6)}
-                />
-              </View>
+              <Drape
+                colour={named(drapes[index]!)}
+                label={seasonLabel(season)}
+                photo={photo}
+                face={face}
+                size={size}
+                width={card}
+                height={Math.round(card * 1.5)}
+                diameter={Math.round(card * 0.8)}
+              />
             </Pressable>
-          );
-        })}
+          </Reveal>
+        ))}
       </View>
     </View>
   );
@@ -138,8 +188,6 @@ export function PaletteResult({
   face,
   size,
   plain,
-  close,
-  onPick,
   children,
 }: {
   profile: ColourProfile;
@@ -148,9 +196,7 @@ export function PaletteResult({
   face: FaceBox | null;
   size: PhotoSize | null;
   plain: boolean;
-  close: Season[] | null;
-  onPick: (season: Season) => void;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   const { width } = useWindowDimensions();
   const content = width - 2 * gutterFor(width);
@@ -158,28 +204,23 @@ export function PaletteResult({
     <View style={styles.result} testID="colour-result">
       <SeasonHeading profile={profile} />
       {photo ? (
-        <Drapes
-          best={palette.best}
-          avoid={palette.goEasy}
-          photo={photo}
-          face={face}
-          size={size}
-          width={content}
-        />
+        <Reveal index={5}>
+          <Drapes
+            best={palette.best}
+            avoid={palette.goEasy}
+            photo={photo}
+            face={face}
+            size={size}
+            width={content}
+          />
+        </Reveal>
       ) : null}
-      {photo && close ? (
-        <CloseSeasons
-          seasons={close}
-          current={profile.season}
-          photo={photo}
-          face={face}
-          size={size}
-          width={content}
-          onPick={onPick}
-        />
-      ) : null}
-      <PaletteSections palette={palette} plain={plain} />
-      {children}
+      <Reveal index={6}>
+        <View style={styles.result}>
+          <PaletteSections palette={palette} plain={plain} />
+          {children}
+        </View>
+      </Reveal>
     </View>
   );
 }
@@ -197,10 +238,6 @@ const styles = StyleSheet.create({
   section: { gap: theme.space.sm },
   close: { flexDirection: "row", gap: theme.space.md },
   closeCard: { flex: 1 },
-  closeFrame: {
-    borderWidth: 2,
-    borderRadius: theme.radius.lg,
-    padding: 2,
-    overflow: "hidden",
-  },
+  choice: { gap: theme.space.lg },
+  pressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
 });

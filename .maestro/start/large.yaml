@@ -67,6 +67,18 @@ appId: com.zaimimran.almari
       - tapOn: "Add|Done"
 - extendedWaitUntil:
     visible:
-      id: "colour-result"
+      id: "colours-choice|colour-result"
     timeout: 60000
+- runFlow:
+    when:
+      visible:
+        id: "colours-choice"
+    commands:
+      - tapOn:
+          id: "colours-choose-.*"
+          index: 0
+- extendedWaitUntil:
+    visible:
+      id: "colour-result"
+    timeout: 10000
 - takeScreenshot: docs/redesign/screens/after/start/ax-palette

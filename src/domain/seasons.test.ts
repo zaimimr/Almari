@@ -12,8 +12,10 @@ import {
 import {
   closeSeason,
   combineReadings,
+  drapePair,
   extractPalette,
   nearestSeason,
+  seasonChoice,
   seasonAxes,
   seasonMetals,
   seasonNeutrals,
@@ -95,12 +97,38 @@ test("a chosen season brings matching traits and keeps measured colours", () => 
 });
 
 test("a skin near a boundary names the close season, a clear one does not", () => {
-  const edge = analyseColours([65, 12, 18], [20, 3, 4], [30, 5, 10]);
+  const edge = analyseColours([74, 12, 18], [20, 3, 4], [30, 5, 10]);
   const near = closeSeason(edge);
   assert.ok(near !== null && near !== edge.season);
   const clear = analyseColours([80, 8, 26], [60, 4, 24], [55, 5, 20]);
   assert.equal(closeSeason(clear), null);
   assert.equal(closeSeason({ ...clear, skin: null }), null);
+});
+
+test("an unsure reading offers the measured season and the closest other one", () => {
+  const clear = analyseColours([80, 8, 26], [60, 4, 24], [55, 5, 20]);
+  assert.equal(seasonChoice(clear), null);
+  assert.equal(seasonChoice({ ...clear, skin: null }), null);
+  const unsure = [30, 40, 50, 60, 70]
+    .flatMap((l) => [6, 12, 18, 24].flatMap((b) => [[l, 14, b] as Lab]))
+    .map((skin) => analyseColours(skin, [20, 3, 4], [30, 5, 10]))
+    .filter((profile) => seasonChoice(profile));
+  assert.ok(unsure.length > 0);
+  for (const profile of unsure)
+    assert.deepEqual(seasonChoice(profile), [
+      profile.season,
+      closeSeason(profile),
+    ]);
+});
+
+test("a drape pair takes the colours that set two seasons apart", () => {
+  const [warm, cool] = drapePair("warm-autumn", "cool-winter");
+  assert.ok(seasonColours("warm-autumn").includes(warm));
+  assert.ok(seasonColours("cool-winter").includes(cool));
+  const gap = (lab: Lab, season: Season) =>
+    Math.min(...seasonColours(season).map((colour) => deltaE(colour, lab)));
+  for (const colour of seasonColours("warm-autumn"))
+    assert.ok(gap(warm, "cool-winter") >= gap(colour, "cool-winter"));
 });
 
 const reading = (skin: Lab, light: SelfieReading["light"] = "ok") => ({

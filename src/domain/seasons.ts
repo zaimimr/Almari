@@ -101,21 +101,51 @@ const nudges: Lab[] = [
   [0, -2, 0],
 ];
 
-export function closeSeason(
-  profile: Pick<ColourProfile, "skin" | "hair" | "eyes" | "season">,
-): Season | null {
-  const { skin, hair, eyes, season } = profile;
-  if (!skin) return null;
+type Measured = Pick<
+  ColourProfile,
+  "skin" | "hair" | "eyes" | "season" | "reference"
+>;
+
+function nudged({ skin, hair, eyes, season, reference }: Measured) {
+  if (!skin) return { flips: 0, close: null };
   const found = nudges
     .map(
       ([l, a, b]) =>
-        analyseColours([skin[0] + l, skin[1] + a, skin[2] + b], hair, eyes)
-          .season,
+        analyseColours(
+          [skin[0] + l, skin[1] + a, skin[2] + b],
+          hair,
+          eyes,
+          reference,
+        ).season,
     )
     .filter((other) => other !== season);
   const counts = new Map<Season, number>();
   for (const other of found) counts.set(other, (counts.get(other) ?? 0) + 1);
-  return [...counts].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+  const close = [...counts].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+  return { flips: found.length, close };
+}
+
+export function closeSeason(profile: Measured): Season | null {
+  return nudged(profile).close;
+}
+
+export const unsureFlips = 2;
+
+export function seasonChoice(profile: Measured): [Season, Season] | null {
+  const { flips, close } = nudged(profile);
+  return close && flips >= unsureFlips ? [profile.season, close] : null;
+}
+
+export function drapePair(a: Season, b: Season): [Lab, Lab] {
+  const apart = (from: Season, to: Season) => {
+    const others = seasonColours(to);
+    const distance = (lab: Lab) =>
+      Math.min(...others.map((colour) => deltaE(colour, lab)));
+    return [...seasonColours(from)].sort(
+      (x, y) => distance(y) - distance(x),
+    )[0]!;
+  };
+  return [apart(a, b), apart(b, a)];
 }
 
 const median = (values: number[]) => {

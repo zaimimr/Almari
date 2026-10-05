@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
+import { Image } from "react-native";
 import { router } from "expo-router";
+import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
 import {
   Easing,
@@ -16,8 +18,8 @@ import type { ColourProfile, Season } from "../../domain/closet";
 import { fromSelfie, type Retake } from "../../domain/colourAnalysis";
 import { applyAnswer } from "../../domain/onboarding";
 import {
-  closeSeason,
   combineReadings,
+  seasonChoice,
   shiftSeason,
   withSeason,
   type Shift,
@@ -36,7 +38,11 @@ import { t } from "../../i18n";
 import { useCloset } from "../../state/closet";
 import { now } from "../../state/clock";
 import { discardTemporary } from "../../storage/local";
-import { fixtures } from "../../testing/fixtures";
+import {
+  fixtures,
+  liveSelfieReading,
+  selfiePhoto,
+} from "../../testing/fixtures";
 import { motion, timing } from "../../ui/motion";
 import { paletteOf } from "./palette";
 
@@ -60,6 +66,8 @@ export function useSelfie() {
   const [hairCovered, setHair] = useState(
     closet.styling.everyday?.hijab !== "not-needed",
   );
+  const [choice, setChoice] = useState<[Season, Season] | null>(null);
+  const [paper, setPaper] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const hold = useSharedValue(0);
@@ -72,6 +80,7 @@ export function useSelfie() {
 
   function discard(uris = kept.current) {
     kept.current = kept.current.filter((uri) => !uris.includes(uri));
+    if (fixtures.selfieLive) return;
     for (const uri of uris) void discardTemporary(uri).catch(() => undefined);
   }
 
@@ -87,6 +96,21 @@ export function useSelfie() {
     phase === "camera" && camera === "ready" && guide === "ready";
 
   useEffect(() => {
+    if (counting) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  }, [counting]);
+
+  useEffect(() => {
+    if (!fixtures.selfieLive || phase !== "camera" || camera !== "ready")
+      return;
+    const start = Date.now();
+    const id = setInterval(
+      () => onReading(liveSelfieReading(Date.now() - start)),
+      100,
+    );
+    return () => clearInterval(id);
+  }, [phase, camera]);
+
+  useEffect(() => {
     fire.current = () => {
       if (readyToCapture(samples.current, Date.now(), motion.timer.dwell))
         void capture();
@@ -94,6 +118,7 @@ export function useSelfie() {
   });
 
   useEffect(() => {
+    if (phase === "measuring") return;
     if (!counting) {
       hold.set(timing(0, "quick", "release"));
       return;
@@ -112,7 +137,7 @@ export function useSelfie() {
         },
       ),
     );
-  }, [counting, hold]);
+  }, [counting, hold, phase]);
 
   async function openCamera() {
     setRetake(null);
@@ -120,6 +145,10 @@ export function useSelfie() {
     setChecks(null);
     samples.current = [];
     setPhase("camera");
+    if (fixtures.selfieLive) {
+      setCamera("ready");
+      return;
+    }
     if (fixtures.cameraFails) {
       setCamera("failed");
       return;
@@ -162,14 +191,18 @@ export function useSelfie() {
     setStill(uri);
     setRetake(null);
     setPhase("measuring");
+    const settled = new Promise((resolve) =>
+      setTimeout(resolve, motion.duration.sheen),
+    );
     try {
       const reading =
         fixtures.selfie ??
         combineReadings(
           await Promise.all(
-            uris.map((each) => ClosetVision.analyzeSelfie(each)),
+            uris.map((each) => ClosetVision.analyzeSelfie(each, paper)),
           ),
         );
+      await settled;
       discard(uris.slice(1));
       if (!active.current) return;
       const outcome = fromSelfie(reading, hairCovered);
@@ -183,6 +216,7 @@ export function useSelfie() {
       setPhoto({ uri, reading });
       setBase(outcome.profile);
       setProfile(outcome.profile);
+      setChoice(seasonChoice(outcome.profile));
       setPhase("result");
     } catch {
       if (!active.current) return;
@@ -198,8 +232,11 @@ export function useSelfie() {
     taking.current = true;
     try {
       const uris: string[] = [];
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       for (let frame = 0; frame < frames; frame++) {
-        const uri = await cameraRef.current?.capture();
+        const uri = fixtures.selfieLive
+          ? Image.resolveAssetSource(selfiePhoto).uri
+          : await cameraRef.current?.capture();
         if (uri) uris.push(uri);
       }
       if (!active.current) discard(uris);
@@ -241,6 +278,11 @@ export function useSelfie() {
     setProfile(season === base.season ? base : withSeason(base, season));
   }
 
+  function choose(season: Season) {
+    pick(season);
+    setChoice(null);
+  }
+
   function shift(direction: Shift) {
     const next = profile && shiftSeason(profile.season, direction);
     if (next) pick(next);
@@ -252,6 +294,7 @@ export function useSelfie() {
     setPhoto(null);
     setBase(null);
     setProfile(null);
+    setChoice(null);
     void openCamera();
   }
 
@@ -293,8 +336,8 @@ export function useSelfie() {
       ? { width: photo.reading.width, height: photo.reading.height }
       : null,
     profile,
-    measured: base?.season ?? null,
-    close: base ? closeSeason(base) : null,
+    choice,
+    paper,
     hairCovered,
     plain: closet.styling.everyday?.hijab === "not-needed",
     palette: profile ? paletteOf(profile) : null,
@@ -307,6 +350,8 @@ export function useSelfie() {
     chooseFromLibrary,
     setHairCovered,
     pick,
+    choose,
+    togglePaper: () => setPaper((on) => !on),
     shift,
     retakePhoto,
     save,

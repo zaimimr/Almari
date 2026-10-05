@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { NotMe } from "../../src/features/selfie/NotMe";
-import { PaletteResult } from "../../src/features/selfie/PaletteResult";
+import {
+  PaletteResult,
+  SeasonChoice,
+} from "../../src/features/selfie/PaletteResult";
 import { SelfieCameraPhase } from "../../src/features/selfie/SelfieCameraPhase";
 import { SelfieTips } from "../../src/features/selfie/SelfieTips";
 import { useSelfie } from "../../src/features/selfie/useSelfie";
@@ -10,7 +13,8 @@ import { Footer, Screen } from "../../src/ui";
 export default function Colours() {
   const selfie = useSelfie();
   const [notMe, setNotMe] = useState(false);
-  const { phase, profile, palette } = selfie;
+  const { phase, profile, palette, choice } = selfie;
+  const choosing = phase === "result" && choice !== null && !!selfie.photo;
 
   const footer =
     phase === "tips" ? (
@@ -21,7 +25,7 @@ export default function Colours() {
           testID: "colours-open-camera",
         }}
       />
-    ) : phase === "result" ? (
+    ) : phase === "result" && !choosing ? (
       <Footer
         primary={{
           label: t("colours.save"),
@@ -46,6 +50,8 @@ export default function Colours() {
           cameraRef={selfie.cameraRef}
           measuring={phase === "measuring"}
           photo={selfie.photo}
+          paper={selfie.paper}
+          onPaper={selfie.togglePaper}
           onReading={selfie.onReading}
           onUnavailable={selfie.onUnavailable}
           onCapture={selfie.capture}
@@ -53,7 +59,16 @@ export default function Colours() {
           onTryAgain={selfie.openCamera}
         />
       ) : null}
-      {phase === "result" && profile && palette ? (
+      {choosing && choice && selfie.photo ? (
+        <SeasonChoice
+          seasons={choice}
+          photo={selfie.photo}
+          face={selfie.face}
+          size={selfie.size}
+          onChoose={selfie.choose}
+        />
+      ) : null}
+      {phase === "result" && !choosing && profile && palette ? (
         <PaletteResult
           profile={profile}
           palette={palette}
@@ -61,12 +76,6 @@ export default function Colours() {
           face={selfie.face}
           size={selfie.size}
           plain={selfie.plain}
-          close={
-            selfie.measured && selfie.close
-              ? [selfie.measured, selfie.close]
-              : null
-          }
-          onPick={selfie.pick}
         >
           <NotMe
             open={notMe}
