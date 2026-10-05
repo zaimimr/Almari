@@ -52,9 +52,12 @@ appId: com.zaimimran.almari
 - tapOn: "These don't look like me"
 - assertVisible:
     id: "colours-hair-toggle"
-- assertVisible: "Undertone"
-- assertVisible: "Depth"
-- assertVisible: "Contrast"
+- assertVisible:
+    id: "colours-shift-warmer"
+- assertVisible:
+    id: "colours-shift-cooler"
+- assertVisible:
+    id: "colours-shift-deeper"
 - takeScreenshot: docs/redesign/screens/after/start/palette-notme
 - tapOn: "Save colours"
 - assertVisible: "Which colours suit you\\?"
@@ -63,4 +66,6 @@ appId: com.zaimimran.almari
 - tapOn: "Back"
 - assertVisible:
     id: "profile"
-- assertVisible: "(Light|Warm|Clear|Cool|Soft|Deep) (spring|summer|autumn|winter)"
+- assertVisible:
+    id: "tile-colours"
+    text: "Colours, (Light|Warm|Clear|Cool|Soft|Deep) (spring|summer|autumn|winter)"

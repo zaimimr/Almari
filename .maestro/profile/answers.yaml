@@ -37,7 +37,7 @@ appId: com.zaimimran.almari
 - tapOn: "Save"
 - assertVisible:
     id: "tile-hijab"
-    text: "Hijab, Always"
+    text: "Hijab, Hijab"
 - scrollUntilVisible:
     direction: UP
     element:
@@ -45,5 +45,5 @@ appId: com.zaimimran.almari
 - tapOn:
     id: "profile-name"
 - inputText: "x"
-- tapOn: "Cancel"
+- tapOn: "Back"
 - takeScreenshot: docs/redesign/screens/after/profile/answer
