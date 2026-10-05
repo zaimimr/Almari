@@ -15,6 +15,8 @@ import Animated, {
   ReduceMotion,
   useAnimatedStyle,
   useSharedValue,
+  withRepeat,
+  withSequence,
   withTiming,
   type SharedValue,
 } from "react-native-reanimated";
@@ -424,6 +426,41 @@ export function FaceCircle({
     dashed.set(arc ? timing(0, "quick", "release") : timing(1, "base", "silk"));
   }, [arc, dashed]);
 
+  const flash = useSharedValue(0);
+  const pulse = useSharedValue(1);
+  const press = useSharedValue(1);
+
+  useEffect(() => {
+    if (!measuring) {
+      pulse.set(timing(1, "quick", "silk"));
+      return;
+    }
+    flash.set(
+      withSequence(
+        timing(reduce ? 0.5 : 0.9, "quick", "fall"),
+        timing(0, "drape", "silk"),
+      ),
+    );
+    if (reduce) return;
+    press.set(
+      withSequence(timing(0.96, "quick", "fall"), timing(1, "drape", "fall")),
+    );
+    pulse.set(
+      withRepeat(
+        withSequence(
+          timing(0.35, "sheen", "carry"),
+          timing(1, "sheen", "carry"),
+        ),
+        -1,
+      ),
+    );
+  }, [measuring, reduce, flash, pulse, press]);
+
+  const flashStyle = useAnimatedStyle(() => ({ opacity: flash.get() }));
+  const pulseStyle = useAnimatedStyle(() => ({ opacity: pulse.get() }));
+  const pressStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: press.get() }],
+  }));
   const dashes = useAnimatedStyle(() => ({ opacity: dashed.get() }));
   const firstHalf = useAnimatedStyle(() => ({
     transform: [{ rotate: `${Math.min(hold.get(), 0.5) * 360}deg` }],
@@ -463,9 +500,9 @@ export function FaceCircle({
         style={{ width: box, height: box }}
       >
         {live ? (
-          <View
+          <Animated.View
             pointerEvents="none"
-            style={StyleSheet.absoluteFill}
+            style={[StyleSheet.absoluteFill, pulseStyle]}
             {...hidden}
           >
             <Animated.View
@@ -509,11 +546,12 @@ export function FaceCircle({
                 </View>
               </Animated.View>
             </View>
-          </View>
+          </Animated.View>
         ) : null}
-        <View
+        <Animated.View
           accessibilityIgnoresInvertColors
           style={[
+            pressStyle,
             styles.circle,
             {
               top: lane,
@@ -535,7 +573,15 @@ export function FaceCircle({
               {null}
             </Silk>
           ) : null}
-        </View>
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              StyleSheet.absoluteFill,
+              { backgroundColor: "#FFFFFF" },
+              flashStyle,
+            ]}
+          />
+        </Animated.View>
       </Pressable>
       <View
         style={[styles.feedback, { minHeight: guideSlotHeight }]}

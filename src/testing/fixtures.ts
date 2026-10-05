@@ -4,6 +4,7 @@ import type {
   SelfieReading,
 } from "../../modules/closet-vision/src";
 import type { NativeScanFrame } from "../domain/scan";
+import type { CameraReading } from "../domain/selfieGuide";
 
 export type Fixtures = {
   now?: string;
@@ -16,6 +17,7 @@ export type Fixtures = {
   studio?: "ok" | "offline" | "limit" | "fail";
   cameraFails?: boolean;
   selfie?: SelfieReading;
+  selfieLive?: boolean;
   language?: "en" | "nb";
   offline?: boolean;
   launchDay?: "today" | "tomorrow";
@@ -68,4 +70,24 @@ export function loadFixtures(): Promise<void> {
 
 export function scanFixture(name: string): ScanFixture | null {
   return scans[name] ?? null;
+}
+
+export const selfiePhoto = require("../../assets/fixtures/selfie.jpg");
+
+const centred = { x: 0.3, y: 0.22, width: 0.4, height: 0.4 };
+
+export function liveSelfieReading(elapsed: number): CameraReading {
+  if (elapsed < 900)
+    return { face: null, brightness: 0.5, yaw: 0, roll: 0, motion: 0.1 };
+  if (elapsed < 2000)
+    return {
+      face: { ...centred, x: 0.12 },
+      brightness: 0.5,
+      yaw: 0,
+      roll: 0,
+      motion: 0.1,
+    };
+  if (elapsed < 3100)
+    return { face: centred, brightness: 0.5, yaw: 0, roll: 0, motion: 0.1 };
+  return { face: centred, brightness: 0.5, yaw: 0, roll: 0, motion: 0 };
 }

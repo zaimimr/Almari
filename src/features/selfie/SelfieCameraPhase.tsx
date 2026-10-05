@@ -1,6 +1,13 @@
-import type { RefObject } from "react";
+import { useEffect, type RefObject } from "react";
 import { Image, StyleSheet, View, useWindowDimensions } from "react-native";
-import type { SharedValue } from "react-native-reanimated";
+import Animated, {
+  ZoomIn,
+  interpolateColor,
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  type SharedValue,
+} from "react-native-reanimated";
 import {
   SelfieCameraView,
   type SelfieCameraHandle,
@@ -13,7 +20,16 @@ import type {
 } from "../../domain/selfieGuide";
 import { t, type Key } from "../../i18n";
 import { openSettings } from "../../state/notifications";
-import { Button, FaceCircle, Symbol, Text, useMeasuredMax } from "../../ui";
+import { fixtures, selfiePhoto } from "../../testing/fixtures";
+import {
+  Button,
+  Chip,
+  FaceCircle,
+  Symbol,
+  Text,
+  useMeasuredMax,
+} from "../../ui";
+import { timing, useReduceMotion } from "../../ui/motion";
 import { gutterFor, theme } from "../../ui/theme";
 import { useColors } from "../../ui/useColors";
 import type { CameraState } from "./useSelfie";
@@ -42,34 +58,64 @@ const checkIcons = {
   still: "hand.raised",
 } as const;
 
-function Checks({ checks }: { checks: SelfieChecks | null }) {
+const pop = ZoomIn.springify().damping(14).stiffness(260);
+
+function Check({ check, ok }: { check: keyof SelfieChecks; ok: boolean }) {
   const colors = useColors();
+  const reduce = useReduceMotion();
+  const on = useSharedValue(ok ? 1 : 0);
+  const scale = useSharedValue(1);
+
+  useEffect(() => {
+    on.set(ok ? timing(1, "settle", "silk") : timing(0, "base", "silk"));
+    if (ok && !reduce)
+      scale.set(
+        withSequence(
+          timing(1.08, "quick", "silk"),
+          timing(1, "settle", "fall"),
+        ),
+      );
+  }, [ok, on, scale, reduce]);
+
+  const pill = useAnimatedStyle(() => ({
+    backgroundColor: interpolateColor(
+      on.get(),
+      [0, 1],
+      [colors.sunken, colors.plumSoft],
+    ),
+    transform: [{ scale: scale.get() }],
+  }));
+
+  return (
+    <Animated.View
+      accessible
+      accessibilityLabel={t(`colours.check.${check}`)}
+      accessibilityState={{ checked: ok }}
+      style={[styles.check, pill]}
+    >
+      <Animated.View
+        key={ok ? "on" : "off"}
+        entering={ok && !reduce ? pop : undefined}
+      >
+        <Symbol
+          name={ok ? "checkmark.circle.fill" : checkIcons[check]}
+          size={15}
+          tone={ok ? "plum" : "muted"}
+        />
+      </Animated.View>
+      <Text role="footnote" tone={ok ? "plum" : "muted"}>
+        {t(`colours.check.${check}`)}
+      </Text>
+    </Animated.View>
+  );
+}
+
+function Checks({ checks }: { checks: SelfieChecks | null }) {
   return (
     <View style={styles.checks} testID="colours-checks">
-      {(Object.keys(checkIcons) as (keyof SelfieChecks)[]).map((check) => {
-        const ok = checks?.[check] ?? false;
-        return (
-          <View
-            key={check}
-            accessible
-            accessibilityLabel={t(`colours.check.${check}`)}
-            accessibilityState={{ checked: ok }}
-            style={[
-              styles.check,
-              { backgroundColor: ok ? colors.plumSoft : colors.sunken },
-            ]}
-          >
-            <Symbol
-              name={ok ? "checkmark.circle.fill" : checkIcons[check]}
-              size={15}
-              tone={ok ? "plum" : "muted"}
-            />
-            <Text role="footnote" tone={ok ? "plum" : "muted"}>
-              {t(`colours.check.${check}`)}
-            </Text>
-          </View>
-        );
-      })}
+      {(Object.keys(checkIcons) as (keyof SelfieChecks)[]).map((check) => (
+        <Check key={check} check={check} ok={checks?.[check] ?? false} />
+      ))}
     </View>
   );
 }
@@ -94,6 +140,8 @@ export function SelfieCameraPhase({
   cameraRef,
   measuring,
   photo,
+  paper,
+  onPaper,
   onReading,
   onUnavailable,
   onCapture,
@@ -108,6 +156,8 @@ export function SelfieCameraPhase({
   cameraRef: RefObject<SelfieCameraHandle | null>;
   measuring: boolean;
   photo: string | null;
+  paper: boolean;
+  onPaper: () => void;
   onReading: (reading: CameraReading) => void;
   onUnavailable: () => void;
   onCapture: () => void;
@@ -155,6 +205,12 @@ export function SelfieCameraPhase({
             style={StyleSheet.absoluteFill}
             resizeMode="cover"
           />
+        ) : live && fixtures.selfieLive ? (
+          <Image
+            source={selfiePhoto}
+            style={StyleSheet.absoluteFill}
+            resizeMode="cover"
+          />
         ) : live ? (
           <SelfieCameraView
             ref={cameraRef}
@@ -167,6 +223,11 @@ export function SelfieCameraPhase({
         ) : null}
       </FaceCircle>
       {live && !measuring ? <Checks checks={checks} /> : null}
+      {live && !measuring && paper ? (
+        <Text role="footnote" tone="muted" style={styles.paper}>
+          {t("colours.paperHold")}
+        </Text>
+      ) : null}
       <View style={styles.actions}>
         {camera === "denied" ? (
           <Button
@@ -184,6 +245,15 @@ export function SelfieCameraPhase({
             testID="colours-try-again"
           />
         ) : null}
+        {live && !measuring ? (
+          <Chip
+            label={t("colours.paper")}
+            role="checkbox"
+            selected={paper}
+            onPress={onPaper}
+            testID="colours-paper"
+          />
+        ) : null}
         <Button
           label={t("colours.library")}
           variant="quiet"
@@ -199,6 +269,7 @@ export function SelfieCameraPhase({
 const styles = StyleSheet.create({
   camera: { gap: theme.space.sm },
   actions: { alignItems: "center", gap: theme.space.xs },
+  paper: { textAlign: "center" },
   checks: {
     flexDirection: "row",
     justifyContent: "center",
