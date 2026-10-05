@@ -1,7 +1,10 @@
 import { StyleSheet, View } from "react-native";
 import { router } from "expo-router";
+import { randomUUID } from "expo-crypto";
+import * as Haptics from "expo-haptics";
 import { locale, t } from "../../src/i18n";
 import {
+  Button,
   MonthGrid,
   Row,
   Rows,
@@ -14,6 +17,8 @@ import { monthTitle, percent, shortDate, spokenDate } from "../../src/ui/dates";
 import { theme } from "../../src/ui/theme";
 import { setPendingFilter } from "../../src/state/closetFilter";
 import { useCalendar } from "../../src/features/looks/useCalendar";
+import { wearAgain } from "../../src/features/looks/actions";
+import { useCloset } from "../../src/state/closet";
 import { monthName, occasionText } from "../../src/features/looks/format";
 
 const setKey = (ids: string[]) => [...ids].sort().join(",");
@@ -24,8 +29,12 @@ export default function CalendarScreen() {
     today,
     month,
     first,
+    last,
     days,
     marks,
+    dots,
+    plans,
+    planned,
     wornCount,
     selected,
     select,
@@ -33,8 +42,22 @@ export default function CalendarScreen() {
     stats,
   } = useCalendar();
   const fits = useMonthGridFits();
+  const { update } = useCloset();
   const title = monthTitle(month, locale);
   const wears = selected ? (days[selected]?.wears ?? []) : [];
+  const plan = selected ? plans[selected] : undefined;
+  const again = selected && selected < today ? wears[0] : undefined;
+
+  const wearToday = async () => {
+    if (!again) return;
+    try {
+      await update(wearAgain(again, randomUUID()));
+    } catch {
+      return;
+    }
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    router.dismissTo("/(tabs)/today");
+  };
 
   const wearRows = wears.map((wear, index) => {
     const pieces = wear.pieceIds.flatMap((id) => {
@@ -51,11 +74,49 @@ export default function CalendarScreen() {
         onPress={() =>
           router.push(`/look/${wear.lookId ?? `set-${setKey(wear.pieceIds)}`}`)
         }
-        last={index === wears.length - 1}
+        last={index === wears.length - 1 && !plan}
         testID={`wear-${wear.eventId}`}
       />
     );
   });
+
+  const planRows = plan
+    ? [
+        <Row
+          key={plan.id}
+          title={plan.name}
+          meta={occasionText(plan.occasion ?? null) ?? undefined}
+          leading={{
+            lay: plan.pieceIds.flatMap((id) => {
+              const piece = closet.pieces.find((item) => item.id === id);
+              return piece ? [piece] : [];
+            }),
+            size: "mini",
+          }}
+          trailing="chevron"
+          onPress={() => router.push(`/look/${plan.id}`)}
+          last
+          testID={`planned-${plan.id}`}
+        />,
+      ]
+    : [];
+  const rows = [...wearRows, ...planRows];
+  const rowsBody = (
+    <>
+      {rows}
+      {again ? (
+        <View style={styles.start}>
+          <Button
+            label={t("looks.wearAgain")}
+            variant="quiet"
+            icon="arrow.counterclockwise"
+            onPress={() => void wearToday()}
+            testID="calendar-wear-again"
+          />
+        </View>
+      ) : null}
+    </>
+  );
 
   return (
     <Screen title={t("calendar.title")}>
@@ -67,7 +128,10 @@ export default function CalendarScreen() {
         onSelect={select}
         onMonth={page}
         days={marks}
+        planned={planned}
+        dots={dots}
         first={first}
+        last={last}
         monthLabel={
           wornCount === 1
             ? t("calendar.monthLabelOne", { month: title })
@@ -76,17 +140,22 @@ export default function CalendarScreen() {
               : title
         }
         dayLabel={(date) =>
-          t(date === today ? "calendar.today" : "calendar.day", {
-            date: spokenDate(date, locale),
-          })
+          t(
+            plans[date] && !days[date]?.wears.length
+              ? "calendar.planned"
+              : date === today
+                ? "calendar.today"
+                : "calendar.day",
+            { date: spokenDate(date, locale) },
+          )
         }
         wornCount={wornCount}
       >
-        {selected && wears.length ? (
+        {selected && rows.length ? (
           fits ? (
-            <Section title={shortDate(selected, locale)}>{wearRows}</Section>
+            <Section title={shortDate(selected, locale)}>{rowsBody}</Section>
           ) : (
-            <View>{wearRows}</View>
+            <View>{rowsBody}</View>
           )
         ) : null}
       </MonthGrid>
@@ -137,5 +206,6 @@ export default function CalendarScreen() {
 }
 
 const styles = StyleSheet.create({
+  start: { alignItems: "flex-start", marginLeft: -theme.space.sm },
   variety: { marginTop: theme.space.lg },
 });
