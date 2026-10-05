@@ -119,11 +119,17 @@ function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
   const [category, setCategory] = useState<Category>(piece.category);
   const [kind, setKind] = useState<GarmentKind | undefined>(piece.kind);
   const [view, setView] = useState(() => shownOf(piece, piece.photo));
+  const [shownPhoto, setShownPhoto] = useState(piece.photo);
+  if (shownPhoto !== piece.photo) {
+    setShownPhoto(piece.photo);
+    setView(shownOf(piece, piece.photo));
+  }
   const [newPhoto, setNewPhoto] = useState<string | null>(null);
   const [leaveSet, setLeaveSet] = useState(false);
   const [pickCategory, setPickCategory] = useState(false);
   const [kindConfirmed, setKindConfirmed] = useState(false);
   const [more, setMore] = useState(moreOpen);
+  const [start] = useState(piece);
   const [facts, setFacts] = useState(piece);
   const [price, setPrice] = useState(priceText(piece));
   const [busy, setBusy] = useState(false);
@@ -144,7 +150,7 @@ function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
   const kindMissing = categoryChanged && (!kind || !isOffered(kind));
   const amount = parsePrice(price);
   const dirty =
-    facts !== piece ||
+    facts !== start ||
     price.trim() !== priceText(piece) ||
     name.trim() !== piece.name ||
     categoryChanged ||
@@ -296,6 +302,7 @@ function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
       const fixed = kind ? fixedStyles(kind) : undefined;
       const { price: _price, ...rest } = {
         ...facts,
+        original: piece.original,
         variants: piece.variants,
         cutoutArea: piece.cutoutArea,
         frame: piece.frame,
@@ -321,6 +328,7 @@ function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
         ...(fixed ? { styles: fixed } : {}),
       };
       for (const key of [
+        "original",
         "variants",
         "cutoutArea",
         "frame",
@@ -350,17 +358,20 @@ function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
       const next = categoryChanged
         ? { ...confirmed, ...fitAttributes(confirmed) }
         : confirmed;
+      let inUse = new Set<string>();
       await update((current) => {
         const saved = savePiece(current, next);
         const linked = leaveSet ? unlinkPiece(saved, piece.id) : saved;
-        return archive
+        const done = archive
           ? dropFromToday(setArchived(linked, piece.id, true), piece.id)
           : linked;
+        inUse = filesInUse(done);
+        return done;
       });
       if (archive) announce(t("result.putAway"));
       if (newPhoto) {
         for (const file of new Set(leftovers(piece)))
-          void discardPhoto(file).catch(() => undefined);
+          if (!inUse.has(file)) void discardPhoto(file).catch(() => undefined);
         void measurePiece({ update }, next);
       }
       allowClose();

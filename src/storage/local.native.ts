@@ -45,6 +45,10 @@ export function photoUri(photo: string) {
   return new File(photos, photo).uri;
 }
 
+export function photoExists(photo: string) {
+  return isSamplePhoto(photo) || new File(photos, photo).exists;
+}
+
 export async function discardPhoto(photo: string) {
   if (isSamplePhoto(photo)) return;
   const file = new File(photos, photo);

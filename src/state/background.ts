@@ -3,6 +3,7 @@ import ClosetVision from "../../modules/closet-vision/src";
 import {
   backgroundFix,
   opaqueStudios,
+  repairPhotos,
   replacePhotoFile,
   toCutout,
   withCutout,
@@ -10,7 +11,7 @@ import {
 import type { Closet, Piece } from "../domain/closet";
 import { filesInUse } from "../domain/importing";
 import type { ClosetRepository } from "../domain/repository";
-import { discardPhoto, photoUri } from "../storage/local";
+import { discardPhoto, photoExists, photoUri } from "../storage/local";
 import { canPrepareOnDevice } from "./imports";
 import { clearStudio } from "./studio";
 
@@ -119,5 +120,20 @@ export function useStudioRepair(repository: ClosetRepository, ready: boolean) {
     return () => {
       stopped = true;
     };
+  }, [repository, ready]);
+}
+
+export function usePhotoRepair(repository: ClosetRepository, ready: boolean) {
+  useEffect(() => {
+    if (!ready) return;
+    const repair = () => {
+      const snapshot = repository.getSnapshot();
+      if (repairPhotos(snapshot, photoExists) === snapshot) return;
+      void repository
+        .update((closet) => repairPhotos(closet, photoExists))
+        .catch(() => undefined);
+    };
+    repair();
+    return repository.subscribe(repair);
   }, [repository, ready]);
 }
