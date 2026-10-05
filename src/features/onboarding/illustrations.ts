@@ -13,6 +13,7 @@ export const illustrations = {
   "coverage-relaxed": require("../../../assets/illustrations/coverage-relaxed.jpg"),
   "style-western": require("../../../assets/illustrations/style-western.jpg"),
   "style-abaya": require("../../../assets/illustrations/style-abaya.jpg"),
+  "style-desi": require("../../../assets/illustrations/style-desi.jpg"),
   "style-mix": require("../../../assets/illustrations/style-mix.jpg"),
   "fit-loose": require("../../../assets/illustrations/fit-loose.jpg"),
   "fit-structured": require("../../../assets/illustrations/fit-structured.jpg"),
@@ -27,46 +28,74 @@ export const illustrations = {
   "sparkle-little": require("../../../assets/illustrations/sparkle-little.jpg"),
   "sparkle-heavy": require("../../../assets/illustrations/sparkle-heavy.jpg"),
   "sparkle-bridal": require("../../../assets/illustrations/sparkle-bridal.jpg"),
+  "hijab-always": require("../../../assets/illustrations/hijab-always.jpg"),
+  "hijab-sometimes": require("../../../assets/illustrations/hijab-sometimes.jpg"),
+  "hijab-no": require("../../../assets/illustrations/hijab-no.jpg"),
+  "coverage-full-bare": require("../../../assets/illustrations/coverage-full-bare.jpg"),
+  "coverage-moderate-bare": require("../../../assets/illustrations/coverage-moderate-bare.jpg"),
+  "coverage-relaxed-bare": require("../../../assets/illustrations/coverage-relaxed-bare.jpg"),
+  "style-western-bare": require("../../../assets/illustrations/style-western-bare.jpg"),
+  "style-abaya-bare": require("../../../assets/illustrations/style-abaya-bare.jpg"),
+  "style-desi-bare": require("../../../assets/illustrations/style-desi-bare.jpg"),
+  "style-mix-bare": require("../../../assets/illustrations/style-mix-bare.jpg"),
+  "fit-loose-bare": require("../../../assets/illustrations/fit-loose-bare.jpg"),
+  "fit-structured-bare": require("../../../assets/illustrations/fit-structured-bare.jpg"),
+  "sparkle-plain-bare": require("../../../assets/illustrations/sparkle-plain-bare.jpg"),
+  "sparkle-little-bare": require("../../../assets/illustrations/sparkle-little-bare.jpg"),
+  "sparkle-heavy-bare": require("../../../assets/illustrations/sparkle-heavy-bare.jpg"),
+  "sparkle-bridal-bare": require("../../../assets/illustrations/sparkle-bridal-bare.jpg"),
 } as const;
 
-export function coverageOptions(): ChoiceOption<
-  "full" | "moderate" | "relaxed"
->[] {
+type Bare = `${string}-bare` & keyof typeof illustrations;
+type Covered = Bare extends `${infer Key}-bare` ? Key : never;
+
+export function art(key: Covered, bare: boolean) {
+  return bare ? illustrations[`${key}-bare` as Bare] : illustrations[key];
+}
+
+export function hijabOptions(): ChoiceOption<"always" | "sometimes" | "no">[] {
+  return (["always", "sometimes", "no"] as const).map((id) => ({
+    id,
+    label: id === "no" ? t("onboarding.hijab.no") : t(`hijab.${id}`),
+    image: illustrations[`hijab-${id}`],
+  }));
+}
+
+export function coverageOptions(
+  bare: boolean,
+): ChoiceOption<"full" | "moderate" | "relaxed">[] {
   return (["full", "moderate", "relaxed"] as const).map((id) => ({
     id,
     label: t(`coverage.${id}`),
     description: t(`coverage.${id}.description`),
-    image: illustrations[`coverage-${id}`],
+    image: art(`coverage-${id}`, bare),
   }));
 }
 
-export function styleOptionsCards(): ChoiceOption<
-  "western" | "desi" | "both"
->[] {
-  return [
-    {
-      id: "western",
-      label: t("onboarding.style.western"),
-      image: illustrations["style-western"],
-    },
-    {
-      id: "desi",
-      label: t("onboarding.style.desi"),
-      image: illustrations["style-abaya"],
-    },
-    {
-      id: "both",
-      label: t("onboarding.style.both"),
-      image: illustrations["style-mix"],
-    },
-  ];
+export const leanArt = {
+  western: "style-western",
+  abaya: "style-abaya",
+  desi: "style-desi",
+  both: "style-mix",
+} as const;
+
+export function styleOptionsCards(
+  bare: boolean,
+): ChoiceOption<keyof typeof leanArt>[] {
+  return (["western", "abaya", "desi", "both"] as const).map((id) => ({
+    id,
+    label: t(`onboarding.style.${id}`),
+    image: art(leanArt[id], bare),
+  }));
 }
 
-export function fitOptions(): ChoiceOption<"loose" | "structured">[] {
+export function fitOptions(
+  bare: boolean,
+): ChoiceOption<"loose" | "structured">[] {
   return (["loose", "structured"] as const).map((id) => ({
     id,
     label: t(`onboarding.fit.${id}`),
-    image: illustrations[`fit-${id}`],
+    image: art(`fit-${id}`, bare),
   }));
 }
 
@@ -80,11 +109,11 @@ export function hijabStyleOptions(): ChoiceOption<HijabStyle>[] {
   }));
 }
 
-export function sparkleOptions(): ChoiceOption<Sparkle>[] {
+export function sparkleOptions(bare: boolean): ChoiceOption<Sparkle>[] {
   return sparkles.map((id) => ({
     id,
     label: t(`sparkle.${id}`),
     description: t(`sparkle.${id}.description`),
-    image: illustrations[`sparkle-${id}`],
+    image: art(`sparkle-${id}`, bare),
   }));
 }

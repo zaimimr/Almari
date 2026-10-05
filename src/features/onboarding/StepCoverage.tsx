@@ -21,7 +21,8 @@ export function StepCoverage({
         : null;
   return (
     <ChoiceCardGroup<Choice>
-      options={coverageOptions()}
+      options={coverageOptions(answers.hijab.hijab === "no")}
+      plainFirst
       plain={[{ id: "none", label: t("coverage.noPreference") }]}
       value={value}
       onChange={(next) =>

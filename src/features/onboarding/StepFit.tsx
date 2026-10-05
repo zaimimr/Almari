@@ -14,7 +14,8 @@ export function StepFit({
 }) {
   return (
     <ChoiceCardGroup<Choice>
-      options={fitOptions()}
+      options={fitOptions(answers.hijab.hijab === "no")}
+      plainFirst
       plain={[{ id: "depends", label: t("onboarding.depends") }]}
       value={answers.fit.fit}
       onChange={(next) =>

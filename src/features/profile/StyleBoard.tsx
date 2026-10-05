@@ -8,10 +8,11 @@ import { Symbol, Text } from "../../ui";
 import { theme } from "../../ui/theme";
 import { useColors } from "../../ui/useColors";
 import { useLargeText } from "../../ui/useLargeText";
-import { illustrations } from "../onboarding/illustrations";
+import { art, illustrations, leanArt } from "../onboarding/illustrations";
 import { paletteOf, seasonLabel } from "../selfie/palette";
 
 type Tile = {
+  id: string;
   step: OnboardingStep;
   label: string;
   value: string | null;
@@ -19,12 +20,6 @@ type Tile = {
   bust?: boolean;
   swatches?: string[];
 };
-
-const leanArt = {
-  western: illustrations["style-western"],
-  desi: illustrations["style-abaya"],
-  both: illustrations["style-mix"],
-} as const;
 
 const hidden = {
   accessibilityElementsHidden: true,
@@ -40,32 +35,37 @@ function tilesFor(closet: Closet): Tile[] {
   const { fit } = answers.fit;
   const { sparkle } = answers.sparkle;
   const { colour } = answers.colours;
-
-  const hijab: Tile =
-    answers.hijab.hijab === null || answers.hijab.hijab === "no"
-      ? {
-          step: "hijab",
-          label: t("style.hijab"),
-          value: answers.hijab.hijab && t("onboarding.hijab.no"),
-        }
-      : {
-          step: "hijabStyles",
-          label: t("style.hijabStyles"),
-          value: first
-            ? [
-                t(`hijabStyle.${first}`),
-                worn.length > 1 && `+${worn.length - 1}`,
-              ]
-                .filter(Boolean)
-                .join(" ")
-            : null,
-          image: first && illustrations[`hijab-${first}`],
-          bust: true,
-        };
+  const { hijab } = answers.hijab;
+  const bare = hijab === "no";
 
   return [
-    hijab,
     {
+      id: "hijab",
+      step: "hijab",
+      label: t("style.hijab"),
+      value:
+        hijab === null
+          ? null
+          : bare
+            ? t("onboarding.hijab.no")
+            : first
+              ? [
+                  t(`hijabStyle.${first}`),
+                  worn.length > 1 && `+${worn.length - 1}`,
+                ]
+                  .filter(Boolean)
+                  .join(" ")
+              : t(`hijab.${hijab}`),
+      image:
+        hijab === null
+          ? undefined
+          : first && !bare
+            ? illustrations[`hijab-${first}`]
+            : illustrations[`hijab-${hijab}`],
+      bust: Boolean(first) && !bare,
+    },
+    {
+      id: "coverage",
       step: "coverage",
       label: t("profile.tile.coverage"),
       value: coverage
@@ -75,28 +75,32 @@ function tilesFor(closet: Closet): Tile[] {
           : null,
       image:
         coverage && coverage !== "own"
-          ? illustrations[`coverage-${coverage}`]
+          ? art(`coverage-${coverage}`, bare)
           : undefined,
     },
     {
+      id: "style",
       step: "style",
       label: t("style.style"),
       value: styleLean && t(`onboarding.style.${styleLean}`),
-      image: styleLean ? leanArt[styleLean] : undefined,
+      image: styleLean ? art(leanArt[styleLean], bare) : undefined,
     },
     {
+      id: "fit",
       step: "fit",
       label: t("style.fit"),
       value: fit && t(`onboarding.fit.${fit}`),
-      image: fit && fit !== "depends" ? illustrations[`fit-${fit}`] : undefined,
+      image: fit && fit !== "depends" ? art(`fit-${fit}`, bare) : undefined,
     },
     {
+      id: "sparkle",
       step: "sparkle",
       label: t("profile.tile.sparkle"),
       value: sparkle && t(`sparkle.${sparkle}`),
-      image: sparkle ? illustrations[`sparkle-${sparkle}`] : undefined,
+      image: sparkle ? art(`sparkle-${sparkle}`, bare) : undefined,
     },
     {
+      id: "colours",
       step: "colours",
       label: t("profile.colours"),
       value: colour && seasonLabel(colour.season),
@@ -118,7 +122,7 @@ function BoardTile({ tile }: { tile: Tile }) {
       accessibilityRole="button"
       accessibilityLabel={`${tile.label}, ${value}`}
       onPress={() => router.push(`/profile/answer/${tile.step}`)}
-      testID={`tile-${tile.step}`}
+      testID={`tile-${tile.id}`}
       style={({ pressed }) => [styles.tile, pressed && styles.pressed]}
     >
       <View
@@ -161,7 +165,19 @@ function BoardTile({ tile }: { tile: Tile }) {
 
 export function StyleBoard({ closet }: { closet: Closet }) {
   const { ax } = useLargeText();
-  const tiles = tilesFor(closet);
+  const all = tilesFor(closet);
+  const open = all.filter(
+    ({ value, step }) => value === null && step !== "colours",
+  );
+  const tiles = [
+    ...all.filter(({ value, step }) => value !== null || step === "colours"),
+    ...open.slice(0, 1).map((tile) => ({
+      id: "finish",
+      step: tile.step,
+      label: t("profile.finish"),
+      value: null,
+    })),
+  ];
   const rows = ax
     ? tiles.map((tile) => [tile])
     : tiles.flatMap((tile, index) =>
@@ -171,9 +187,9 @@ export function StyleBoard({ closet }: { closet: Closet }) {
   return (
     <View style={styles.board} testID="style-board">
       {rows.map((row) => (
-        <View key={row.map(({ step }) => step).join()} style={styles.row}>
+        <View key={row.map(({ id }) => id).join()} style={styles.row}>
           {row.map((tile) => (
-            <BoardTile key={tile.step} tile={tile} />
+            <BoardTile key={tile.id} tile={tile} />
           ))}
         </View>
       ))}

@@ -248,6 +248,11 @@ test("style Desi sets the everyday style, and Both keeps it", () => {
       ?.style,
     "desi",
   );
+  const abaya = applyAnswer(desi, "style", { styleLean: "abaya" }, clock);
+  assert.deepEqual(
+    [abaya.styling.everyday?.style, abaya.styling.profile.styleLean],
+    ["western", "abaya"],
+  );
   const first = applyAnswer(fresh(), "style", { styleLean: "both" }, clock);
   assert.equal(first.styling.everyday?.style, "western");
   assert.equal(first.styling.profile.styleLean, "both");

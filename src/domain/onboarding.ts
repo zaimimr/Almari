@@ -273,7 +273,9 @@ export function applyAnswer<S extends AnswerStep>(
     const style =
       styleLean === "both"
         ? (closet.styling.everyday?.style ?? "western")
-        : styleLean;
+        : styleLean === "abaya"
+          ? "western"
+          : styleLean;
     return style === null ? saved : withPreset(saved, { style }, clock);
   }
   if (step === "place") {
@@ -330,7 +332,11 @@ export function finishOnboarding(closet: Closet, clock: Clock): Closet {
 }
 
 export function replayOnboarding(closet: Closet): Closet {
-  const { notification: _notification, ...styling } = closet.styling;
+  const {
+    notification: _notification,
+    weekdaysOnly: _weekdaysOnly,
+    ...styling
+  } = closet.styling;
   return { ...closet, styling: { ...styling, onboarded: false } };
 }
 
