@@ -227,14 +227,37 @@ final class GarmentPipeline {
     }
   }
 
-  func whitenBackground(sourceUri: String, id: String) throws -> String {
-    let source = sourceUri.hasPrefix("file://") ? URL(string: sourceUri)! : URL(fileURLWithPath: sourceUri)
-    try FileManager.default.createDirectory(at: photos, withIntermediateDirectories: true)
-    let name = "\(id)-studio.jpg"
-    guard StudioBackground.whiten(source: source, target: photos.appendingPathComponent(name)) else {
-      throw PrepareError.unreadable
+  func clearBackground(sourceUri: String, id: String) throws -> String {
+    try queue.sync {
+      let source = sourceUri.hasPrefix("file://") ? URL(string: sourceUri)! : URL(fileURLWithPath: sourceUri)
+      guard let loaded = CIImage(contentsOf: source, options: [.applyOrientationProperty: true]) else {
+        throw PrepareError.unreadable
+      }
+      let image = loaded.transformed(
+        by: CGAffineTransform(translationX: -loaded.extent.minX, y: -loaded.extent.minY))
+      guard let picture = render(image) else { throw PrepareError.unreadable }
+      let enhancer = GarmentEnhancer(context: context)
+      let request = Self.foregroundRequest()
+      let handler = VNImageRequestHandler(cgImage: picture)
+      var cleared: CIImage?
+      if (try? handler.perform([request])) != nil, let observation = request.results?.first,
+        !observation.allInstances.isEmpty,
+        let mask = try? observation.generateScaledMaskForImage(forInstances: observation.allInstances, from: handler),
+        coverage(CIImage(cvPixelBuffer: mask), enhancer: enhancer) < Self.wholeFrame,
+        let buffer = try? observation.generateMaskedImage(
+          ofInstances: observation.allInstances, from: handler, croppedToInstancesExtent: false)
+      {
+        cleared = CIImage(cvPixelBuffer: buffer)
+      }
+      if cleared == nil, let fallback = StudioBackground.clear(picture) {
+        cleared = CIImage(cgImage: fallback)
+      }
+      guard let cleared else { throw PrepareError.unreadable }
+      try FileManager.default.createDirectory(at: photos, withIntermediateDirectories: true)
+      let name = "\(id).png"
+      try write(cleared, to: name, extent: image.extent)
+      return name
     }
-    return name
   }
 
   func workingPhoto(sourceUri: String) throws -> (image: CIImage, picture: CGImage) {
@@ -756,8 +779,8 @@ public class ClosetVisionModule: Module {
       try GarmentPipeline.shared.studioInput(sourceUri: sourceUri, id: id)
     }
 
-    AsyncFunction("whitenBackground") { (sourceUri: String, id: String) throws -> String in
-      try GarmentPipeline.shared.whitenBackground(sourceUri: sourceUri, id: id)
+    AsyncFunction("clearBackground") { (sourceUri: String, id: String) throws -> String in
+      try GarmentPipeline.shared.clearBackground(sourceUri: sourceUri, id: id)
     }
 
     View(SelfieCameraView.self) {

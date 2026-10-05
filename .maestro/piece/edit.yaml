@@ -34,11 +34,18 @@ appId: com.zaimimran.almari
 - hideKeyboard
 - scrollUntilVisible:
     element:
-      id: "edit-category-top"
-    direction: DOWN
+      id: "edit-kind-switch-category"
+    direction: UP
     centerElement: true
 - tapOn:
+    id: "edit-kind-switch-category"
+- tapOn:
     id: "edit-category-top"
+- scrollUntilVisible:
+    element:
+      id: "edit-kind-blouse"
+    direction: DOWN
+    centerElement: true
 - tapOn:
     id: "edit-kind-blouse"
 - tapOn:

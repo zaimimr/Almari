@@ -7,7 +7,7 @@ appId: com.zaimimran.almari
     id: "job-ready-1"
 - assertVisible:
     id: "confirm-photo"
-- tapOn: "Clean background"
+- tapOn: "AI Enhance"
 - extendedWaitUntil:
     visible: "You are offline"
     timeout: 30000

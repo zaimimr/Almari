@@ -45,19 +45,13 @@ import {
   Footer,
   HeaderItem,
   Screen,
-  Text,
-  Tile,
 } from "../../ui";
 import { confirmAction } from "../../ui/confirm";
 import { theme } from "../../ui/theme";
 import { ColourChips } from "../ColourChips";
 import { useRetake, type CaptureProblem } from "../Retake";
 import { jobColour, jobColours, jobPhoto, jobPiece } from "./jobs";
-import {
-  PhotoToolbar,
-  type PhotoPreview,
-  type PhotoView,
-} from "./PhotoToolbar";
+import { PiecePhoto, type PhotoChoice, type PhotoView } from "./PiecePhoto";
 import { removeWithUndo } from "./removed";
 
 type StyleChoice = Style | "both";
@@ -188,6 +182,11 @@ function ConfirmForm({
   const [answer, setAnswer] = useState<AttributeValue | undefined>(
     initial.answer,
   );
+  const [touched, setTouched] = useState({
+    kind: false,
+    styles: false,
+    colour: false,
+  });
   const [showAll, setShowAll] = useState(false);
   const [pickCategory, setPickCategory] = useState(false);
   const [problem, setProblem] = useState<CaptureProblem | null>(null);
@@ -260,7 +259,6 @@ function ConfirmForm({
       : t("confirm.title");
   const previous = walk && step > 0 ? run[step - 1] : undefined;
   const following = walk && step >= 0 ? run[step + 1] : undefined;
-  const shown = jobPhoto({ ...job, ...photoChange(photo) });
   const cutout = failed ? undefined : importCutout(job);
   const adjust =
     failed || (canPrepareOnDevice && cutout?.cutout === null)
@@ -429,22 +427,15 @@ function ConfirmForm({
       >
         <View style={styles.content}>
           {banner}
-          <View style={styles.hero}>
-            <Tile
-              image={jobPiece(job)}
-              raw
-              size="hero"
-              accessibilityLabel={t("capture.photo")}
-            />
-          </View>
-          {adjust ? (
-            <PhotoToolbar
-              options={["original"]}
-              value="original"
-              onChange={() => undefined}
-              adjust={adjust}
-            />
-          ) : null}
+          <PiecePhoto
+            choices={[{ id: "original", image: jobPiece(job), raw: true }]}
+            value="original"
+            onChange={() => undefined}
+            adjust={adjust}
+            accessibilityLabel={t("capture.photo")}
+            heroID="confirm-hero"
+            testID="confirm-photo"
+          />
           {retakeRow}
         </View>
       </Screen>
@@ -479,19 +470,29 @@ function ConfirmForm({
         "original",
         ...(offerStudio || prepared.studio ? (["studio"] as const) : []),
       ];
-  const previewOf = (view: PhotoView): PhotoPreview => {
+  const photoChoices = photoOptions.map((view): PhotoChoice => {
     const preview = jobPhoto({
       ...job,
       ...photoChange(view === "studio" && !prepared.studio ? "cutout" : view),
     });
     return {
+      id: view,
       image: { ...jobPiece(job), photo: preview.photo },
       raw: preview.raw,
     };
-  };
-  const previews = Object.fromEntries(
-    photoOptions.map((view) => [view, previewOf(view)]),
-  );
+  });
+  const kindGuessed =
+    job.sources?.kind !== "confirmed" && kind === initial.kind && !touched.kind;
+  const styleGuessed =
+    job.sources?.styles !== "confirmed" &&
+    choiceOf(chosenStyles) === choiceOf(initial.styles) &&
+    !touched.styles;
+  const colourGuessed =
+    job.sources?.colour !== "confirmed" &&
+    colour === initial.colour &&
+    !touched.colour;
+  const touch = (key: keyof typeof touched) =>
+    setTouched((current) => ({ ...current, [key]: true }));
   const naming = (k: GarmentKind, c: string | null) => ({
     kind: k,
     palette: withColour(prepared.palette, c ?? undefined),
@@ -504,6 +505,7 @@ function ConfirmForm({
   );
 
   function chooseColour(next: string) {
+    touch("colour");
     setName((current) =>
       renameAuto(current, naming(kind!, colour), naming(kind!, next)),
     );
@@ -511,6 +513,7 @@ function ConfirmForm({
   }
 
   function chooseKind(next: GarmentKind) {
+    touch("kind");
     setName((current) =>
       renameAuto(current, naming(kind!, colour), naming(next, colour)),
     );
@@ -522,10 +525,12 @@ function ConfirmForm({
 
   function chooseCategory(next: Category) {
     if (next !== category) chooseKind(rankKinds(prepared!.labels, next)[0]!);
+    else touch("kind");
   }
 
   async function makeStudio() {
     if (!studioSource || studio.making) return;
+    const before = prepared!.studio;
     const file = await studio.make(studioSource, job.id, {
       category,
       kind,
@@ -540,7 +545,11 @@ function ConfirmForm({
       return next;
     }).catch(() => undefined);
     if (!applied) void discardPhoto(file).catch(() => undefined);
-    else setPhoto("studio");
+    else {
+      if (before && before !== file)
+        void discardPhoto(before).catch(() => undefined);
+      setPhoto("studio");
+    }
   }
 
   function pickPhoto(next: PhotoView) {
@@ -596,7 +605,9 @@ function ConfirmForm({
           styles: fixed ? undefined : chosenStyles,
           name: name.trim(),
           ...photoChange(photo),
-          ...(colour && colour !== initial.colour ? { colour } : {}),
+          ...(colour && (colour !== initial.colour || touched.colour)
+            ? { colour }
+            : {}),
           ...(attributeAsked && answer !== undefined
             ? { attribute: { key: attributeAsked, value: answer } }
             : {}),
@@ -617,8 +628,11 @@ function ConfirmForm({
       options={styleChoices()}
       value={choiceOf(chosenStyles)}
       onChange={(choice) => {
-        if (typeof choice === "string") setStyles(stylesOf(choice));
+        if (typeof choice !== "string") return;
+        touch("styles");
+        setStyles(stylesOf(choice));
       }}
+      guessed={styleGuessed}
       testID="confirm-style"
     />
   );
@@ -640,6 +654,7 @@ function ConfirmForm({
         if (next === somethingElse) setShowAll(true);
         else if (typeof next === "string") chooseCategory(next as Category);
       }}
+      guessed={kindGuessed}
       testID="confirm-category"
     />
   );
@@ -661,6 +676,7 @@ function ConfirmForm({
         if (next === switchCategory) setPickCategory(true);
         else if (typeof next === "string") chooseKind(next as GarmentKind);
       }}
+      guessed={kindGuessed}
       testID="confirm-kind"
     />
   );
@@ -709,55 +725,21 @@ function ConfirmForm({
     >
       <View style={styles.content}>
         {banner}
-        <View style={styles.hero}>
-          <Tile
-            image={{ ...jobPiece(job), photo: shown.photo }}
-            raw={shown.raw}
-            size="hero"
-            state={studio.making ? "preparing" : undefined}
-            busyLabel={t("photo.cleanMaking")}
-            accessibilityLabel={name || t("capture.photo")}
-            testID={studio.making ? "moment-generating" : "confirm-hero"}
-          />
-          {adjust ? (
-            <View style={styles.adjust}>
-              <Button
-                variant="icon"
-                icon="scissors"
-                label={adjust.label}
-                disabled={busy || studio.making || adjust.disabled}
-                onPress={adjust.onPress}
-                testID={adjust.testID}
-              />
-            </View>
-          ) : null}
-        </View>
-        <PhotoToolbar
-          options={photoOptions}
+        <PiecePhoto
+          choices={photoChoices}
           value={photo}
           onChange={pickPhoto}
-          previews={previews}
-          note={(offerStudio && !prepared.studio) || studio.making}
           making={studio.making}
+          stale={Boolean(prepared.studio && prepared.studioStale)}
+          onMake={() => void makeStudio()}
+          adjust={adjust}
+          message={studio.message}
+          note={offerStudio && !prepared.studio}
           disabled={busy}
+          accessibilityLabel={name || t("capture.photo")}
+          heroID="confirm-hero"
           testID="confirm-photo"
         />
-        {studio.message ? (
-          <View style={styles.block}>
-            <Text role="footnote" tone="error">
-              {studio.message}
-            </Text>
-            {studio.message !== t("photo.cleanLimit") ? (
-              <View style={styles.bleed}>
-                <Button
-                  label={t("common.tryAgain")}
-                  variant="quiet"
-                  onPress={() => void makeStudio()}
-                />
-              </View>
-            ) : null}
-          </View>
-        ) : null}
         {question === "category" ? (
           <View style={styles.block}>
             {categoryChips(asked ?? t("piece.category"))}
@@ -800,6 +782,7 @@ function ConfirmForm({
             value={colour}
             first={jobColours(job)}
             onPick={chooseColour}
+            guessed={colourGuessed}
             testID="confirm-colour"
           />
         ) : null}
@@ -841,7 +824,5 @@ function openCutout(id: string) {
 const styles = StyleSheet.create({
   content: { gap: theme.space.lg },
   block: { gap: theme.space.md },
-  hero: { width: 240, alignSelf: "center" },
-  adjust: { position: "absolute", top: theme.space.sm, right: theme.space.sm },
   bleed: { marginLeft: -theme.space.sm, alignSelf: "flex-start" },
 });

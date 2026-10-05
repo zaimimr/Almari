@@ -1,5 +1,10 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
+import Animated, {
+  interpolateColor,
+  useAnimatedStyle,
+  useSharedValue,
+} from "react-native-reanimated";
 import type { SFSymbol } from "expo-symbols";
 import { router, useLocalSearchParams, useNavigation } from "expo-router";
 import {
@@ -22,7 +27,9 @@ import { useCloset } from "../../src/state/closet";
 import { discardPhoto, photoUri } from "../../src/storage/local";
 import { CameraFrame, Footer, Screen, Silk, Symbol, Text } from "../../src/ui";
 import { announce } from "../../src/ui/announce";
+import { timing, useReduceMotion } from "../../src/ui/motion";
 import { theme } from "../../src/ui/theme";
+import { useColors } from "../../src/ui/useColors";
 
 const brushes: BrushSize[] = ["small", "medium", "large"];
 
@@ -159,7 +166,7 @@ function Editor({ id, target }: { id: string; target: "import" | "piece" }) {
           controls={
             <View style={styles.toolbar} testID="cutout-tools">
               <Tool
-                icon="eraser"
+                icon={mode === "erase" ? "eraser.fill" : "eraser"}
                 label={t("cutout.erase")}
                 selected={mode === "erase"}
                 disabled={!ready}
@@ -167,7 +174,11 @@ function Editor({ id, target }: { id: string; target: "import" | "piece" }) {
                 testID="cutout-erase"
               />
               <Tool
-                icon="paintbrush.pointed"
+                icon={
+                  mode === "restore"
+                    ? "paintbrush.pointed.fill"
+                    : "paintbrush.pointed"
+                }
                 label={t("cutout.restore")}
                 selected={mode === "restore"}
                 disabled={!ready}
@@ -176,32 +187,14 @@ function Editor({ id, target }: { id: string; target: "import" | "piece" }) {
               />
               <View style={styles.dots}>
                 {brushes.map((size, index) => (
-                  <Pressable
+                  <Brush
                     key={size}
-                    accessibilityRole="button"
-                    accessibilityLabel={`${t("cutout.brush")}, ${t(`cutout.${size}`)}`}
-                    accessibilityState={{
-                      selected: brush === size,
-                      disabled: !ready,
-                    }}
+                    size={size}
+                    diameter={8 + index * 5}
+                    selected={brush === size}
                     disabled={!ready}
-                    hitSlop={theme.space.xs}
                     onPress={() => setBrush(size)}
-                    style={[styles.dotTarget, !ready && styles.off]}
-                    testID={`cutout-brush-${size}`}
-                  >
-                    <View
-                      style={[
-                        styles.dot,
-                        {
-                          width: 8 + index * 5,
-                          height: 8 + index * 5,
-                          borderRadius: 8 + index * 5,
-                        },
-                        brush === size && styles.dotOn,
-                      ]}
-                    />
-                  </Pressable>
+                  />
                 ))}
               </View>
               <Tool
@@ -281,6 +274,21 @@ function Editor({ id, target }: { id: string; target: "import" | "piece" }) {
   );
 }
 
+function useSelection(selected: boolean) {
+  const colors = useColors();
+  const reduce = useReduceMotion();
+  const on = useSharedValue(selected ? 1 : 0);
+  useEffect(() => {
+    const to = selected ? 1 : 0;
+    on.set(reduce ? to : timing(to, "quick", "silk"));
+  }, [selected, reduce, on]);
+  const { blush } = colors;
+  return useAnimatedStyle(() => ({
+    backgroundColor: interpolateColor(on.get(), [0, 1], [`${blush}00`, blush]),
+    transform: [{ scale: 0.92 + on.get() * 0.08 }],
+  }));
+}
+
 function Tool({
   icon,
   label,
@@ -296,6 +304,8 @@ function Tool({
   onPress: () => void;
   testID: string;
 }) {
+  const fill = useSelection(Boolean(selected));
+  const tone = selected ? "ink" : "onMedia";
   return (
     <Pressable
       accessibilityRole="button"
@@ -305,16 +315,65 @@ function Tool({
       onPress={onPress}
       style={({ pressed }) => [
         styles.tool,
-        selected && styles.toolOn,
         pressed && styles.pressed,
         disabled && styles.off,
       ]}
       testID={testID}
     >
-      <Symbol name={icon} size={theme.size.iconBar} tone="onMedia" />
-      <Text role="mark" tone="onMedia" numberOfLines={1}>
+      {selected === undefined ? null : (
+        <Animated.View
+          style={[StyleSheet.absoluteFill, styles.toolFill, fill]}
+        />
+      )}
+      <Symbol name={icon} size={theme.size.iconBar} tone={tone} />
+      <Text role="mark" tone={tone} numberOfLines={1}>
         {label}
       </Text>
+    </Pressable>
+  );
+}
+
+function Brush({
+  size,
+  diameter,
+  selected,
+  disabled,
+  onPress,
+}: {
+  size: BrushSize;
+  diameter: number;
+  selected: boolean;
+  disabled: boolean;
+  onPress: () => void;
+}) {
+  const colors = useColors();
+  const fill = useSelection(selected);
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${t("cutout.brush")}, ${t(`cutout.${size}`)}`}
+      accessibilityState={{ selected, disabled }}
+      disabled={disabled}
+      hitSlop={theme.space.xs}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.dotTarget,
+        pressed && styles.pressed,
+        disabled && styles.off,
+      ]}
+      testID={`cutout-brush-${size}`}
+    >
+      <Animated.View style={[styles.dotDisc, fill]} />
+      <View
+        style={{
+          width: diameter,
+          height: diameter,
+          borderRadius: diameter,
+          borderWidth: 1.5,
+          borderColor: selected ? colors.ink : colors.onMedia,
+          backgroundColor: selected ? colors.ink : "transparent",
+        }}
+      />
     </Pressable>
   );
 }
@@ -334,21 +393,29 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 2,
-    paddingHorizontal: theme.space.xs,
+    paddingHorizontal: theme.space.sm,
     paddingVertical: theme.space.xs,
-    borderRadius: theme.radius.sm,
   },
-  toolOn: { backgroundColor: theme.colors.scrimPill },
+  toolFill: { borderRadius: theme.radius.md },
   pressed: { opacity: 0.7 },
   off: { opacity: 0.4 },
-  dots: { flexDirection: "row", alignItems: "center" },
+  dots: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: theme.radius.full,
+    backgroundColor: theme.colors.scrimPill,
+  },
   dotTarget: {
-    width: 28,
+    width: 36,
     height: theme.size.touch,
     alignItems: "center",
     justifyContent: "center",
   },
-  dot: { borderWidth: 1.5, borderColor: theme.colors.onMedia },
-  dotOn: { backgroundColor: theme.colors.onMedia },
+  dotDisc: {
+    position: "absolute",
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+  },
   selecting: { position: "absolute", width: 1, height: 1 },
 });

@@ -12,6 +12,7 @@ import {
   finishImport,
   queueImport,
   removeImport,
+  setImportStudio,
   startImport,
 } from "./importing";
 import {
@@ -212,6 +213,43 @@ test("a studio photo stays chosen when the cut-out is adjusted", () => {
   assert.equal(next.pieces[0]!.photo, "job-studio.jpg");
   assert.equal(next.pieces[0]!.variants?.studio, "job-studio.jpg");
   assert.equal(next.pieces[0]!.variants?.plain, "job-cut-1.png");
+  assert.equal(next.pieces[0]!.studioStale, true);
+  assert.equal(decodeCloset(JSON.stringify(next)).pieces[0]!.studioStale, true);
+});
+
+test("an adjusted cut-out without a studio photo is never stale", () => {
+  const closet = acceptImports(finished());
+  const piece = replacePieceCutout(closet, closet.pieces[0]!.id, edit)
+    .pieces[0]!;
+  assert.equal(piece.studioStale, undefined);
+  const job = replaceImportCutout(finished(), "job", edit).imports[0]!;
+  assert.equal(job.prepared?.studioStale, undefined);
+});
+
+test("adjusting an import cut-out marks its studio photo stale until a new one is made", () => {
+  const closet = setImportStudio(finished(), "job", "job-studio.jpg");
+  const edited = replaceImportCutout(closet, "job", edit);
+  assert.equal(edited.imports[0]!.prepared?.studioStale, true);
+  assert.equal(
+    decodeCloset(JSON.stringify(edited)).imports[0]!.prepared?.studioStale,
+    true,
+  );
+  const fresh = setImportStudio(edited, "job", "job-studio-2.jpg");
+  assert.equal(fresh.imports[0]!.prepared?.studioStale, undefined);
+  assert.equal(fresh.imports[0]!.prepared?.studio, "job-studio-2.jpg");
+});
+
+test("a stale studio photo stays stale when the import is accepted", () => {
+  const closet = replaceImportCutout(
+    setImportStudio(finished(), "job", "job-studio.jpg"),
+    "job",
+    edit,
+  );
+  const named = correctImport(closet, "job", {
+    kind: "kurta",
+    name: "Sage kurta",
+  });
+  assert.equal(acceptImports(named).pieces[0]!.studioStale, true);
 });
 
 test("an adjusted cut-out on an import replaces every prepared cut-out file", () => {

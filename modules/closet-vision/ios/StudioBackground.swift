@@ -1,37 +1,38 @@
 import CoreGraphics
 import Foundation
-import ImageIO
-import UniformTypeIdentifiers
 
 enum StudioBackground {
   static let borderShare = 0.04
-  static let shadowShare = 0.03
-  static let shadowKeep: Float = 0.7
   static let near: Float = 12
   static let far: Float = 34
 
-  static func whiten(source: URL, target: URL) -> Bool {
-    guard let input = CGImageSourceCreateWithURL(source as CFURL, nil),
-      let image = CGImageSourceCreateImageAtIndex(input, 0, nil),
-      let whitened = whiten(image),
-      let output = CGImageDestinationCreateWithURL(target as CFURL, UTType.jpeg.identifier as CFString, 1, nil)
-    else { return false }
-    CGImageDestinationAddImage(
-      output, whitened, [kCGImageDestinationLossyCompressionQuality: 0.92] as CFDictionary)
-    return CGImageDestinationFinalize(output)
-  }
-
-  static func whiten(_ image: CGImage) -> CGImage? {
+  static func clear(_ image: CGImage) -> CGImage? {
     let width = image.width
     let height = image.height
     guard width > 8, height > 8, let space = CGColorSpace(name: CGColorSpace.sRGB),
       let context = CGContext(
         data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: width * 4,
-        space: space, bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue),
+        space: space, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue),
       let data = context.data
     else { return nil }
     context.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
     let pixels = data.bindMemory(to: UInt8.self, capacity: width * height * 4)
+    let (weight, backdrop) = backdropOf(pixels, width: width, height: height)
+    var kept = 0
+    for index in 0..<(width * height) {
+      let alpha = backdrop[index] ? 1 - weight[index] : 1
+      if alpha > 0.5 { kept += 1 }
+      for channel in 0..<4 {
+        pixels[index * 4 + channel] = UInt8((Float(pixels[index * 4 + channel]) * alpha).rounded())
+      }
+    }
+    guard kept > 0, kept < width * height else { return nil }
+    return context.makeImage()
+  }
+
+  private static func backdropOf(_ pixels: UnsafeMutablePointer<UInt8>, width: Int, height: Int) -> (
+    [Float], [Bool]
+  ) {
     let count = width * height
     let background = median(pixels, width: width, height: height)
     let backgroundOpponent = opponent(background.0, background.1, background.2)
@@ -73,35 +74,7 @@ enum StudioBackground {
       if y > 0 { seed(index - width) }
       if y < height - 1 { seed(index + width) }
     }
-
-    let reach = max(1, Int(Double(min(width, height)) * shadowShare))
-    var below = [Int](repeating: Int.max / 2, count: count)
-    for x in 0..<width {
-      var since = Int.max / 2
-      for y in 0..<height {
-        let index = y * width + x
-        since = backdrop[index] ? since + 1 : 0
-        below[index] = since
-      }
-    }
-    for y in 0..<height {
-      let row = y * width
-      for x in 1..<width { below[row + x] = min(below[row + x], below[row + x - 1] + 1) }
-      for x in stride(from: width - 2, through: 0, by: -1) {
-        below[row + x] = min(below[row + x], below[row + x + 1] + 1)
-      }
-    }
-
-    for index in 0..<count where backdrop[index] {
-      let distance = below[index]
-      let shadow = distance < reach ? 1 - Float(distance) / Float(reach) : 0
-      let strength = weight[index] * (1 - shadowKeep * shadow * shadow)
-      for channel in 0..<3 {
-        let value = Float(pixels[index * 4 + channel])
-        pixels[index * 4 + channel] = UInt8(min(255, (value + (255 - value) * strength).rounded()))
-      }
-    }
-    return context.makeImage()
+    return (weight, backdrop)
   }
 
   private static func opponent(_ red: Float, _ green: Float, _ blue: Float) -> (Float, Float, Float) {

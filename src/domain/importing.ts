@@ -537,7 +537,8 @@ export function setImportStudio(
   return updateJob(closet, id, (job) => {
     if (job.state !== "ready" && job.state !== "review") return job;
     if (!job.prepared || !importStudioSource(job)) return job;
-    return { ...job, prepared: { ...job.prepared, studio }, variant: "studio" };
+    const { studioStale: _stale, ...prepared } = job.prepared;
+    return { ...job, prepared: { ...prepared, studio }, variant: "studio" };
   });
 }
 
@@ -746,6 +747,7 @@ export function pieceFromImport(job: ImportJob): Piece | null {
     original: job.prepared.original,
     ...(useCutout && job.prepared.frame ? { frame: job.prepared.frame } : {}),
     ...(enhanced && job.prepared.area ? { cutoutArea: job.prepared.area } : {}),
+    ...(studio && job.prepared.studioStale ? { studioStale: true } : {}),
     createdAt: job.createdAt,
     source: "owned",
     ...(job.captureId ? { captureId: job.captureId } : {}),

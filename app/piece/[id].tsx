@@ -14,7 +14,12 @@ import { costPerWear, setArchived } from "../../src/domain/wardrobe";
 import { FactChips } from "../../src/features/piece/FactChips";
 import { usePiece, wearLine } from "../../src/features/piece/usePiece";
 import { listName, locale, t } from "../../src/i18n";
+import {
+  canRemoveBackground,
+  removeBackground,
+} from "../../src/state/background";
 import { fibreLabel } from "../../src/state/careLabel";
+import { useCloset } from "../../src/state/closet";
 import { now } from "../../src/state/clock";
 import {
   Button,
@@ -64,8 +69,10 @@ function costLine(piece: Piece, closet: Closet): string | null {
 
 export default function PieceDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { closet, piece, change, error } = usePiece(id);
+  const { closet, piece, change, error, setError } = usePiece(id);
+  const { update, read } = useCloset();
   const [busy, setBusy] = useState(false);
+  const [clearing, setClearing] = useState(false);
   const { height } = useWindowDimensions();
 
   if (!piece) return <Screen gone={{ title: t("piece.missing.title") }} />;
@@ -90,6 +97,16 @@ export default function PieceDetail() {
     } finally {
       setBusy(false);
     }
+  };
+
+  const clearBackground = async () => {
+    if (clearing || busy) return;
+    setClearing(true);
+    setError(null);
+    const done = await removeBackground(update, read, piece);
+    setClearing(false);
+    if (done) announce(t("background.removed"));
+    else setError(t("background.failed"));
   };
 
   const backInCloset = () =>
@@ -156,6 +173,8 @@ export default function PieceDetail() {
         <Tile
           image={piece}
           size="hero"
+          state={clearing ? "preparing" : undefined}
+          busyLabel={clearing ? t("background.removing") : undefined}
           accessibilityLabel={piece.name}
           testID="piece-hero"
         />
@@ -173,6 +192,18 @@ export default function PieceDetail() {
           </Text>
         ) : null}
       </View>
+      {canRemoveBackground(piece) || clearing ? (
+        <View style={styles.actions}>
+          <Button
+            variant="quiet"
+            icon="wand.and.stars"
+            label={t("background.remove")}
+            busy={clearing}
+            testID="piece-remove-background"
+            onPress={() => void clearBackground()}
+          />
+        </View>
+      ) : null}
       <Section title={t("piece.facts.title")} testID="piece-facts">
         <FactChips key={pieceId} piece={piece} onChange={change} />
       </Section>

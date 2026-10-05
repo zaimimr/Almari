@@ -32,6 +32,7 @@ import {
 import { builderRequest } from "../../domain/builder";
 import { clockFor, ensureToday, startOccasion } from "../../domain/today";
 import { t } from "../../i18n";
+import { canRemoveBackground, removeBackground } from "../../state/background";
 import { useCloset } from "../../state/closet";
 import { now } from "../../state/clock";
 import { takePendingFilter } from "../../state/closetFilter";
@@ -50,7 +51,7 @@ const errorText = (error: unknown) =>
     : t("common.error.save");
 
 export function useClosetScreen() {
-  const { closet, update } = useCloset();
+  const { closet, update, read } = useCloset();
   const searchRef = useRef<SearchBarCommands | null>(null);
   const [raw, setFilter] = useState<ClosetFilter>(noFilter);
   const [panelOpen, setPanelOpen] = useState(false);
@@ -59,6 +60,7 @@ export function useClosetScreen() {
   const [added, setAdded] = useState<string[]>([]);
   const [result, setResult] = useState<SelectResult>(null);
   const [expanded, setExpanded] = useState<Expanded>(null);
+  const [clearing, setClearing] = useState<string[]>([]);
 
   useFocusEffect(
     useCallback(() => {
@@ -184,6 +186,7 @@ export function useClosetScreen() {
     return piece ? [piece] : [];
   });
   const owned = chosen.filter((piece) => piece.source === "owned");
+  const backed = owned.filter(canRemoveBackground);
 
   const run = (transform: (current: Closet) => Closet, done: () => void) =>
     update(transform).then(done, (error: unknown) =>
@@ -273,6 +276,24 @@ export function useClosetScreen() {
     );
   };
 
+  const clearBackgrounds = async () => {
+    const pieces = backed;
+    setSelecting(false);
+    setSelected([]);
+    setExpanded(null);
+    setResult(null);
+    setClearing(pieces.map((piece) => piece.id));
+    let failed = false;
+    for (const piece of pieces) {
+      const done = await removeBackground(update, read, piece);
+      if (!done) failed = true;
+      setClearing((current) => current.filter((id) => id !== piece.id));
+    }
+    const text = t(failed ? "background.failed" : "background.removed");
+    announce(text);
+    setResult({ text });
+  };
+
   const laundry = (done: boolean) => {
     const ids = (done ? washing : load).map((piece) => piece.id);
     run(
@@ -329,6 +350,9 @@ export function useClosetScreen() {
     selected,
     chosen,
     owned,
+    backed,
+    clearing,
+    clearBackgrounds,
     startSelect,
     endSelect,
     toggle,

@@ -127,6 +127,7 @@ export type Piece = {
   captureId?: string;
   variants?: Variants;
   cutoutArea?: Frame;
+  studioStale?: boolean;
   setId?: string;
   washedAt?: string;
   price?: Price;
@@ -145,6 +146,7 @@ export type Prepared = {
   embedding: string | null;
   enhanced?: string | null;
   studio?: string | null;
+  studioStale?: boolean;
   quality?: Quality | null;
   area?: Frame | null;
 };
@@ -712,6 +714,7 @@ function isPiece(value: unknown): value is Piece {
     optional(value.captureId, isString) &&
     optional(value.variants, isVariants) &&
     optional(value.cutoutArea, isFrame) &&
+    optional(value.studioStale, isBoolean) &&
     optional(value.setId, isString) &&
     optional(value.washedAt, isString) &&
     optional(value.price, isPrice)
@@ -798,6 +801,7 @@ function isPrepared(value: unknown): value is Prepared {
         (value.embedding === null || isEmbedding(value.embedding))) &&
     optional(value.enhanced, isNullableString) &&
     optional(value.studio, isNullableString) &&
+    optional(value.studioStale, isBoolean) &&
     optional(value.quality, isNullableQuality) &&
     optional(
       value.area,

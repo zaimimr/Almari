@@ -73,6 +73,7 @@ export function replacePieceCutout(
       enhanced: edit.enhanced,
     },
     cutoutArea: edit.area,
+    ...(piece.variants?.studio ? { studioStale: true } : {}),
     ...(piece.frame || !source.cutout ? { frame: edit.frame } : {}),
   };
   return {
@@ -104,6 +105,7 @@ export function replaceImportCutout(
       thumbnail: edit.thumbnail,
       frame: edit.frame,
       area: edit.area,
+      ...(job.prepared.studio ? { studioStale: true } : {}),
     },
   };
   return {

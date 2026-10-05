@@ -12,6 +12,7 @@ import Animated, {
   useSharedValue,
 } from "react-native-reanimated";
 import type { SFSymbol } from "expo-symbols";
+import { t } from "../i18n";
 import { timing, useAfterWait, useReduceMotion } from "./motion";
 import { Symbol } from "./symbol";
 import { Text } from "./Text";
@@ -134,7 +135,12 @@ export function Chip({
       disabled={disabled}
       accessibilityRole={role}
       accessibilityLabel={
-        accessibilityLabel ?? [keyLabel, label].filter(Boolean).join(": ")
+        accessibilityLabel ??
+        (tentative
+          ? t("chip.guessed", {
+              label: [keyLabel, label].filter(Boolean).join(": "),
+            })
+          : [keyLabel, label].filter(Boolean).join(": "))
       }
       accessibilityValue={
         accessibilityValue ? { text: accessibilityValue } : undefined
@@ -152,7 +158,14 @@ export function Chip({
       testID={testID}
       style={styles.target}
     >
-      <Animated.View style={[styles.chip, { borderRadius: radius }, fill]}>
+      <Animated.View
+        style={[
+          styles.chip,
+          { borderRadius: radius },
+          tentative && styles.dashed,
+          fill,
+        ]}
+      >
         <Animated.View
           pointerEvents="none"
           style={[
@@ -161,10 +174,11 @@ export function Chip({
               borderRadius: radius - border,
               borderColor: colors.lineField,
             },
+            tentative && styles.dashedEdge,
             edge,
           ]}
         />
-        {tentative || dot ? (
+        {dot ? (
           <View
             style={{
               width: dotSize,
@@ -239,6 +253,7 @@ export type ChipRowProps<T extends string> = {
   multi?: boolean;
   optional?: boolean;
   reselect?: boolean;
+  guessed?: boolean;
   inSurface?: boolean;
   testID?: string;
 };
@@ -253,6 +268,7 @@ export function ChipRow<T extends string>({
   multi = false,
   optional = false,
   reselect = false,
+  guessed = false,
   inSurface,
   testID,
 }: ChipRowProps<T>) {
@@ -271,7 +287,7 @@ export function ChipRow<T extends string>({
       onChange(
         list.includes(id) ? list.filter((item) => item !== id) : [...list, id],
       );
-    } else if (optional || reselect || value !== id) {
+    } else if (optional || reselect || guessed || value !== id) {
       onChange(optional && value === id ? null : id);
     }
   };
@@ -290,6 +306,7 @@ export function ChipRow<T extends string>({
         swatch={option.swatch}
         accessibilityLabel={option.accessibilityLabel}
         selected={chosen(option.id)}
+        tentative={guessed && chosen(option.id)}
         role={role}
         inSurface={inSurface}
         onPress={() => pick(option.id)}
@@ -341,6 +358,8 @@ const styles = StyleSheet.create({
     borderCurve: "continuous",
   },
   edge: { position: "absolute", inset: 0, borderWidth: 1 },
+  dashed: { borderStyle: "dashed" },
+  dashedEdge: { borderStyle: "dashed", borderWidth: 1.5 },
   swatch: { borderWidth: 1 },
   label: { flexShrink: 1 },
   group: { gap: theme.space.md },
