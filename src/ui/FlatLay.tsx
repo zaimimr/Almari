@@ -203,6 +203,7 @@ function LaidPiece({
   gleam,
   origin,
   mark,
+  kept,
   nativeID,
   onPress,
   access,
@@ -216,6 +217,7 @@ function LaidPiece({
   gleam: boolean;
   origin: SharedValue<number>;
   mark: boolean;
+  kept: boolean;
   nativeID?: string;
   onPress?: () => void;
   access: AccessibilityProps;
@@ -234,6 +236,28 @@ function LaidPiece({
   const scale = Math.min(symbolScale, markCap);
   const disc = markDisc * scale;
   const raised = theme.elevation.lift;
+  const inset = { top: box.height * 0.08, right: box.width * 0.08 };
+  const badge = (name: "arrow.2.squarepath" | "pin.fill", at: object) => (
+    <View
+      style={[
+        styles.mark,
+        at,
+        {
+          width: disc,
+          height: disc,
+          borderRadius: disc / 2,
+          backgroundColor: colors.canvas,
+        },
+      ]}
+      {...hidden}
+    >
+      <Symbol
+        name={name}
+        size={(theme.size.iconInline * scale) / symbolScale}
+        tone="plum"
+      />
+    </View>
+  );
 
   useEffect(() => {
     if (phase === "still") return;
@@ -320,26 +344,10 @@ function LaidPiece({
         {gleam && !ghost ? (
           <Gleam laid={laid} side={side} origin={origin} />
         ) : null}
-        {mark ? (
-          <View
-            style={[
-              styles.mark,
-              {
-                width: disc,
-                height: disc,
-                borderRadius: disc / 2,
-                backgroundColor: colors.canvas,
-              },
-            ]}
-            {...hidden}
-          >
-            <Symbol
-              name="arrow.2.squarepath"
-              size={(theme.size.iconInline * scale) / symbolScale}
-              tone="plum"
-            />
-          </View>
-        ) : null}
+        {mark ? badge("arrow.2.squarepath", inset) : null}
+        {kept
+          ? badge("pin.fill", { top: inset.top, left: box.width * 0.08 })
+          : null}
       </Pressable>
     </Animated.View>
   );
@@ -607,6 +615,7 @@ export function FlatLay({
               gleam={state === "arranging"}
               origin={origin}
               mark={hero && swapMark && roleOf(laid.piece) === "hijab"}
+              kept={hero && keptIds.includes(laid.piece.id)}
               nativeID={`${prefix}-${laid.piece.id}`}
               onPress={
                 hero && onPiecePress
@@ -638,8 +647,6 @@ const styles = StyleSheet.create({
   },
   mark: {
     position: "absolute",
-    top: 0,
-    right: 0,
     alignItems: "center",
     justifyContent: "center",
   },
