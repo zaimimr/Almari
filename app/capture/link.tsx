@@ -3,6 +3,7 @@ import { StyleSheet, View } from "react-native";
 import { randomUUID } from "expo-crypto";
 import { router } from "expo-router";
 import {
+  botPage,
   imageExtension,
   productFromPage,
   productLink,
@@ -26,7 +27,10 @@ async function download(url: string, accept: string) {
       headers: { Accept: accept },
       signal: controller.signal,
     });
-    if (!response.ok) throw new Error("failed");
+    if (!response.ok)
+      throw new Error(
+        [401, 403, 429].includes(response.status) ? "blocked" : "failed",
+      );
     return response;
   } finally {
     clearTimeout(timer);
@@ -38,18 +42,22 @@ export default function AddFromLink() {
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [stuck, setStuck] = useState(false);
   const link = productLink(text);
 
   async function add() {
     if (!link || busy) return;
     setBusy(true);
     setError(null);
+    setStuck(false);
     let source: string | null = null;
     try {
       const page = await download(link, "text/html");
-      const product = productFromPage(await page.text(), page.url || link);
+      const html = await page.text();
+      const product = productFromPage(html, page.url || link);
       if (!product) {
-        setError(t("link.failed"));
+        setError(t(botPage(html) ? "link.blocked" : "link.failed"));
+        setStuck(true);
         return;
       }
       const image = await download(product.image, "image/*");
@@ -70,9 +78,19 @@ export default function AddFromLink() {
         }),
       );
       router.back();
-    } catch {
+    } catch (failure) {
       if (source) void discardPhoto(source).catch(() => undefined);
-      setError(t((await isOffline()) ? "common.offline" : "link.failed"));
+      const offline = await isOffline();
+      setError(
+        t(
+          offline
+            ? "common.offline"
+            : failure instanceof Error && failure.message === "blocked"
+              ? "link.blocked"
+              : "link.failed",
+        ),
+      );
+      setStuck(!offline);
     } finally {
       setBusy(false);
     }
@@ -91,6 +109,15 @@ export default function AddFromLink() {
             busy,
             testID: "link-add",
           }}
+          secondary={
+            stuck
+              ? {
+                  label: t("capture.byHand"),
+                  onPress: () => router.replace("/piece/new"),
+                  testID: "link-by-hand",
+                }
+              : undefined
+          }
         />
       }
       testID="link-screen"
@@ -102,6 +129,7 @@ export default function AddFromLink() {
           onChangeText={(value) => {
             setText(value);
             setError(null);
+            setStuck(false);
           }}
           autoCapitalize="none"
           autoCorrect={false}

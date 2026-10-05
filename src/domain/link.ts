@@ -97,6 +97,21 @@ export function productFromPage(html: string, pageUrl: string): Product | null {
   return { image: resolved, name: title ? cleanTitle(title) : null };
 }
 
+const botMarks = [
+  /captcha/i,
+  /access denied/i,
+  /just a moment/i,
+  /cf-chl/i,
+  /bm-verify/i,
+  /_sec\/cp_challenge/i,
+  /pardon our interruption/i,
+  /are you a robot/i,
+];
+
+export function botPage(html: string): boolean {
+  return botMarks.some((mark) => mark.test(html));
+}
+
 export function imageExtension(contentType: string | null, url: string) {
   if (contentType?.includes("png") || /\.png(\?|$)/i.test(url)) return ".png";
   return ".jpg";

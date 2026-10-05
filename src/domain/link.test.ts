@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  botPage,
   cleanTitle,
   imageExtension,
   productFromPage,
@@ -64,4 +65,14 @@ test("png images keep their extension", () => {
   assert.equal(imageExtension("image/png", "https://a.example/x"), ".png");
   assert.equal(imageExtension(null, "https://a.example/x.PNG?w=2"), ".png");
   assert.equal(imageExtension("image/jpeg", "https://a.example/x"), ".jpg");
+});
+
+test("a shop bot wall is told apart from a page with no photo", () => {
+  assert.equal(
+    botPage(
+      '<html><head><title>Access Denied</title></head><body><script src="/_sec/cp_challenge/sec-4-4.js"></script></body></html>',
+    ),
+    true,
+  );
+  assert.equal(botPage("<html><title>Summer sale</title></html>"), false);
 });
