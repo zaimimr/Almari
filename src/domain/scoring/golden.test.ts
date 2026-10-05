@@ -53,30 +53,28 @@ test("the sample closet on a fixed day gives a fixed top three with fixed reason
         "sample-taupe-bag",
       ],
       [
-        "sample-ivory-tunic",
-        "sample-charcoal-trousers",
-        "sample-chocolate-hijab",
+        "sample-olive-maxi-dress",
+        "sample-ivory-hijab",
         "sample-navy-blazer",
         "sample-chocolate-loafers",
         "sample-taupe-bag",
       ],
       [
-        "sample-olive-maxi-dress",
-        "sample-ivory-trousers",
-        "sample-ivory-hijab",
-        "sample-navy-blazer",
+        "sample-ivory-tunic",
+        "sample-charcoal-trousers",
+        "sample-chocolate-hijab",
+        "sample-taupe-abaya",
         "sample-chocolate-loafers",
         "sample-taupe-bag",
       ],
     ],
   );
   assert.deepEqual(result.outfits[0]!.reasons, [
-    "Every piece is marked for work.",
-    "The chocolate jersey hijab brings contrast to the ivory longline tunic.",
+    "The chocolate jersey hijab frames your face against the ivory longline tunic.",
+    "The chocolate jersey hijab ties in with the chocolate leather loafers.",
   ]);
-  assert.deepEqual(result.outfits[2]!.reasons, [
-    "Every piece is marked for work.",
-    "The ivory modal hijab brings contrast to the olive maxi dress.",
+  assert.deepEqual(result.outfits[1]!.reasons.slice(0, 1), [
+    "The ivory modal hijab frames your face against the olive maxi dress.",
   ]);
 });
 
@@ -96,7 +94,7 @@ test("a Desi party from the samples is explained by colour and pairing rules", (
   ]);
   assert.deepEqual(result.outfits[0]!.reasons, [
     "The ivory modal hijab picks up a colour from the sage embroidered kurta.",
-    "The ivory modal hijab repeats the colour of the ivory cotton shalwar.",
+    "The ivory modal hijab ties in with the ivory cotton shalwar.",
   ]);
 });
 
@@ -242,5 +240,79 @@ test("only a hijab or an instant hijab fills the hijab slot", () => {
   assert.deepEqual(
     result.problems.map((problem) => problem.message),
     ["Add a hijab to complete an outfit."],
+  );
+});
+
+const pick = (...ids: string[]) =>
+  ids.map((id) => samples.pieces.find((piece) => piece.id === `sample-${id}`)!);
+
+test("a maxi dress alone beats the same dress over trousers on a warm day", () => {
+  const warm = request({
+    occasion: "everyday",
+    weather: {
+      source: "manual",
+      warmth: "warm",
+      precipitation: "dry",
+      exposure: null,
+    },
+  });
+  const alone = rulesScorer.score(
+    pick("olive-maxi-dress", "ivory-hijab", "chocolate-loafers"),
+    warm,
+    context,
+  ).score;
+  const layered = rulesScorer.score(
+    pick(
+      "olive-maxi-dress",
+      "ivory-trousers",
+      "ivory-hijab",
+      "chocolate-loafers",
+    ),
+    warm,
+    context,
+  ).score;
+  assert.ok(alone > layered);
+});
+
+test("a blazer under an open abaya scores below either layer alone", () => {
+  const cold = request({
+    occasion: "party",
+    weather: {
+      source: "manual",
+      warmth: "cold",
+      precipitation: "dry",
+      exposure: null,
+    },
+  });
+  const base = [
+    "ivory-tunic",
+    "charcoal-trousers",
+    "mauve-hijab",
+    "chocolate-loafers",
+  ];
+  const score = (...extra: string[]) =>
+    rulesScorer.score(pick(...base, ...extra), cold, context).score;
+  assert.ok(score("navy-blazer", "taupe-abaya") < score("navy-blazer"));
+  assert.ok(score("navy-blazer", "taupe-abaya") < score("taupe-abaya"));
+});
+
+test("reasons about trousers and shoes use plural grammar", () => {
+  const { reasons } = rulesScorer.score(
+    pick("sage-kurta", "charcoal-trousers", "ivory-hijab", "chocolate-loafers"),
+    request({
+      occasion: "work",
+      style: "desi",
+      weather: {
+        source: "manual",
+        warmth: "cold",
+        precipitation: "dry",
+        exposure: null,
+      },
+    }),
+    context,
+  );
+  assert.ok(
+    reasons.includes("The charcoal wide-leg trousers are warm for a cold day."),
+    reasons.join(" | "),
   );
 });

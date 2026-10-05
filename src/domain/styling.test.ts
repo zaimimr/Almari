@@ -471,3 +471,34 @@ test("missing roles name what the owned pool still needs", () => {
     [],
   );
 });
+
+test("a large closet spreads outfits across many mains and bottoms", () => {
+  const make = (prefix: string, count: number, extra: Partial<Piece>) =>
+    Array.from({ length: count }, (_, index) =>
+      piece(`${prefix}-${index}`, extra.category!, {
+        styles: ["western"],
+        ...extra,
+      }),
+    );
+  const pieces = [
+    ...make("top", 6, { category: "top", kind: "blouse" }),
+    ...make("bottom", 6, { category: "bottom", kind: "trousers" }),
+    ...make("hijab", 8, { category: "hijab", kind: "hijab" }),
+    ...make("cardigan", 4, { category: "layer", kind: "cardigan" }),
+    ...make("coat", 2, { category: "layer", kind: "coat" }),
+    ...make("shoes", 5, { category: "shoes", kind: "loafers" }),
+  ];
+  const result = styleOutfits(
+    pieces,
+    request({ wardrobe: "owned" }),
+    "2026-10-01:owned",
+    rulesScorer,
+    context,
+  );
+  const first = result.outfits.slice(0, 12);
+  const core = (ids: string[]) =>
+    ids.filter((id) => id.startsWith("top") || id.startsWith("bottom")).join();
+  assert.equal(new Set(first.map((outfit) => outfit.ids[0])).size, 6);
+  for (let index = 1; index < first.length; index++)
+    assert.notEqual(core(first[index]!.ids), core(first[index - 1]!.ids));
+});

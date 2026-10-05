@@ -384,24 +384,38 @@ function difference(a: string[], b: string[]) {
   return b.filter((id) => !set.has(id)).length;
 }
 
-function diversify(candidates: Candidate[], seed: string) {
+function diversify(
+  candidates: Candidate[],
+  seed: string,
+  core: (id: string) => boolean,
+) {
   const remaining = [...candidates].sort(
     (a, b) =>
       b.score - a.score ||
       hash(seed + a.ids.join()) - hash(seed + b.ids.join()),
   );
   const ordered: Candidate[] = [];
+  const uses = new Map<string, number>();
   while (remaining.length && ordered.length < maxOutfits) {
     const last = ordered[ordered.length - 1];
-    const index = last
-      ? Math.max(
-          0,
-          remaining.findIndex(
-            (candidate) => difference(last.ids, candidate.ids) >= 2,
-          ),
-        )
-      : 0;
-    ordered.push(remaining.splice(index, 1)[0]!);
+    let index = 0;
+    let best = -Infinity;
+    remaining.forEach((candidate, at) => {
+      if (last && difference(last.ids, candidate.ids) < 2) return;
+      const value =
+        candidate.score -
+        candidate.ids
+          .filter(core)
+          .reduce((sum, id) => sum + (uses.get(id) ?? 0), 0);
+      if (value > best) {
+        best = value;
+        index = at;
+      }
+    });
+    const picked = remaining.splice(index, 1)[0]!;
+    ordered.push(picked);
+    for (const id of picked.ids.filter(core))
+      uses.set(id, (uses.get(id) ?? 0) + 1);
   }
   return ordered;
 }
@@ -624,7 +638,6 @@ export function styleOutfits(
 
   const outfits: Candidate[] = [];
   const reviews: Candidate[] = [];
-  let count = 0;
   let limited = false;
   let coverageBlocked = false;
   const consider = (ids: Piece[]) => {
@@ -675,37 +688,68 @@ export function styleOutfits(
     }
     return best;
   };
-  const expand = (prefix: Piece[], rest: Piece[][][]) => {
-    if (limited) return;
-    if (!rest.length) {
-      if (++count > maxCombinations) {
-        limited = true;
-        return;
-      }
-      consider(prefix);
-      return;
-    }
-    for (const option of rest[0]!)
-      expand([...prefix, ...option], rest.slice(1));
-  };
-  for (const main of mains) {
+  const pairs = mains.flatMap((main) => {
     const bottomOptions: Piece[][] = keptRole("bottom").length
       ? [keptRole("bottom")]
       : needsBottom(main)
         ? bottoms.map((piece) => [piece])
         : [[], ...bottoms.map((piece) => [piece])];
-    expand([main], [bottomOptions, ...slots]);
+    return bottomOptions.map((bottom) => [main, ...bottom]);
+  });
+  const chosenPairs =
+    pairs.length > maxCombinations
+      ? [...pairs]
+          .sort(
+            (a, b) =>
+              hash(seed + a.map((piece) => piece.id).join()) -
+              hash(seed + b.map((piece) => piece.id).join()),
+          )
+          .slice(0, maxCombinations)
+      : pairs;
+  if (chosenPairs.length < pairs.length) limited = true;
+  const budget = Math.max(1, Math.floor(maxCombinations / chosenPairs.length));
+  const total = slots.reduce((product, options) => product * options.length, 1);
+  const combination = (prefix: Piece[], index: number) => {
+    const outfit = [...prefix];
+    let rest = index;
+    for (const options of slots) {
+      outfit.push(...options[rest % options.length]!);
+      rest = Math.floor(rest / options.length);
+    }
+    return outfit;
+  };
+  for (const prefix of chosenPairs) {
+    if (total <= budget) {
+      for (let index = 0; index < total; index++)
+        consider(combination(prefix, index));
+      continue;
+    }
+    limited = true;
+    const key = seed + prefix.map((piece) => piece.id).join();
+    const seen = new Set<number>();
+    for (let attempt = 0; seen.size < budget && attempt < budget * 2; attempt++)
+      seen.add(hash(`${key}:${attempt}`) % total);
+    for (const index of seen) consider(combination(prefix, index));
   }
+  const coreIds = new Set(
+    pool
+      .filter((piece) => {
+        const role = roleOf(piece);
+        return role === "main" || role === "bottom";
+      })
+      .map((piece) => piece.id),
+  );
+  const core = (id: string) => coreIds.has(id);
 
   if (outfits.length)
     return {
       status: "ready",
-      outfits: diversify(outfits, seed).map(accessorise),
+      outfits: diversify(outfits, seed, core).map(accessorise),
       problems: [],
       limited,
     };
   if (reviews.length) {
-    const ordered = diversify(reviews, seed).map(accessorise);
+    const ordered = diversify(reviews, seed, core).map(accessorise);
     return {
       status: "review",
       outfits: ordered,

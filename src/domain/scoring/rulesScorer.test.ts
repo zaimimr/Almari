@@ -55,7 +55,7 @@ test("the two strongest positive rules explain the outfit", () => {
   const result = rulesScorer.score([top, hijab, shoes], request, context);
   assert.deepEqual(result.reasons, [
     "A solid chocolate hijab keeps the floral blouse the focus.",
-    "The chocolate hijab brings contrast to the floral blouse.",
+    "The chocolate hijab frames your face against the floral blouse.",
   ]);
 });
 
@@ -72,7 +72,7 @@ test("her taste can lift a rule and its reason above another", () => {
   assert.ok(after.score > before.score);
   assert.equal(
     after.reasons[0],
-    "The chocolate hijab repeats the colour of the brown loafers.",
+    "The chocolate hijab ties in with the brown loafers.",
   );
 });
 

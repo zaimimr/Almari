@@ -22,7 +22,6 @@ import { saveLook as storeLook } from "../../domain/closet";
 import { lookForPieces, plannedToday } from "../../domain/looks";
 import { outfitName } from "../../domain/outfitName";
 import type { Occasion } from "../../domain/taxonomy";
-import { coverageNote } from "../../domain/outfitView";
 import { rulesScorer } from "../../domain/scoring/rulesScorer";
 import { scoreContext } from "../../domain/scoring/taste";
 import { evaluateOutfit } from "../../domain/styling";
@@ -144,11 +143,7 @@ export function useToday() {
     [scorer, request, context],
   );
   const reasons = showOutfit ? score(pieces).reasons : [];
-  const coverageLine =
-    showOutfit && request
-      ? coverageNote(pieces, request.coverage, locale)
-      : null;
-  const reasonLine = [reasons[0], coverageLine].filter(Boolean).join(" ");
+  const reasonLine = reasons[0] ?? "";
 
   const run = useCallback(
     async (
@@ -411,7 +406,6 @@ export function useToday() {
     broken,
     name,
     reasonLine,
-    coverageLine,
     score,
     mode,
     hour,

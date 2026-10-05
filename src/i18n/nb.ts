@@ -435,8 +435,7 @@ export const nb: Record<Key, string> = {
   "occasion.barat": "Barat",
   "occasion.barat.phrase": "barat eller formelt bryllup",
   "today.styledFor": "Antrekk til {occasion}.",
-  "reason.occasion-tags-match": "Alle plaggene er merket for {occasion}.",
-  "reason.layer-for-cold": "Med {a} får du et ekstra lag en kald dag.",
+  "reason.layer-for-cold": "Med {a} holder du deg varm en kald dag.",
   "reason.layer-for-mild": "Med {a} får du et ekstra lag en mild dag.",
   "reason.layer-at-work": "Med {a} blir antrekket komplett for jobb.",
   "reason.hijab-solid-with-print":
@@ -448,7 +447,7 @@ export const nb: Record<Key, string> = {
     "En nøytral {a} roer ned et fargerikt antrekk.",
   "reason.hijab-tonal-main":
     "Fargen på {a} er en lysere eller mørkere nyanse av {b}.",
-  "reason.hijab-contrast-main": "Fargen på {a} gir kontrast til {b}.",
+  "reason.hijab-contrast-main": "Med {a} rammes ansiktet inn mot {b}.",
   "reason.hijab-repeats-colour": "Samme farge går igjen i {a} og {b}.",
   "reason.bag-matches": "Fargen på {a} passer til {b}.",
   "reason.hijab-dressy-fabric": "Stoffet i {a} passer til {occasion}.",
@@ -456,22 +455,29 @@ export const nb: Record<Key, string> = {
   "reason.hijab-warm-fabric-cold": "Stoffet i {a} holder deg varm en kald dag.",
   "reason.hijab-cool-fabric-warm": "Stoffet i {a} er luftig en varm dag.",
   "reason.volume-balanced": "Fasongen på {a} balanserer {b}.",
+  "reason.volume-balanced_plural": "Fasongen på {a} balanserer {b}.",
   "reason.belt-over-long-piece": "Med {a} får {b} mer form.",
-  "reason.formality-fits-occasion": "Antrekket er passe pent for {occasion}.",
   "reason.dressed-up-element":
+    "Med {a} blir antrekket pent nok for {occasion}.",
+  "reason.dressed-up-element_plural":
     "Med {a} blir antrekket pent nok for {occasion}.",
   "reason.formal-shoes": "Med {a} passer antrekket til {occasion}.",
   "reason.formal-bag": "Med {a} passer antrekket til {occasion}.",
   "reason.work-shoes": "Med {a} blir antrekket pent nok for jobb.",
   "reason.dinner-shoes-bag": "Med {a} løftes antrekket til {occasion}.",
+  "reason.dinner-shoes-bag_plural": "Med {a} løftes antrekket til {occasion}.",
   "reason.khussa-for-mehndi": "Med {a} er det lett å sitte på gulvet og danse.",
   "reason.gharara-short-top": "En kort {b} får {a} til å komme til sin rett.",
   "reason.sharara-short-top": "En kort {b} får {a} til å komme til sin rett.",
   "reason.anarkali-slim-bottom": "Med {b} kan {a} folde seg ut.",
+  "reason.anarkali-slim-bottom_plural": "Med {b} kan {a} folde seg ut.",
   "reason.long-kameez-straight-bottom": "Med {b} under sitter {a} fint.",
+  "reason.long-kameez-straight-bottom_plural": "Med {b} under sitter {a} fint.",
   "reason.short-kurti-jeans": "Kort {a} med {b} er en enkel fusion-look.",
   "reason.bright-top-plain-bottom": "En enkel {b} lar {a} skille seg ut.",
+  "reason.bright-top-plain-bottom_plural": "Enkle {b} lar {a} skille seg ut.",
   "reason.printed-kameez-plain-bottom": "En enkel {b} balanserer {a}.",
+  "reason.printed-kameez-plain-bottom_plural": "Enkle {b} balanserer {a}.",
   "reason.plain-kameez-statement-dupatta":
     "Med {b} blir en enkel {a} mer festlig.",
   "reason.printed-kameez-plain-dupatta": "En enkel {b} lar {a} stå i fokus.",
@@ -480,10 +486,17 @@ export const nb: Record<Key, string> = {
   "reason.dupatta-for-occasion":
     "Med {a} blir antrekket komplett for {occasion}.",
   "reason.mehndi-colours": "Med {a} får du festlige farger til {occasion}.",
+  "reason.mehndi-colours_plural":
+    "Med {a} får du festlige farger til {occasion}.",
   "reason.barat-jewel-tones":
     "Fargen på {a} er en dyp juveltone som passer til {occasion}.",
+  "reason.barat-jewel-tones_plural":
+    "Fargen på {a} er en dyp juveltone som passer til {occasion}.",
   "reason.walima-soft-tones": "Den myke fargen på {a} passer til {occasion}.",
+  "reason.walima-soft-tones_plural":
+    "Den myke fargen på {a} passer til {occasion}.",
   "reason.eid-embroidery": "Med {a} føles antrekket riktig for Eid.",
+  "reason.eid-embroidery_plural": "Med {a} føles antrekket riktig for Eid.",
   "reason.denim-jacket-kurti": "Med {a} får {b} et uformelt fusion-preg.",
   "reason.blazer-over-kameez": "Med {a} over {b} blir det en pen fusion-look.",
   "reason.cardigan-over-kameez":
@@ -491,13 +504,17 @@ export const nb: Record<Key, string> = {
   "reason.coat-reaches-hem":
     "Med {a} er du dekket lenger ned enn kanten på {b}.",
   "reason.warm-fabric-cold": "Stoffet i {a} er varmt nok for en kald dag.",
+  "reason.warm-fabric-cold_plural":
+    "Stoffet i {a} er varmt nok for en kald dag.",
   "reason.shawl-with-winter-suit":
     "Med {a} til {b} er du godt kledd for vinteren.",
   "reason.velvet-winter-wedding":
     "Stoffet i {a} passer til bryllup om vinteren.",
   "reason.light-fabric-warm": "Stoffet i {a} er luftig en varm dag.",
+  "reason.light-fabric-warm_plural": "Stoffet i {a} er luftig en varm dag.",
   "reason.abaya-centred": "Med {a} i sentrum blir antrekket samlet.",
   "reason.accent-echo": "Fargen på {a} går igjen i {b}.",
+  "reason.accent-echo_plural": "Fargen på {a} går igjen i {b}.",
   "reason.tonal-steps": "Fargene på {a} og {b} er nyanser av samme farge.",
   "stylist.often": "Du bruker ofte {a} sammen med {b}.",
   "stylist.keptAway": "{name} er merket som utilgjengelig akkurat nå.",

@@ -408,13 +408,38 @@ function lower(piece: Piece) {
   return piece.name.charAt(0).toLowerCase() + piece.name.slice(1);
 }
 
+const pluralKinds = [
+  "trousers",
+  "jeans",
+  "shorts",
+  "leggings",
+  "joggers",
+  "wide-leg",
+];
+
+function isPlural(piece: Piece | undefined) {
+  return (
+    !!piece &&
+    (piece.category === "shoes" || pluralKinds.includes(piece.kind ?? ""))
+  );
+}
+
 export function reasonFor(hit: Hit, request: OutfitRequest): string | null {
   if (!hit.rule.reason) return null;
-  const key = `reason.${hit.rule.id}`;
-  const template = (en as Record<string, string>)[key] ?? "";
+  const templates = en as Record<string, string>;
+  const single = `reason.${hit.rule.id}`;
+  const template = templates[single] ?? "";
   const [a, b] = hit.bound.map((facts) => lower(facts.piece));
   if (template.includes("{a}") && !a) return null;
   if (template.includes("{b}") && !b) return null;
+  const subject =
+    template.indexOf("{b}") >= 0 &&
+    (template.indexOf("{a}") < 0 ||
+      template.indexOf("{b}") < template.indexOf("{a}"))
+      ? hit.bound[1]
+      : hit.bound[0];
+  const plural = `${single}_plural`;
+  const key = isPlural(subject?.piece) && templates[plural] ? plural : single;
   return t(key as Key, {
     a: a ?? "",
     b: b ?? "",
