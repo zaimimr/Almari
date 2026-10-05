@@ -50,6 +50,7 @@ const slotTexts: Key[] = [
   ...retakes.map((reason) => `colours.retake.${reason}` as const),
   "common.cameraOff",
   "colours.cameraFailed",
+  "colours.busy",
 ];
 
 const checkIcons = {
@@ -174,7 +175,9 @@ export function SelfieCameraPhase({
   );
   const live = camera === "ready";
   const faceFound = live && guide !== null && guide !== "find";
-  const message = t(messageFor(camera, guide, retake));
+  const message = t(
+    measuring ? "colours.busy" : messageFor(camera, guide, retake),
+  );
   const state = measuring
     ? "measuring"
     : !live
@@ -207,7 +210,7 @@ export function SelfieCameraPhase({
           />
         ) : live && fixtures.selfieLive ? (
           <Image
-            source={selfiePhoto}
+            source={{ uri: Image.resolveAssetSource(selfiePhoto).uri }}
             style={StyleSheet.absoluteFill}
             resizeMode="cover"
           />
