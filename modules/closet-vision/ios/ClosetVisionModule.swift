@@ -505,11 +505,11 @@ final class GarmentPipeline {
     return Double((0..<total).filter { cover.value($0) > 0.5 }.count) / Double(max(total, 1))
   }
 
-  private func heldCutout(_ image: CIImage) -> (garment: CIImage, mask: CIImage)? {
+  private func heldCutout(_ image: CIImage) -> (garment: CIImage, mask: CIImage, rect: CGRect)? {
     guard let parse = try? loadParser().parse(image),
       let region = GarmentRegions.held(parse.grid)
     else { return nil }
-    return (parse.cutout(image, region: region), parse.mask(of: region))
+    return (parse.cutout(image, region: region), parse.mask(of: region), parse.cutoutRect(of: region))
   }
 
   private static let guideGrowth = 6
@@ -642,6 +642,7 @@ final class GarmentPipeline {
     var found = false
     var mask: CIImage? = nil
     var spot: (origin: CGPoint, width: CGFloat)? = nil
+    var heldSpot: (origin: CGPoint, width: CGFloat)? = nil
     let enhancer = GarmentEnhancer(context: context)
     if let cutout = options?.cutout {
       guard let loaded = CIImage(contentsOf: photos.appendingPathComponent(cutout)) else {
@@ -668,14 +669,13 @@ final class GarmentPipeline {
           result.instances = observation.allInstances.count
           mask = scaledMask
           if let maskBuffer, let box = maskBounds(maskBuffer),
-            Int(box.width) == CVPixelBufferGetWidth(buffer)
+            let edged = CutoutEdges.garment(photo: image, mask: maskBuffer, box: box)
           {
-            spot = (
-              CGPoint(x: crop.minX + box.minX, y: full.height - crop.maxY + box.minY),
-              CGFloat(CVPixelBufferGetWidth(buffer))
-            )
+            spot = (CGPoint(x: crop.minX + box.minX, y: full.height - crop.maxY + box.minY), box.width)
+            garment = scaled(edged, longEdge: 1536)
+          } else {
+            garment = scaled(CIImage(cvPixelBuffer: buffer), longEdge: 1536)
           }
-          garment = scaled(CIImage(cvPixelBuffer: buffer), longEdge: 1536)
           found = true
         }
       }
@@ -683,17 +683,23 @@ final class GarmentPipeline {
         result.instances = 1
         mask = held.mask
         garment = scaled(held.garment, longEdge: 1536)
+        heldSpot = (
+          CGPoint(
+            x: crop.minX + held.rect.minX,
+            y: full.height - crop.maxY + image.extent.height - held.rect.maxY),
+          held.rect.width
+        )
         found = true
       }
     }
     if found {
       let correction = mask.map { enhancer.correction(photo: image, mask: $0) } ?? LightCorrection()
-      let placed = try place(eroded(garment), correction: correction, id: id, enhancer: enhancer)
+      let placed = try place(spot == nil ? eroded(garment) : garment, correction: correction, id: id, enhancer: enhancer)
       result.cutout = placed.cutout
       result.enhanced = placed.enhanced
       result.thumbnail = placed.thumbnail
       result.frame = placed.frame
-      if let spot {
+      if let spot = spot ?? heldSpot {
         result.area = CutoutMapping.record(
           CutoutMapping.area(
             garmentOrigin: spot.origin, scale: garment.extent.width / spot.width, side: placed.side,
