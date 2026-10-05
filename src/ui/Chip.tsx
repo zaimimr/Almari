@@ -237,6 +237,7 @@ export type ChipRowProps<T extends string> = {
   keepScroll?: boolean;
   multi?: boolean;
   optional?: boolean;
+  reselect?: boolean;
   inSurface?: boolean;
   testID?: string;
 };
@@ -250,6 +251,7 @@ export function ChipRow<T extends string>({
   keepScroll = false,
   multi = false,
   optional = false,
+  reselect = false,
   inSurface,
   testID,
 }: ChipRowProps<T>) {
@@ -268,7 +270,7 @@ export function ChipRow<T extends string>({
       onChange(
         list.includes(id) ? list.filter((item) => item !== id) : [...list, id],
       );
-    } else if (optional || value !== id) {
+    } else if (optional || reselect || value !== id) {
       onChange(optional && value === id ? null : id);
     }
   };

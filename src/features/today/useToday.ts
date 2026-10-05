@@ -291,6 +291,14 @@ export function useToday() {
     if (!request) return;
     const anchored = request.keptIds.length > 0 || !!request.garmentType;
     if (occasion === request.occasion && !anchored) return void another();
+    if (occasion === request.occasion)
+      return void restyle((current) =>
+        applyRequest(
+          current,
+          { ...request, keptIds: [], garmentType: null },
+          revision,
+        ),
+      );
     const everyday = closet.styling.everyday?.occasion ?? "everyday";
     void restyle((current) =>
       occasion === everyday

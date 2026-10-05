@@ -19,6 +19,7 @@ export function IntentRow({ model }: { model: TodayModel }) {
         if (typeof next === "string") model.intent(next);
       }}
       layout="scroll"
+      reselect
       testID="today-intent"
     />
   );
