@@ -52,7 +52,6 @@
       "expo-status-bar",
       "expo-image",
       "expo-sqlite",
-      "expo-font",
       [
         "expo-splash-screen",
         {
