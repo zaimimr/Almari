@@ -1491,7 +1491,7 @@ export const en = {
   "stats.categories": "Categories",
   "stats.leastWorn": "Least worn",
   "stats.thisMonth": "Wears this month",
-  "stats.wornNever": "{name}, never",
+  "stats.wornNever": "{name}, never worn",
   "piece.edit.price": "Price",
   "piece.edit.priceInvalid": "Use a number",
   "piece.costPerWear": "{price} per wear",

@@ -189,7 +189,6 @@ export function ClosetGrid({
             ? `section-${item.section.id}`
             : item.type
       }
-      stickyHeaderIndices={[0]}
       style={{ marginHorizontal: -gutter }}
       contentInsetAdjustmentBehavior="automatic"
       keyboardShouldPersistTaps="handled"

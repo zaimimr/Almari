@@ -1509,7 +1509,7 @@ export const nb: Record<Key, string> = {
   "stats.categories": "Kategorier",
   "stats.leastWorn": "Minst brukt",
   "stats.thisMonth": "Bruk denne måneden",
-  "stats.wornNever": "{name}, aldri",
+  "stats.wornNever": "{name}, aldri brukt",
   "piece.edit.price": "Pris",
   "piece.edit.priceInvalid": "Bruk et tall",
   "piece.costPerWear": "{price} per bruk",

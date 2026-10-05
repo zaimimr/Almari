@@ -45,6 +45,7 @@ export function filterValues(filter: ClosetFilter): string[] {
     filter.colour ? colourLabel(filter.colour) : null,
     filter.season ? t(`value.season.${filter.season}`) : null,
     show ? t(showLabels[show] as Parameters<typeof t>[0]) : null,
+    filter.sort ? t(`closet.sort.${filter.sort}`) : null,
   ].filter((value): value is string => value !== null);
 }
 

@@ -64,6 +64,22 @@ export function SelectFooter({
       </View>
     </ScrollView>
   );
+  const actions = [
+    markWorn,
+    {
+      label: t("closet.linkSet"),
+      onPress: onLink,
+      disabled: !canLink,
+      testID: "select-link",
+    },
+    {
+      label: t(putAwayShown ? "closet.backInCloset" : "closet.putAwayAction"),
+      onPress: onPutAway,
+      disabled: !canAct,
+      testID: "select-put-away",
+    },
+    changeAction,
+  ];
   const content =
     result && "text" in result ? (
       <ResultBar
@@ -102,28 +118,17 @@ export function SelectFooter({
           testID: `change-${id}`,
         })),
       ])
-    ) : undefined;
+    ) : (
+      <View style={styles.wrap}>
+        {actions.map((action) => (
+          <Button key={action.testID} variant="quiet" {...action} />
+        ))}
+      </View>
+    );
 
   return (
     <Footer
-      actions={[
-        markWorn,
-        {
-          label: t("closet.linkSet"),
-          onPress: onLink,
-          disabled: !canLink,
-          testID: "select-link",
-        },
-        {
-          label: t(
-            putAwayShown ? "closet.backInCloset" : "closet.putAwayAction",
-          ),
-          onPress: onPutAway,
-          disabled: !canAct,
-          testID: "select-put-away",
-        },
-        changeAction,
-      ]}
+      actions={actions}
       actionsContent={content}
       error={result && "error" in result ? result.error : null}
     />
@@ -133,4 +138,5 @@ export function SelectFooter({
 const styles = StyleSheet.create({
   row: { flexDirection: "row", alignItems: "center", gap: theme.space.sm },
   chips: { flexDirection: "row", gap: theme.space.sm },
+  wrap: { flexDirection: "row", flexWrap: "wrap", gap: theme.space.sm },
 });
