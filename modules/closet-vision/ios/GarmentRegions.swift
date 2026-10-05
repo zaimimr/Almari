@@ -48,13 +48,15 @@ enum GarmentRegions {
   static let heldGap = 4
   static let clothing: Set<UInt8> = Set(
     [ClothesClass.upper, .skirt, .pants, .dress, .scarf, .bag].map { UInt8($0.rawValue) })
+  static let carried: Set<UInt8> = clothing.union(
+    [ClothesClass.leftShoe, .rightShoe, .hat].map { UInt8($0.rawValue) })
 
   static let colourGap = 18.0
   static let colourKept = 0.85
   static let seedRadius = 6
 
   static func held(_ grid: LabelGrid, chroma: [SIMD2<Double>]? = nil) -> FoundRegion? {
-    guard let found = largest(grid, kind: "held", wanted: clothing) else { return nil }
+    guard let found = largest(grid, kind: "held", wanted: carried) else { return nil }
     let region = settled(found, grid: grid, chroma: chroma)
     return region.share >= minRegionShare ? region : nil
   }

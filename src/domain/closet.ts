@@ -73,6 +73,7 @@ export const garmentRegionKinds = [
   "shoes",
   "bag",
   "sunglasses",
+  "item",
 ] as const;
 
 export type GarmentRegionKind = (typeof garmentRegionKinds)[number];

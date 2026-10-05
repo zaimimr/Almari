@@ -197,8 +197,56 @@ final class GarmentPipeline {
         record.partial = region.partial
         result.regions.append(record)
       }
+      if parse.people == 0 {
+        result.regions += try items(image, id: id, after: result.regions.count)
+      }
       return result
     }
+  }
+
+  private static let minItemShare = 0.01
+
+  private func items(_ image: CIImage, id: String, after count: Int) throws -> [GarmentRegionRecord] {
+    guard let picture = render(image) else { return [] }
+    let request = Self.foregroundRequest()
+    let handler = VNImageRequestHandler(cgImage: picture)
+    guard (try? handler.perform([request])) != nil, let observation = request.results?.first else { return [] }
+    let enhancer = GarmentEnhancer(context: context)
+    let extent = image.extent
+    var records: [GarmentRegionRecord] = []
+    for instance in observation.allInstances {
+      guard
+        let buffer = try? observation.generateScaledMaskForImage(forInstances: IndexSet(integer: instance), from: handler)
+      else { continue }
+      let mask = CIImage(cvPixelBuffer: buffer)
+      let share = coverage(mask, enhancer: enhancer)
+      guard share >= Self.minItemShare, share < Self.wholeFrame,
+        let bounds = maskBounds(mask, extent: extent, enhancer: enhancer)
+      else { continue }
+      let cut = image.applyingFilter(
+        "CIBlendWithMask",
+        parameters: [
+          kCIInputBackgroundImageKey: CIImage(color: .clear).cropped(to: extent),
+          kCIInputMaskImageKey: mask,
+        ]
+      )
+      .cropped(to: bounds)
+      .transformed(by: CGAffineTransform(translationX: -bounds.minX, y: -bounds.minY))
+      let name = "\(id)-region-\(count + records.count + 1).png"
+      try write(cut, to: name, extent: nil)
+      var record = GarmentRegionRecord()
+      record.kind = "item"
+      record.cutout = name
+      record.frame = [
+        "x": Double(bounds.minX / extent.width),
+        "y": Double((extent.height - bounds.maxY) / extent.height),
+        "width": Double(bounds.width / extent.width),
+        "height": Double(bounds.height / extent.height),
+      ]
+      record.share = share
+      records.append(record)
+    }
+    return records
   }
 
   func studioInput(sourceUri: String, id: String) throws -> String {

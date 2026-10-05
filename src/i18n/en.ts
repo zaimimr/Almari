@@ -355,6 +355,7 @@ export const en = {
   "region.shoes": "Shoes",
   "region.bag": "Bag",
   "region.sunglasses": "Sunglasses",
+  "region.item": "Piece",
   "advice.useAnyway": "Continue anyway",
   "advice.merged.title": "The background blends in.",
   "advice.merged.body":
@@ -1558,7 +1559,6 @@ export const en = {
   "capture.addAnyway": "Add anyway",
   "capture.notAddedOne": "1 photo could not be added",
   "capture.notAddedMany": "{count} photos could not be added",
-  "capture.preparingCount": "Preparing {n} of {total}",
   "capture.cleanAll": "Clean all backgrounds",
   "capture.cleanAllTitle": "Clean all backgrounds?",
   "capture.cleanAllNote": "Clean all sends these photos to Cloudflare.",

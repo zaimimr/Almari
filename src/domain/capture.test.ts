@@ -6,6 +6,7 @@ import {
   holds,
   boxFrom,
   categoryForRegion,
+  coveredFrame,
   matchingPiece,
   minBox,
   minPick,
@@ -83,6 +84,74 @@ test("a flat lay with several pieces gives one proposal each, larger first", () 
   assert.equal(categoryForRegion("bag"), "bag");
   assert.equal(categoryForRegion("pants"), "bottom");
   assert.equal(categoryForRegion("upper"), null);
+});
+
+test("a product photo without a person uses the found item, not the misread garment", () => {
+  const plan = proposalsFromRegions(
+    [region("upper", 0.19), region("item", 0.25)],
+    0,
+  );
+  assert.deepEqual(plan.proposals, []);
+  assert.equal(plan.checkWhole, false);
+});
+
+test("several items without a person give one proposal each with no forced category", () => {
+  const plan = proposalsFromRegions(
+    [
+      region("pants", 0.04),
+      region("pants", 0.03),
+      region("item", 0.03),
+      region("item", 0.04),
+    ],
+    0,
+  );
+  assert.deepEqual(
+    plan.proposals.map((proposal) => [
+      proposal.region.kind,
+      proposal.region.share,
+      proposal.category,
+    ]),
+    [
+      ["item", 0.04, null],
+      ["item", 0.03, null],
+    ],
+  );
+});
+
+test("a flat lay the parser splits keeps its pieces over one found item", () => {
+  const plan = proposalsFromRegions(
+    [region("upper", 0.3), region("pants", 0.2), region("item", 0.6)],
+    0,
+  );
+  assert.deepEqual(
+    plan.proposals.map((proposal) => proposal.region.kind),
+    ["upper", "pants"],
+  );
+});
+
+test("found items are ignored when a person is in the photo", () => {
+  const plan = proposalsFromRegions(
+    [region("upper"), region("pants"), region("item", 0.4)],
+    1,
+  );
+  assert.deepEqual(
+    plan.proposals.map((proposal) => proposal.region.kind),
+    ["upper", "pants"],
+  );
+});
+
+test("a found piece is placed where it shows on a cropped thumbnail", () => {
+  const wide = coveredFrame(
+    { x: 0.5, y: 0.2, width: 0.25, height: 0.5 },
+    1,
+    0.8,
+  );
+  assert.ok(Math.abs(wide.x - 0.5) < 1e-9);
+  assert.ok(Math.abs(wide.width - 0.3125) < 1e-9);
+  assert.equal(wide.y, 0.2);
+  const tall = coveredFrame({ x: 0, y: 0, width: 1, height: 0.2 }, 0.5, 0.8);
+  assert.equal(tall.y, 0);
+  assert.ok(Math.abs(tall.height - 0.02) < 1e-9);
 });
 
 test("a box drawn in any direction stays inside the photo", () => {
