@@ -11,6 +11,7 @@ import {
 import { hijabAlternatives } from "../../../src/domain/wardrobe";
 import { ChangeStrip } from "../../../src/features/ChangeStrip";
 import { ActionArea } from "../../../src/features/today/ActionArea";
+import { DressyMeter } from "../../../src/features/today/DressyMeter";
 import { FirstRun } from "../../../src/features/today/FirstRun";
 import { IntentRow } from "../../../src/features/today/IntentRow";
 import { OutfitCard } from "../../../src/features/today/OutfitCard";
@@ -300,6 +301,7 @@ export default function TodayScreen() {
             </View>
             {locked ? null : <Strip key={openId ?? "closed"} model={model} />}
             <OutfitCard model={model} />
+            <DressyMeter model={model} />
             {locked ? null : <ActionArea model={model} />}
           </View>
         ) : model.result?.partial && model.lostPieces === 0 ? (
