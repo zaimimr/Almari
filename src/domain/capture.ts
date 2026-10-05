@@ -36,6 +36,7 @@ const regionOrder: GarmentRegionKind[] = [
   "shoes",
   "bag",
   "sunglasses",
+  "item",
 ];
 
 const regionCategories: Partial<Record<GarmentRegionKind, Category>> = {
@@ -57,9 +58,15 @@ export function proposalsFromRegions(
   found: GarmentRegion[],
   people: number,
 ): CapturePlan {
-  const regions = found.filter(
-    (region) => !region.partial || region.share >= minPartialShare,
+  const items = found.filter((region) => region.kind === "item");
+  const parsed = found.filter(
+    (region) =>
+      region.kind !== "item" &&
+      (!region.partial || region.share >= minPartialShare),
   );
+  const flatLay =
+    parsed.filter((region) => region.share >= minPartialShare).length > 1;
+  const regions = people === 0 && items.length && !flatLay ? items : parsed;
   const notice = people > 1 ? "others-ignored" : null;
   if (!regions.length || (people === 0 && regions.length === 1))
     return { proposals: [], people, notice, checkWhole: people > 1 };
@@ -74,6 +81,21 @@ export function proposalsFromRegions(
 }
 
 export const minBox = 0.05;
+
+export function coveredFrame(frame: Frame, aspect: number, box: number): Frame {
+  if (aspect > box) {
+    const seen = box / aspect;
+    const left = (1 - seen) / 2;
+    const x = Math.max(0, (frame.x - left) / seen);
+    const right = Math.min(1, (frame.x + frame.width - left) / seen);
+    return { ...frame, x, width: Math.max(0, right - x) };
+  }
+  const seen = aspect / box;
+  const top = (1 - seen) / 2;
+  const y = Math.max(0, (frame.y - top) / seen);
+  const bottom = Math.min(1, (frame.y + frame.height - top) / seen);
+  return { ...frame, y, height: Math.max(0, bottom - y) };
+}
 
 const clamp = (value: number) => Math.min(1, Math.max(0, value));
 

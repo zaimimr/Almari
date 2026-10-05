@@ -42,6 +42,11 @@ final class CutoutSelector {
   }
 
   func garmentBox(at point: CGPoint) -> CGRect? {
+    if let found = foreground(), case let label = found.label(at: point), label > 0, !person(label, in: found),
+      let box = Self.box(of: label, in: found)
+    {
+      return box
+    }
     guard let parse = parsed()?.parse else { return nil }
     let grid = parse.grid
     let area = parse.area
@@ -83,6 +88,31 @@ final class CutoutSelector {
     return CGRect(
       x: start.x - cellWidth / 2, y: start.y - cellHeight / 2, width: end.x - start.x + cellWidth,
       height: end.y - start.y + cellHeight)
+  }
+
+  private static let lone = 0.5
+
+  private static func box(of label: Int, in found: Instances) -> CGRect? {
+    var minX = found.width
+    var minY = found.height
+    var maxX = -1
+    var maxY = -1
+    var size = 0
+    for y in 0..<found.height {
+      for x in 0..<found.width where Int(found.labels[y * found.width + x]) == label {
+        size += 1
+        minX = min(minX, x)
+        maxX = max(maxX, x)
+        minY = min(minY, y)
+        maxY = max(maxY, y)
+      }
+    }
+    guard maxX >= minX, Double(size) < Self.lone * Double(found.width * found.height) else { return nil }
+    let width = CGFloat(found.width)
+    let height = CGFloat(found.height)
+    return CGRect(
+      x: CGFloat(minX) / width, y: CGFloat(minY) / height, width: CGFloat(maxX - minX + 1) / width,
+      height: CGFloat(maxY - minY + 1) / height)
   }
 
   private func foreground() -> Instances? {

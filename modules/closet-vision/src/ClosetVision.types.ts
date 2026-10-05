@@ -51,7 +51,8 @@ export type GarmentRegionKind =
   | "belt"
   | "shoes"
   | "bag"
-  | "sunglasses";
+  | "sunglasses"
+  | "item";
 
 export type GarmentRegion = {
   kind: GarmentRegionKind;

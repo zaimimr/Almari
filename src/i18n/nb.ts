@@ -356,6 +356,7 @@ export const nb: Record<Key, string> = {
   "region.shoes": "Sko",
   "region.bag": "Veske",
   "region.sunglasses": "Solbriller",
+  "region.item": "Plagg",
   "advice.useAnyway": "Fortsett likevel",
   "advice.merged.title": "Bakgrunnen glir inn i plagget.",
   "advice.merged.body":
@@ -1580,7 +1581,6 @@ export const nb: Record<Key, string> = {
   "capture.addAnyway": "Legg til likevel",
   "capture.notAddedOne": "1 bilde kunne ikke legges til",
   "capture.notAddedMany": "{count} bilder kunne ikke legges til",
-  "capture.preparingCount": "Klargjør {n} av {total}",
   "capture.cleanAll": "Rens alle bakgrunner",
   "capture.cleanAllTitle": "Rense alle bakgrunner?",
   "capture.cleanAllNote": "Rens alle sender bildene til Cloudflare.",

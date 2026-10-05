@@ -139,12 +139,6 @@ export function useCaptureGrid() {
   const ready = jobs.filter((job) => job.state === "ready").length;
   const confirm = jobs.filter((job) => job.state === "review").length;
   const failed = jobs.filter((job) => job.state === "failed").length;
-  const waiting = jobs.filter(
-    (job) => job.state === "queued" || job.state === "preparing",
-  ).length;
-  const preparing = waiting
-    ? { n: jobs.length - waiting + 1, total: jobs.length }
-    : null;
   const cleanable = studioOffered()
     ? jobs.filter(
         (job) =>
@@ -330,7 +324,6 @@ export function useCaptureGrid() {
       setProblem({ kind, from }),
     lookalikes,
     keepBoth: (id: string) => update((current) => keepDuplicate(current, id)),
-    preparing,
     cleanable: cleanable.length,
     cleaning,
     cleanAll,

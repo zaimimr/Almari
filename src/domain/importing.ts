@@ -44,7 +44,7 @@ export type CheckReason =
 
 export type RejectReason = "no-clothing";
 
-export const minKindScore = 0.12;
+export const minKindScore = 0.095;
 export const flatBelow = 10;
 export const smallerThan = 64;
 

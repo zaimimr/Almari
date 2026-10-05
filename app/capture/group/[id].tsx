@@ -52,6 +52,7 @@ import {
 } from "../../../src/ui";
 import { confirmAction } from "../../../src/ui/confirm";
 import { motion } from "../../../src/ui/motion";
+import { ScanSweep } from "../../../src/ui/ScanSweep";
 import { theme } from "../../../src/ui/theme";
 import { useColors } from "../../../src/ui/useColors";
 import { useLargeText } from "../../../src/ui/useLargeText";
@@ -559,6 +560,12 @@ export default function PiecesFound() {
         accessibilityLabel={t("capture.photo")}
         onLoad={(event) => setAspect(event.source.width / event.source.height)}
       />
+      {!drawing &&
+      jobs.some(
+        (job) => job.state === "queued" || job.state === "preparing",
+      ) ? (
+        <ScanSweep />
+      ) : null}
       {layered.map(({ job, number }) => {
         if (drawing && (job.id === drawing.job || foundNothing(job)))
           return null;
