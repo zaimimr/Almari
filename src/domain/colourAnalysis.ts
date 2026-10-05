@@ -257,15 +257,120 @@ const palettes: Record<Season, Rgb[]> = {
   ],
 };
 
+const more: Record<Season, Rgb[]> = {
+  "light-spring": [
+    [255, 160, 122],
+    [144, 213, 150],
+    [120, 190, 225],
+    [250, 170, 180],
+    [245, 200, 110],
+    [170, 150, 220],
+  ],
+  "warm-spring": [
+    [255, 165, 0],
+    [240, 128, 100],
+    [150, 200, 80],
+    [0, 160, 150],
+    [250, 200, 120],
+    [200, 110, 60],
+  ],
+  "clear-spring": [
+    [255, 105, 180],
+    [0, 180, 140],
+    [255, 140, 0],
+    [30, 144, 255],
+    [140, 80, 220],
+    [255, 215, 80],
+  ],
+  "light-summer": [
+    [150, 180, 220],
+    [220, 160, 200],
+    [170, 200, 180],
+    [190, 170, 210],
+    [250, 190, 200],
+    [140, 170, 190],
+  ],
+  "cool-summer": [
+    [100, 149, 237],
+    [180, 80, 130],
+    [120, 100, 160],
+    [90, 110, 140],
+    [220, 150, 180],
+    [40, 90, 110],
+  ],
+  "soft-summer": [
+    [170, 150, 170],
+    [120, 140, 130],
+    [100, 120, 150],
+    [190, 130, 140],
+    [90, 110, 110],
+    [160, 120, 150],
+  ],
+  "soft-autumn": [
+    [180, 120, 100],
+    [195, 175, 140],
+    [130, 140, 100],
+    [110, 130, 140],
+    [170, 110, 110],
+    [185, 150, 120],
+  ],
+  "warm-autumn": [
+    [160, 82, 45],
+    [210, 105, 30],
+    [85, 107, 47],
+    [205, 133, 63],
+    [180, 60, 40],
+    [220, 180, 60],
+  ],
+  "deep-autumn": [
+    [128, 0, 32],
+    [60, 80, 40],
+    [150, 75, 0],
+    [0, 70, 80],
+    [170, 60, 30],
+    [100, 60, 30],
+  ],
+  "deep-winter": [
+    [0, 60, 110],
+    [120, 0, 60],
+    [0, 80, 60],
+    [60, 0, 90],
+    [150, 0, 30],
+    [40, 40, 60],
+  ],
+  "cool-winter": [
+    [0, 0, 128],
+    [150, 0, 100],
+    [0, 100, 120],
+    [100, 50, 160],
+    [220, 0, 80],
+    [180, 200, 230],
+  ],
+  "clear-winter": [
+    [220, 20, 60],
+    [0, 180, 220],
+    [120, 40, 200],
+    [0, 140, 70],
+    [255, 105, 180],
+    [20, 40, 140],
+  ],
+};
+
 const paletteLab = Object.fromEntries(
   Object.entries(palettes).map(([season, colours]) => [
     season,
-    colours.map(toLab),
+    [...colours, ...more[season as Season]].map(toLab),
   ]),
 ) as Record<Season, Lab[]>;
 
-export function bestColours(profile: Pick<ColourProfile, "season">): Lab[] {
-  return paletteLab[profile.season];
+export function seasonColours(season: Season): Lab[] {
+  return paletteLab[season];
+}
+
+export function bestColours(
+  profile: Pick<ColourProfile, "season" | "palette">,
+): Lab[] {
+  return profile.palette ?? paletteLab[profile.season];
 }
 
 const opposites: Record<Season, Season> = {
@@ -287,7 +392,9 @@ export function oppositeSeason(season: Season): Season {
   return opposites[season];
 }
 
-export function paletteFor(profile: Pick<ColourProfile, "season">): {
+export function paletteFor(
+  profile: Pick<ColourProfile, "season" | "palette">,
+): {
   best: Lab[];
   goEasy: Lab[];
 } {

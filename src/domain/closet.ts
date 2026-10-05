@@ -259,6 +259,8 @@ export const seasons = [
 ] as const;
 export type Season = (typeof seasons)[number];
 
+export const maxPalette = 48;
+
 export type ColourProfile = {
   skin: [number, number, number] | null;
   hair: [number, number, number] | null;
@@ -267,7 +269,8 @@ export type ColourProfile = {
   depth: "light" | "medium" | "deep";
   contrast: "low" | "medium" | "high";
   season: Season;
-  source: "measured" | "swatch" | "confirmed";
+  source: "measured" | "swatch" | "confirmed" | "professional";
+  palette?: [number, number, number][];
 };
 
 export type StyleProfile = {
@@ -1269,7 +1272,17 @@ function isColourProfile(value: unknown): value is ColourProfile {
     ["light", "medium", "deep"].includes(value.depth as string) &&
     ["low", "medium", "high"].includes(value.contrast as string) &&
     seasons.includes(value.season as Season) &&
-    ["measured", "swatch", "confirmed"].includes(value.source as string)
+    ["measured", "swatch", "confirmed", "professional"].includes(
+      value.source as string,
+    ) &&
+    optional(
+      value.palette,
+      (list): list is [number, number, number][] =>
+        Array.isArray(list) &&
+        list.length > 0 &&
+        list.length <= maxPalette &&
+        list.every((lab) => lab !== null && isLab(lab)),
+    )
   );
 }
 

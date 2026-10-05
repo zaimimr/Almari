@@ -115,7 +115,7 @@ function proposed(piece: Piece, key: SourceKey) {
 function certainFor(facts: Facts, selector: Selector, scope: Scope) {
   if (
     (selector.bestColour || selector.undertoneClash) &&
-    scope.profile.colour?.source !== "confirmed"
+    !["confirmed", "professional"].includes(scope.profile.colour?.source ?? "")
   )
     return false;
   return (Object.keys(selector) as (keyof Selector)[]).every((key) => {

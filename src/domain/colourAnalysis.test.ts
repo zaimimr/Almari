@@ -236,14 +236,14 @@ test("each skin swatch reads as its own label", () => {
   );
 });
 
-test("best colours give six Lab colours per season with the expected character", () => {
+test("best colours give twelve Lab colours per season with the expected character", () => {
   const profile = (season: ColourProfile["season"]) => ({ season });
   const mean = (season: ColourProfile["season"], index: 0 | 1) =>
     bestColours(profile(season))
       .map((lab) => toLch(lab)[index])
-      .reduce((sum, value) => sum + value, 0) / 6;
+      .reduce((sum, value) => sum + value, 0) / 12;
   for (const season of seasons)
-    assert.equal(bestColours(profile(season)).length, 6, season);
+    assert.equal(bestColours(profile(season)).length, 12, season);
   for (const season of ["light-spring", "light-summer"] as const)
     assert.ok(mean(season, 0) > 75, season);
   for (const season of ["deep-autumn", "deep-winter"] as const)
