@@ -289,23 +289,27 @@ export function finishImport(
   return next === closet ? closet : mergePair(reviewCapture(next, id), id);
 }
 
+function sideBySide(a: Frame, b: Frame): boolean {
+  const overlap = Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y);
+  return (
+    overlap > 0.5 * Math.min(a.height, b.height) &&
+    Math.min(a.height, b.height) > 0.7 * Math.max(a.height, b.height)
+  );
+}
+
 function mergePair(closet: Closet, id: string): Closet {
   const job = closet.imports.find((item) => item.id === id);
-  if (
-    !job?.prepared ||
-    !job.captureId ||
-    job.state === "failed" ||
-    job.region?.kind !== "shoes"
-  )
+  if (!job?.prepared || !job.captureId || !job.region || job.state === "failed")
     return closet;
   const twin = closet.imports.some(
     (other) =>
       other.id !== id &&
       other.captureId === job.captureId &&
-      other.region?.kind === "shoes" &&
+      other.region &&
       other.state !== "failed" &&
       other.prepared &&
       other.kind === job.kind &&
+      sideBySide(job.region!.frame, other.region.frame) &&
       looksAlike(
         { kind: job.kind, palette: job.prepared!.palette },
         { kind: other.kind, palette: other.prepared.palette },

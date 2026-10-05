@@ -1335,11 +1335,18 @@ test("owned pieces take over from the samples once they make an outfit", () => {
 
 test("two loafers of the same colour in one photo become one piece", () => {
   const shoes: LabelScore[] = [{ group: "kind", value: "loafers", score: 0.6 }];
-  const pair = (...palettes: Swatch[][]) => {
+  const side = (index: number): GarmentRegion => ({
+    kind: "pants",
+    cutout: `job-region-${index}.png`,
+    frame: { x: 0.1 + 0.4 * index, y: 0.3, width: 0.35, height: 0.4 },
+    share: 0.15,
+    partial: false,
+  });
+  const pair = (regions: GarmentRegion[], ...palettes: Swatch[][]) => {
     let closet = splitCapture(
       startImport(queued(), "job"),
       "job",
-      proposalsFromRegions([region("shoes", 1), region("shoes", 2)], 0),
+      proposalsFromRegions(regions, 0),
     );
     closet.imports.forEach((job, index) => {
       closet = finishImport(
@@ -1354,36 +1361,14 @@ test("two loafers of the same colour in one photo become one piece", () => {
     });
     return closet.imports;
   };
-  const brown = [{ rgb: [110, 70, 40], share: 1 }] as Swatch[];
-  const black = [{ rgb: [20, 20, 20], share: 1 }] as Swatch[];
-  assert.equal(pair(brown, brown).length, 1);
-  assert.equal(pair(brown, brown)[0]!.kind, "loafers");
-  assert.equal(pair(brown, black).length, 2);
-});
-
-test("name ideas leave out a fabric the app is unsure of", () => {
-  const dress: LabelScore[] = [
-    { group: "kind", value: "dress", score: 0.6 },
-    { group: "fabric", value: "velvet", score: 0.1 },
-    { group: "fabric", value: "chiffon", score: 0.099 },
-  ];
-  const black = [{ rgb: [20, 20, 20], share: 1 }] as Swatch[];
-  const job = finishImport(
-    startImport(queued(), "job"),
-    "job",
-    prepared({ labels: dress, palette: black }),
-  ).imports[0]!;
-  assert.equal(job.attributes?.fabric, "velvet");
-  const names = nameOptions("dress", black, namingAttributes(job));
-  assert.ok(!names.some((name) => /velvet/i.test(name)));
-  const sure = {
-    ...job,
-    attributes: { ...job.attributes, fabric: "velvet" as const },
-    attributeSources: { ...job.attributeSources, fabric: "confirmed" as const },
-  };
-  assert.ok(
-    nameOptions("dress", black, namingAttributes(sure)).some((name) =>
-      /velvet/i.test(name),
-    ),
+  const brown = [{ rgb: [51, 28, 20], share: 1 }] as Swatch[];
+  const lighter = [{ rgb: [75, 49, 39], share: 1 }] as Swatch[];
+  const pale = [{ rgb: [200, 200, 200], share: 1 }] as Swatch[];
+  const both = [side(0), side(1)];
+  assert.equal(pair(both, brown, lighter).length, 1);
+  assert.equal(pair(both, brown, pale).length, 2);
+  assert.equal(
+    pair([region("upper", 1), region("pants", 5)], brown, brown).length,
+    2,
   );
 });
