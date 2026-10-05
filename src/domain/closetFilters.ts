@@ -202,8 +202,13 @@ export function groupByCategory(
   sort: ClosetSort | null = null,
   worn: Record<string, number> = {},
 ): ClosetSection[] {
-  const owned = pieces.filter((piece) => piece.source !== "sample");
-  const samples = pieces.filter((piece) => piece.source === "sample");
+  const mixed = pieces.some((piece) => piece.source !== "sample");
+  const owned = mixed
+    ? pieces.filter((piece) => piece.source !== "sample")
+    : [...pieces];
+  const samples = mixed
+    ? pieces.filter((piece) => piece.source === "sample")
+    : [];
   const chosen = sorter(sort, worn);
   const sections: ClosetSection[] = categories.map(({ id }) => ({
     id,

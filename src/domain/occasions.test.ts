@@ -125,3 +125,33 @@ test("the new sample catalog refreshes sample details without restoring removed 
     mine,
   );
 });
+
+test("sample pieces saved as her own move to the sample closet and she lands in her own", () => {
+  const mine: Piece = {
+    id: "my-top",
+    name: "My top",
+    category: "top",
+    photo: "mine.jpg",
+    createdAt: "2026-10-01T00:00:00Z",
+    source: "owned",
+  };
+  const samples = addSampleWardrobe(emptyCloset);
+  assert.equal(samples.styling.wardrobe, "sample");
+  const stale = {
+    ...samples,
+    sampleCatalog: 3,
+    pieces: [
+      ...samples.pieces.map((piece) => ({
+        ...piece,
+        source: "owned" as const,
+      })),
+      mine,
+    ],
+  };
+  const next = addSampleWardrobe(stale);
+  assert.deepEqual(
+    next.pieces.filter((piece) => piece.source === "owned"),
+    [mine],
+  );
+  assert.equal(next.styling.wardrobe, "owned");
+});

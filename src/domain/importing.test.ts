@@ -52,7 +52,6 @@ import {
   sameCapture,
   setImportLabel,
   setKeepAsSet,
-  settleWardrobe,
   importStudioSource,
   setImportStudio,
   splitCapture,
@@ -1341,37 +1340,19 @@ test("capture progress counts the queue and links a set on add", () => {
   );
 });
 
-test("owned pieces take over from the samples once they make an outfit", () => {
-  const add = (pieces: Piece[]) =>
-    pieces.reduce((current, item) => savePiece(current, item), emptyCloset);
-  const outfit = [
-    ownedPiece("t", "tunic", { kind: "kurta" }),
-    ownedPiece("b", "bottom", { kind: "trousers" }),
-    ownedPiece("s", "shoes", { kind: "flats" }),
-  ];
-  assert.equal(settleWardrobe(add(outfit)).styling.wardrobe, "owned");
+test("her first own piece moves her from the sample closet to her own", () => {
+  assert.equal(emptyCloset.styling.wardrobe, "sample");
+  const first = savePiece(emptyCloset, ownedPiece("t", "tunic"));
+  assert.equal(first.styling.wardrobe, "owned");
+  const back = {
+    ...first,
+    styling: { ...first.styling, wardrobe: "sample" as const },
+  };
   assert.equal(
-    settleWardrobe(add(outfit.slice(0, 2))).styling.wardrobe,
+    savePiece(back, { ...ownedPiece("t", "tunic"), name: "Edited" }).styling
+      .wardrobe,
     "sample",
   );
-  const away = add(
-    outfit.map((item) => ({ ...item, status: "archived" as const })),
-  );
-  assert.equal(settleWardrobe(away).styling.wardrobe, "sample");
-  const always = {
-    ...add(outfit),
-    styling: {
-      ...emptyCloset.styling,
-      everyday: {
-        occasion: "everyday" as const,
-        style: "desi" as const,
-        hijab: "always" as const,
-        sample: false,
-        version: 1,
-      },
-    },
-  };
-  assert.equal(settleWardrobe(always).styling.wardrobe, "sample");
 });
 
 test("two loafers of the same colour in one photo become one piece", () => {

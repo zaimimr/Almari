@@ -46,10 +46,20 @@ function piecesOf(closet: Closet, ids: string[]): Piece[] {
   });
 }
 
+function inWardrobe(closet: Closet, ids: string[]): boolean {
+  const sample = ids.some(
+    (id) => closet.pieces.find((piece) => piece.id === id)?.source === "sample",
+  );
+  return sample === (closet.styling.wardrobe === "sample");
+}
+
 function outfitWears(closet: Closet): FeedbackEvent[] {
   return closet.feedback.filter(
     (event) =>
-      event.kind === "wore" && !event.undone && event.scope !== "piece",
+      event.kind === "wore" &&
+      !event.undone &&
+      event.scope !== "piece" &&
+      inWardrobe(closet, event.pieceIds),
   );
 }
 
@@ -81,7 +91,10 @@ export function lookEntries(
   today: string = closet.styling.today?.localDate ?? "",
 ): LookEntry[] {
   const wears = lastWears(closet);
-  const saved: LookEntry[] = closet.looks.map((look) => {
+  const looks = closet.looks.filter((look) =>
+    inWardrobe(closet, look.pieceIds),
+  );
+  const saved: LookEntry[] = looks.map((look) => {
     const lastWorn = wears.get(setKey(look.pieceIds))?.at ?? null;
     return {
       id: look.id,
@@ -215,7 +228,12 @@ export function plannedDays(
   const days: Record<string, Look> = {};
   for (const look of closet.looks) {
     const date = look.plannedFor;
-    if (date && date >= today && date.startsWith(`${month}-`))
+    if (
+      date &&
+      date >= today &&
+      date.startsWith(`${month}-`) &&
+      inWardrobe(closet, look.pieceIds)
+    )
       days[date] = look;
   }
   return days;
@@ -232,7 +250,10 @@ export function lastPlannedMonth(closet: Closet, today: string): string {
 }
 
 export function plannedToday(closet: Closet, clock: Clock): Look[] {
-  return closet.looks.filter((look) => look.plannedFor === clock.localDate);
+  return closet.looks.filter(
+    (look) =>
+      look.plannedFor === clock.localDate && inWardrobe(closet, look.pieceIds),
+  );
 }
 
 export function lookMark(closet: Closet, pieceIds: string[]): Piece | null {
@@ -310,6 +331,7 @@ export function wearCalendar(
   for (const event of closet.feedback) {
     if (event.kind !== "wore" || event.undone || event.scope !== "piece")
       continue;
+    if (!inWardrobe(closet, event.pieceIds)) continue;
     if (!piecesOf(closet, event.pieceIds).length) continue;
     const date = wearDate(closet, event.at);
     if (!date.startsWith(`${month}-`)) continue;

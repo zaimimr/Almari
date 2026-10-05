@@ -321,7 +321,7 @@ test("an old closet migrates without losing edits, removals, or saved looks", as
   const ids = repository.getSnapshot().pieces.map((piece) => piece.id);
   assert.equal(ids.includes("sample-olive-maxi-dress"), true);
   assert.equal(ids.includes("sample-mauve-hijab"), false);
-  assert.equal(ids.length, 5);
+  assert.equal(ids.length, 15);
 
   await repository.update((closet) =>
     removePiece(closet, "sample-olive-maxi-dress"),

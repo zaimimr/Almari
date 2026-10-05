@@ -714,6 +714,7 @@ export const nb: Record<Key, string> = {
   "settings.language.en": "English",
   "settings.language.nb": "Norsk bokmål",
   "settings.export": "Eksporter dataene mine",
+  "settings.sampleCloset": "Eksempelgarderobe",
   "settings.export.failed": "Kunne ikke eksportere. Prøv igjen.",
   "settings.reset": "Slett alle data",
   "settings.reset.title": "Slette alle data?",
