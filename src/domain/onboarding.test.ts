@@ -10,9 +10,11 @@ import {
   answersFrom,
   applyAnswer,
   finishOnboarding,
+  hasAnswer,
   onboardingSteps,
   placeFrom,
   previousStep,
+  resumeStep,
   setName,
   skipStep,
   stepsFor,
@@ -431,4 +433,25 @@ test("a place is trimmed, rounded and validated", () => {
   assert.equal(placeFrom("Oslo", Number.NaN, 10, "search"), null);
   assert.equal(placeFrom("Oslo", 91, 10, "search"), null);
   assert.equal(placeFrom("   ", 59.9, 10.7, "search"), null);
+});
+
+test("a relaunch resumes after the last answered step", () => {
+  const empty = answersFrom(emptyCloset);
+  assert.equal(resumeStep(empty), "name");
+  assert.equal(hasAnswer("name", { ...empty, name: { name: "  " } }), false);
+  let closet = setName(emptyCloset, "Sara");
+  assert.equal(resumeStep(answersFrom(closet)), "hijab");
+  closet = applyAnswer(closet, "hijab", { hijab: "no" }, clock);
+  assert.equal(resumeStep(answersFrom(closet)), "coverage");
+  closet = applyAnswer(
+    closet,
+    "coverage",
+    { coverage: null, answered: true },
+    clock,
+  );
+  closet = applyAnswer(closet, "sparkle", { sparkle: "little" }, clock);
+  assert.equal(resumeStep(answersFrom(closet)), "place");
+  const place = placeFrom("Oslo", 59.91, 10.75, "search");
+  closet = applyAnswer(closet, "place", { place }, clock);
+  assert.equal(resumeStep(answersFrom(closet)), "done");
 });

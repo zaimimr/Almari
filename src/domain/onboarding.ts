@@ -94,6 +94,39 @@ export function previousStep(
   );
 }
 
+export function hasAnswer(step: OnboardingStep, answers: Answers): boolean {
+  switch (step) {
+    case "name":
+      return Boolean(answers.name.name?.trim());
+    case "hijab":
+      return answers.hijab.hijab !== null;
+    case "hijabStyles":
+      return answers.hijabStyles.hijabStyles !== null;
+    case "coverage":
+      return answers.coverage.answered || answers.coverage.coverage !== null;
+    case "style":
+      return answers.style.styleLean !== null;
+    case "fit":
+      return answers.fit.fit !== null;
+    case "sparkle":
+      return answers.sparkle.sparkle !== null;
+    case "place":
+      return answers.place.place !== null;
+    case "notifications":
+      return answers.notifications.notification !== null;
+    case "colours":
+      return answers.colours.colour !== null;
+    case "done":
+      return false;
+  }
+}
+
+export function resumeStep(answers: Answers): OnboardingStep {
+  const steps = stepsFor(answers);
+  const last = steps.findLastIndex((step) => hasAnswer(step, answers));
+  return steps[last + 1] ?? "done";
+}
+
 export function answersFrom(closet: Closet): Answers {
   const { everyday, profile, units, place, name, notification } =
     closet.styling;

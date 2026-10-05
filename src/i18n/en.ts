@@ -625,6 +625,9 @@ export const en = {
   "onboarding.colours.swatch": "Or pick the swatch closest to your skin",
   "onboarding.colours.saved": "Your colours: {season}",
   "onboarding.done.title": "You are set",
+  "onboarding.welcome.title": "Your closet, styled every morning",
+  "onboarding.welcome.start": "Start",
+  "onboarding.welcome.skip": "Skip for now",
   "onboarding.done.text":
     "Next, add your own clothes. Photos work best in daylight, one piece at a time, laid flat or on a hanger.",
   "onboarding.done.add": "Add my clothes",
