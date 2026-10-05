@@ -145,13 +145,17 @@ export function JobTile({
           },
         ]
       : []),
-    ...(opens
+    ...(opens && !job.fromLink
       ? [
           {
             name: "retake",
             label: t("capture.retake"),
             onPress: () => onRetake(job),
           },
+        ]
+      : []),
+    ...(opens
+      ? [
           {
             name: "remove",
             label: t("common.remove"),

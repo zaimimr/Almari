@@ -157,7 +157,7 @@ export function withColour(palette: Swatch[], colour: string | undefined) {
 
 export function queueImport(
   closet: Closet,
-  job: Pick<ImportJob, "id" | "source" | "createdAt" | "linkName">,
+  job: Pick<ImportJob, "id" | "source" | "createdAt" | "linkName" | "fromLink">,
 ): Closet {
   if (closet.imports.some((item) => item.id === job.id)) return closet;
   return {
@@ -578,6 +578,7 @@ export function splitCapture(
         captureId: id,
         region: proposal.region,
         ...(index || !job.linkName ? {} : { linkName: job.linkName }),
+        ...(job.fromLink ? { fromLink: true } : {}),
         ...people,
       }))
     : [

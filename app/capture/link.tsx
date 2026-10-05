@@ -74,6 +74,7 @@ export default function AddFromLink() {
           id,
           source: stored,
           createdAt: now().toISOString(),
+          fromLink: true,
           ...(product.name ? { linkName: product.name } : {}),
         }),
       );

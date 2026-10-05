@@ -181,6 +181,7 @@ export type ImportJob = {
   keepAsSet?: boolean;
   colour?: string;
   linkName?: string;
+  fromLink?: boolean;
 };
 
 export type Look = {
@@ -879,6 +880,7 @@ function isImportJob(value: unknown): value is ImportJob {
     optional(value.label, isCareLabel) &&
     optional(value.keepAsSet, isBoolean) &&
     optional(value.linkName, isString) &&
+    optional(value.fromLink, isBoolean) &&
     optional(value.colour, (name): name is string =>
       colourNames.includes(name as string),
     ) &&
