@@ -24,9 +24,7 @@ appId: com.zaimimran.almari
 - tapOn:
     id: "name-field"
 - eraseText: 10
-- waitForAnimationToEnd
-- tapOn:
-    id: "onboarding-next"
+- pressKey: Enter
 - extendedWaitUntil:
     visible: "Do you wear a hijab\\?"
     timeout: 10000

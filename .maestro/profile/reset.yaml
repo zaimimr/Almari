@@ -9,6 +9,6 @@ appId: com.zaimimran.almari
 - scrollUntilVisible:
     element: "Delete all data"
 - tapOn: "Delete all data"
-- tapOn: "Delete all data"
+- tapOn: "Delete everything"
 - assertVisible:
-    id: "onboarding-next"
+    id: "welcome-start"

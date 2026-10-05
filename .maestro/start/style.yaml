@@ -27,8 +27,9 @@ appId: com.zaimimran.almari
     id: "style-desi"
     selected: true
 - takeScreenshot: docs/redesign/screens/after/start/style
-- tapOn: "Next"
-- assertVisible: "How do you like your clothes to sit?"
+- tapOn:
+    id: "onboarding-next"
+- assertVisible: "For Eid and parties, how much sparkle?"
 - repeat:
     times: 10
     while:

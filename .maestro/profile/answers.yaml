@@ -16,10 +16,12 @@ appId: com.zaimimran.almari
 - pressKey: Enter
 - tapOn: "Oslo.*"
 - tapOn: "Save"
+- scrollUntilVisible:
+    element:
+      id: "profile-units"
 - tapOn:
-    id: "profile-body"
-- tapOn: "Feet and °F"
-- tapOn: "Save"
+    id: "profile-units"
+- tapOn: "Imperial.*"
 - scrollUntilVisible:
     direction: UP
     element:

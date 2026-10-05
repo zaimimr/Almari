@@ -14,7 +14,12 @@ appId: com.zaimimran.almari
 - tapOn:
     id: "answer-height"
 - inputText: "1.65"
-- assertVisible: "Enter a height between 120 and 220 cm."
+- waitForAnimationToEnd
+- tapOn:
+    point: "91%,63%"
+- assertVisible: ".*Enter a height between 120 and 220 cm.*"
+- tapOn:
+    id: "answer-height"
 - eraseText: 10
 - inputText: "165"
 - tapOn: "Hourglass"

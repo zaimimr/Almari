@@ -17,11 +17,11 @@ appId: com.zaimimran.almari
 - tapOn:
     id: "profile-morning"
 - tapOn:
-    id: "morning-on"
+    id: "morning-on-toggle"
 - extendedWaitUntil:
     visible:
       id: "notify-denied"
     timeout: 10000
 - assertVisible: "Open Settings"
 - assertNotVisible:
-    id: "morning-time"
+    id: "morning-weekdays"

@@ -15,5 +15,5 @@ appId: com.zaimimran.almari
     id: "profile-name"
 - inputText: "Sara A"
 - tapOn: "Save"
-- back
+- tapOn: "Back"
 - assertVisible: "Good morning, Sara A|Good afternoon, Sara A|Good evening, Sara A|Hi, Sara A"
