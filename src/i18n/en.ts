@@ -1559,7 +1559,7 @@ export const en = {
   "link.title": "Add from link",
   "link.field": "Product link",
   "link.failed": "No product photo found on that page",
-  "link.blocked": "This shop does not let Almari read its page",
+  "link.blocked": "This shop page could not be read",
   "lookalike.title": "These look alike",
   "lookalike.keepBoth": "Keep both",
   "lookalike.keepOne": "Keep one",

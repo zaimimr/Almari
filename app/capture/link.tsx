@@ -27,10 +27,7 @@ async function download(url: string, accept: string) {
       headers: { Accept: accept },
       signal: controller.signal,
     });
-    if (!response.ok)
-      throw new Error(
-        [401, 403, 429].includes(response.status) ? "blocked" : "failed",
-      );
+    if (!response.ok) throw new Error("failed");
     return response;
   } finally {
     clearTimeout(timer);
@@ -79,18 +76,10 @@ export default function AddFromLink() {
         }),
       );
       router.back();
-    } catch (failure) {
+    } catch {
       if (source) void discardPhoto(source).catch(() => undefined);
       const offline = await isOffline();
-      setError(
-        t(
-          offline
-            ? "common.offline"
-            : failure instanceof Error && failure.message === "blocked"
-              ? "link.blocked"
-              : "link.failed",
-        ),
-      );
+      setError(t(offline ? "common.offline" : "link.blocked"));
       setStuck(!offline);
     } finally {
       setBusy(false);
