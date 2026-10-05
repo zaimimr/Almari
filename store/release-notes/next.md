@@ -6,6 +6,7 @@
 - Plan your week, share a look as a story card, and get a reminder the evening before.
 - Add a piece from a shop link, see lookalikes before adding a duplicate, and get name suggestions.
 - Closet stats, sorting, cost per wear, laundry mode and editing several pieces at once.
-- Today shows a weather tip and how dressy the outfit is.
+- Today picks fit the occasion better: a blazer for Work, a dress for Party, sporty hijabs for Gym.
+- Today shows a weather tip and how dressy the outfit is, and the heart saves the outfit as a look.
 - A welcome screen, a summary at the end of onboarding, units and imperial height, and data export.
 - Many fixes across capture, closet, Today and Looks.
