@@ -1,4 +1,4 @@
-import { t } from "../i18n";
+import { t, type Key } from "../i18n";
 import {
   isAvailable,
   kindLabel,
@@ -78,6 +78,7 @@ export type StyleResult = {
   outfits: Candidate[];
   problems: Problem[];
   limited: boolean;
+  partial?: { ids: string[]; missing: Role[] };
 };
 
 const maxCombinations = 4000;
@@ -136,12 +137,8 @@ function fitsStyle(piece: Piece, style: Style) {
   return !piece.styles || piece.styles.includes(style);
 }
 
-const activewear: readonly string[] = [
-  "leggings",
-  "joggers",
-  "sports-top",
-  "hoodie",
-];
+const gymMains: readonly string[] = ["sports-top", "hoodie", "t-shirt"];
+const gymBottoms: readonly string[] = ["leggings", "joggers", "shorts"];
 
 const offAtGym: readonly string[] = ["heels", "blazer"];
 
@@ -150,6 +147,9 @@ function fitsOccasion(piece: Piece, request: OutfitRequest) {
   if (piece.category === "dress" || piece.category === "bag") return false;
   if (piece.category === "accessory") return false;
   if (piece.kind && offAtGym.includes(piece.kind)) return false;
+  const role = roleOf(piece);
+  if (role === "main") return gymMains.includes(piece.kind ?? "");
+  if (role === "bottom") return gymBottoms.includes(piece.kind ?? "");
   if (piece.category === "shoes") return piece.kind === "sneakers";
   if (piece.kind === "coat")
     return (
@@ -384,26 +384,71 @@ function difference(a: string[], b: string[]) {
   return b.filter((id) => !set.has(id)).length;
 }
 
-function diversify(candidates: Candidate[], seed: string) {
+function diversify(
+  candidates: Candidate[],
+  seed: string,
+  core: (id: string) => boolean,
+) {
   const remaining = [...candidates].sort(
     (a, b) =>
       b.score - a.score ||
       hash(seed + a.ids.join()) - hash(seed + b.ids.join()),
   );
   const ordered: Candidate[] = [];
+  const uses = new Map<string, number>();
   while (remaining.length && ordered.length < maxOutfits) {
     const last = ordered[ordered.length - 1];
-    const index = last
-      ? Math.max(
-          0,
-          remaining.findIndex(
-            (candidate) => difference(last.ids, candidate.ids) >= 2,
-          ),
-        )
-      : 0;
-    ordered.push(remaining.splice(index, 1)[0]!);
+    let index = 0;
+    let best = -Infinity;
+    remaining.forEach((candidate, at) => {
+      if (last && difference(last.ids, candidate.ids) < 2) return;
+      const value =
+        candidate.score -
+        candidate.ids
+          .filter(core)
+          .reduce((sum, id) => sum + (uses.get(id) ?? 0), 0);
+      if (value > best) {
+        best = value;
+        index = at;
+      }
+    });
+    const picked = remaining.splice(index, 1)[0]!;
+    ordered.push(picked);
+    for (const id of picked.ids.filter(core))
+      uses.set(id, (uses.get(id) ?? 0) + 1);
   }
   return ordered;
+}
+
+type Need = "main" | "bottom" | "shoes" | "hijab";
+
+const needOrder: Need[] = ["shoes", "hijab", "main", "bottom"];
+
+function needMessage(needs: Need[], request: OutfitRequest) {
+  const gym = request.occasion === "gym";
+  if (!gym && needs.length === 1 && needs[0] === "main")
+    return t("styling.gapMain");
+  if (!gym && needs.length === 1 && needs[0] === "bottom")
+    return t("styling.gapBottom", { style: styleLabel(request.style) });
+  if (!gym && needs.length === 1 && needs[0] === "shoes")
+    return t("styling.gapShoes");
+  const clothes = gym && needs.includes("main") && needs.includes("bottom");
+  const words = [...needs]
+    .sort((a, b) => needOrder.indexOf(a) - needOrder.indexOf(b))
+    .flatMap((need): Key[] => {
+      if (clothes && need === "bottom") return [];
+      if (clothes && need === "main") return ["styling.need.gymClothes"];
+      if (gym && need === "main") return ["styling.need.gymTop"];
+      if (gym && need === "bottom") return ["styling.need.gymBottom"];
+      if (gym && need === "shoes") return ["styling.need.sneakers"];
+      return [`styling.need.${need}`];
+    })
+    .map((key) => t(key));
+  const list =
+    words.length > 1
+      ? `${words.slice(0, -1).join(", ")} ${t("word.and")} ${words[words.length - 1]}`
+      : words[0]!;
+  return t("styling.gapList", { list });
 }
 
 function mainPieceWords(style: Style) {
@@ -502,21 +547,6 @@ export function styleOutfits(
   const eligible = available.filter(
     (piece) => fitsStyle(piece, request.style) && fitsOccasion(piece, request),
   );
-  if (
-    request.occasion === "gym" &&
-    ![...kept, ...eligible].some(
-      (piece) => piece.kind && activewear.includes(piece.kind),
-    )
-  )
-    return fail("missing", [
-      {
-        code: "missing-role",
-        severity: "missing",
-        message: t("styling.gapGym"),
-        ids: [],
-        actions: [{ type: "add-pieces" }],
-      },
-    ]);
   const keptRole = (role: Role) =>
     kept.filter((piece) => roleOf(piece) === role);
   const eligibleRole = (role: Role) =>
@@ -558,41 +588,80 @@ export function styleOutfits(
     }
   }
 
+  const gym = request.occasion === "gym";
   const gaps: Problem[] = [];
-  const gap = (message: string, actions: ProblemAction[] = []) =>
-    gaps.push({
-      code: "missing-role",
-      severity: "missing",
-      message,
-      ids: [],
-      actions,
-    });
+  const needs: Need[] = [];
   const mains = keptRole("main").length
     ? keptRole("main")
     : eligibleRole("main");
   if (!mains.length) {
-    if (available.some((piece) => roleOf(piece) === "main"))
-      gap(mainPieceWords(request.style), [
-        { type: "set-style", style: otherStyle(request.style) },
-      ]);
-    else gap(t("styling.gapMain"), [{ type: "add-pieces" }]);
+    if (
+      available.some(
+        (piece) => roleOf(piece) === "main" && fitsOccasion(piece, request),
+      )
+    )
+      gaps.push({
+        code: "missing-role",
+        severity: "missing",
+        message: mainPieceWords(request.style),
+        ids: [],
+        actions: [{ type: "set-style", style: otherStyle(request.style) }],
+      });
+    else needs.push("main");
   }
   const bottoms = keptRole("bottom").length
     ? keptRole("bottom")
     : eligibleRole("bottom");
-  if (mains.length && mains.every(needsBottom) && !bottoms.length)
-    gap(t("styling.gapBottom", { style: styleLabel(request.style) }), [
-      { type: "add-pieces" },
-    ]);
+  if (
+    !bottoms.length &&
+    (mains.length ? mains.every(needsBottom) : gym && needs.includes("main"))
+  )
+    needs.push("bottom");
   if (!keptRole("shoes").length && !eligibleRole("shoes").length)
-    gap(t("styling.gapShoes"), [{ type: "add-pieces" }]);
+    needs.push("shoes");
   if (
     request.hijab === "always" &&
     !keptRole("hijab").length &&
     !eligibleRole("hijab").length
   )
-    gap(t("styling.gapHijab"), [{ type: "add-pieces" }]);
-  if (gaps.length) return fail("missing", gaps);
+    needs.push("hijab");
+  if (needs.length)
+    gaps.push({
+      code: "missing-role",
+      severity: "missing",
+      message: needMessage(needs, request),
+      ids: [],
+      actions: [{ type: "add-pieces" }],
+    });
+  if (gaps.length) {
+    const partial =
+      needs.length && gaps.length === 1
+        ? {
+            ids: (["main", "bottom", "shoes", "hijab"] as const).flatMap(
+              (role) => {
+                if (needs.includes(role)) return [];
+                if (role === "hijab" && request.hijab === "not-needed")
+                  return [];
+                if (keptRole(role).length)
+                  return keptRole(role).map((piece) => piece.id);
+                const first = [...eligibleRole(role)].sort(
+                  (a, b) => hash(seed + a.id) - hash(seed + b.id),
+                )[0];
+                if (!first) return [];
+                if (
+                  role === "bottom" &&
+                  mains.length &&
+                  !mains.some(needsBottom)
+                )
+                  return [];
+                return [first.id];
+              },
+            ),
+            missing: needs,
+          }
+        : undefined;
+    return { ...fail("missing", gaps), ...(partial ? { partial } : {}) };
+  }
 
   const warm =
     request.weather.source !== "unknown" && request.weather.warmth === "warm";
@@ -624,7 +693,6 @@ export function styleOutfits(
 
   const outfits: Candidate[] = [];
   const reviews: Candidate[] = [];
-  let count = 0;
   let limited = false;
   let coverageBlocked = false;
   const consider = (ids: Piece[]) => {
@@ -675,37 +743,68 @@ export function styleOutfits(
     }
     return best;
   };
-  const expand = (prefix: Piece[], rest: Piece[][][]) => {
-    if (limited) return;
-    if (!rest.length) {
-      if (++count > maxCombinations) {
-        limited = true;
-        return;
-      }
-      consider(prefix);
-      return;
-    }
-    for (const option of rest[0]!)
-      expand([...prefix, ...option], rest.slice(1));
-  };
-  for (const main of mains) {
+  const pairs = mains.flatMap((main) => {
     const bottomOptions: Piece[][] = keptRole("bottom").length
       ? [keptRole("bottom")]
       : needsBottom(main)
         ? bottoms.map((piece) => [piece])
         : [[], ...bottoms.map((piece) => [piece])];
-    expand([main], [bottomOptions, ...slots]);
+    return bottomOptions.map((bottom) => [main, ...bottom]);
+  });
+  const chosenPairs =
+    pairs.length > maxCombinations
+      ? [...pairs]
+          .sort(
+            (a, b) =>
+              hash(seed + a.map((piece) => piece.id).join()) -
+              hash(seed + b.map((piece) => piece.id).join()),
+          )
+          .slice(0, maxCombinations)
+      : pairs;
+  if (chosenPairs.length < pairs.length) limited = true;
+  const budget = Math.max(1, Math.floor(maxCombinations / chosenPairs.length));
+  const total = slots.reduce((product, options) => product * options.length, 1);
+  const combination = (prefix: Piece[], index: number) => {
+    const outfit = [...prefix];
+    let rest = index;
+    for (const options of slots) {
+      outfit.push(...options[rest % options.length]!);
+      rest = Math.floor(rest / options.length);
+    }
+    return outfit;
+  };
+  for (const prefix of chosenPairs) {
+    if (total <= budget) {
+      for (let index = 0; index < total; index++)
+        consider(combination(prefix, index));
+      continue;
+    }
+    limited = true;
+    const key = seed + prefix.map((piece) => piece.id).join();
+    const seen = new Set<number>();
+    for (let attempt = 0; seen.size < budget && attempt < budget * 2; attempt++)
+      seen.add(hash(`${key}:${attempt}`) % total);
+    for (const index of seen) consider(combination(prefix, index));
   }
+  const coreIds = new Set(
+    pool
+      .filter((piece) => {
+        const role = roleOf(piece);
+        return role === "main" || role === "bottom";
+      })
+      .map((piece) => piece.id),
+  );
+  const core = (id: string) => coreIds.has(id);
 
   if (outfits.length)
     return {
       status: "ready",
-      outfits: diversify(outfits, seed).map(accessorise),
+      outfits: diversify(outfits, seed, core).map(accessorise),
       problems: [],
       limited,
     };
   if (reviews.length) {
-    const ordered = diversify(reviews, seed).map(accessorise);
+    const ordered = diversify(reviews, seed, core).map(accessorise);
     return {
       status: "review",
       outfits: ordered,

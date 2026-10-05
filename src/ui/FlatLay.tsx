@@ -43,6 +43,7 @@ export type FlatLayProps = {
   state?: "arranging" | "loading";
   swapMark?: boolean;
   emptyRoles?: Role[];
+  onEmptyPress?: (role: Role) => void;
   preview?: boolean;
   hiddenPieces?: boolean;
   revision?: number;
@@ -202,6 +203,7 @@ function LaidPiece({
   gleam,
   origin,
   mark,
+  kept,
   nativeID,
   onPress,
   access,
@@ -215,6 +217,7 @@ function LaidPiece({
   gleam: boolean;
   origin: SharedValue<number>;
   mark: boolean;
+  kept: boolean;
   nativeID?: string;
   onPress?: () => void;
   access: AccessibilityProps;
@@ -233,6 +236,28 @@ function LaidPiece({
   const scale = Math.min(symbolScale, markCap);
   const disc = markDisc * scale;
   const raised = theme.elevation.lift;
+  const inset = { top: box.height * 0.08, right: box.width * 0.08 };
+  const badge = (name: "arrow.2.squarepath" | "pin.fill", at: object) => (
+    <View
+      style={[
+        styles.mark,
+        at,
+        {
+          width: disc,
+          height: disc,
+          borderRadius: disc / 2,
+          backgroundColor: colors.canvas,
+        },
+      ]}
+      {...hidden}
+    >
+      <Symbol
+        name={name}
+        size={(theme.size.iconInline * scale) / symbolScale}
+        tone="plum"
+      />
+    </View>
+  );
 
   useEffect(() => {
     if (phase === "still") return;
@@ -319,26 +344,10 @@ function LaidPiece({
         {gleam && !ghost ? (
           <Gleam laid={laid} side={side} origin={origin} />
         ) : null}
-        {mark ? (
-          <View
-            style={[
-              styles.mark,
-              {
-                width: disc,
-                height: disc,
-                borderRadius: disc / 2,
-                backgroundColor: colors.canvas,
-              },
-            ]}
-            {...hidden}
-          >
-            <Symbol
-              name="arrow.2.squarepath"
-              size={(theme.size.iconInline * scale) / symbolScale}
-              tone="plum"
-            />
-          </View>
-        ) : null}
+        {mark ? badge("arrow.2.squarepath", inset) : null}
+        {kept
+          ? badge("pin.fill", { top: inset.top, left: box.width * 0.08 })
+          : null}
       </Pressable>
     </Animated.View>
   );
@@ -353,6 +362,7 @@ export function FlatLay({
   state,
   swapMark = false,
   emptyRoles = [],
+  onEmptyPress,
   preview = false,
   hiddenPieces = false,
   revision,
@@ -548,13 +558,18 @@ export function FlatLay({
       ) : side > 0 ? (
         <LayoutAnimationConfig key={revision} skipEntering>
           {empties.map(({ role, piece, laid }) => (
-            <View
+            <Pressable
               key={piece.id}
               nativeID={`${prefix}-${piece.id}`}
-              accessible={!silent}
-              accessibilityLabel={t("build.slotEmpty", {
-                role: t(`role.one.${role}`),
-              })}
+              accessible={!silent || Boolean(onEmptyPress)}
+              accessibilityRole={onEmptyPress ? "button" : undefined}
+              accessibilityLabel={t(
+                onEmptyPress ? "today.addRole" : "build.slotEmpty",
+                { role: t(`role.one.${role}`) },
+              )}
+              disabled={!onEmptyPress}
+              onPress={() => onEmptyPress?.(role)}
+              testID={onEmptyPress ? `empty-${role}` : undefined}
               style={[
                 styles.empty,
                 {
@@ -562,10 +577,14 @@ export function FlatLay({
                   top: laid.y * side,
                   width: laid.width * side,
                   height: laid.height * side,
-                  borderColor: colors.lineField,
+                  borderColor: onEmptyPress ? colors.plum : colors.lineField,
                 },
               ]}
-            />
+            >
+              {onEmptyPress ? (
+                <Symbol name="plus" size={theme.size.iconInline} tone="plum" />
+              ) : null}
+            </Pressable>
           ))}
           {[
             ...swap.outgoing
@@ -596,6 +615,7 @@ export function FlatLay({
               gleam={state === "arranging"}
               origin={origin}
               mark={hero && swapMark && roleOf(laid.piece) === "hijab"}
+              kept={hero && keptIds.includes(laid.piece.id)}
               nativeID={`${prefix}-${laid.piece.id}`}
               onPress={
                 hero && onPiecePress
@@ -622,11 +642,11 @@ const styles = StyleSheet.create({
     borderStyle: "dashed",
     borderRadius: theme.radius.print,
     borderCurve: "continuous",
+    alignItems: "center",
+    justifyContent: "center",
   },
   mark: {
     position: "absolute",
-    top: 0,
-    right: 0,
     alignItems: "center",
     justifyContent: "center",
   },

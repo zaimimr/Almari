@@ -7,7 +7,7 @@ appId: com.zaimimran.almari
       all: allow
 - extendedWaitUntil:
     visible:
-      id: "today-reason"
+      id: "today-weather"
       text: "Oslo 4 to 9°.*"
     timeout: 60000
 - scrollUntilVisible:

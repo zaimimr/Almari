@@ -1,5 +1,5 @@
 import type { Occasion } from "../../domain/taxonomy";
-import { occasionName } from "../../i18n";
+import { occasionName, t } from "../../i18n";
 import { ChipRow } from "../../ui";
 import { intents, type TodayModel } from "./useToday";
 
@@ -13,12 +13,17 @@ export function IntentRow({ model }: { model: TodayModel }) {
     : [...intents, request.occasion];
   return (
     <ChipRow
-      options={ids.map((id) => ({ id, label: occasionName(id) }))}
+      options={ids.map((id) => ({
+        id,
+        label: id === "party" ? t("today.intent.party") : occasionName(id),
+      }))}
       value={request.occasion}
       onChange={(next) => {
         if (typeof next === "string") model.intent(next);
       }}
       layout="scroll"
+      keepScroll
+      reselect
       testID="today-intent"
     />
   );

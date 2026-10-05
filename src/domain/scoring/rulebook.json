@@ -32,8 +32,7 @@
           { "has": { "tagged": "other" }, "count": { "max": 0 } }
         ]
       },
-      "weight": 1.0,
-      "reason": true
+      "weight": 1.0
     },
     {
       "id": "occasion-tag-mismatch",
@@ -83,6 +82,18 @@
       "weight": -1.5
     },
     {
+      "id": "blazer-under-abaya",
+      "source": "almari:layers",
+      "layer": "style",
+      "if": {
+        "all": [
+          { "has": { "role": ["layer"], "kind": ["blazer", "jacket"] } },
+          { "has": { "role": ["outer"], "kind": ["abaya"] } }
+        ]
+      },
+      "weight": -2.0
+    },
+    {
       "id": "dress-with-bottom",
       "source": "legacy:dress-bottom",
       "layer": "style",
@@ -97,7 +108,7 @@
           }
         ]
       },
-      "weight": -1.0
+      "weight": -2.5
     },
     {
       "id": "hijab-solid-with-print",
@@ -487,8 +498,7 @@
       "source": "desi:ladder",
       "layer": "style",
       "if": { "outfit": "formality-fit", "op": "=", "value": 1 },
-      "weight": 0.5,
-      "reason": true
+      "weight": 0.5
     },
     {
       "id": "formality-spread",

@@ -306,6 +306,36 @@ test("Trening picks sneakers, never a dress, heels, a blazer or a bag", () => {
   assert.ok(result.outfits[0]!.ids.includes("instant hijab"));
 });
 
+test("Trening never pairs jeans or a blouse with gym pieces", () => {
+  const result = styleOutfits(
+    gymCloset,
+    request({ occasion: "gym" }),
+    "seed",
+    rulesScorer,
+    gymContext,
+  );
+  for (const outfit of result.outfits)
+    for (const id of ["jeans", "blouse"]) assert.ok(!outfit.ids.includes(id));
+});
+
+test("Trening with only a sports top asks for gym bottoms and shows the rest", () => {
+  const result = styleOutfits(
+    gymCloset.filter((piece) => piece.kind !== "leggings"),
+    request({ occasion: "gym" }),
+    "seed",
+    rulesScorer,
+    gymContext,
+  );
+  assert.equal(result.status, "missing");
+  assert.deepEqual(
+    result.problems.map((problem) => problem.message),
+    ["Add leggings or joggers to complete an outfit."],
+  );
+  assert.deepEqual(result.partial?.missing, ["bottom"]);
+  assert.ok(result.partial?.ids.includes("sports top"));
+  assert.ok(result.partial?.ids.includes("sneakers"));
+});
+
 test("Trening without any gym clothes says so instead of styling", () => {
   const result = styleOutfits(
     gymCloset.filter(
@@ -318,5 +348,8 @@ test("Trening without any gym clothes says so instead of styling", () => {
   );
   assert.equal(result.status, "missing");
   assert.equal(result.outfits.length, 0);
-  assert.equal(result.problems[0]!.message, "No gym clothes yet");
+  assert.equal(
+    result.problems[0]!.message,
+    "Add gym clothes to complete an outfit.",
+  );
 });

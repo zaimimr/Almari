@@ -11,9 +11,9 @@ appId: com.zaimimran.almari
 - assertVisible: "Everyday"
 - assertVisible: "Work"
 - assertVisible: "Gym"
-- assertVisible: "Party or mehndi"
+- assertVisible: "Party"
 - tapOn:
-    id: "today-intent-gym"
+    id: "today-intent-work"
 - extendedWaitUntil:
     visible:
       id: "today-outfit"
@@ -21,3 +21,7 @@ appId: com.zaimimran.almari
 - takeScreenshot: docs/redesign/screens/after/today/intent
 - tapOn: "Wear this"
 - assertVisible: "Worn today"
+- assertNotVisible:
+    id: "today-another"
+- assertNotVisible:
+    id: "today-intent-work"

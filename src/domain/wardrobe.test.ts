@@ -203,7 +203,7 @@ const byPreference = (pieces: Piece[]) => {
     score: 10 - preference.indexOf(worn.id),
     reasons: [
       "Every piece is marked for work.",
-      `The ${worn.name.toLowerCase()} brings contrast to the ivory longline tunic.`,
+      `The ${worn.name.toLowerCase()} frames your face against the ivory longline tunic.`,
     ],
   };
 };
@@ -228,7 +228,7 @@ test("R03 the comparison shows the three closest in tone, each keeping every oth
     );
     assert.equal(
       option.reason,
-      `The ${option.piece.name.toLowerCase()} brings contrast to the ivory longline tunic.`,
+      `The ${option.piece.name.toLowerCase()} frames your face against the ivory longline tunic.`,
     );
   }
 });

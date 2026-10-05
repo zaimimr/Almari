@@ -55,10 +55,18 @@ test("every reason has English and bokmål text with the same known placeholders
       assert.ok(["a", "b", "occasion"].includes(name), `${key}: ${name}`);
   }
   const keys = Object.keys(english).filter((key) => key.startsWith("reason."));
+  const plural = keys.filter((key) => key.endsWith("_plural"));
   assert.deepEqual(
-    keys.sort(),
+    keys.filter((key) => !key.endsWith("_plural")).sort(),
     withReason.map((rule) => `reason.${rule.id}`).sort(),
   );
+  for (const key of plural) {
+    const base = key.replace(/_plural$/, "");
+    assert.ok(english[base], key);
+    assert.ok(bokmal[key], key);
+    assert.deepEqual(placeholders(english[key]!), placeholders(english[base]!));
+    assert.deepEqual(placeholders(bokmal[key]!), placeholders(english[base]!));
+  }
 });
 
 test("a rule book with an unknown garment, setting, reason value or duplicate id is rejected", () => {

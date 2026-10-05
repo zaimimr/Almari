@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { StyleSheet, View } from "react-native";
+import { useEffect, useMemo, useRef } from "react";
+import { ScrollView, StyleSheet, View } from "react-native";
 import { router } from "expo-router";
 import { plannedPieces } from "../../../src/domain/looks";
 import { replacementsFor, roleOf } from "../../../src/domain/styling";
@@ -11,10 +11,12 @@ import {
 import { hijabAlternatives } from "../../../src/domain/wardrobe";
 import { ChangeStrip } from "../../../src/features/ChangeStrip";
 import { ActionArea } from "../../../src/features/today/ActionArea";
+import { DressyMeter } from "../../../src/features/today/DressyMeter";
 import { FirstRun } from "../../../src/features/today/FirstRun";
 import { IntentRow } from "../../../src/features/today/IntentRow";
 import { OutfitCard } from "../../../src/features/today/OutfitCard";
 import { useShareCard } from "../../../src/features/share/useShareCard";
+import { WeatherTip } from "../../../src/features/today/WeatherTip";
 import { ProblemBanner } from "../../../src/features/today/ProblemBanner";
 import {
   useToday,
@@ -22,6 +24,7 @@ import {
 } from "../../../src/features/today/useToday";
 import { locale, t } from "../../../src/i18n";
 import { now } from "../../../src/state/clock";
+import { addPiecesRoute } from "../../../src/state/imports";
 import {
   Banner,
   Button,
@@ -37,7 +40,7 @@ import { fullDate, shortWeekday, spokenDate } from "../../../src/ui/dates";
 import { theme } from "../../../src/ui/theme";
 import { useGreeting } from "../../../src/features/today/useGreeting";
 
-const heroSize = 360;
+const heroSize = 300;
 
 function Strip({ model }: { model: TodayModel }) {
   const { closet, request, session, openId, setOpenId, pieces } = model;
@@ -176,7 +179,7 @@ function Banners({ model }: { model: TodayModel }) {
 
 function TodayFooter({ model }: { model: TodayModel }) {
   const planning = model.mode === "planning" || model.mode === "tomorrow";
-  if (!model.showOutfit) return null;
+  if (!model.showOutfit || model.holding) return null;
   if (planning) {
     const saved = model.savedLook;
     return (
@@ -231,6 +234,15 @@ function TodayFooter({ model }: { model: TodayModel }) {
 export default function TodayScreen() {
   const model = useToday();
   const { closet, today, mode, request, openId, setOpenId } = model;
+  const scroll = useRef<ScrollView>(null);
+  useEffect(() => {
+    if (!openId) return;
+    const timer = setTimeout(
+      () => scroll.current?.scrollToEnd({ animated: true }),
+      100,
+    );
+    return () => clearTimeout(timer);
+  }, [openId]);
   const [title, measure] = useGreeting(closet.styling.name, model.hour);
   const inline = mode === "planning" || mode === "tomorrow";
   const first = !closet.styling.everyday;
@@ -239,6 +251,7 @@ export default function TodayScreen() {
     name: model.name,
     caption: model.session?.date ? fullDate(model.session.date, locale) : null,
   });
+  const locked = !inline && !!model.worn;
 
   const header = (
     <View style={styles.header}>
@@ -274,14 +287,19 @@ export default function TodayScreen() {
       headerTitleVisible={!inline}
       actions={header}
       footer={<TodayFooter model={model} />}
+      contentRef={scroll}
       testID="today"
     >
       {measure}
       {shareCard.card}
       <View style={styles.content}>
-        {inline ? <TitleRow model={model} /> : <IntentRow model={model} />}
+        {inline ? (
+          <TitleRow model={model} />
+        ) : locked ? null : (
+          <IntentRow model={model} />
+        )}
         <Banners model={model} />
-        {!today ? (
+        {!today || model.holding ? (
           <Silk
             kind="placeholder"
             shape="lay"
@@ -295,20 +313,38 @@ export default function TodayScreen() {
                 pieces={model.pieces}
                 size="hero"
                 maxSize={heroSize}
-                swapMark
+                swapMark={!locked}
                 keptIds={request?.keptIds}
-                openId={openId}
+                openId={locked ? undefined : openId}
                 revision={model.revision}
                 state={model.styling ? "arranging" : undefined}
-                onPiecePress={(piece) =>
-                  setOpenId(openId === piece.id ? null : piece.id)
+                onPiecePress={
+                  locked
+                    ? undefined
+                    : (piece) =>
+                        setOpenId(openId === piece.id ? null : piece.id)
                 }
                 testID="today-outfit"
               />
             </View>
-            <Strip key={openId ?? "closed"} model={model} />
+            {locked ? null : <Strip key={openId ?? "closed"} model={model} />}
             <OutfitCard model={model} />
-            <ActionArea model={model} />
+            <DressyMeter model={model} />
+            {locked ? null : <WeatherTip model={model} />}
+            {locked ? null : <ActionArea model={model} />}
+          </View>
+        ) : model.result?.partial && model.lostPieces === 0 ? (
+          <View style={styles.hero}>
+            <FlatLay
+              pieces={model.result.partial.ids.flatMap((id) =>
+                closet.pieces.filter((piece) => piece.id === id),
+              )}
+              size="hero"
+              maxSize={heroSize}
+              emptyRoles={model.result.partial.missing}
+              onEmptyPress={() => router.push(addPiecesRoute)}
+              testID="today-partial"
+            />
           </View>
         ) : null}
       </View>
@@ -318,7 +354,7 @@ export default function TodayScreen() {
 
 const styles = StyleSheet.create({
   header: { flexDirection: "row", alignItems: "center" },
-  content: { gap: theme.space.xl },
+  content: { gap: theme.space.lg },
   outfit: { gap: theme.space.md },
   hero: { width: "100%", maxWidth: heroSize, alignSelf: "center" },
   placeholder: {
