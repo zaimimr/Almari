@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, useWindowDimensions, View } from "react-native";
 import Constants from "expo-constants";
 import { router } from "expo-router";
 import type { Language, Units } from "../../src/domain/closet";
@@ -36,6 +36,7 @@ export default function Profile() {
   const summary = profileSummary(closet);
   const { name, place } = closet.styling;
   const [exportFailed, setExportFailed] = useState(false);
+  const { fontScale } = useWindowDimensions();
 
   const setStyling = (change: { language: Language } | { units: Units }) =>
     void update((current) => ({
@@ -63,7 +64,7 @@ export default function Profile() {
 
   return (
     <Screen title={t("profile.title")} testID="profile">
-      <View style={styles.page}>
+      <View key={fontScale} style={styles.page}>
         <View style={styles.head}>
           <Pressable
             accessibilityRole="button"

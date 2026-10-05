@@ -163,21 +163,40 @@ function BoardTile({ tile }: { tile: Tile }) {
   );
 }
 
+function FinishRow({ step }: { step: OnboardingStep }) {
+  const colors = useColors();
+  const label = t("profile.finish");
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={() => router.push(`/profile/answer/${step}`)}
+      testID="tile-finish"
+      style={({ pressed }) => [styles.finish, pressed && styles.pressed]}
+    >
+      <View
+        style={[styles.plus, { backgroundColor: colors.paper }]}
+        {...hidden}
+      >
+        <Symbol name="plus" size={theme.size.iconInline} tone="plum" />
+      </View>
+      <Text role="subhead" tone="plum" style={styles.grow}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
 export function StyleBoard({ closet }: { closet: Closet }) {
   const { ax } = useLargeText();
   const all = tilesFor(closet);
-  const open = all.filter(
+  const [open] = all.filter(
     ({ value, step }) => value === null && step !== "colours",
   );
-  const tiles = [
-    ...all.filter(({ value, step }) => value !== null || step === "colours"),
-    ...open.slice(0, 1).map((tile) => ({
-      id: "finish",
-      step: tile.step,
-      label: t("profile.finish"),
-      value: null,
-    })),
-  ];
+  const tiles = all.filter(
+    ({ value, step }) => value !== null || step === "colours",
+  );
   const rows = ax
     ? tiles.map((tile) => [tile])
     : tiles.flatMap((tile, index) =>
@@ -191,8 +210,10 @@ export function StyleBoard({ closet }: { closet: Closet }) {
           {row.map((tile) => (
             <BoardTile key={tile.id} tile={tile} />
           ))}
+          {!ax && row.length === 1 ? <View style={styles.tile} /> : null}
         </View>
       ))}
+      {open ? <FinishRow step={open.step} /> : null}
     </View>
   );
 }
@@ -225,4 +246,19 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
   },
   words: { gap: theme.space.xs },
+  finish: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: theme.space.md,
+    minHeight: theme.size.touch,
+  },
+  plus: {
+    width: theme.size.touch,
+    height: theme.size.touch,
+    borderRadius: theme.radius.print,
+    borderCurve: "continuous",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  grow: { flex: 1 },
 });
