@@ -1,7 +1,8 @@
 node_modules/
 .expo/
 dist/
-/ios/
+/ios/*
+!/ios/ci_scripts/
 /android/
 .DS_Store
 *.log

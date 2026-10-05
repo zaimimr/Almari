@@ -14,18 +14,12 @@ const EDITABLE = new Set([
 ]);
 const OPEN_SUBMISSION_STATES =
   "READY_FOR_REVIEW,WAITING_FOR_REVIEW,IN_REVIEW,UNRESOLVED_ISSUES";
-const PROCESSING_TIMEOUT_MS = 40 * 60 * 1000;
+const PROCESSING_TIMEOUT_MS = 90 * 60 * 1000;
 const POLL_INTERVAL_MS = 30 * 1000;
 
-const buildNumber = process.argv[2];
 const keyPath = process.env.ASC_KEY_PATH;
 const keyId = process.env.ASC_KEY_ID;
 const issuerId = process.env.ASC_ISSUER_ID;
-
-if (!buildNumber) {
-  console.error("usage: asc-prepare-submission.mjs <buildNumber>");
-  process.exit(1);
-}
 
 for (const [name, value] of Object.entries({
   ASC_KEY_PATH: keyPath,
@@ -88,28 +82,30 @@ async function asc(method, path, body) {
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-async function waitForBuild() {
+async function waitForBuild(version) {
   const deadline = Date.now() + PROCESSING_TIMEOUT_MS;
 
   while (Date.now() < deadline) {
     const { data } = await asc(
       "GET",
-      `/v1/builds?filter[app]=${APP_ID}&filter[version]=${buildNumber}&limit=1`,
+      `/v1/builds?filter[app]=${APP_ID}&filter[preReleaseVersion.version]=${version}&sort=-uploadedDate&limit=1`,
     );
     const build = data[0];
 
     if (build?.attributes.processingState === "VALID") {
-      console.log(`build ${buildNumber} finished processing`);
-      return build.id;
+      console.log(
+        `${version} (${build.attributes.version}) finished processing`,
+      );
+      return { id: build.id, number: build.attributes.version };
     }
 
     console.log(
-      `build ${buildNumber} is ${build?.attributes.processingState ?? "not visible yet"}, waiting`,
+      `${version} is ${build?.attributes.processingState ?? "not uploaded yet"}, waiting`,
     );
     await sleep(POLL_INTERVAL_MS);
   }
 
-  throw new Error(`build ${buildNumber} never finished processing`);
+  throw new Error(`no processed build of ${version} showed up`);
 }
 
 async function versionRecord(version) {
@@ -236,13 +232,13 @@ async function stageSubmission(versionId) {
 
 const version = appVersion();
 const notes = releaseNotes(version);
-const buildId = await waitForBuild();
+const build = await waitForBuild(version);
 const versionId = await versionRecord(version);
 
 await asc("PATCH", `/v1/appStoreVersions/${versionId}/relationships/build`, {
-  data: { type: "builds", id: buildId },
+  data: { type: "builds", id: build.id },
 });
-console.log(`build ${buildNumber} attached to ${version}`);
+console.log(`build ${build.number} attached to ${version}`);
 
 await writeReleaseNotes(versionId, notes);
 
@@ -250,7 +246,7 @@ const submission = await stageSubmission(versionId);
 
 console.log("");
 console.log(
-  `${version} (${buildNumber}) is staged and NOT submitted. State: ${submission.attributes.state}`,
+  `${version} (${build.number}) is staged and NOT submitted. State: ${submission.attributes.state}`,
 );
 console.log(
   "Approve it in App Store Connect > Review Submissions when you are ready.",

@@ -17,17 +17,7 @@ function patchLine(file, pattern, replacement) {
   writeFileSync(file, contents.replace(pattern, replacement));
 }
 
-const RELEASE_FILE = "release.json";
 const NEXT_NOTES = "store/release-notes/next.md";
-
-const release = JSON.parse(readFileSync(RELEASE_FILE, "utf8"));
-
-if (!Number.isInteger(release.build)) {
-  console.error(`${RELEASE_FILE} has no integer "build"`);
-  process.exit(1);
-}
-
-const build = release.build + 1;
 
 const appConfig = JSON.parse(readFileSync("app.json", "utf8"));
 const previous = appConfig.expo?.version;
@@ -60,14 +50,10 @@ if (!existsSync(notes)) {
   console.log(`${NEXT_NOTES} -> ${notes}`);
 }
 
-patchLine(RELEASE_FILE, /"build":\s*\d+/, `"build": ${build}`);
 patchLine("app.json", /"version":\s*"[^"]*"/, `"version": "${version}"`);
 
-console.log(`release ${version}, build ${build}`);
+console.log(`release ${version}`);
 
 if (process.env.GITHUB_OUTPUT) {
-  appendFileSync(
-    process.env.GITHUB_OUTPUT,
-    `build=${build}\nversion=${version}\n`,
-  );
+  appendFileSync(process.env.GITHUB_OUTPUT, `version=${version}\n`);
 }
