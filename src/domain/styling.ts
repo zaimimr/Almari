@@ -141,6 +141,7 @@ const gymMains: readonly string[] = ["sports-top", "hoodie", "t-shirt"];
 const gymBottoms: readonly string[] = ["leggings", "joggers", "shorts"];
 
 const offAtGym: readonly string[] = ["heels", "blazer"];
+const dressyHijabFabrics: readonly string[] = ["chiffon", "silk", "satin"];
 
 function fitsOccasion(piece: Piece, request: OutfitRequest) {
   if (request.occasion !== "gym") return true;
@@ -148,6 +149,8 @@ function fitsOccasion(piece: Piece, request: OutfitRequest) {
   if (piece.category === "accessory") return false;
   if (piece.kind && offAtGym.includes(piece.kind)) return false;
   const role = roleOf(piece);
+  if (role === "hijab")
+    return !dressyHijabFabrics.includes(piece.attributes?.fabric ?? "");
   if (role === "main") return gymMains.includes(piece.kind ?? "");
   if (role === "bottom") return gymBottoms.includes(piece.kind ?? "");
   if (piece.category === "shoes") return piece.kind === "sneakers";

@@ -69,6 +69,14 @@
       "reason": true
     },
     {
+      "id": "blazer-at-work",
+      "source": "owner:work",
+      "layer": "style",
+      "when": { "occasion": ["work"] },
+      "if": { "has": { "kind": ["blazer"] } },
+      "weight": 0.8
+    },
+    {
       "id": "two-layers-not-cold",
       "source": "legacy:layers",
       "layer": "style",
@@ -341,6 +349,14 @@
       "weight": 1.0
     },
     {
+      "id": "gym-sporty-hijab",
+      "source": "owner:gym",
+      "layer": "style",
+      "when": { "occasion": ["gym"] },
+      "if": { "has": { "role": ["hijab"], "fabric": ["jersey", "knit"] } },
+      "weight": 0.6
+    },
+    {
       "id": "hijab-warm-fabric-cold",
       "source": "western-hijab:59",
       "layer": "style",
@@ -563,6 +579,14 @@
         ]
       },
       "weight": -0.8
+    },
+    {
+      "id": "dress-dressed-up",
+      "source": "owner:party",
+      "layer": "style",
+      "when": { "minFormality": 4 },
+      "if": { "has": { "role": ["main"], "category": ["dress"] } },
+      "weight": 0.6
     },
     {
       "id": "dressed-up-element",
