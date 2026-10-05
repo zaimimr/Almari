@@ -124,6 +124,20 @@ test("hijab no maps to not needed and keeps her occasion and style", () => {
   assert.equal(closet.styling.everyday?.version, 2);
 });
 
+test("hijab no clears the saved hijab styles", () => {
+  const styled = applyAnswer(
+    withPreset("always"),
+    "hijabStyles",
+    { hijabStyles: ["shayla", "khimar"] },
+    clock,
+  );
+  const no = applyAnswer(styled, "hijab", { hijab: "no" }, clock);
+  assert.equal(no.styling.profile.hijabStyles, undefined);
+  assert.equal(answersFrom(no).hijabStyles.hijabStyles, null);
+  const sometimes = applyAnswer(styled, "hijab", { hijab: "sometimes" }, clock);
+  assert.deepEqual(sometimes.styling.profile.hijabStyles, ["shayla", "khimar"]);
+});
+
 test("hijab sometimes clears the preset hijab and never creates a preset", () => {
   assert.equal(
     applyAnswer(withPreset("always"), "hijab", { hijab: "sometimes" }, clock)
@@ -402,6 +416,8 @@ test("the name is trimmed and the greeting follows the hour", () => {
   assert.equal(greeting("Sara", 20, "nb"), "God kveld, Sara");
   assert.equal(greeting(null, 9, "en"), "Good morning");
   assert.equal(greeting("Sara", 15, "nb"), "Hei, Sara");
+  assert.equal(greeting("Sara", 2, "en"), "Good evening, Sara");
+  assert.equal(greeting("Sara", 5, "en"), "Good morning, Sara");
   assert.equal(greetingShort("Sara", "en"), "Hi, Sara");
 });
 

@@ -202,8 +202,12 @@ export function applyAnswer<S extends AnswerStep>(
   if (step === "hijab") {
     const { hijab } = answer as Answers["hijab"];
     if (hijab === null) return closet;
+    const answered = withProfile(closet, { hijabAnswered: true });
+    const { hijabStyles: _old, ...profile } = answered.styling.profile;
     return withPreset(
-      withProfile(closet, { hijabAnswered: true }),
+      hijab === "no"
+        ? { ...answered, styling: { ...answered.styling, profile } }
+        : answered,
       { hijab: hijabPreference[hijab] },
       clock,
     );
