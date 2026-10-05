@@ -16,7 +16,7 @@ appId: com.zaimimran.almari
     timeout: 20000
 - assertVisible: "What is your name?"
 - assertVisible:
-    id: "step-1-of-7"
+    id: "step-1-of-8"
 - assertNotVisible:
     id: "onboarding-back"
 - takeScreenshot: docs/redesign/screens/after/start/name
@@ -26,7 +26,7 @@ appId: com.zaimimran.almari
 - pressKey: Enter
 - assertVisible: "Do you wear a hijab?"
 - assertVisible:
-    id: "step-2-of-7"
+    id: "step-2-of-8"
 - assertVisible: "Skip"
 - tapOn:
     id: "hijab-sometimes"
@@ -66,9 +66,26 @@ appId: com.zaimimran.almari
     id: "sparkle-little"
 - tapOn:
     id: "onboarding-next"
+- assertVisible: "Your height, weight and shape"
+- assertVisible:
+    id: "step-7-of-8"
+- assertVisible: "Skip"
+- swipe:
+    from:
+      id: "body-height"
+    direction: LEFT
+- assertVisible: "Next"
+- tapOn:
+    id: "shape-hourglass"
+- assertVisible:
+    id: "shape-hourglass"
+    selected: true
+- takeScreenshot: docs/redesign/screens/after/start/body
+- tapOn:
+    id: "onboarding-next"
 - assertVisible: "Where are you?"
 - assertVisible:
-    id: "step-7-of-7"
+    id: "step-8-of-8"
 - tapOn:
     id: "onboarding-next"
 - assertVisible: "You are set"

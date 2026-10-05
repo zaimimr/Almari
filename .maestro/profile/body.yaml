@@ -11,18 +11,26 @@ appId: com.zaimimran.almari
       id: "profile-body"
 - tapOn:
     id: "profile-body"
+- assertVisible:
+    id: "body-height"
+- swipe:
+    from:
+      id: "body-height"
+    direction: LEFT
+- assertVisible:
+    id: "body-height-clear"
+- swipe:
+    from:
+      id: "body-weight"
+    direction: RIGHT
+- assertVisible:
+    id: "body-weight-clear"
+- scrollUntilVisible:
+    element:
+      id: "shape-hourglass"
 - tapOn:
-    id: "answer-height"
-- inputText: "1.65"
-- waitForAnimationToEnd
+    id: "shape-hourglass"
 - tapOn:
-    point: "91%,63%"
-- assertVisible: ".*Enter a height between 120 and 220 cm.*"
-- tapOn:
-    id: "answer-height"
-- eraseText: 10
-- inputText: "165"
-- tapOn: "Hourglass"
-- tapOn: "Save"
+    id: "onboarding-next"
 - assertVisible:
     id: "profile"

@@ -1,6 +1,8 @@
 import {
+  bodyShapes,
   hijabStyles,
   sparkles,
+  type BodyShape,
   type HijabStyle,
   type Sparkle,
 } from "../../domain/closet";
@@ -44,6 +46,12 @@ export const illustrations = {
   "sparkle-little-bare": require("../../../assets/illustrations/sparkle-little-bare.jpg"),
   "sparkle-heavy-bare": require("../../../assets/illustrations/sparkle-heavy-bare.jpg"),
   "sparkle-bridal-bare": require("../../../assets/illustrations/sparkle-bridal-bare.jpg"),
+  "shape-pear": require("../../../assets/illustrations/shape-pear.jpg"),
+  "shape-apple": require("../../../assets/illustrations/shape-apple.jpg"),
+  "shape-hourglass": require("../../../assets/illustrations/shape-hourglass.jpg"),
+  "shape-rectangle": require("../../../assets/illustrations/shape-rectangle.jpg"),
+  "shape-inverted-triangle": require("../../../assets/illustrations/shape-inverted-triangle.jpg"),
+  "shape-athletic": require("../../../assets/illustrations/shape-athletic.jpg"),
 } as const;
 
 type Bare = `${string}-bare` & keyof typeof illustrations;
@@ -115,5 +123,13 @@ export function sparkleOptions(bare: boolean): ChoiceOption<Sparkle>[] {
     label: t(`sparkle.${id}`),
     description: t(`sparkle.${id}.description`),
     image: art(`sparkle-${id}`, bare),
+  }));
+}
+
+export function shapeOptions(): ChoiceOption<BodyShape>[] {
+  return bodyShapes.map((id) => ({
+    id,
+    label: t(`shape.${id}`),
+    image: illustrations[`shape-${id}`],
   }));
 }

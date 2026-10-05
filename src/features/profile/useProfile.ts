@@ -1,5 +1,5 @@
 import type { Closet } from "../../domain/closet";
-import { formatHeight } from "../../domain/units";
+import { formatHeight, formatWeight } from "../../domain/units";
 import { t } from "../../i18n";
 
 export function profileSummary(closet: Closet) {
@@ -7,9 +7,12 @@ export function profileSummary(closet: Closet) {
   const notAnswered = t("profile.notAnswered");
   const body = [
     profile.heightCm !== null && formatHeight(profile.heightCm, units),
+    profile.weightKg !== null && formatWeight(profile.weightKg, units),
     profile.bodyShape
       ? t(`shape.${profile.bodyShape}`)
-      : profile.bodyAnswered && profile.heightCm === null
+      : profile.bodyAnswered &&
+          profile.heightCm === null &&
+          profile.weightKg === null
         ? t("shape.none")
         : null,
   ]

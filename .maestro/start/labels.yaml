@@ -46,7 +46,14 @@ appId: com.zaimimran.almari
     id: "onboarding-next"
 - assertVisible:
     id: "step-title"
+    text: "Your height, weight and shape"
+- tapOn:
+    id: "onboarding-next"
+- assertVisible:
+    id: "step-title"
     text: "Where are you?"
+- tapOn: "Back"
+- assertVisible: "Your height, weight and shape"
 - tapOn: "Back"
 - assertVisible: "For Eid and parties, how much sparkle?"
 - tapOn:

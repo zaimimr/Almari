@@ -10,6 +10,7 @@ import {
 import Animated, { LayoutAnimationConfig } from "react-native-reanimated";
 import { Stack, router, useLocalSearchParams } from "expo-router";
 import { answerSteps, type OnboardingStep } from "../../src/domain/onboarding";
+import { StepBody } from "../../src/features/onboarding/StepBody";
 import { StepColours } from "../../src/features/onboarding/StepColours";
 import { StepCoverage } from "../../src/features/onboarding/StepCoverage";
 import { StepDone } from "../../src/features/onboarding/StepDone";
@@ -37,6 +38,7 @@ const questions: Record<Exclude<OnboardingStep, "done">, Key> = {
   style: "onboarding.style.question",
   fit: "onboarding.fit.question",
   sparkle: "onboarding.sparkle.question",
+  body: "onboarding.body.question",
   place: "onboarding.place.question",
   notifications: "onboarding.notify.question",
   colours: "onboarding.colours.question",
@@ -50,6 +52,7 @@ const labels: Record<Exclude<OnboardingStep, "done">, Key> = {
   style: "style.style",
   fit: "style.fit",
   sparkle: "profile.tile.sparkle",
+  body: "onboarding.body.title",
   place: "profile.location",
   notifications: "profile.morning",
   colours: "profile.colours",
@@ -136,6 +139,13 @@ export default function Onboarding() {
           <StepSparkle
             answers={answers}
             onChange={(answer) => set("sparkle", answer)}
+          />
+        );
+      case "body":
+        return (
+          <StepBody
+            answers={answers}
+            onChange={(answer) => set("body", answer)}
           />
         );
       case "place":

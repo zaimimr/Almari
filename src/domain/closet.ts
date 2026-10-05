@@ -299,6 +299,7 @@ export type ColourProfile = {
 export type StyleProfile = {
   coverageLevel: Coverage | null;
   heightCm: number | null;
+  weightKg: number | null;
   bodyShape: BodyShape | null;
   fit: "loose" | "structured" | "depends" | null;
   colourLean: "bold" | "soft" | "depends" | null;
@@ -422,6 +423,7 @@ export function coverageNeedFor(
 }
 
 export const heightRange = { min: 120, max: 220 };
+export const weightRange = { min: 30, max: 250 };
 
 export type Place = {
   name: string;
@@ -532,6 +534,7 @@ export type Closet = {
 export const neutralProfile: StyleProfile = {
   coverageLevel: null,
   heightCm: null,
+  weightKg: null,
   bodyShape: null,
   fit: null,
   colourLean: null,
@@ -1335,6 +1338,10 @@ function isProfile(value: unknown): value is StyleProfile {
       (Number.isInteger(value.heightCm) &&
         (value.heightCm as number) >= heightRange.min &&
         (value.heightCm as number) <= heightRange.max)) &&
+    (value.weightKg === null ||
+      (isNumber(value.weightKg) &&
+        value.weightKg >= weightRange.min &&
+        value.weightKg <= weightRange.max)) &&
     isNullableIn(bodyShapes)(value.bodyShape) &&
     isNullableIn(["loose", "structured", "depends"])(value.fit) &&
     isNullableIn(["bold", "soft", "depends"])(value.colourLean) &&

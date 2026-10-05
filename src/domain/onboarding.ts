@@ -24,6 +24,7 @@ export const onboardingSteps = [
   "coverage",
   "style",
   "sparkle",
+  "body",
   "place",
   "done",
 ] as const;
@@ -53,7 +54,12 @@ export type Answers = {
     colour: ColourProfile | null;
     colourLean: StyleProfile["colourLean"];
   };
-  body: { units: Units; heightCm: number | null; bodyShape: BodyShape | null };
+  body: {
+    units: Units;
+    heightCm: number | null;
+    weightKg: number | null;
+    bodyShape: BodyShape | null;
+  };
 };
 
 export type AnswerStep = keyof Answers;
@@ -110,6 +116,12 @@ export function hasAnswer(step: OnboardingStep, answers: Answers): boolean {
       return answers.fit.fit !== null;
     case "sparkle":
       return answers.sparkle.sparkle !== null;
+    case "body":
+      return (
+        answers.body.heightCm !== null ||
+        answers.body.weightKg !== null ||
+        answers.body.bodyShape !== null
+      );
     case "place":
       return answers.place.place !== null;
     case "notifications":
@@ -153,7 +165,12 @@ export function answersFrom(closet: Closet): Answers {
     place: { place },
     notifications: { notification: notification ?? null },
     colours: { colour: profile.colour, colourLean: profile.colourLean },
-    body: { units, heightCm: profile.heightCm, bodyShape: profile.bodyShape },
+    body: {
+      units,
+      heightCm: profile.heightCm,
+      weightKg: profile.weightKg,
+      bodyShape: profile.bodyShape,
+    },
   };
 }
 

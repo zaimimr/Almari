@@ -28,7 +28,7 @@ appId: com.zaimimran.almari
     selected: true
 - takeScreenshot: docs/redesign/screens/after/start/sparkle
 - tapOn: "Next"
-- assertVisible: "Where are you?"
+- assertVisible: "Your height, weight and shape"
 - repeat:
     times: 10
     while:

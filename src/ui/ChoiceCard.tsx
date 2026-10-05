@@ -139,6 +139,7 @@ export function ChoiceCardGroup<T extends string>({
   multi = false,
   exclusive,
   plainFirst = false,
+  columns = 2,
   testID,
 }: {
   label?: string;
@@ -149,6 +150,7 @@ export function ChoiceCardGroup<T extends string>({
   multi?: boolean;
   exclusive?: T;
   plainFirst?: boolean;
+  columns?: number;
   testID?: string;
 }) {
   const { ax } = useLargeText();
@@ -214,7 +216,7 @@ export function ChoiceCardGroup<T extends string>({
   const rows = ax
     ? options.map((option) => [option])
     : options.flatMap((option, index) =>
-        index % 2 === 0 ? [options.slice(index, index + 2)] : [],
+        index % columns === 0 ? [options.slice(index, index + columns)] : [],
       );
 
   return (
@@ -229,7 +231,11 @@ export function ChoiceCardGroup<T extends string>({
         {rows.map((row) => (
           <View key={row.map(({ id }) => id).join()} style={styles.row}>
             {row.map(card)}
-            {!ax && row.length === 1 ? <View style={styles.card} /> : null}
+            {ax
+              ? null
+              : Array.from({ length: columns - row.length }, (_, index) => (
+                  <View key={index} style={styles.card} />
+                ))}
           </View>
         ))}
       </View>

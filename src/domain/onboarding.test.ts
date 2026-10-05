@@ -28,7 +28,8 @@ import {
   feetAndInches,
   formatHeight,
   formatTemperature,
-  parseHeight,
+  formatWeight,
+  scaleFor,
 } from "./units";
 
 const clock = { localDate: "2026-10-01", timeZone: "Europe/Oslo" };
@@ -182,7 +183,7 @@ test("units and city are stored and a new city clears the old forecast", () => {
   const same = applyAnswer(
     applyAnswer(withForecast, "place", { place: oslo }, clock),
     "body",
-    { units: "imperial", heightCm: null, bodyShape: null },
+    { units: "imperial", heightCm: null, weightKg: null, bodyShape: null },
     clock,
   );
   assert.equal(same.styling.units, "imperial");
@@ -193,19 +194,20 @@ test("units and city are stored and a new city clears the old forecast", () => {
   assert.equal(moved.styling.forecast, null);
 });
 
-test("body answers fill height and shape, and prefer not to say stays null", () => {
+test("body answers fill height, weight and shape, and prefer not to say stays null", () => {
   const closet = applyAnswer(
     fresh(),
     "body",
-    { units: "metric", heightCm: 165, bodyShape: "pear" },
+    { units: "metric", heightCm: 165, weightKg: 62.5, bodyShape: "pear" },
     clock,
   );
   assert.equal(closet.styling.profile.heightCm, 165);
+  assert.equal(closet.styling.profile.weightKg, 62.5);
   assert.equal(closet.styling.profile.bodyShape, "pear");
   const preferNot = applyAnswer(
     closet,
     "body",
-    { units: "metric", heightCm: null, bodyShape: null },
+    { units: "metric", heightCm: null, weightKg: null, bodyShape: null },
     clock,
   ).styling.profile;
   assert.equal(preferNot.bodyShape, null);
@@ -277,7 +279,7 @@ test("answers read back from the closet for editing", () => {
   closet = applyAnswer(
     closet,
     "body",
-    { units: "metric", heightCm: 170, bodyShape: null },
+    { units: "metric", heightCm: 170, weightKg: null, bodyShape: null },
     clock,
   );
   closet = applyAnswer(closet, "colours", { colour, colourLean: null }, clock);
@@ -288,6 +290,7 @@ test("answers read back from the closet for editing", () => {
   assert.deepEqual(answers.body, {
     units: "metric",
     heightCm: 170,
+    weightKg: null,
     bodyShape: null,
   });
   assert.deepEqual(answers.colours, { colour, colourLean: null });
@@ -299,7 +302,7 @@ test("finishing keeps every answer and marks her as onboarded", () => {
   const answered = applyAnswer(
     fresh(),
     "body",
-    { units: "metric", heightCm: 160, bodyShape: null },
+    { units: "metric", heightCm: 160, weightKg: null, bodyShape: null },
     clock,
   );
   const done = finishOnboarding(answered, clock);
@@ -318,21 +321,38 @@ test("heights follow the chosen units and survive a round trip", () => {
   assert.equal(formatHeight(165, "metric"), "165 cm");
   assert.deepEqual(feetAndInches(165), { feet: 5, inches: 5 });
   assert.equal(formatHeight(165, "imperial"), "5 ft 5 in");
-  assert.equal(parseHeight("imperial", { feet: "5", inches: "5" }), 165);
-  assert.equal(parseHeight("imperial", { feet: "5", inches: "" }), 152);
-  assert.equal(parseHeight("metric", { cm: " 165,4 " }), 165);
+  const inches = scaleFor("height", "imperial");
+  assert.equal(inches.toBase(65), 165);
+  for (let mark = inches.min; mark <= inches.max; mark++)
+    assert.equal(inches.fromBase(inches.toBase(mark)), mark);
+  assert.deepEqual(inches.parts(165), [
+    { amount: "5", unit: "ft" },
+    { amount: "5", unit: "in" },
+  ]);
+  assert.equal(emptyCloset.styling.profile.heightCm, null);
 });
 
-test("height entries outside 120 to 220 cm or with 12 inches or more are rejected", () => {
-  assert.equal(parseHeight("metric", { cm: "1.65" }), null);
-  assert.equal(parseHeight("metric", { cm: "500" }), null);
-  assert.equal(parseHeight("metric", { cm: "tall" }), null);
-  assert.equal(parseHeight("metric", { cm: "" }), null);
-  assert.equal(parseHeight("imperial", { feet: "5", inches: "13" }), null);
-  assert.equal(parseHeight("imperial", { feet: "", inches: "5" }), null);
-  assert.equal(parseHeight("metric", { cm: "120" }), 120);
-  assert.equal(parseHeight("metric", { cm: "220" }), 220);
-  assert.equal(emptyCloset.styling.profile.heightCm, null);
+test("ruler scales stay inside the stored height and weight ranges", () => {
+  for (const units of ["metric", "imperial"] as const) {
+    const height = scaleFor("height", units);
+    assert.ok(height.toBase(height.min) >= 120);
+    assert.ok(height.toBase(height.max) <= 220);
+    const weight = scaleFor("weight", units);
+    assert.ok(weight.toBase(weight.min) >= 30);
+    assert.ok(weight.toBase(weight.max) <= 250);
+  }
+  assert.equal(scaleFor("height", "metric").toBase(500), 220);
+  assert.equal(scaleFor("weight", "metric").toBase(10), 30);
+});
+
+test("weights follow the chosen units and pounds survive a round trip", () => {
+  assert.equal(formatWeight(64.6, "metric"), "65 kg");
+  assert.equal(formatWeight(68, "imperial"), "150 lb");
+  const pounds = scaleFor("weight", "imperial");
+  assert.equal(pounds.toBase(150), 68);
+  for (let mark = pounds.min; mark <= pounds.max; mark++)
+    assert.equal(pounds.fromBase(pounds.toBase(mark)), mark);
+  assert.equal(emptyCloset.styling.profile.weightKg, null);
 });
 
 test("Back goes to the step before, and the first step has no Back", () => {
@@ -343,7 +363,7 @@ test("Back goes to the step before, and the first step has no Back", () => {
   assert.equal(previousStep("done", answers), "place");
 });
 
-test("seven steps in the owner's order, hijab styles skipped after Not needed", () => {
+test("eight steps in the owner's order, hijab styles skipped after Not needed", () => {
   assert.deepEqual(
     [...onboardingSteps],
     [
@@ -353,15 +373,16 @@ test("seven steps in the owner's order, hijab styles skipped after Not needed", 
       "coverage",
       "style",
       "sparkle",
+      "body",
       "place",
       "done",
     ],
   );
   const answers = answersFrom(emptyCloset);
-  assert.equal(stepsFor(answers).length, 8);
+  assert.equal(stepsFor(answers).length, 9);
   assert.equal(skipStep("hijab", answers), "hijabStyles");
   const no = { ...answers, hijab: { hijab: "no" as const } };
-  assert.equal(stepsFor(no).length, 7);
+  assert.equal(stepsFor(no).length, 8);
   assert.equal(skipStep("hijab", no), "coverage");
   assert.equal(previousStep("coverage", no), "hijab");
 });
@@ -455,6 +476,13 @@ test("a relaunch resumes after the last answered step", () => {
     clock,
   );
   closet = applyAnswer(closet, "sparkle", { sparkle: "little" }, clock);
+  assert.equal(resumeStep(answersFrom(closet)), "body");
+  closet = applyAnswer(
+    closet,
+    "body",
+    { units: "metric", heightCm: null, weightKg: 60, bodyShape: null },
+    clock,
+  );
   assert.equal(resumeStep(answersFrom(closet)), "place");
   const place = placeFrom("Oslo", 59.91, 10.75, "search");
   closet = applyAnswer(closet, "place", { place }, clock);

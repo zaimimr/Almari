@@ -17,7 +17,7 @@ appId: com.zaimimran.almari
     id: "welcome-start"
 - extendedWaitUntil:
     visible:
-      id: "step-1-of-7"
+      id: "step-1-of-8"
     timeout: 20000
 - tapOn:
     id: "onboarding-next"
@@ -26,20 +26,25 @@ appId: com.zaimimran.almari
 - tapOn:
     id: "onboarding-next"
 - assertVisible:
-    id: "step-3-of-7"
+    id: "step-3-of-8"
 - takeScreenshot: docs/redesign/screens/after/start/ax-hijab-styles
 - tapOn:
     id: "onboarding-next"
 - assertVisible:
-    id: "step-4-of-7"
+    id: "step-4-of-8"
 - takeScreenshot: docs/redesign/screens/after/start/ax-coverage
 - repeat:
     while:
       notVisible:
-        id: "step-7-of-7"
+        id: "step-7-of-8"
     commands:
       - tapOn:
           id: "onboarding-next"
+- takeScreenshot: docs/redesign/screens/after/start/ax-body
+- tapOn:
+    id: "onboarding-next"
+- assertVisible:
+    id: "step-8-of-8"
 - takeScreenshot: docs/redesign/screens/after/start/ax-place
 - tapOn:
     id: "onboarding-next"

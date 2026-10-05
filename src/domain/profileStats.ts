@@ -102,6 +102,7 @@ export function completeness(closet: Closet): {
     [
       "body",
       profile.heightCm !== null ||
+        profile.weightKg !== null ||
         profile.bodyShape !== null ||
         !!profile.bodyAnswered,
     ],

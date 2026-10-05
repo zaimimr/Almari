@@ -106,6 +106,7 @@ test("stored answers, place and forecast survive a round trip", () => {
         ...neutralProfile,
         coverageLevel: "full" as const,
         heightCm: 165,
+        weightKg: 61.2,
         bodyShape: "hourglass" as const,
         fit: "loose" as const,
         colourLean: "soft" as const,
@@ -145,6 +146,8 @@ test("broken onboarding values keep the closet unreadable instead of empty", () 
     { units: "kelvin" },
     { place: { name: "Oslo", latitude: 200, longitude: 10 } },
     { profile: { heightCm: 500 } },
+    { profile: { weightKg: 900 } },
+    { profile: { weightKg: "heavy" } },
     { profile: { bodyShape: "triangle" } },
     { profile: "tall" },
     {

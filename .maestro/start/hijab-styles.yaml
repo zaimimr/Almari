@@ -27,7 +27,7 @@ appId: com.zaimimran.almari
     id: "onboarding-next"
 - assertVisible: "Which styles do you wear?"
 - assertVisible:
-    id: "step-3-of-7"
+    id: "step-3-of-8"
 - tapOn:
     id: "card-hijab"
 - tapOn:
@@ -72,5 +72,5 @@ appId: com.zaimimran.almari
     id: "onboarding-next"
 - assertVisible: "How covered do you like your everyday outfits?"
 - assertVisible:
-    id: "step-3-of-6"
+    id: "step-3-of-7"
 - assertNotVisible: "Which styles do you wear?"
