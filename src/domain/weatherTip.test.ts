@@ -53,6 +53,23 @@ test("a cold day without a warm layer suggests the warm coat", () => {
   assert.equal(tip?.replaces, null);
 });
 
+test("a warm blazer swaps for the open abaya instead of going under it", () => {
+  const abaya = piece("abaya", "layer", "abaya", { open: true });
+  const blazer = piece("blazer", "layer", "blazer", { warmth: "warm" });
+  const tip = weatherTip(
+    [tunic, abaya, loafers],
+    request({
+      source: "manual",
+      warmth: "cold",
+      precipitation: "dry",
+      exposure: null,
+    }),
+    [tunic, abaya, loafers, blazer],
+  );
+  assert.equal(tip?.piece.id, "blazer");
+  assert.equal(tip?.replaces?.id, "abaya");
+});
+
 test("rain with loafers suggests swapping to boots", () => {
   const tip = weatherTip(
     [tunic, loafers],

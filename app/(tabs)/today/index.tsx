@@ -314,7 +314,7 @@ export default function TodayScreen() {
                 size="hero"
                 maxSize={heroSize}
                 swapMark={!locked}
-                keptIds={request?.keptIds}
+                keptIds={locked ? [] : request?.keptIds}
                 openId={locked ? undefined : openId}
                 revision={model.revision}
                 state={model.styling ? "arranging" : undefined}

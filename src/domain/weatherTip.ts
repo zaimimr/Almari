@@ -55,6 +55,10 @@ export function weatherTip(
   return {
     weather: "cold",
     piece: warm,
-    replaces: layers.find((piece) => roleOf(piece) === roleOf(warm)) ?? null,
+    replaces:
+      layers.find((piece) => roleOf(piece) === roleOf(warm)) ??
+      (roleOf(warm) === "layer"
+        ? (layers.find((piece) => roleOf(piece) === "outer") ?? null)
+        : null),
   };
 }
