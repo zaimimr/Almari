@@ -180,6 +180,9 @@ export const paletteLimits = {
   rounds: 12,
 };
 
+const distance = (a: Lab, b: Lab) =>
+  (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2;
+
 export function extractPalette(
   pixels: Lab[],
   count = paletteLimits.colours,
@@ -205,7 +208,7 @@ export function extractPalette(
     for (const lab of usable) {
       let best = 0;
       for (let index = 1; index < centres.length; index++)
-        if (deltaE(lab, centres[index]!) < deltaE(lab, centres[best]!))
+        if (distance(lab, centres[index]!) < distance(lab, centres[best]!))
           best = index;
       members[best]!.push(lab);
     }

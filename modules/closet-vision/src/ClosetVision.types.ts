@@ -89,6 +89,7 @@ export type SelfieReading = {
   eyes: [number, number, number] | null;
   light: "ok" | "dark" | "mixed";
   points: SelfiePoint[];
+  face?: [number, number, number, number] | null;
   gains: [number, number, number];
   width: number;
   height: number;

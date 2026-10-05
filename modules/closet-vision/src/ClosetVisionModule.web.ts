@@ -35,6 +35,8 @@ export default {
     _point: SelfiePoint,
     _gains: [number, number, number],
   ): Promise<[number, number, number] | null> => null,
+  palettePixels: (_uri: string): Promise<[number, number, number][]> =>
+    Promise.reject(new Error("unavailable")),
   geocodeCity: async (_name: string): Promise<City | null> => null,
   forecast: async (
     _latitude: number,

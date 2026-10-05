@@ -16,6 +16,7 @@ struct SelfieResult: Record {
   @Field var eyes: [Double]? = nil
   @Field var light: String = "ok"
   @Field var points: [SelfiePoint] = []
+  @Field var face: [Double]? = nil
   @Field var gains: [Double] = [1, 1, 1]
   @Field var width: Double = 0
   @Field var height: Double = 0
@@ -210,6 +211,12 @@ final class SelfieColours {
     let faceHeight = face.boundingBox.height * size.height
 
     var result = SelfieResult()
+    result.face = [
+      Double(face.boundingBox.minX), Double(1 - face.boundingBox.maxY), Double(face.boundingBox.width),
+      Double(face.boundingBox.height),
+    ]
+    result.width = Double(size.width)
+    result.height = Double(size.height)
     let rawCheeks = eyes.map { eye in
       bitmap.disc(
         CGPoint(x: eye.centre.x, y: eye.centre.y + 0.18 * faceHeight), radius: 0.06 * faceWidth, only: faceClass)
@@ -298,9 +305,27 @@ final class SelfieColours {
       point("eyes", eyes[0].pupil, max(1, 0.22 * eyes[0].width)),
     ]
     result.gains = [gains.r, gains.g, gains.b]
-    result.width = Double(size.width)
-    result.height = Double(size.height)
     return result
+  }
+
+  func palettePixels(uri: String) throws -> [[Double]] {
+    let (bitmap, _) = try load(uri, parse: false)
+    let step = max(1, max(bitmap.width, bitmap.height) / 72)
+    var colours: [Colour] = []
+    for y in stride(from: 0, to: bitmap.height, by: step) {
+      for x in stride(from: 0, to: bitmap.width, by: step) {
+        colours.append(bitmap.colour(x, y))
+      }
+    }
+    let whites = colours.filter { $0.saturation < 0.15 }.sorted { $0.luma > $1.luma }
+      .prefix(max(1, colours.count / 20))
+    var gains = Colour(r: 1, g: 1, b: 1)
+    if let white = Colour.mean(Array(whites)), white.luma > 0.5 {
+      let grey = (white.r + white.g + white.b) / 3
+      let gain = { (channel: Double) in min(1.25, max(0.8, grey / max(channel, 0.01))) }
+      gains = Colour(r: gain(white.r), g: gain(white.g), b: gain(white.b))
+    }
+    return colours.map { $0.balanced(gains).lab }
   }
 
   private func load(_ uri: String, parse wantsParse: Bool) throws -> (Bitmap, CGImage) {

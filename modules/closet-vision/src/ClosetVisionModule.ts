@@ -30,6 +30,7 @@ declare class ClosetVisionModule extends NativeModule {
     point: SelfiePoint,
     gains: [number, number, number],
   ): Promise<[number, number, number] | null>;
+  palettePixels(uri: string): Promise<[number, number, number][]>;
   geocodeCity(name: string): Promise<City | null>;
   forecast(latitude: number, longitude: number): Promise<ForecastResult | null>;
 }
@@ -61,6 +62,8 @@ export default native ?? {
     _point: SelfiePoint,
     _gains: [number, number, number],
   ): Promise<[number, number, number] | null> => null,
+  palettePixels: (_uri: string): Promise<[number, number, number][]> =>
+    Promise.reject(new Error("unavailable")),
   geocodeCity: async (_name: string): Promise<City | null> => null,
   forecast: async (
     _latitude: number,

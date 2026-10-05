@@ -709,6 +709,10 @@ public class ClosetVisionModule: Module {
         uri: uri, part: point.part, x: point.x, y: point.y, radius: point.radius, gains: gains)
     }
 
+    AsyncFunction("palettePixels") { (uri: String) throws -> [[Double]] in
+      try SelfieColours.shared.palettePixels(uri: uri)
+    }
+
     AsyncFunction("geocodeCity") { (name: String) async -> CityResult? in
       await WeatherLookup.city(name)
     }
