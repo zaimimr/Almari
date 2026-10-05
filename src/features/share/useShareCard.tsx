@@ -21,8 +21,8 @@ const mark = require("../../../assets/brand/mark.png");
 export type ShareFormat = "story" | "post";
 
 const frames = {
-  story: { width: 360, height: 640, lay: 280, output: [1080, 1920] },
-  post: { width: 360, height: 450, lay: 236, output: [1080, 1350] },
+  story: { width: 360, height: 640, lay: 300, output: [1080, 1920] },
+  post: { width: 360, height: 450, lay: 200, output: [1080, 1350] },
 } as const;
 
 const hidden = {
@@ -181,6 +181,7 @@ const styles = StyleSheet.create({
   paper: {
     flex: 1,
     borderRadius: theme.radius.lg,
+    overflow: "hidden",
     justifyContent: "center",
     alignItems: "center",
   },

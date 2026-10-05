@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import type { Piece } from "../../src/domain/closet";
@@ -28,6 +28,7 @@ export default function BuildLook() {
   const builder = useBuilder(params);
   const colors = useColors();
   const { ax } = useLargeText();
+  const [room, setRoom] = useState(0);
   const title = t("build.edit");
 
   if (builder.gone)
@@ -207,7 +208,7 @@ export default function BuildLook() {
       <FlatLay
         pieces={builder.pieces}
         size="hero"
-        maxSize={ax ? 240 : undefined}
+        maxSize={ax ? 240 : room > 0 ? room - 64 : undefined}
         emptyRoles={builder.empty}
         state={builder.filling ? "arranging" : undefined}
         openId={swapPiece?.id ?? null}
@@ -258,7 +259,11 @@ export default function BuildLook() {
         </ScrollView>
       ) : (
         <View style={styles.fill}>
-          <ScrollView style={styles.fill} contentContainerStyle={styles.column}>
+          <ScrollView
+            style={styles.fill}
+            contentContainerStyle={styles.column}
+            onLayout={(event) => setRoom(event.nativeEvent.layout.height)}
+          >
             {collage}
           </ScrollView>
           <View style={[styles.hair, { backgroundColor: colors.line }]} />
