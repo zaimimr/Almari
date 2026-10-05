@@ -274,14 +274,13 @@ final class CutoutEditorView: ExpoView, UIScrollViewDelegate {
 
   private static func prepare(original: String, cutout: String?, area: CGRect?) throws -> Prepared {
     let working = try GarmentPipeline.shared.workingPhoto(sourceUri: original)
-    guard let cutout else {
-      return Prepared(
-        photo: working.image, picture: working.picture,
-        alpha: [UInt8](repeating: 0, count: working.picture.width * working.picture.height))
-    }
+    let empty = Prepared(
+      photo: working.image, picture: working.picture,
+      alpha: [UInt8](repeating: 0, count: working.picture.width * working.picture.height))
+    guard let cutout else { return empty }
     guard let source = CGImageSourceCreateWithURL(url(cutout) as CFURL, nil),
       let cut = CGImageSourceCreateImageAtIndex(source, 0, nil)
-    else { throw PrepareError.unreadable }
+    else { return empty }
     let width = working.picture.width
     let height = working.picture.height
     let size = CGSize(width: width, height: height)
@@ -292,7 +291,7 @@ final class CutoutEditorView: ExpoView, UIScrollViewDelegate {
       guard
         let match = CutoutMapping.locate(
           template: cut, photo: working.picture, scales: CutoutMapping.scales(forCutoutSide: cut.width, photo: size))
-      else { throw PrepareError.unreadable }
+      else { return empty }
       placed = CutoutMapping.area(of: match, side: cut.width, photo: size)
     }
     guard let alpha = CutoutMapping.alpha(of: cut, area: placed, width: width, height: height) else {

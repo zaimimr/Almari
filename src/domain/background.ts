@@ -91,3 +91,60 @@ export function withCutout(
   const next = replacePieceCutout(based, id, edit);
   return next === based ? closet : toCutout(next, id);
 }
+
+function repairPiece(piece: Piece, exists: (file: string) => boolean): Piece {
+  const has = (file: string | undefined) =>
+    file && exists(file) ? file : undefined;
+  const { enhanced, plain, studio } = piece.variants ?? {};
+  const kept = {
+    enhanced: has(enhanced),
+    plain: has(plain),
+    studio: has(studio),
+  };
+  const original = has(piece.original);
+  const photo =
+    has(piece.photo) ?? kept.enhanced ?? kept.plain ?? kept.studio ?? original;
+  if (
+    !photo ||
+    (photo === piece.photo &&
+      original === piece.original &&
+      kept.enhanced === enhanced &&
+      kept.plain === plain &&
+      kept.studio === studio)
+  )
+    return piece;
+  const {
+    variants: _variants,
+    original: _original,
+    cutoutArea,
+    studioStale,
+    ...rest
+  } = piece;
+  const variants = {
+    ...(kept.enhanced ? { enhanced: kept.enhanced } : {}),
+    ...(kept.plain ? { plain: kept.plain } : {}),
+    ...(kept.studio ? { studio: kept.studio } : {}),
+  };
+  return {
+    ...rest,
+    photo,
+    ...(original ? { original } : {}),
+    ...(Object.keys(variants).length ? { variants } : {}),
+    ...(kept.plain && cutoutArea ? { cutoutArea } : {}),
+    ...(kept.studio && studioStale ? { studioStale } : {}),
+  };
+}
+
+export function repairPhotos(
+  closet: Closet,
+  exists: (file: string) => boolean,
+): Closet {
+  let changed = false;
+  const pieces = closet.pieces.map((piece) => {
+    if (piece.source !== "owned") return piece;
+    const next = repairPiece(piece, exists);
+    if (next !== piece) changed = true;
+    return next;
+  });
+  return changed ? { ...closet, pieces } : closet;
+}

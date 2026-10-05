@@ -11,6 +11,7 @@ import {
   backgroundFix,
   hasBackground,
   opaqueStudios,
+  repairPhotos,
   replacePhotoFile,
   toCutout,
   withCutout,
@@ -146,4 +147,46 @@ test("a new cut-out is kept and shown only for a piece with a background", () =>
   assert.equal(piece.original, "job-original.jpg");
   assert.equal(hasBackground(piece), false);
   assert.equal(withCutout(next, id, edit), next);
+});
+
+test("a piece whose photo file is gone falls back to a photo that exists", () => {
+  const closet = withPiece({
+    photo: "job-enhanced.png",
+    original: "job-original.jpg",
+    variants: { enhanced: "job-enhanced.png", plain: "job.png" },
+    cutoutArea: { x: 0, y: 0, width: 1, height: 1 },
+  });
+  const gone = new Set(["job-enhanced.png"]);
+  const piece = repairPhotos(closet, (file) => !gone.has(file)).pieces[0]!;
+  assert.equal(piece.photo, "job.png");
+  assert.equal(piece.original, "job-original.jpg");
+  assert.deepEqual(piece.variants, { plain: "job.png" });
+  assert.ok(piece.cutoutArea);
+});
+
+test("a piece with only its original left shows the original", () => {
+  const closet = withPiece({
+    photo: "job-enhanced.png",
+    original: "job-original.jpg",
+    variants: { enhanced: "job-enhanced.png", plain: "job.png" },
+    cutoutArea: { x: 0, y: 0, width: 1, height: 1 },
+  });
+  const piece = repairPhotos(closet, (file) => file === "job-original.jpg")
+    .pieces[0]!;
+  assert.equal(piece.photo, "job-original.jpg");
+  assert.equal(piece.original, "job-original.jpg");
+  assert.equal(piece.variants, undefined);
+  assert.equal(piece.cutoutArea, undefined);
+});
+
+test("pieces with every photo in place or none left are not touched", () => {
+  const closet = withPiece({ photo: "job-enhanced.png" });
+  assert.equal(
+    repairPhotos(closet, () => true),
+    closet,
+  );
+  assert.equal(
+    repairPhotos(closet, () => false),
+    closet,
+  );
 });

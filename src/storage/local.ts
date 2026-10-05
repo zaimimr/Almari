@@ -26,6 +26,10 @@ export function photoUri(photo: string) {
   return photo;
 }
 
+export function photoExists(_photo: string) {
+  return true;
+}
+
 export async function discardPhoto(_photo: string) {}
 
 export async function discardAllPhotos() {}

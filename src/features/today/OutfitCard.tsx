@@ -1,4 +1,4 @@
-import { Linking, Pressable, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import type { Forecast, Weather } from "../../domain/closet";
 import { locale, t } from "../../i18n";
 import { Button, Text } from "../../ui";
@@ -83,24 +83,9 @@ export function OutfitCard({ model }: { model: TodayModel }) {
         />
       </View>
       {weather ? (
-        <View style={styles.weather}>
-          <Text role="footnote" tone="muted" testID="today-weather">
-            {weather}
-          </Text>
-          {forecast ? (
-            <Pressable
-              accessibilityRole="link"
-              accessibilityLabel={t("forecast.markLabel")}
-              hitSlop={theme.space.md}
-              onPress={() => void Linking.openURL(forecast.attribution.url)}
-              testID="forecast-mark"
-            >
-              <Text role="mark" tone="muted" style={styles.link}>
-                {t("forecast.mark")}
-              </Text>
-            </Pressable>
-          ) : null}
-        </View>
+        <Text role="footnote" tone="muted" testID="today-weather">
+          {weather}
+        </Text>
       ) : null}
       {reason ? (
         <Text role="footnote" tone="muted" testID="today-reason">
@@ -119,11 +104,4 @@ const styles = StyleSheet.create({
     gap: theme.space.sm,
   },
   title: { flex: 1, minWidth: 0 },
-  weather: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    alignItems: "baseline",
-    columnGap: theme.space.sm,
-  },
-  link: { fontSize: 11, fontWeight: "400", textDecorationLine: "underline" },
 });

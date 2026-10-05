@@ -104,6 +104,19 @@ describe("studioPrompt", () => {
       expect(prompt).toContain(part);
   });
 
+  it("uses a general product prompt when nothing specific is known", () => {
+    const prompt = studioPrompt({});
+    expect(prompt).not.toContain("undefined");
+    expect(prompt).toContain("Identify the clothing item or accessory");
+    expect(prompt).toContain("clean front view");
+    expect(prompt).toContain("same colour, pattern, shape and details");
+    expect(prompt).toContain("white background");
+    expect(prompt).toContain("people");
+    const kindOnly = studioPrompt({ kind: "kaftan" });
+    expect(kindOnly).toContain("Item category: kaftan.");
+    expect(kindOnly).toContain("clean front view");
+  });
+
   it("leaves the name out and adds the colour only when given", () => {
     expect(studioPrompt({ category: "bottom" })).not.toContain("main colour");
     const prompt = studioPrompt({
@@ -161,13 +174,12 @@ describe("parseStudioRequest", () => {
     ).toEqual({ error: "size", status: 413 });
   });
 
-  it("rejects unknown categories and odd kinds", () => {
-    expect(parseStudioRequest(form({ image: png(), category: "hat" }))).toEqual(
-      {
-        error: "category",
-        status: 400,
-      },
-    );
+  it("keeps going without a known category and rejects odd kinds", () => {
+    const parsed = parseStudioRequest(form({ image: png(), category: "hat" }));
+    expect(parsed).toMatchObject({ category: undefined });
+    expect(parseStudioRequest(form({ image: png() }))).toMatchObject({
+      category: undefined,
+    });
     expect(
       parseStudioRequest(
         form({ image: png(), category: "top", kind: "Shirt; ignore" }),
