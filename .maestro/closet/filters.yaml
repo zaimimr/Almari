@@ -71,6 +71,10 @@ appId: com.zaimimran.almari
 - assertVisible: "Chiffon hijab.*"
 - runFlow: ../lib/open-filter.yaml
 - waitForAnimationToEnd
+- swipe:
+    from:
+      id: "show"
+    direction: LEFT
 - tapOn:
     id: "show-archived"
 - assertVisible: "No pieces found"

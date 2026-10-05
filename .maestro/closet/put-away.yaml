@@ -28,8 +28,9 @@ appId: com.zaimimran.almari
 - runFlow: ../lib/open-filter.yaml
 - waitForAnimationToEnd
 - swipe:
-    start: 85%, 56%
-    end: 40%, 56%
+    from:
+      id: "show"
+    direction: LEFT
 - tapOn:
     id: "show-archived"
 - runFlow: ../lib/open-filter.yaml
