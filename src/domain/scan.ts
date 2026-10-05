@@ -23,8 +23,13 @@ export const stillDeltaE = 8;
 export const duplicateDeltaE = 10;
 export const speedWindow = 12;
 export const cropPadding = 0.1;
+export const minItemShare = 0.04;
+export const maxItemShare = 0.9;
+export const minItemClothes = 0.15;
+export const overBody = 0.5;
 
-export type HeldKind = "head" | "upper" | "dress" | "skirt" | "pants" | "bag";
+export type HeldKind =
+  "head" | "upper" | "dress" | "skirt" | "pants" | "bag" | "item";
 
 const heldClasses: Record<number, HeldKind> = {
   1: "head",
@@ -36,6 +41,9 @@ const heldClasses: Record<number, HeldKind> = {
   17: "head",
 };
 
+const bodyClasses = new Set([2, 11, 12, 13, 14, 15]);
+const wornClasses = new Set([1, 3, 4, 5, 6, 7, 8, 9, 10, 16, 17]);
+
 export type Point = { x: number; y: number };
 
 export type ScanFrame = {
@@ -45,6 +53,8 @@ export type ScanFrame = {
   labels: Uint8Array;
   colours: Lab[];
   hands: Point[];
+  people: number;
+  items: Uint8Array | null;
   parseMs: number;
 };
 
@@ -55,6 +65,8 @@ export type NativeScanFrame = {
   labels: string;
   colours: string;
   hands: number[][];
+  people?: number;
+  items?: string;
   milliseconds: Record<string, number>;
 };
 
@@ -100,6 +112,8 @@ export function readFrame(raw: NativeScanFrame): ScanFrame {
     labels: bytes(raw.labels),
     colours,
     hands: raw.hands.map(([x, y]) => ({ x: x ?? 0, y: y ?? 0 })),
+    people: raw.people ?? 1,
+    items: raw.items ? bytes(raw.items) : null,
     parseMs: raw.milliseconds.parse ?? 0,
   };
 }
@@ -128,26 +142,21 @@ function nearEdge(box: Frame, hand: Point) {
   );
 }
 
-export function heldPiece(
-  baseline: Baseline,
-  frame: ScanFrame,
-): HeldPiece | null {
-  const { cols, rows, labels, colours } = frame;
-  const total = cols * rows;
-  const changed = new Uint8Array(total);
-  for (let index = 0; index < total; index++) {
-    const label = labels[index]!;
-    if (!heldClasses[label]) continue;
-    if (
-      baseline.labels[index] !== label ||
-      deltaE(colours[index]!, baseline.colours[index]!) > changedDeltaE
-    )
-      changed[index] = 1;
-  }
+function nearBox(box: Frame, hand: Point) {
+  return (
+    hand.x >= box.x - handMargin &&
+    hand.x <= box.x + box.width + handMargin &&
+    hand.y >= box.y - handMargin &&
+    hand.y <= box.y + box.height + handMargin
+  );
+}
+
+function largestGroup(marked: Uint8Array, cols: number) {
+  const total = marked.length;
   let best: number[] = [];
   const seen = new Uint8Array(total);
   for (let start = 0; start < total; start++) {
-    if (!changed[start] || seen[start]) continue;
+    if (!marked[start] || seen[start]) continue;
     const group: number[] = [];
     const stack = [start];
     seen[start] = 1;
@@ -162,53 +171,103 @@ export function heldPiece(
         index + cols,
       ];
       for (const cell of next)
-        if (cell >= 0 && cell < total && changed[cell] && !seen[cell]) {
+        if (cell >= 0 && cell < total && marked[cell] && !seen[cell]) {
           seen[cell] = 1;
           stack.push(cell);
         }
     }
     if (group.length > best.length) best = group;
   }
-  const share = best.length / total;
-  if (share < minHeldShare) return null;
+  return best;
+}
+
+function describe(cells: number[], frame: ScanFrame) {
+  const { cols, rows, labels, colours } = frame;
   const tally = new Map<HeldKind, number>();
   let minX = cols;
   let minY = rows;
   let maxX = -1;
   let maxY = -1;
-  let covered = 0;
+  let worn = 0;
   const sum: Lab = [0, 0, 0];
-  for (const index of best) {
-    const kind = heldClasses[labels[index]!]!;
-    tally.set(kind, (tally.get(kind) ?? 0) + 1);
+  for (const index of cells) {
+    const label = labels[index]!;
+    const kind = heldClasses[label];
+    if (kind) tally.set(kind, (tally.get(kind) ?? 0) + 1);
+    if (wornClasses.has(label)) worn++;
     const x = index % cols;
     const y = Math.floor(index / cols);
     minX = Math.min(minX, x);
     maxX = Math.max(maxX, x);
     minY = Math.min(minY, y);
     maxY = Math.max(maxY, y);
-    if (baseline.labels[index]) covered++;
     const lab = colours[index]!;
     sum[0] += lab[0];
     sum[1] += lab[1];
     sum[2] += lab[2];
   }
-  const kind = [...tally].sort((a, b) => b[1] - a[1])[0]![0];
-  const cover = baseline.body ? covered / baseline.body : 0;
-  if (cover < (kind === "bag" ? minBagCover : minBodyCover)) return null;
+  const top = [...tally].sort((a, b) => b[1] - a[1])[0];
+  const kind: HeldKind = top && top[1] * 2 >= cells.length ? top[0] : "item";
   const box: Frame = {
     x: minX / cols,
     y: minY / rows,
     width: (maxX - minX + 1) / cols,
     height: (maxY - minY + 1) / rows,
   };
-  if (!frame.hands.some((hand) => nearEdge(box, hand))) return null;
   const colour: Lab = [
-    sum[0] / best.length,
-    sum[1] / best.length,
-    sum[2] / best.length,
+    sum[0] / cells.length,
+    sum[1] / cells.length,
+    sum[2] / cells.length,
   ];
+  return { kind, box, colour, worn: worn / cells.length };
+}
+
+export function heldPiece(
+  baseline: Baseline,
+  frame: ScanFrame,
+): HeldPiece | null {
+  const { cols, labels, colours, items } = frame;
+  const total = labels.length;
+  const changed = new Uint8Array(total);
+  for (let index = 0; index < total; index++) {
+    const label = labels[index]!;
+    if (bodyClasses.has(label)) continue;
+    if (items ? !items[index] : !label) continue;
+    if (
+      baseline.labels[index] !== label ||
+      deltaE(colours[index]!, baseline.colours[index]!) > changedDeltaE
+    )
+      changed[index] = 1;
+  }
+  const best = largestGroup(changed, cols);
+  const share = best.length / total;
+  if (share < minHeldShare) return null;
+  const { kind, box, colour } = describe(best, frame);
+  const covered = best.filter((index) => baseline.labels[index]).length;
+  if (covered >= best.length * overBody) {
+    const cover = baseline.body ? covered / baseline.body : 0;
+    if (cover < (kind === "bag" ? minBagCover : minBodyCover)) return null;
+  }
+  if (!frame.hands.some((hand) => nearEdge(box, hand))) return null;
   return { kind, box, colour, share };
+}
+
+export function itemPiece(frame: ScanFrame): HeldPiece | null {
+  const { cols, items } = frame;
+  if (!items) return null;
+  const sizes = new Map<number, number>();
+  for (const label of items)
+    if (label) sizes.set(label, (sizes.get(label) ?? 0) + 1);
+  const top = [...sizes].sort((a, b) => b[1] - a[1])[0];
+  if (!top) return null;
+  const share = top[1] / items.length;
+  if (share < minItemShare || share > maxItemShare) return null;
+  const marked = items.map((label) => (label === top[0] ? 1 : 0));
+  const cells = largestGroup(marked, cols);
+  const { kind, box, colour, worn } = describe(cells, frame);
+  if (worn < minItemClothes && !frame.hands.some((hand) => nearBox(box, hand)))
+    return null;
+  return { kind, box, colour, share: cells.length / items.length };
 }
 
 export function paddedBox(box: Frame, padding = cropPadding): Frame {
@@ -238,6 +297,13 @@ export function scanStep(
   frame: ScanFrame,
   mode: ScanMode = "auto",
 ): { state: ScanState; status: ScanStatus; capture: HeldPiece | null } {
+  if (frame.people === 0)
+    return holding(
+      { ...state, baseline: null, seenSince: null },
+      itemPiece(frame),
+      frame,
+      mode,
+    );
   if (!state.baseline) {
     const body = bodyCells(frame.labels);
     if (body / frame.labels.length < minPersonShare)
@@ -259,7 +325,15 @@ export function scanStep(
       capture: null,
     };
   }
-  const held = heldPiece(state.baseline, frame);
+  return holding(state, heldPiece(state.baseline, frame), frame, mode);
+}
+
+function holding(
+  state: ScanState,
+  held: HeldPiece | null,
+  frame: ScanFrame,
+  mode: ScanMode,
+): { state: ScanState; status: ScanStatus; capture: HeldPiece | null } {
   if (mode === "manual")
     return {
       state: { ...state, hold: null, held },

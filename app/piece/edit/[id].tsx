@@ -141,7 +141,7 @@ function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
       ? piece.original
       : next === "studio"
         ? piece.variants?.studio
-        : (piece.variants?.enhanced ?? piece.variants?.plain);
+        : (piece.variants?.plain ?? piece.variants?.enhanced);
   const photo =
     view === null || view === shownOf(piece, piece.photo)
       ? piece.photo
@@ -190,7 +190,7 @@ function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
   const cutout = pieceCutout(piece);
   const cutoutOffered =
     !sample && !newPhoto && canPrepareOnDevice && Boolean(cutout);
-  const cutoutFile = piece.variants?.enhanced ?? piece.variants?.plain;
+  const cutoutFile = piece.variants?.plain ?? piece.variants?.enhanced;
   const studioFrom = studioSource(piece);
 
   const choices: PhotoChoice[] = newPhoto
@@ -462,7 +462,7 @@ function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
           value={shown}
           onChange={pickShown}
           making={studio.making}
-          stale={Boolean(studioMade && piece.studioStale && !newPhoto)}
+          made={studioMade && !newPhoto}
           onMake={() => void makeClean()}
           adjust={
             cutoutOffered

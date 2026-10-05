@@ -32,6 +32,8 @@ final class FrameReader {
 
   private let parser: ClothesParser
   private let hands = VNDetectHumanHandPoseRequest()
+  private let humans = VNDetectHumanRectanglesRequest()
+  private let foreground = GarmentPipeline.foregroundRequest()
 
   init(parser: ClothesParser) {
     self.parser = parser
@@ -55,14 +57,16 @@ final class FrameReader {
     }
     let colours = averages(image)
     let handStart = Date()
-    let points = handPoints(buffer)
+    let seen = look(buffer)
     return [
       "at": Date().timeIntervalSince1970 * 1000,
       "cols": cols,
       "rows": rows,
       "labels": Data(labels).base64EncodedString(),
       "colours": Data(colours).base64EncodedString(),
-      "hands": points,
+      "hands": seen.hands,
+      "people": seen.people,
+      "items": Data(seen.items).base64EncodedString(),
       "milliseconds": [
         "parse": milliseconds(started, parsed), "hands": milliseconds(handStart),
         "total": milliseconds(started),
@@ -94,10 +98,10 @@ final class FrameReader {
     return rgb
   }
 
-  private func handPoints(_ buffer: CVPixelBuffer) -> [[Double]] {
+  private func look(_ buffer: CVPixelBuffer) -> (hands: [[Double]], people: Int, items: [UInt8]) {
     let handler = VNImageRequestHandler(cvPixelBuffer: buffer, orientation: .up)
-    guard (try? handler.perform([hands])) != nil, let results = hands.results else { return [] }
-    return results.compactMap { hand in
+    try? handler.perform([hands, humans, foreground])
+    let points: [[Double]] = (hands.results ?? []).compactMap { hand in
       guard let points = try? hand.recognizedPoints(.all) else { return nil }
       let sure = points.values.filter { $0.confidence > 0.3 }
       guard !sure.isEmpty else { return nil }
@@ -105,13 +109,32 @@ final class FrameReader {
       let y = sure.reduce(0.0) { $0 + Double($1.location.y) } / Double(sure.count)
       return [x, 1 - y]
     }
+    let people = humans.results?.filter { $0.confidence > 0.5 }.count ?? 0
+    var items = [UInt8](repeating: 0, count: Self.cols * Self.rows)
+    if let mask = foreground.results?.first?.instanceMask {
+      CVPixelBufferLockBaseAddress(mask, .readOnly)
+      if let base = CVPixelBufferGetBaseAddress(mask) {
+        let width = CVPixelBufferGetWidth(mask)
+        let height = CVPixelBufferGetHeight(mask)
+        let row = CVPixelBufferGetBytesPerRow(mask)
+        let pointer = base.assumingMemoryBound(to: UInt8.self)
+        for y in 0..<Self.rows {
+          for x in 0..<Self.cols {
+            let column = min(width - 1, Int((Double(x) + 0.5) / Double(Self.cols) * Double(width)))
+            let line = min(height - 1, Int((Double(y) + 0.5) / Double(Self.rows) * Double(height)))
+            items[y * Self.cols + x] = pointer[line * row + column]
+          }
+        }
+      }
+      CVPixelBufferUnlockBaseAddress(mask, .readOnly)
+    }
+    return (points, people, items)
   }
 
   func cutHeld(data: Data, id: String, box: CGRect, kind: String, folder: URL) throws
     -> (region: GarmentRegionRecord, sticker: ScanStickerRecord?)?
   {
-    guard let classes = Self.held[kind], let loaded = CIImage(data: data, options: [.applyOrientationProperty: true])
-    else { return nil }
+    guard let loaded = CIImage(data: data, options: [.applyOrientationProperty: true]) else { return nil }
     var image = loaded.transformed(by: CGAffineTransform(translationX: -loaded.extent.minX, y: -loaded.extent.minY))
     let edge = max(image.extent.width, image.extent.height)
     if edge > 2048 {
@@ -128,11 +151,18 @@ final class FrameReader {
     guard rect.width >= 32, rect.height >= 32 else { return nil }
     let crop = image.cropped(to: rect).transformed(by: CGAffineTransform(translationX: -rect.minX, y: -rect.minY))
     let parse = try parser.parseWhole(crop)
-    let wanted = Set(classes.map { UInt8($0.rawValue) })
-    guard let region = GarmentRegions.largest(parse.grid, kind: kind, wanted: wanted), region.share >= 0.02
+    let wanted = Set((Self.held[kind] ?? []).map { UInt8($0.rawValue) })
+    let found = GarmentRegions.largest(parse.grid, kind: kind, wanted: wanted).flatMap { $0.share >= 0.02 ? $0 : nil }
+    let local = CGRect(
+      x: (box.minX - area.minX) / area.width, y: (box.minY - area.minY) / area.height,
+      width: box.width / area.width, height: box.height / area.height)
+    guard
+      let piece = found.map({ (cut: parse.cutout(crop, region: $0), frame: parse.normalizedFrame(of: $0),
+        outline: parse.cutoutFrame(of: $0), share: $0.share, kind: kind) })
+        ?? cutItem(crop, parse: parse, inside: local)
     else { return nil }
     let name = "\(id)-region-1.png"
-    let cut = parse.cutout(crop, region: region)
+    let cut = piece.cut
     try parser.context.writePNGRepresentation(
       of: cut, to: folder.appendingPathComponent(name), format: .RGBA8,
       colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
@@ -147,10 +177,10 @@ final class FrameReader {
       ]
     }
     var record = GarmentRegionRecord()
-    record.kind = kind
+    record.kind = piece.kind
     record.cutout = name
-    record.frame = place(parse.normalizedFrame(of: region))
-    record.share = region.share * Double(photoArea.width * photoArea.height)
+    record.frame = place(piece.frame)
+    record.share = piece.share * Double(photoArea.width * photoArea.height)
     record.partial = false
     let stickerName = "\(id)-sticker.png"
     guard let pad = try? writeSticker(cut, to: folder.appendingPathComponent(stickerName)) else {
@@ -158,9 +188,96 @@ final class FrameReader {
     }
     var outlined = ScanStickerRecord()
     outlined.name = stickerName
-    outlined.frame = place(
-      parse.cutoutFrame(of: region).insetBy(dx: -pad / rect.width, dy: -pad / rect.height))
+    outlined.frame = place(piece.outline.insetBy(dx: -pad / rect.width, dy: -pad / rect.height))
     return (record, outlined)
+  }
+
+  private static let body: Set<ClothesClass> = [.hair, .face, .leftArm, .rightArm, .leftLeg, .rightLeg]
+
+  private func cutItem(_ crop: CIImage, parse: ClothesParse, inside: CGRect)
+    -> (cut: CIImage, frame: CGRect, outline: CGRect, share: Double, kind: String)?
+  {
+    let extent = crop.extent
+    guard let picture = parser.context.createCGImage(crop, from: extent) else { return nil }
+    let request = GarmentPipeline.foregroundRequest()
+    let handler = VNImageRequestHandler(cgImage: picture)
+    guard (try? handler.perform([request])) != nil, let observation = request.results?.first,
+      let instance = Self.central(observation.instanceMask, inside: inside),
+      let buffer = try? observation.generateScaledMaskForImage(forInstances: IndexSet(integer: instance), from: handler)
+    else { return nil }
+    let skin = parse.mask(of: Self.body).applyingFilter("CIColorInvert")
+    let mask = CIImage(cvPixelBuffer: buffer).applyingFilter(
+      "CIMultiplyCompositing", parameters: [kCIInputBackgroundImageKey: skin]
+    ).cropped(to: extent)
+    guard let bounds = bounds(mask, extent: extent) else { return nil }
+    let cut = crop.applyingFilter(
+      "CIBlendWithMask",
+      parameters: [
+        kCIInputBackgroundImageKey: CIImage(color: .clear).cropped(to: extent), kCIInputMaskImageKey: mask,
+      ]
+    )
+    .cropped(to: bounds.rect)
+    .transformed(by: CGAffineTransform(translationX: -bounds.rect.minX, y: -bounds.rect.minY))
+    let frame = CGRect(
+      x: bounds.rect.minX / extent.width, y: 1 - bounds.rect.maxY / extent.height,
+      width: bounds.rect.width / extent.width, height: bounds.rect.height / extent.height)
+    return (cut, frame, frame, bounds.share, "item")
+  }
+
+  private static func central(_ mask: CVPixelBuffer, inside: CGRect) -> Int? {
+    CVPixelBufferLockBaseAddress(mask, .readOnly)
+    defer { CVPixelBufferUnlockBaseAddress(mask, .readOnly) }
+    guard let base = CVPixelBufferGetBaseAddress(mask) else { return nil }
+    let width = CVPixelBufferGetWidth(mask)
+    let height = CVPixelBufferGetHeight(mask)
+    let row = CVPixelBufferGetBytesPerRow(mask)
+    let pointer = base.assumingMemoryBound(to: UInt8.self)
+    let minX = max(0, Int(inside.minX * CGFloat(width)))
+    let maxX = min(width, Int(inside.maxX * CGFloat(width)))
+    let minY = max(0, Int(inside.minY * CGFloat(height)))
+    let maxY = min(height, Int(inside.maxY * CGFloat(height)))
+    var counts: [Int: Int] = [:]
+    for y in minY..<max(minY, maxY) {
+      for x in minX..<max(minX, maxX) where pointer[y * row + x] > 0 {
+        counts[Int(pointer[y * row + x]), default: 0] += 1
+      }
+    }
+    return counts.max { $0.value < $1.value }?.key
+  }
+
+  private func bounds(_ mask: CIImage, extent: CGRect) -> (rect: CGRect, share: Double)? {
+    let side = 128
+    let scale = CGFloat(side) / max(extent.width, extent.height)
+    let width = max(1, Int(extent.width * scale))
+    let height = max(1, Int(extent.height * scale))
+    let small = mask.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
+    var gray = [UInt8](repeating: 0, count: width * height)
+    guard let picture = parser.context.createCGImage(small, from: CGRect(x: 0, y: 0, width: width, height: height)),
+      let drawing = CGContext(
+        data: &gray, width: width, height: height, bitsPerComponent: 8, bytesPerRow: width,
+        space: CGColorSpaceCreateDeviceGray(), bitmapInfo: CGImageAlphaInfo.none.rawValue)
+    else { return nil }
+    drawing.draw(picture, in: CGRect(x: 0, y: 0, width: width, height: height))
+    var minX = width
+    var minY = height
+    var maxX = -1
+    var maxY = -1
+    var count = 0
+    for y in 0..<height {
+      for x in 0..<width where gray[y * width + x] > 127 {
+        count += 1
+        minX = min(minX, x)
+        maxX = max(maxX, x)
+        minY = min(minY, y)
+        maxY = max(maxY, y)
+      }
+    }
+    guard maxX >= minX, Double(count) >= 0.02 * Double(width * height) else { return nil }
+    let rect = CGRect(
+      x: CGFloat(minX) / scale, y: extent.height - CGFloat(maxY + 1) / scale,
+      width: CGFloat(maxX - minX + 1) / scale, height: CGFloat(maxY - minY + 1) / scale
+    ).integral.intersection(extent)
+    return (rect, Double(count) / Double(width * height))
   }
 
   private func writeSticker(_ cut: CIImage, to url: URL) throws -> CGFloat {

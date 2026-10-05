@@ -97,7 +97,7 @@ export function PiecePhoto({
   value,
   onChange,
   making = false,
-  stale = false,
+  made = false,
   onMake,
   adjust,
   message,
@@ -111,7 +111,7 @@ export function PiecePhoto({
   value: PhotoView;
   onChange: (next: PhotoView) => void;
   making?: boolean;
-  stale?: boolean;
+  made?: boolean;
   onMake?: () => void;
   adjust?: {
     label: string;
@@ -194,7 +194,7 @@ export function PiecePhoto({
           disabled={locked}
         />
       ) : null}
-      {stale && onMake && !making ? (
+      {made && onMake && !making ? (
         <View style={styles.lead}>
           <Button
             variant="secondary"

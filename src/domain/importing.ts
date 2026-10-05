@@ -134,6 +134,7 @@ export function rejectReason(
   prepared: Prepared,
   size?: { width: number; height: number },
   known?: Category,
+  held = false,
 ): RejectReason | null {
   if (size && Math.min(size.width, size.height) < smallerThan)
     return "no-clothing";
@@ -145,6 +146,7 @@ export function rejectReason(
   const kinds = prepared.labels.filter((label) => label.group === "kind");
   if (
     !known &&
+    !held &&
     kinds.length &&
     Math.max(...kinds.map((label) => label.score)) < minKindScore
   )
@@ -269,7 +271,9 @@ export function finishImport(
     };
     if (job.region?.partial && !checks.includes("partial"))
       checks.push("partial");
-    const rejected = rejectReason(prepared, size, known);
+    const held = job.region?.kind === "item";
+    if (held && !checks.includes("uncertain")) checks.push("uncertain");
+    const rejected = rejectReason(prepared, size, known, held);
     const fabric = details.uncertain.includes("fabric")
       ? undefined
       : (described.attributes as Attributes | undefined)?.fabric;
@@ -281,7 +285,7 @@ export function finishImport(
       name:
         job.linkName ?? nameFor(recognition.kind, prepared.palette, { fabric }),
       styles,
-      question: recognition.question ?? undefined,
+      question: recognition.question ?? (held ? "category" : undefined),
       sources,
       attributes: described.attributes,
       attributeSources: described.sources,
@@ -530,7 +534,7 @@ export function setImportLabel(
 
 export function importStudioSource(job: ImportJob): string | null {
   if (!job.prepared?.cutout || !job.prepared.enhanced) return null;
-  return job.prepared.enhanced;
+  return job.prepared.cutout;
 }
 
 export function setImportStudio(

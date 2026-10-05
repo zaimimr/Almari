@@ -1565,7 +1565,7 @@ export function withVariant(piece: Piece, variant: Variant): Piece {
 
 export function studioSource(piece: Piece): string | null {
   if (!pieceVariant(piece)) return null;
-  return piece.variants!.enhanced ?? piece.variants!.plain!;
+  return piece.variants!.plain!;
 }
 
 export function withStudio(piece: Piece, studio: string): Piece {

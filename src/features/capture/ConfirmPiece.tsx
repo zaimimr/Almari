@@ -17,6 +17,7 @@ import {
   type AttributeValue,
 } from "../../domain/attributes";
 import {
+  captureMembers,
   correctImport,
   dismissAdvice,
   importStudioSource,
@@ -50,7 +51,7 @@ import { confirmAction } from "../../ui/confirm";
 import { theme } from "../../ui/theme";
 import { ColourChips } from "../ColourChips";
 import { useRetake, type CaptureProblem } from "../Retake";
-import { isGrouped, jobColour, jobColours, jobPhoto, jobPiece } from "./jobs";
+import { jobColour, jobColours, jobPhoto, jobPiece } from "./jobs";
 import { PiecePhoto, type PhotoChoice, type PhotoView } from "./PiecePhoto";
 import { removeWithUndo } from "./removed";
 
@@ -394,7 +395,7 @@ function ConfirmForm({
   ) : null;
 
   const retakeRow = job.fromLink ? null : (
-    <View style={[styles.bleed, styles.retakeRow]}>
+    <View style={styles.bleed}>
       <Button
         label={t("capture.retake")}
         variant="quiet"
@@ -402,11 +403,20 @@ function ConfirmForm({
         onPress={() => void retakeFrom("camera")}
         testID="confirm-retake"
       />
-      {job.captureId && !isGrouped(job) ? (
+    </View>
+  );
+
+  const onePhoto =
+    job.captureId &&
+    new Set(captureMembers(closet, job.captureId).map((item) => item.source))
+      .size === 1;
+  const markMore =
+    onePhoto && !job.fromLink ? (
+      <View style={styles.mark}>
         <Button
           label={t("capture.pickPiece")}
           icon="plus"
-          variant="quiet"
+          variant="secondary"
           disabled={busy}
           onPress={() =>
             router.push({
@@ -416,9 +426,8 @@ function ConfirmForm({
           }
           testID="confirm-add-piece"
         />
-      ) : null}
-    </View>
-  );
+      </View>
+    ) : null;
 
   const trash = (
     <HeaderItem
@@ -451,6 +460,7 @@ function ConfirmForm({
             heroID="confirm-hero"
             testID="confirm-photo"
           />
+          {markMore}
           {retakeRow}
         </View>
       </Screen>
@@ -745,7 +755,7 @@ function ConfirmForm({
           value={photo}
           onChange={pickPhoto}
           making={studio.making}
-          stale={Boolean(prepared.studio && prepared.studioStale)}
+          made={Boolean(prepared.studio)}
           onMake={() => void makeStudio()}
           adjust={adjust}
           message={studio.message}
@@ -755,6 +765,7 @@ function ConfirmForm({
           heroID="confirm-hero"
           testID="confirm-photo"
         />
+        {markMore}
         {question === "category" ? (
           <View style={styles.block}>
             {categoryChips(asked ?? t("piece.category"))}
@@ -840,5 +851,5 @@ const styles = StyleSheet.create({
   content: { gap: theme.space.lg },
   block: { gap: theme.space.md },
   bleed: { marginLeft: -theme.space.sm, alignSelf: "flex-start" },
-  retakeRow: { flexDirection: "row", flexWrap: "wrap" },
+  mark: { alignItems: "center" },
 });
