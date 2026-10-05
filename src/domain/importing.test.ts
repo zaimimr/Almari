@@ -19,7 +19,7 @@ import {
 import type { CareLabel } from "./careLabel";
 import { piece as ownedPiece } from "./test-helpers";
 import { proposalsFromRegions, unparsedCapture } from "./capture";
-import { colorName, namedSwatch } from "./color";
+import { colorName, namedSwatch, type Swatch } from "./color";
 import {
   acceptImports,
   addToCapture,
@@ -876,9 +876,9 @@ const vector = (...values: number[]) =>
 test("a new photo very close to an owned piece asks Same piece or Different piece", () => {
   const owned: Piece = {
     id: "owned",
-    name: "Black hijab",
-    category: "hijab",
-    kind: "hijab",
+    name: "Sage kurta",
+    category: "tunic",
+    kind: "kurta",
     photo: "owned.png",
     createdAt: "2026-09-01T08:00:00Z",
     source: "owned",
@@ -1329,4 +1329,32 @@ test("owned pieces take over from the samples once they make an outfit", () => {
     },
   };
   assert.equal(settleWardrobe(always).styling.wardrobe, "sample");
+});
+
+test("two loafers of the same colour in one photo become one piece", () => {
+  const shoes: LabelScore[] = [{ group: "kind", value: "loafers", score: 0.6 }];
+  const pair = (...palettes: Swatch[][]) => {
+    let closet = splitCapture(
+      startImport(queued(), "job"),
+      "job",
+      proposalsFromRegions([region("shoes", 1), region("shoes", 2)], 0),
+    );
+    closet.imports.forEach((job, index) => {
+      closet = finishImport(
+        startImport(closet, job.id),
+        job.id,
+        prepared({
+          labels: shoes,
+          palette: palettes[index]!,
+          cutout: `${job.id}.png`,
+        }),
+      );
+    });
+    return closet.imports;
+  };
+  const brown = [{ rgb: [110, 70, 40], share: 1 }] as Swatch[];
+  const black = [{ rgb: [20, 20, 20], share: 1 }] as Swatch[];
+  assert.equal(pair(brown, brown).length, 1);
+  assert.equal(pair(brown, brown)[0]!.kind, "loafers");
+  assert.equal(pair(brown, black).length, 2);
 });

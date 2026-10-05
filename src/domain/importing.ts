@@ -1,5 +1,5 @@
 import { adviceReason } from "./quality";
-import { findDuplicate } from "./duplicates";
+import { findDuplicate, looksAlike } from "./duplicates";
 import {
   attributeKeys,
   confirmAttribute,
@@ -269,7 +269,32 @@ export function finishImport(
       error: rejected ?? undefined,
     };
   });
-  return next === closet ? closet : reviewCapture(next, id);
+  return next === closet ? closet : mergePair(reviewCapture(next, id), id);
+}
+
+function mergePair(closet: Closet, id: string): Closet {
+  const job = closet.imports.find((item) => item.id === id);
+  if (
+    !job?.prepared ||
+    !job.captureId ||
+    job.state === "failed" ||
+    job.region?.kind !== "shoes"
+  )
+    return closet;
+  const twin = closet.imports.some(
+    (other) =>
+      other.id !== id &&
+      other.captureId === job.captureId &&
+      other.region?.kind === "shoes" &&
+      other.state !== "failed" &&
+      other.prepared &&
+      other.kind === job.kind &&
+      looksAlike(
+        { kind: job.kind, palette: job.prepared!.palette },
+        { kind: other.kind, palette: other.prepared.palette },
+      ),
+  );
+  return twin ? removeImport(closet, id) : closet;
 }
 
 export function keepRejected(closet: Closet, id: string): Closet {

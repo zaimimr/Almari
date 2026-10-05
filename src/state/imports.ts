@@ -121,11 +121,15 @@ export function useImportRunner(repository: ClosetRepository, ready: boolean) {
             .getSnapshot()
             .imports.find((item) => item.id === job.id);
           if (current?.state === "preparing")
-            await repository.update((closet) =>
-              finishImport(closet, job.id, prepared, {
-                width: result.width,
-                height: result.height,
-              }),
+            await changeImports(
+              async (transform) => {
+                await repository.update(transform);
+              },
+              (closet) =>
+                finishImport(closet, job.id, prepared, {
+                  width: result.width,
+                  height: result.height,
+                }),
             );
           else {
             const closet = repository.getSnapshot();

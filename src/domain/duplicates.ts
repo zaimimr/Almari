@@ -1,6 +1,6 @@
 import type { Closet } from "./closet";
 import { deltaE, type Swatch, toLab } from "./color";
-import type { GarmentKind } from "./taxonomy";
+import { categoryOf, type GarmentKind } from "./taxonomy";
 
 export const duplicateAbove = 0.93;
 export const sameColourBelow = 15;
@@ -15,7 +15,8 @@ function mainSwatch(palette: Swatch[] | undefined) {
 }
 
 export function looksAlike(a: Look, b: Look): boolean {
-  if (a.kind && b.kind && a.kind !== b.kind) return false;
+  if (a.kind && b.kind && categoryOf(a.kind) !== categoryOf(b.kind))
+    return false;
   const left = mainSwatch(a.palette);
   const right = mainSwatch(b.palette);
   return (

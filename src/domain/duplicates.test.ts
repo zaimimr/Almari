@@ -131,7 +131,7 @@ test("ivory and charcoal trousers do not look alike", () => {
   assert.equal(looksAlike(trousers(ivory.rgb), trousers(charcoal.rgb)), false);
   assert.equal(looksAlike(trousers(ivory.rgb), trousers(cream.rgb)), true);
   assert.equal(
-    looksAlike(trousers(ivory.rgb), { ...trousers(ivory.rgb), kind: "skirt" }),
+    looksAlike(trousers(ivory.rgb), { ...trousers(ivory.rgb), kind: "kurta" }),
     false,
   );
   const closet: Closet = {
