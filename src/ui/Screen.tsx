@@ -28,6 +28,7 @@ import Animated, {
   type SharedValue,
 } from "react-native-reanimated";
 import { scheduleOnUI } from "react-native-worklets";
+import type { SearchBarCommands } from "react-native-screens";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Stack, router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -54,7 +55,11 @@ export type ScreenProps = PropsWithChildren<{
   scroll?: boolean;
   gone?: { title: string };
   media?: boolean;
-  search?: { placeholder: string; onChangeText: (text: string) => void };
+  search?: {
+    placeholder: string;
+    onChangeText: (text: string) => void;
+    ref?: React.RefObject<SearchBarCommands | null>;
+  };
   headerTitleVisible?: boolean;
   contentRef?: Ref<ScrollView>;
   testID?: string;
@@ -196,6 +201,7 @@ export function Screen({
       ? {
           headerSearchBarOptions: {
             placeholder: search.placeholder,
+            ref: search.ref,
             onChangeText: (event: { nativeEvent: { text: string } }) =>
               search.onChangeText(event.nativeEvent.text),
           },

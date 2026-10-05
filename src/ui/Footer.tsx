@@ -147,11 +147,7 @@ export function Footer({
         {row ? (
           <View style={{ minHeight: rowHeight }}>
             {rowContent ? (
-              <Animated.View
-                key="content"
-                entering={fadeIn}
-                exiting={exiting}
-              >
+              <Animated.View key="content" entering={fadeIn} exiting={exiting}>
                 {rowContent}
               </Animated.View>
             ) : (

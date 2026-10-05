@@ -8,7 +8,6 @@ import {
   type Piece,
   type Style,
 } from "./closet";
-import { t } from "../i18n";
 import { en } from "../i18n/en";
 import { nb } from "../i18n/nb";
 import { colorName, toLab, toLch } from "./color";

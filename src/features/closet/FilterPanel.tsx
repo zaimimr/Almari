@@ -22,11 +22,9 @@ const hex = (name: string) =>
     .rgb.map((part) => part.toString(16).padStart(2, "0"))
     .join("")}`;
 
-type Show =
-  "forgotten" | "not-worn-lately" | "never-worn" | "away" | "archived";
+type Show = "not-worn-lately" | "never-worn" | "away" | "archived";
 
 const showLabels: Record<Show, string> = {
-  forgotten: "closet.forgotten",
   "not-worn-lately": "closet.notWornLately",
   "never-worn": "closet.neverWorn",
   away: "closet.unavailable",
@@ -36,7 +34,7 @@ const showLabels: Record<Show, string> = {
 const seasonIds: WearSeason[] = ["summer", "winter", "all-year"];
 
 const showOf = (filter: ClosetFilter): Show | null =>
-  filter.wear ??
+  (filter.wear === "forgotten" ? null : filter.wear) ??
   (filter.availability === "away" || filter.availability === "archived"
     ? filter.availability
     : null);
@@ -53,12 +51,14 @@ export function filterValues(filter: ClosetFilter): string[] {
 export function FilterRow({
   filter,
   offered,
+  forgotten,
   open,
   onToggle,
   onChange,
 }: {
   filter: ClosetFilter;
   offered: Category[];
+  forgotten: number;
   open: boolean;
   onToggle: () => void;
   onChange: (next: Partial<ClosetFilter>) => void;
@@ -84,6 +84,18 @@ export function FilterRow({
         onPress={onToggle}
         testID="chip-more"
       />
+      {forgotten || filter.wear === "forgotten" ? (
+        <Chip
+          label={t("closet.forgotten")}
+          selected={filter.wear === "forgotten"}
+          onPress={() =>
+            onChange({
+              wear: filter.wear === "forgotten" ? null : "forgotten",
+            })
+          }
+          testID="chip-forgotten"
+        />
+      ) : null}
       <View accessibilityRole="radiogroup" style={styles.row}>
         {(["all", ...offered] as const).map((id) => (
           <Chip
@@ -212,9 +224,7 @@ export function FilterPanel({
           onChange={(next) =>
             onChange({
               wear:
-                next === "forgotten" ||
-                next === "not-worn-lately" ||
-                next === "never-worn"
+                next === "not-worn-lately" || next === "never-worn"
                   ? next
                   : null,
               availability:

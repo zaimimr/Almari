@@ -1,7 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { router, useFocusEffect } from "expo-router";
 import { randomUUID } from "expo-crypto";
-import { categories, type Category, type Piece } from "../../domain/closet";
+import type { SearchBarCommands } from "react-native-screens";
+import {
+  categories,
+  type Category,
+  type Closet,
+  type Piece,
+} from "../../domain/closet";
 import {
   filterPieces,
   groupByCategory,
@@ -10,9 +16,19 @@ import {
   panelFilterCount,
   type ClosetFilter,
 } from "../../domain/closetFilters";
+import type { WearSeason } from "../../domain/facts";
 import { undoFeedback, woreLately } from "../../domain/feedback";
+import { wearCounts } from "../../domain/scoring/taste";
 import { linkSet } from "../../domain/sets";
-import { setArchived } from "../../domain/wardrobe";
+import {
+  inWash,
+  intoWash,
+  laundryDone,
+  laundryLoad,
+  setArchived,
+  setCategory,
+  setSeason,
+} from "../../domain/wardrobe";
 import { builderRequest } from "../../domain/builder";
 import { clockFor, ensureToday, startOccasion } from "../../domain/today";
 import { t } from "../../i18n";
@@ -26,6 +42,8 @@ import { motion } from "../../ui/motion";
 export type SelectResult =
   { text: string; undo?: () => void } | { error: string } | null;
 
+export type Expanded = "worn" | "change" | null;
+
 const errorText = (error: unknown) =>
   error instanceof Error && error.message === t("error.setTooSmall")
     ? error.message
@@ -33,13 +51,14 @@ const errorText = (error: unknown) =>
 
 export function useClosetScreen() {
   const { closet, update } = useCloset();
-  const [filter, setFilter] = useState<ClosetFilter>(noFilter);
+  const searchRef = useRef<SearchBarCommands | null>(null);
+  const [raw, setFilter] = useState<ClosetFilter>(noFilter);
   const [panelOpen, setPanelOpen] = useState(false);
   const [selecting, setSelecting] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
   const [added, setAdded] = useState<string[]>([]);
   const [result, setResult] = useState<SelectResult>(null);
-  const [wornOpen, setWornOpen] = useState(false);
+  const [expanded, setExpanded] = useState<Expanded>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -52,33 +71,66 @@ export function useClosetScreen() {
       setSelecting(Boolean(select));
       setSelected([]);
       setResult(null);
-      setWornOpen(false);
+      setExpanded(null);
     }, []),
   );
 
+  const today = clockFor(now()).localDate;
   const context = useMemo(
-    () => ({
-      lastWorn: lastWorn(closet),
-      today: clockFor(now()).localDate,
-    }),
-    [closet],
+    () => ({ lastWorn: lastWorn(closet), today }),
+    [closet, today],
+  );
+  const worn = useMemo(() => wearCounts(closet.feedback), [closet.feedback]);
+  const showingArchived = raw.availability === "archived";
+  const shelved = useMemo(
+    () =>
+      closet.pieces.filter(
+        (piece) => (piece.status === "archived") === showingArchived,
+      ),
+    [closet.pieces, showingArchived],
+  );
+  const offered = useMemo(
+    () =>
+      categories
+        .map(({ id }) => id)
+        .filter((id) => shelved.some((piece) => piece.category === id)),
+    [shelved],
+  );
+  const filter = useMemo(
+    () =>
+      raw.category === "all" || offered.includes(raw.category)
+        ? raw
+        : { ...raw, category: "all" as const },
+    [raw, offered],
   );
   const visible = useMemo(
     () => filterPieces(closet.pieces, filter, context),
     [closet.pieces, filter, context],
   );
-  const sections = useMemo(() => groupByCategory(visible), [visible]);
-  const offered = useMemo(
-    () =>
-      categories
-        .map(({ id }) => id)
-        .filter((id) => closet.pieces.some((piece) => piece.category === id)),
-    [closet.pieces],
+  const sections = useMemo(
+    () => groupByCategory(visible, filter.sort, worn),
+    [visible, filter.sort, worn],
   );
+  const allPutAway =
+    closet.pieces.length > 0 &&
+    closet.pieces.every((piece) => piece.status === "archived");
+  const forgotten = useMemo(
+    () =>
+      filterPieces(
+        closet.pieces.filter((piece) => piece.status !== "archived"),
+        { ...noFilter, wear: "forgotten" },
+        context,
+      ).length,
+    [closet.pieces, context],
+  );
+  const load = useMemo(() => laundryLoad(closet, today), [closet, today]);
+  const washing = useMemo(() => inWash(closet), [closet]);
   const filtered =
     filter.search.trim() !== "" ||
     filter.category !== "all" ||
-    panelFilterCount(filter) > 0;
+    panelFilterCount(filter) > 0 ||
+    filter.wear === "forgotten" ||
+    filter.sort !== null;
 
   useEffect(() => {
     if (!filtered) return;
@@ -96,21 +148,24 @@ export function useClosetScreen() {
   }, [filter, filtered, visible.length]);
 
   const change = (next: Partial<ClosetFilter>) =>
-    setFilter((current) => ({ ...current, ...next }));
-  const clear = () => setFilter(noFilter);
+    setFilter({ ...filter, ...next });
+  const clear = () => {
+    searchRef.current?.clearText();
+    setFilter(noFilter);
+  };
 
   const startSelect = () => {
     setSelecting(true);
     setSelected([]);
     setResult(null);
-    setWornOpen(false);
+    setExpanded(null);
     setAdded([]);
   };
   const endSelect = () => {
     setSelecting(false);
     setSelected([]);
     setResult(null);
-    setWornOpen(false);
+    setExpanded(null);
   };
   const toggle = (id: string) => {
     setResult(null);
@@ -118,7 +173,7 @@ export function useClosetScreen() {
       const next = current.includes(id)
         ? current.filter((item) => item !== id)
         : [...current, id];
-      if (!next.length) setWornOpen(false);
+      if (!next.length) setExpanded(null);
       return next;
     });
   };
@@ -130,73 +185,109 @@ export function useClosetScreen() {
   });
   const owned = chosen.filter((piece) => piece.source === "owned");
 
-  const run = (transform: Parameters<typeof update>[0], done: () => void) =>
+  const run = (transform: (current: Closet) => Closet, done: () => void) =>
     update(transform).then(done, (error: unknown) =>
       setResult({ error: errorText(error) }),
     );
+
+  const finish = (text: string, revert?: (current: Closet) => Closet) => {
+    const restore = selected;
+    setSelecting(false);
+    setSelected([]);
+    setExpanded(null);
+    setResult({
+      text,
+      undo: revert
+        ? () =>
+            run(revert, () => {
+              setResult(null);
+              setSelecting(true);
+              setSelected(restore);
+            })
+        : undefined,
+    });
+  };
 
   const markWorn = (day: "today" | "yesterday") => {
     const ids = owned.map((piece) => piece.id);
     const events = new Map(ids.map((id) => [id, randomUUID()]));
     const at = new Date(now());
     if (day === "yesterday") at.setDate(at.getDate() - 1);
-    const restore = selected;
-    setWornOpen(false);
+    let changed = false;
     run(
-      (current) =>
-        woreLately(
-          ensureToday(current, clockFor(now())),
-          ids,
-          at.toISOString(),
-          (id) => events.get(id)!,
-        ),
-      () => {
-        setSelected([]);
-        setResult({
-          text: t(day === "today" ? "outfit.worn" : "looks.wornYesterday"),
-          undo: () =>
-            run(
-              (current) => [...events.values()].reduce(undoFeedback, current),
-              () => {
-                setResult(null);
-                setSelected(restore);
-              },
-            ),
-        });
+      (current) => {
+        const next = woreLately(current, ids, at.toISOString(), (id) =>
+          events.get(id)!,
+        );
+        changed = next !== current;
+        return next;
       },
+      () =>
+        changed
+          ? finish(
+              t(day === "today" ? "outfit.worn" : "looks.wornYesterday"),
+              (current) => [...events.values()].reduce(undoFeedback, current),
+            )
+          : finish(t("closet.wornAlready")),
     );
   };
 
-  const link = (ids: string[], after: () => void) =>
-    run((current) => linkSet(current, ids, randomUUID()), after);
-
   const linkSelected = () =>
-    link(
-      owned.map((piece) => piece.id),
-      () => {
-        setSelected([]);
-        setResult({ text: t("closet.linked") });
-      },
+    run(
+      (current) =>
+        linkSet(
+          current,
+          owned.map((piece) => piece.id),
+          randomUUID(),
+        ),
+      () => finish(t("closet.linked")),
     );
 
   const putAway = (archived: boolean) => {
     const ids = owned
       .filter((piece) => (piece.status === "archived") !== archived)
       .map((piece) => piece.id);
-    const restore = selected;
-    const apply = (value: boolean) => (current: typeof closet) =>
+    const apply = (value: boolean) => (current: Closet) =>
       ids.reduce((next, id) => setArchived(next, id, value), current);
-    run(apply(archived), () => {
-      setSelected([]);
-      setResult({
-        text: t(archived ? "result.putAway" : "result.backInCloset"),
-        undo: () =>
-          run(apply(!archived), () => {
-            setResult(null);
-            setSelected(restore);
-          }),
-      });
-    });
+    run(apply(archived), () =>
+      finish(
+        t(archived ? "result.putAway" : "result.backInCloset"),
+        apply(!archived),
+      ),
+    );
+  };
+
+  const changeAll = (next: { season: WearSeason } | { category: Category }) => {
+    const ids = owned.map((piece) => piece.id);
+    const before = new Map(owned.map((piece) => [piece.id, piece]));
+    run(
+      (current) =>
+        "season" in next
+          ? setSeason(current, ids, next.season)
+          : setCategory(current, ids, next.category),
+      () =>
+        finish(t("closet.changed"), (current) => ({
+          ...current,
+          pieces: current.pieces.map((piece) => before.get(piece.id) ?? piece),
+        })),
+    );
+  };
+
+  const laundry = (done: boolean) => {
+    const ids = (done ? washing : load).map((piece) => piece.id);
+    run(
+      (current) => (done ? laundryDone(current, ids) : intoWash(current, ids)),
+      () =>
+        setResult({
+          text: t(done ? "result.backInCloset" : "piece.away.wash"),
+          undo: () =>
+            run(
+              (current) =>
+                done ? intoWash(current, ids) : laundryDone(current, ids),
+              () => setResult(null),
+            ),
+        }),
+    );
   };
 
   const startWith = async (pieces: Piece[]) => {
@@ -216,6 +307,7 @@ export function useClosetScreen() {
 
   return {
     closet,
+    searchRef,
     filter,
     change,
     clear,
@@ -225,6 +317,11 @@ export function useClosetScreen() {
     visible,
     sections,
     offered: offered as Category[],
+    allPutAway,
+    forgotten,
+    load,
+    washing,
+    laundry,
     selecting,
     selected,
     chosen,
@@ -234,11 +331,12 @@ export function useClosetScreen() {
     toggle,
     result,
     setResult,
-    wornOpen,
-    setWornOpen,
+    expanded,
+    setExpanded,
     markWorn,
     linkSelected,
     putAway,
+    changeAll,
     startWith,
     added,
     setAdded,

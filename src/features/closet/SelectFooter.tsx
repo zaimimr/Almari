@@ -1,35 +1,69 @@
 import { ScrollView, StyleSheet, View } from "react-native";
-import { t } from "../../i18n";
+import { categories, type Category } from "../../domain/closet";
+import type { WearSeason } from "../../domain/facts";
+import { categoryName, t } from "../../i18n";
 import { Button, Chip, Footer, ResultBar } from "../../ui";
 import { theme } from "../../ui/theme";
-import type { SelectResult } from "./useClosetScreen";
+import type { Expanded, SelectResult } from "./useClosetScreen";
+
+const seasons: WearSeason[] = ["summer", "winter", "all-year"];
 
 export function SelectFooter({
+  selecting,
   canAct,
+  canLink,
   putAwayShown,
-  wornOpen,
+  expanded,
   result,
-  onWornToggle,
+  onExpand,
   onWorn,
   onLink,
   onPutAway,
+  onChange,
 }: {
+  selecting: boolean;
   canAct: boolean;
+  canLink: boolean;
   putAwayShown: boolean;
-  wornOpen: boolean;
+  expanded: Expanded;
   result: SelectResult;
-  onWornToggle: () => void;
+  onExpand: (next: Expanded) => void;
   onWorn: (day: "today" | "yesterday") => void;
   onLink: () => void;
   onPutAway: () => void;
+  onChange: (next: { season: WearSeason } | { category: Category }) => void;
 }) {
   const markWorn = {
     label: t("looks.markWorn"),
-    onPress: onWornToggle,
+    onPress: () => onExpand(expanded === "worn" ? null : "worn"),
     disabled: !canAct,
-    expanded: wornOpen,
+    expanded: expanded === "worn",
     testID: "select-mark-worn",
   };
+  const changeAction = {
+    label: t("closet.change"),
+    onPress: () => onExpand(expanded === "change" ? null : "change"),
+    disabled: !canAct,
+    expanded: expanded === "change",
+    testID: "select-change",
+  };
+  const expandedRow = (
+    action: typeof markWorn,
+    chips: { label: string; onPress: () => void; testID: string }[],
+  ) => (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.row}
+    >
+      <Button variant="quiet" {...action} />
+      <View style={styles.chips}>
+        {chips.map((chip) => (
+          <Chip key={chip.testID} kind="action" {...chip} />
+        ))}
+      </View>
+    </ScrollView>
+  );
   const content =
     result && "text" in result ? (
       <ResultBar
@@ -42,28 +76,32 @@ export function SelectFooter({
         focus
         testID="select-result"
       />
-    ) : wornOpen ? (
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.row}
-      >
-        <Button variant="quiet" {...markWorn} />
-        <View style={styles.chips}>
-          <Chip
-            kind="action"
-            label={t("adjust.today")}
-            onPress={() => onWorn("today")}
-            testID="worn-today"
-          />
-          <Chip
-            kind="action"
-            label={t("looks.yesterday")}
-            onPress={() => onWorn("yesterday")}
-            testID="worn-yesterday"
-          />
-        </View>
-      </ScrollView>
+    ) : !selecting ? null : expanded === "worn" ? (
+      expandedRow(markWorn, [
+        {
+          label: t("adjust.today"),
+          onPress: () => onWorn("today"),
+          testID: "worn-today",
+        },
+        {
+          label: t("looks.yesterday"),
+          onPress: () => onWorn("yesterday"),
+          testID: "worn-yesterday",
+        },
+      ])
+    ) : expanded === "change" ? (
+      expandedRow(changeAction, [
+        ...seasons.map((season) => ({
+          label: t(`value.season.${season}`),
+          onPress: () => onChange({ season }),
+          testID: `change-${season}`,
+        })),
+        ...categories.map(({ id }) => ({
+          label: categoryName(id),
+          onPress: () => onChange({ category: id }),
+          testID: `change-${id}`,
+        })),
+      ])
     ) : undefined;
 
   return (
@@ -73,7 +111,7 @@ export function SelectFooter({
         {
           label: t("closet.linkSet"),
           onPress: onLink,
-          disabled: !canAct,
+          disabled: !canLink,
           testID: "select-link",
         },
         {
@@ -84,6 +122,7 @@ export function SelectFooter({
           disabled: !canAct,
           testID: "select-put-away",
         },
+        changeAction,
       ]}
       actionsContent={content}
       error={result && "error" in result ? result.error : null}

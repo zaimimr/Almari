@@ -1,15 +1,19 @@
-import type { Attributes } from "./attributes";
+import { fitAttributes, type Attributes } from "./attributes";
 import {
   isAvailable,
+  kindsIn,
   savePiece,
   setAway,
   type Closet,
   type Look,
   type OutfitRequest,
+  type Category,
   type Piece,
   type Traits,
+  type Warmth,
 } from "./closet";
 import { filterPieces, lastWorn, noFilter } from "./closetFilters";
+import type { WearSeason } from "./facts";
 import { toLab, toLch } from "./color";
 import { hasAnyWear } from "./feedback";
 import { wearDate } from "./looks";
@@ -291,3 +295,40 @@ export const laundryDone = (closet: Closet, ids: string[]): Closet =>
 export function costPerWear(piece: Piece, wears: number): number | null {
   return piece.price ? piece.price.amount / Math.max(wears, 1) : null;
 }
+
+const seasonWarmth: Record<WearSeason, Warmth> = {
+  summer: "light",
+  "all-year": "medium",
+  winter: "warm",
+};
+
+function eachPiece(
+  closet: Closet,
+  ids: string[],
+  change: (piece: Piece) => Piece | null,
+): Closet {
+  return ids.reduce((next, id) => {
+    const piece = next.pieces.find((item) => item.id === id);
+    const changed = piece && change(piece);
+    return changed ? savePiece(next, changed) : next;
+  }, closet);
+}
+
+export const setSeason = (closet: Closet, ids: string[], season: WearSeason) =>
+  eachPiece(closet, ids, (piece) => ({
+    ...piece,
+    traits: { ...piece.traits, warmth: seasonWarmth[season] },
+    sources: { ...piece.sources, warmth: "confirmed" },
+  }));
+
+export const setCategory = (
+  closet: Closet,
+  ids: string[],
+  category: Category,
+) =>
+  eachPiece(closet, ids, (piece) => {
+    if (piece.category === category) return null;
+    const { kind, traits: _traits, ...rest } = piece;
+    const keeps = kind && kindsIn(category).some((item) => item.id === kind);
+    return fitAttributes({ ...rest, category, ...(keeps ? { kind } : {}) });
+  });

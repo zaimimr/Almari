@@ -18,7 +18,10 @@ import {
   intoWash,
   laundryDone,
   laundryLoad,
+  setCategory,
+  setSeason,
 } from "./wardrobe";
+import { wearSeason } from "./facts";
 import { setLanguage } from "../i18n";
 
 const at = (iso: string) => clockFor(new Date(iso));
@@ -162,4 +165,25 @@ test("the closet breakdown counts colours, categories, wear and this month", () 
   assert.equal(stats.leastWorn[0]!.count, 0);
   assert.equal(stats.wearsThisMonth, 1);
   assert.deepEqual(Object.keys(lastWorn(closet)), ["a"]);
+});
+
+test("multi-edit sets season and category for many pieces at once", () => {
+  const closet = ownedCloset([
+    piece("a", "top", { kind: "blouse" }),
+    piece("b", "top", { kind: "t-shirt" }),
+    piece("c", "shoes"),
+  ]);
+  const summer = setSeason(closet, ["a", "b"], "summer");
+  assert.deepEqual(
+    Object.fromEntries(
+      summer.pieces.map((item) => [item.id, wearSeason(item)?.season ?? null]),
+    ),
+    { a: "summer", b: "summer", c: null },
+  );
+  const moved = setCategory(summer, ["a", "c"], "tunic");
+  const a = moved.pieces.find((item) => item.id === "a")!;
+  assert.equal(a.category, "tunic");
+  assert.equal(a.kind, undefined);
+  assert.equal(a.traits?.warmth, undefined);
+  assert.equal(setCategory(moved, ["a"], "tunic"), moved);
 });
