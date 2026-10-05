@@ -28,6 +28,7 @@ appId: com.zaimimran.almari
     centerElement: true
 - tapOn:
     id: "manual-name"
+- eraseText
 - inputText: "Taupe bag"
 - hideKeyboard
 - takeScreenshot: docs/redesign/screens/after/capture/by-hand

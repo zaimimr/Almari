@@ -19,14 +19,16 @@ import {
   type Closet,
   type Piece,
 } from "../../../src/domain/closet";
+import { colourNames, mainColourName } from "../../../src/domain/color";
 import {
-  colorName,
-  colourNames,
-  mainColourName,
-} from "../../../src/domain/color";
+  colourOf,
+  isOwnId,
+  ownKind,
+  ownKindsIn,
+} from "../../../src/domain/lists";
 import { setColour } from "../../../src/domain/facts";
 import { pieceCutout } from "../../../src/domain/cutout";
-import { filesInUse } from "../../../src/domain/importing";
+import { confirmedTraits, filesInUse } from "../../../src/domain/importing";
 import { confirmEdits } from "../../../src/domain/recognition";
 import { unlinkPiece } from "../../../src/domain/sets";
 import { dropFromToday } from "../../../src/domain/today";
@@ -38,7 +40,8 @@ import { useCloset } from "../../../src/state/closet";
 import { canPrepareOnDevice, measurePiece } from "../../../src/state/imports";
 import { studioOffered, useStudioMaker } from "../../../src/state/studio";
 import { discardPhoto, keepPhoto } from "../../../src/storage/local";
-import { FactChips, moreFacts } from "../../../src/features/piece/FactChips";
+import { AddOwn, addOwnId, addOwnOption } from "../../../src/features/AddOwn";
+import { FactChips, detailFacts } from "../../../src/features/piece/FactChips";
 import {
   Button,
   ChipRow,
@@ -80,10 +83,12 @@ const switchCategory = "switch-category";
 
 const paletteColours = (piece: Piece) =>
   [
-    ...new Set((piece.colors ?? []).map((swatch) => colorName(swatch.rgb))),
+    ...new Set((piece.colors ?? []).map((swatch) => colourOf(swatch.rgb))),
   ].slice(0, 5);
 
 const paletteName = (piece: Piece) => {
+  const first = piece.colors?.[0];
+  if (first && isOwnId(colourOf(first.rgb))) return colourOf(first.rgb);
   const main = mainColourName(piece.colors);
   return colourNames.find((option) => option.toLowerCase() === main) ?? null;
 };
@@ -118,6 +123,8 @@ function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
   const [name, setName] = useState(piece.name);
   const [category, setCategory] = useState<Category>(piece.category);
   const [kind, setKind] = useState<GarmentKind | undefined>(piece.kind);
+  const [own, setOwn] = useState<string | undefined>(piece.ownKind);
+  const [adding, setAdding] = useState(false);
   const [view, setView] = useState(() => shownOf(piece, piece.photo));
   const [shownPhoto, setShownPhoto] = useState(piece.photo);
   if (shownPhoto !== piece.photo) {
@@ -147,7 +154,7 @@ function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
       ? piece.photo
       : (fileFor(view) ?? piece.photo);
   const categoryChanged = category !== piece.category;
-  const kindMissing = categoryChanged && (!kind || !isOffered(kind));
+  const kindMissing = categoryChanged && !own && (!kind || !isOffered(kind));
   const amount = parsePrice(price);
   const dirty =
     facts !== start ||
@@ -155,6 +162,7 @@ function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
     name.trim() !== piece.name ||
     categoryChanged ||
     kind !== piece.kind ||
+    own !== piece.ownKind ||
     photo !== piece.photo ||
     newPhoto !== null ||
     kindConfirmed ||
@@ -325,6 +333,7 @@ function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
         category,
         photo: kept,
         ...(kind ? { kind } : {}),
+        ...(own ? { ownKind: own } : {}),
         ...(fixed ? { styles: fixed } : {}),
       };
       for (const key of [
@@ -336,7 +345,16 @@ function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
       ] as const)
         if (base[key] === undefined) delete base[key];
       if (!kind) delete base.kind;
-      if (categoryChanged) delete base.traits;
+      if (!own) delete base.ownKind;
+      if (categoryChanged) {
+        const kept = confirmedTraits(base);
+        const sources = { ...base.sources };
+        for (const key of ["warmth", "rain", "snow"] as const)
+          delete sources[key];
+        delete base.traits;
+        base.sources = { ...sources, ...kept.sources };
+        if (Object.keys(kept.traits).length) base.traits = kept.traits;
+      }
       if (newPhoto) {
         delete base.original;
         delete base.frame;
@@ -511,6 +529,7 @@ function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
                 }
                 setCategory(next as Category);
                 setKind(next === piece.category ? piece.kind : undefined);
+                setOwn(next === piece.category ? piece.ownKind : undefined);
               }}
               testID="edit-category"
             />
@@ -518,6 +537,10 @@ function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
           <ChipRow
             label={t("piece.kind")}
             options={[
+              ...ownKindsIn(category).map((option) => ({
+                id: option.id,
+                label: option.name,
+              })),
               ...kindsIn(category).map((option) => ({
                 id: option.id as string,
                 label: kindName(option.id),
@@ -525,8 +548,9 @@ function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
               ...(pickCategory
                 ? []
                 : [{ id: switchCategory, label: t("confirm.switchCategory") }]),
+              ...(sample ? [] : [addOwnOption()]),
             ]}
-            value={kind ?? null}
+            value={own ?? kind ?? null}
             optional={sample}
             guessed={kindGuessed}
             onChange={(next) => {
@@ -535,13 +559,42 @@ function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
                 setPickCategory(true);
                 return;
               }
+              if (next === addOwnId) {
+                setAdding(true);
+                return;
+              }
+              if (typeof next === "string" && ownKind(next)) {
+                setOwn(next);
+                setKind(undefined);
+                return;
+              }
               if (next === kind) setKindConfirmed(true);
+              setOwn(undefined);
               setKind(
                 typeof next === "string" ? (next as GarmentKind) : undefined,
               );
             }}
             testID="edit-kind"
           />
+          {adding ? (
+            <AddOwn
+              list="kinds"
+              category={category}
+              onAdded={(next) => {
+                setAdding(false);
+                const added = ownKind(next);
+                if (!added) return;
+                if (added.category !== category) {
+                  setPickCategory(true);
+                  setCategory(added.category);
+                }
+                setOwn(next);
+                setKind(undefined);
+              }}
+              onCancel={() => setAdding(false)}
+              testID="edit-own-kind"
+            />
+          ) : null}
           {kindMissing && !sample ? (
             <Text role="footnote" tone="error">
               {t("piece.kindRequired")}
@@ -589,7 +642,7 @@ function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
             />
           </View>
         )}
-        {moreFacts(facts).length ? (
+        {detailFacts(facts).length ? (
           <Expander
             id="edit-more"
             title={t("editor.moreDetails")}

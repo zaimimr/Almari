@@ -6,21 +6,16 @@ import {
   useWindowDimensions,
 } from "react-native";
 import type { Category, Piece } from "../../domain/closet";
-import { colorName, namedSwatch } from "../../domain/color";
 import { closetSorts, type ClosetFilter } from "../../domain/closetFilters";
 import type { WearSeason } from "../../domain/facts";
+import { colourOf } from "../../domain/lists";
 import { categoryName, t } from "../../i18n";
 import { Button, Chip, ChipRow, Text } from "../../ui";
 import { gutterFor, theme } from "../../ui/theme";
 import { useLargeText } from "../../ui/useLargeText";
-import { colourLabel } from "../ColourChips";
+import { colourHex, colourLabel } from "../ColourChips";
 
 const colourId = (name: string) => name.toLowerCase().replace(" ", "-");
-
-const hex = (name: string) =>
-  `#${namedSwatch(name)
-    .rgb.map((part) => part.toString(16).padStart(2, "0"))
-    .join("")}`;
 
 type Show = "not-worn-lately" | "never-worn" | "away" | "archived";
 
@@ -159,7 +154,7 @@ export function FilterPanel({
   const names = [
     ...new Set(
       pieces.flatMap((piece) =>
-        piece.colors?.[0] ? [colorName(piece.colors[0].rgb)] : [],
+        piece.colors?.[0] ? [colourOf(piece.colors[0].rgb)] : [],
       ),
     ),
   ];
@@ -183,7 +178,7 @@ export function FilterPanel({
               options={names.map((name) => ({
                 id: colourId(name),
                 label: colourLabel(name),
-                swatch: hex(name),
+                swatch: colourHex(name),
                 accessibilityLabel: colourLabel(name),
               }))}
               value={filter.colour ? colourId(filter.colour) : null}

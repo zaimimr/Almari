@@ -5,13 +5,17 @@ import {
   categoryOf,
   fixedStyles,
   type Category,
+  type Closet,
   type GarmentKind,
   type ImportJob,
+  type Piece,
   type QuickCheck,
   type Style,
   type Variant,
 } from "../../domain/closet";
 import {
+  confirmAttribute,
+  fitAttributes,
   optionsFor,
   type AttributeKey,
   type AttributeValue,
@@ -20,6 +24,7 @@ import {
   captureMembers,
   correctImport,
   dismissAdvice,
+  type Details,
   importStudioSource,
   keepDuplicate,
   keepRejected,
@@ -31,6 +36,7 @@ import {
 } from "../../domain/importing";
 import { importCutout } from "../../domain/cutout";
 import { attributeLabelKey, attributeValueKey } from "../../domain/facts";
+import { ownKind, ownKindsIn } from "../../domain/lists";
 import { rankCategories, rankKinds } from "../../domain/recognition";
 import { categoryName, kindName, styleName, t, type Key } from "../../i18n";
 import { useDiscardChanges } from "../../navigation/useDiscardChanges";
@@ -42,6 +48,7 @@ import {
   Banner,
   Button,
   ChipRow,
+  Expander,
   Field,
   Footer,
   HeaderItem,
@@ -49,7 +56,9 @@ import {
 } from "../../ui";
 import { confirmAction } from "../../ui/confirm";
 import { theme } from "../../ui/theme";
+import { AddOwn, addOwnId, addOwnOption } from "../AddOwn";
 import { ColourChips } from "../ColourChips";
+import { FactChips, detailFacts } from "../piece/FactChips";
 import { useRetake, type CaptureProblem } from "../Retake";
 import { jobColour, jobColours, jobPhoto, jobPiece } from "./jobs";
 import { PiecePhoto, type PhotoChoice, type PhotoView } from "./PiecePhoto";
@@ -169,6 +178,7 @@ function ConfirmForm({
     styles: job.styles ?? (job.kind ? fixedStyles(job.kind) : undefined),
     photo: photoChoiceOf(job),
     colour: jobColour(job),
+    own: job.ownKind ?? null,
     answer:
       job.attributeCheck &&
       job.attributeSources?.[job.attributeCheck] === "confirmed"
@@ -180,6 +190,10 @@ function ConfirmForm({
   const [chosenStyles, setStyles] = useState(initial.styles);
   const [photo, setPhoto] = useState<PhotoView>(initial.photo);
   const [colour, setColour] = useState(initial.colour);
+  const [own, setOwn] = useState<string | null>(initial.own);
+  const [facts, setFacts] = useState<Piece | null>(null);
+  const [more, setMore] = useState(false);
+  const [addingKind, setAddingKind] = useState(false);
   const [answer, setAnswer] = useState<AttributeValue | undefined>(
     initial.answer,
   );
@@ -203,6 +217,8 @@ function ConfirmForm({
       choiceOf(chosenStyles) !== choiceOf(initial.styles) ||
       photo !== initial.photo ||
       colour !== initial.colour ||
+      own !== initial.own ||
+      facts !== null ||
       answer !== initial.answer);
   const allowClose = useDiscardChanges(dirty, busy);
 
@@ -539,6 +555,7 @@ function ConfirmForm({
 
   function chooseKind(next: GarmentKind) {
     touch("kind");
+    setOwn(null);
     setName((current) =>
       renameAuto(current, naming(kind!, colour), naming(next, colour)),
     );
@@ -552,6 +569,58 @@ function ConfirmForm({
     if (next !== category) chooseKind(rankKinds(prepared!.labels, next)[0]!);
     else touch("kind");
   }
+
+  function chooseOwn(id: string) {
+    const picked = ownKind(id);
+    if (!picked) return;
+    if (picked.category !== category)
+      chooseKind(rankKinds(prepared!.labels, picked.category)[0]!);
+    touch("kind");
+    setOwn(id);
+  }
+
+  const shownCategory = (own ? ownKind(own)?.category : undefined) ?? category;
+  const base = jobPiece(job);
+  const draftBase: Piece = {
+    ...base,
+    name: name.trim() || kindName(kind),
+    category: shownCategory,
+    kind,
+    ...(chosenStyles ? { styles: chosenStyles } : {}),
+    attributes: facts?.attributes ?? job.attributes,
+    sources: facts?.sources ?? job.attributeSources,
+    ...(facts?.traits ? { traits: facts.traits } : {}),
+    ...(facts?.ownFabric ? { ownFabric: facts.ownFabric } : {}),
+  };
+  const draft = fitAttributes(
+    attributeAsked && answer !== undefined
+      ? confirmAttribute(draftBase, attributeAsked, answer)
+      : draftBase,
+  );
+  const details: Details | undefined = facts
+    ? {
+        attributes: draft.attributes,
+        sources: draft.sources,
+        traits: draft.traits,
+        ...(draft.ownFabric ? { ownFabric: draft.ownFabric } : {}),
+      }
+    : undefined;
+
+  const changeFacts = async (transform: (current: Closet) => Closet) => {
+    const next = transform({ ...closet, pieces: [draft] }).pieces[0];
+    if (!next) return;
+    setFacts(next);
+    if (
+      !fixed &&
+      next.sources?.styles === "confirmed" &&
+      choiceOf(next.styles) !== choiceOf(chosenStyles)
+    ) {
+      touch("styles");
+      setStyles(next.styles);
+    }
+    if (attributeAsked && next.sources?.[attributeAsked] === "confirmed")
+      setAnswer(next.attributes?.[attributeAsked]);
+  };
 
   async function makeStudio() {
     if (!studioSource || studio.making) return;
@@ -627,6 +696,8 @@ function ConfirmForm({
       await update((current) =>
         correctImport(current, job.id, {
           kind,
+          ownKind: own,
+          ...(details ? { details } : {}),
           styles: fixed ? undefined : chosenStyles,
           name: name.trim(),
           ...photoChange(photo),
@@ -688,6 +759,10 @@ function ConfirmForm({
     <ChipRow
       label={label}
       options={[
+        ...ownKindsIn(category).map((option) => ({
+          id: option.id,
+          label: option.name,
+        })),
         ...kindChoices.map((option) => ({
           id: option as string,
           label: kindName(option),
@@ -695,10 +770,13 @@ function ConfirmForm({
         ...(switcher
           ? [{ id: switchCategory, label: t("confirm.switchCategory") }]
           : []),
+        addOwnOption(),
       ]}
-      value={kind}
+      value={own ?? kind}
       onChange={(next) => {
         if (next === switchCategory) setPickCategory(true);
+        else if (next === addOwnId) setAddingKind(true);
+        else if (typeof next === "string" && ownKind(next)) chooseOwn(next);
         else if (typeof next === "string") chooseKind(next as GarmentKind);
       }}
       guessed={kindGuessed}
@@ -771,14 +849,29 @@ function ConfirmForm({
             {categoryChips(asked ?? t("piece.category"))}
             {kindChips(t("piece.kind"))}
           </View>
-        ) : question === "subcategory" ? (
-          kindChips(asked ?? t("piece.kind"))
         ) : (
           <View style={styles.block}>
             {pickCategory ? categoryChips(t("piece.category")) : null}
-            {kindChips(t("piece.kind"), !pickCategory)}
+            {kindChips(
+              question === "subcategory"
+                ? (asked ?? t("piece.kind"))
+                : t("piece.kind"),
+              !pickCategory,
+            )}
           </View>
         )}
+        {addingKind ? (
+          <AddOwn
+            list="kinds"
+            category={category}
+            onAdded={(id) => {
+              setAddingKind(false);
+              chooseOwn(id);
+            }}
+            onCancel={() => setAddingKind(false)}
+            testID="confirm-own-kind"
+          />
+        ) : null}
         {question === "style" && !fixed
           ? styleChips(asked ?? t("piece.style"))
           : null}
@@ -802,16 +895,15 @@ function ConfirmForm({
             testID="confirm-attribute"
           />
         ) : null}
-        {colour ? (
-          <ColourChips
-            label={t("fact.colour")}
-            value={colour}
-            first={jobColours(job)}
-            onPick={chooseColour}
-            guessed={colourGuessed}
-            testID="confirm-colour"
-          />
-        ) : null}
+        <ColourChips
+          label={t("fact.colour")}
+          value={colour}
+          first={jobColours(job)}
+          onPick={chooseColour}
+          guessed={colourGuessed}
+          photo={prepared.palette.map((swatch) => swatch.rgb)}
+          testID="confirm-colour"
+        />
         <Field
           label={t("piece.name")}
           testID="check-name"
@@ -833,6 +925,17 @@ function ConfirmForm({
             layout="scroll"
             testID="confirm-name-options"
           />
+        ) : null}
+        {detailFacts(draft).length ? (
+          <Expander
+            id="confirm-more"
+            title={t("editor.moreDetails")}
+            open={more}
+            onToggle={() => setMore((open) => !open)}
+            testID="confirm-more"
+          >
+            <FactChips piece={draft} onChange={changeFacts} more />
+          </Expander>
         ) : null}
         {retakeRow}
       </View>

@@ -1,21 +1,19 @@
-import {
-  colorName,
-  colourNames,
-  mainColourName,
-  namedSwatch,
-} from "../../domain/color";
+import { colourNames, mainColourName } from "../../domain/color";
+import { colourOf, colourSwatch, isOwnId, ownKind } from "../../domain/lists";
 import { categoryOf, type ImportJob, type Piece } from "../../domain/closet";
 import { t } from "../../i18n";
 import type { TileState } from "../../ui";
 import { colourLabel } from "../ColourChips";
 
 export const hexOf = (name: string) =>
-  `#${namedSwatch(name)
+  `#${colourSwatch(name)
     .rgb.map((part) => part.toString(16).padStart(2, "0"))
     .join("")}`;
 
 export function jobColour(job: ImportJob): string | null {
   if (job.colour) return job.colour;
+  const first = job.prepared?.palette?.[0];
+  if (first && isOwnId(colourOf(first.rgb))) return colourOf(first.rgb);
   const main = mainColourName(job.prepared?.palette);
   return colourNames.find((name) => name.toLowerCase() === main) ?? null;
 }
@@ -23,7 +21,7 @@ export function jobColour(job: ImportJob): string | null {
 export function jobColours(job: ImportJob): string[] {
   return [
     ...new Set(
-      (job.prepared?.palette ?? []).map((swatch) => colorName(swatch.rgb)),
+      (job.prepared?.palette ?? []).map((swatch) => colourOf(swatch.rgb)),
     ),
   ].slice(0, 5);
 }
@@ -50,8 +48,11 @@ export function jobPiece(job: ImportJob): Piece {
   return {
     id: job.id,
     name: job.name ?? "",
-    category: job.kind ? categoryOf(job.kind) : "top",
+    category:
+      (job.ownKind ? ownKind(job.ownKind)?.category : undefined) ??
+      (job.kind ? categoryOf(job.kind) : "top"),
     ...(job.kind ? { kind: job.kind } : {}),
+    ...(job.ownKind ? { ownKind: job.ownKind } : {}),
     photo: jobPhoto(job).photo,
     createdAt: job.createdAt,
     source: "owned",

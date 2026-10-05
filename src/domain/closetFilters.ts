@@ -10,7 +10,8 @@ import {
 } from "./closet";
 import { en } from "../i18n/en";
 import { nb } from "../i18n/nb";
-import { colorName, toLab, toLch } from "./color";
+import { toLab, toLch } from "./color";
+import { colourOf as colourId, ownColour, ownKind } from "./lists";
 import {
   colourKeys,
   needsDetails,
@@ -80,7 +81,7 @@ const availabilityOf = (piece: Piece): Availability =>
       : "archived";
 
 const colourOf = (piece: Piece) =>
-  piece.colors?.[0] ? colorName(piece.colors[0].rgb) : null;
+  piece.colors?.[0] ? colourId(piece.colors[0].rgb) : null;
 
 const time = (iso: string) => Date.parse(iso);
 
@@ -143,6 +144,8 @@ function matchesSearch(piece: Piece, search: string): boolean {
   return [
     piece.name,
     colour ?? "",
+    (colour ? ownColour(colour)?.name : undefined) ?? "",
+    (piece.ownKind ? ownKind(piece.ownKind)?.name : undefined) ?? "",
     ...keys.flatMap((key) => [en[key], nb[key]]),
   ].some((text) => text.toLowerCase().includes(query));
 }

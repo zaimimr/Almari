@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import type { Closet } from "../domain/closet";
+import { setLists } from "../domain/lists";
 import { proposeWeatherTraits } from "../domain/pieceWeather";
 import { ClosetRepository } from "../domain/repository";
 import {
@@ -49,6 +50,10 @@ export function ClosetProvider({
   const language = useSyncExternalStore(
     repository.subscribe,
     () => repository.getSnapshot().styling.language,
+  );
+  const lists = useSyncExternalStore(
+    repository.subscribe,
+    () => repository.getSnapshot().lists,
   );
   useImportRunner(repository, status === "ready");
   useAttributeRefresh(repository, status === "ready");
@@ -106,6 +111,7 @@ export function ClosetProvider({
   };
 
   if (status === "ready") setLanguage(language);
+  setLists(lists);
   return (
     <ClosetStatusContext.Provider
       value={{
@@ -141,6 +147,7 @@ export function useCloset() {
     repository.getSnapshot,
     repository.getSnapshot,
   );
+  setLists(closet.lists);
   return {
     closet,
     update: repository.update.bind(repository),
