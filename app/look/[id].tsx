@@ -20,6 +20,7 @@ import {
 } from "../../src/ui";
 import { spokenDate, monthTitle } from "../../src/ui/dates";
 import { theme } from "../../src/ui/theme";
+import { wearDate } from "../../src/domain/looks";
 import { useLook } from "../../src/features/looks/useLook";
 import { useShareCard } from "../../src/features/share/useShareCard";
 import { useLargeText } from "../../src/ui/useLargeText";
@@ -259,7 +260,9 @@ export default function LookDetail() {
             testID="look-notice"
           />
         ) : null}
-        {entry.lastWorn ? (
+        {entry.lastWorn &&
+        !worn &&
+        wearDate(closet, entry.lastWorn) !== today ? (
           <View style={styles.start}>
             <Button
               label={t("looks.wearAgain")}

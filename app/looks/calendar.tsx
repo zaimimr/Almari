@@ -46,7 +46,15 @@ export default function CalendarScreen() {
   const title = monthTitle(month, locale);
   const wears = selected ? (days[selected]?.wears ?? []) : [];
   const plan = selected ? plans[selected] : undefined;
-  const again = selected && selected < today ? wears[0] : undefined;
+  const wornToday = new Set(
+    (days[today]?.wears ?? []).map((wear) => setKey(wear.pieceIds)),
+  );
+  const again =
+    selected &&
+    selected < today &&
+    !wornToday.has(setKey(wears[0]?.pieceIds ?? []))
+      ? wears[0]
+      : undefined;
 
   const wearToday = async () => {
     if (!again) return;

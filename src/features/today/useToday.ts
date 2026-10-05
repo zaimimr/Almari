@@ -328,12 +328,23 @@ export function useToday() {
     );
   };
 
+  const keepLiked = (current: Closet) =>
+    !session || !request || lookForPieces(current, session.pieceIds)
+      ? current
+      : storeLook(current, {
+          id: randomUUID(),
+          name,
+          pieceIds: session.pieceIds,
+          createdAt: at(),
+          occasion: request.occasion,
+        });
+
   const liked = likedNow(closet);
   const like = () =>
     void run((current) =>
       liked
         ? undoFeedback(current, liked.id)
-        : likeOutfit(current, at(), randomUUID()),
+        : likeOutfit(keepLiked(current), at(), randomUUID()),
     );
 
   const saveLook = async () => {
