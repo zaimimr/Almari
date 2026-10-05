@@ -2,11 +2,19 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import type { GarmentRegion } from "./closet";
 import {
+  boxAround,
+  holds,
   boxFrom,
   categoryForRegion,
+  matchingPiece,
   minBox,
+  minPick,
+  overlap,
+  pickedBox,
   proposalsFromRegions,
   resizeBox,
+  toggled,
+  toggledAll,
 } from "./capture";
 
 const region = (
@@ -115,4 +123,48 @@ test("a box grows and shrinks around its centre without leaving the photo", () =
     },
   );
   assert.equal(resizeBox(box, -1).width, minBox);
+});
+
+test("pieces can be left out one by one or all at once", () => {
+  assert.deepEqual(toggled([], "a"), ["a"]);
+  assert.deepEqual(toggled(["a", "b"], "a"), ["b"]);
+  assert.deepEqual(toggledAll(["a", "b", "c"], []), ["a", "b", "c"]);
+  assert.deepEqual(toggledAll(["a", "b", "c"], ["b"]), []);
+});
+
+test("a picked piece that covers one already found is matched instead of added twice", () => {
+  const found = [
+    { x: 0.3, y: 0, width: 0.4, height: 0.2 },
+    null,
+    { x: 0.2, y: 0.25, width: 0.6, height: 0.35 },
+  ];
+  assert.equal(
+    matchingPiece(found, { x: 0.22, y: 0.27, width: 0.56, height: 0.33 }),
+    2,
+  );
+  assert.equal(
+    matchingPiece(found, { x: 0.3, y: 0.62, width: 0.4, height: 0.36 }),
+    -1,
+  );
+  assert.ok(Math.abs(overlap(found[0]!, found[0]!) - 1) < 1e-9);
+  assert.equal(
+    overlap(found[0]!, { x: 0, y: 0.8, width: 0.1, height: 0.1 }),
+    0,
+  );
+});
+
+test("a picked piece gets a little room and never shrinks below a usable box", () => {
+  const box = pickedBox({ x: 0.4, y: 0.4, width: 0.2, height: 0.3 });
+  assert.ok(Math.abs(box.x - 0.38) < 1e-9 && Math.abs(box.width - 0.24) < 1e-9);
+  const tiny = pickedBox({ x: 0.97, y: 0.5, width: 0.02, height: 0.01 });
+  assert.ok(tiny.width >= minPick && tiny.height >= minPick);
+  assert.ok(tiny.x + tiny.width <= 1 && tiny.x >= 0);
+  const around = boxAround({ x: 0, y: 1 });
+  assert.deepEqual(around, { x: 0, y: 0.7, width: 0.3, height: 0.3 });
+});
+
+test("a pick that lands away from the tap is not the tapped piece", () => {
+  const box = pickedBox({ x: 0.3, y: 0.4, width: 0.4, height: 0.4 });
+  assert.equal(holds(box, { x: 0.5, y: 0.5 }), true);
+  assert.equal(holds(box, { x: 0.5, y: 0.9 }), false);
 });

@@ -61,6 +61,8 @@ export type GarmentRegion = {
   partial: boolean;
 };
 
+export type Box = { x: number; y: number; width: number; height: number };
+
 export type GarmentParse = { regions: GarmentRegion[]; people: number };
 
 export type PrepareOptions = {

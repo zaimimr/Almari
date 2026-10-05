@@ -360,6 +360,23 @@ final class GarmentPipeline {
     }
   }
 
+  private let pickQueue = DispatchQueue(label: "closet.vision.pick")
+  private var picker: (uri: String, selector: CutoutSelector)?
+
+  func pickGarment(sourceUri: String, x: Double, y: Double) throws -> [String: Double]? {
+    try pickQueue.sync {
+      let selector: CutoutSelector
+      if let picker, picker.uri == sourceUri {
+        selector = picker.selector
+      } else {
+        let working = try workingPhoto(sourceUri: sourceUri)
+        selector = CutoutSelector(photo: working.image, picture: working.picture)
+        picker = (sourceUri, selector)
+      }
+      return selector.garmentBox(at: CGPoint(x: x, y: y)).map(CutoutMapping.record)
+    }
+  }
+
   func parseSelfie(_ image: CIImage) -> ClothesParse? {
     queue.sync { try? loadParser().parse(image) }
   }
@@ -750,6 +767,10 @@ public class ClosetVisionModule: Module {
 
     AsyncFunction("parseGarments") { (sourceUri: String, id: String) throws -> GarmentParse in
       try GarmentPipeline.shared.parseGarments(sourceUri: sourceUri, id: id)
+    }
+
+    AsyncFunction("pickGarment") { (sourceUri: String, x: Double, y: Double) throws -> [String: Double]? in
+      try GarmentPipeline.shared.pickGarment(sourceUri: sourceUri, x: x, y: y)
     }
 
     AsyncFunction("studioInput") { (sourceUri: String, id: String) throws -> String in

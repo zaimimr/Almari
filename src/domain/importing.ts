@@ -632,6 +632,31 @@ export function cropCapture(
   );
 }
 
+export function captureMembers(closet: Closet, captureId: string): ImportJob[] {
+  return closet.imports.filter((job) => job.captureId === captureId);
+}
+
+function clipped(frame: Frame): Frame | null {
+  const x = Math.max(0, frame.x);
+  const y = Math.max(0, frame.y);
+  const width = Math.min(1, frame.x + frame.width) - x;
+  const height = Math.min(1, frame.y + frame.height) - y;
+  return width > 0 && height > 0 ? { x, y, width, height } : null;
+}
+
+export function jobFrame(job: ImportJob): Frame {
+  return (
+    job.crop ??
+    job.region?.frame ??
+    (job.prepared?.area ? clipped(job.prepared.area) : null) ??
+    wholePhoto
+  );
+}
+
+function foundNothing(job: ImportJob) {
+  return job.state === "failed" && job.error === "no-clothing" && !job.region;
+}
+
 export function addToCapture(
   closet: Closet,
   captureId: string,
@@ -639,12 +664,20 @@ export function addToCapture(
   crop: Frame,
   createdAt: string,
 ): Closet {
-  const sibling = captureJobs(closet, captureId)[0];
+  const sibling = captureMembers(closet, captureId)[0];
   if (!sibling || closet.imports.some((job) => job.id === id)) return closet;
   return {
     ...closet,
     imports: [
-      ...closet.imports,
+      ...closet.imports.flatMap((job) =>
+        job.captureId !== captureId
+          ? [job]
+          : foundNothing(job)
+            ? []
+            : job.region || job.crop
+              ? [job]
+              : [{ ...job, crop: jobFrame(job), stem: jobStem(job) }],
+      ),
       {
         id,
         source: sibling.source,

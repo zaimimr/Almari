@@ -52,7 +52,7 @@ import { confirmAction } from "../../ui/confirm";
 import { theme } from "../../ui/theme";
 import { ColourChips } from "../ColourChips";
 import { useRetake, type CaptureProblem } from "../Retake";
-import { jobColour, jobColours, jobPhoto, jobPiece } from "./jobs";
+import { isGrouped, jobColour, jobColours, jobPhoto, jobPiece } from "./jobs";
 import {
   PhotoToolbar,
   type PhotoPreview,
@@ -396,7 +396,7 @@ function ConfirmForm({
   ) : null;
 
   const retakeRow = job.fromLink ? null : (
-    <View style={styles.bleed}>
+    <View style={[styles.bleed, styles.retakeRow]}>
       <Button
         label={t("capture.retake")}
         variant="quiet"
@@ -404,6 +404,21 @@ function ConfirmForm({
         onPress={() => void retakeFrom("camera")}
         testID="confirm-retake"
       />
+      {job.captureId && !isGrouped(job) ? (
+        <Button
+          label={t("capture.pickPiece")}
+          icon="plus"
+          variant="quiet"
+          disabled={busy}
+          onPress={() =>
+            router.push({
+              pathname: "/capture/group/[id]",
+              params: { id: job.captureId!, add: "1" },
+            })
+          }
+          testID="confirm-add-piece"
+        />
+      ) : null}
     </View>
   );
 
@@ -844,4 +859,5 @@ const styles = StyleSheet.create({
   hero: { width: 240, alignSelf: "center" },
   adjust: { position: "absolute", top: theme.space.sm, right: theme.space.sm },
   bleed: { marginLeft: -theme.space.sm, alignSelf: "flex-start" },
+  retakeRow: { flexDirection: "row", flexWrap: "wrap" },
 });

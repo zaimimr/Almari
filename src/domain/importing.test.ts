@@ -24,6 +24,7 @@ import {
   acceptImports,
   addToCapture,
   captureJobs,
+  captureMembers,
   captureProgress,
   correctImport,
   cropCapture,
@@ -38,6 +39,7 @@ import {
   nameOptions,
   namingAttributes,
   keepDuplicate,
+  jobFrame,
   jobStem,
   orphanedFiles,
   piecesToRefresh,
@@ -683,6 +685,45 @@ test("a box drawn by hand prepares a piece again or adds one that was missed", (
   );
   assert.equal(addToCapture(added, "missing", "other", box, "x"), added);
   assert.equal(addToCapture(added, "job", "extra", box, "x"), added);
+});
+
+const onePiece = { proposals: [], people: 0, notice: null, checkWhole: false };
+
+test("a piece added to a photo where one piece was found keeps the first piece and its files", () => {
+  let closet = splitCapture(startImport(queued(), "job"), "job", onePiece);
+  closet = finishImport(
+    startImport(closet, "job"),
+    "job",
+    prepared({ area: { x: -0.1, y: 0.1, width: 0.6, height: 0.6 } }),
+  );
+  assert.deepEqual(captureJobs(closet, "job"), []);
+  const box = { x: 0.5, y: 0.5, width: 0.3, height: 0.3 };
+  const added = addToCapture(closet, "job", "extra", box, "x");
+  const first = added.imports.find((job) => job.id === "job")!;
+  assert.equal(first.state, "ready");
+  assert.deepEqual(first.crop, { x: 0, y: 0.1, width: 0.5, height: 0.6 });
+  assert.equal(jobStem(first), "job");
+  assert.deepEqual(
+    captureJobs(added, "job").map((job) => job.id),
+    ["job", "extra"],
+  );
+});
+
+test("a piece added to a photo where nothing was found replaces the empty result", () => {
+  let closet = splitCapture(startImport(queued(), "job"), "job", onePiece);
+  closet = failImport(startImport(closet, "job"), "job", "no-clothing");
+  assert.deepEqual(jobFrame(closet.imports[0]!), {
+    x: 0,
+    y: 0,
+    width: 1,
+    height: 1,
+  });
+  const box = { x: 0.2, y: 0.2, width: 0.4, height: 0.4 };
+  const added = addToCapture(closet, "job", "extra", box, "x");
+  assert.deepEqual(
+    captureMembers(added, "job").map((job) => [job.id, job.source, job.crop]),
+    [["extra", "job-original.jpg", box]],
+  );
 });
 
 test("a piece cropped again is prepared under fresh file names", () => {

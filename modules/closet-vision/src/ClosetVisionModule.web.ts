@@ -1,4 +1,5 @@
 import type {
+  Box,
   City,
   ForecastResult,
   GarmentParse,
@@ -19,6 +20,11 @@ export default {
   ): Promise<PreparedGarment> => Promise.reject(new Error("unavailable")),
   parseGarments: (_sourceUri: string, _id: string): Promise<GarmentParse> =>
     Promise.reject(new Error("unavailable")),
+  pickGarment: async (
+    _sourceUri: string,
+    _x: number,
+    _y: number,
+  ): Promise<Box | null> => null,
   studioInput: (_sourceUri: string, _id: string): Promise<string> =>
     Promise.reject(new Error("unavailable")),
   whitenBackground: async (sourceUri: string, _id: string): Promise<string> =>

@@ -16,10 +16,18 @@ appId: com.zaimimran.almari
 - takeScreenshot: docs/redesign/screens/after/capture/group
 - tapOn:
     id: "group-row-1"
-- assertVisible: "Link as a set"
+- scrollUntilVisible:
+    element:
+      id: "group-set-toggle"
+    centerElement: true
 - tapOn:
     id: "group-set-toggle"
-- tapOn:
+- scrollUntilVisible:
+    element:
+      id: "region-2"
+    direction: UP
+    centerElement: true
+- longPressOn:
     id: "region-2"
 - tapOn: "Use"
 - scrollUntilVisible:
@@ -28,10 +36,12 @@ appId: com.zaimimran.almari
     centerElement: true
 - tapOn:
     id: "group-draw"
-- swipe:
-    from:
-      id: "draw-area"
-    direction: RIGHT
+- tapOn:
+    id: "draw-area"
+- extendedWaitUntil:
+    visible:
+      id: "draw-box"
+    timeout: 30000
 - tapOn: "Use"
 - extendedWaitUntil:
     visible:
@@ -54,6 +64,7 @@ appId: com.zaimimran.almari
 - extendedWaitUntil:
     visible:
       id: "group-done"
+      enabled: true
     timeout: 60000
 - tapOn:
     id: "group-done"

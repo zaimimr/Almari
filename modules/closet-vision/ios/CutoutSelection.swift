@@ -41,6 +41,50 @@ final class CutoutSelector {
     return garment(at: point)
   }
 
+  func garmentBox(at point: CGPoint) -> CGRect? {
+    guard let parse = parsed()?.parse else { return nil }
+    let grid = parse.grid
+    let area = parse.area
+    let extent = parse.extent
+    let x = Int((point.x * extent.width - area.minX) / area.width * CGFloat(grid.width))
+    let y = Int((point.y * extent.height - (extent.height - area.maxY)) / area.height * CGFloat(grid.height))
+    let reach = max(2, grid.width / 40)
+    var kind: String?
+    var nearest = Int.max
+    for row in max(0, y - reach)...min(grid.height - 1, max(0, y + reach)) {
+      for column in max(0, x - reach)...min(grid.width - 1, max(0, x + reach)) {
+        guard let found = ClothesClass(rawValue: Int(grid.labels[row * grid.width + column]))?.garment else { continue }
+        let distance = (column - x) * (column - x) + (row - y) * (row - y)
+        if distance < nearest {
+          nearest = distance
+          kind = found
+        }
+      }
+    }
+    guard let kind else { return nil }
+    var minX = grid.width
+    var minY = grid.height
+    var maxX = -1
+    var maxY = -1
+    for row in 0..<grid.height {
+      for column in 0..<grid.width
+      where ClothesClass(rawValue: Int(grid.labels[row * grid.width + column]))?.garment == kind {
+        minX = min(minX, column)
+        maxX = max(maxX, column)
+        minY = min(minY, row)
+        maxY = max(maxY, row)
+      }
+    }
+    guard maxX >= minX else { return nil }
+    let start = normalized(parse, x: minX, y: minY)
+    let end = normalized(parse, x: maxX, y: maxY)
+    let cellWidth = area.width / CGFloat(grid.width) / extent.width
+    let cellHeight = area.height / CGFloat(grid.height) / extent.height
+    return CGRect(
+      x: start.x - cellWidth / 2, y: start.y - cellHeight / 2, width: end.x - start.x + cellWidth,
+      height: end.y - start.y + cellHeight)
+  }
+
   private func foreground() -> Instances? {
     if let instances { return instances }
     let request = GarmentPipeline.foregroundRequest()
