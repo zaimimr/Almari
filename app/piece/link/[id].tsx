@@ -290,7 +290,9 @@ function LinkEditor({ piece }: { piece: Piece }) {
             {photos.map((photo, index) => (
               <View key={photo} style={styles.tile}>
                 <Tile
-                  image={{ uri: photoUri(photo) }}
+                  image={{
+                    uri: /^https?:/i.test(photo) ? photo : photoUri(photo),
+                  }}
                   size="strip"
                   raw
                   label={cover === photo ? t("link.piecePhoto") : undefined}

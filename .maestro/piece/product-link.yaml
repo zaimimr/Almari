@@ -1,0 +1,56 @@
+# seed: seed-piece.sh
+appId: com.zaimimran.almari
+---
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "today"
+    timeout: 60000
+- openLink: "almari://piece/seed-tunic"
+- runFlow:
+    when:
+      visible: "Open|Åpne"
+    commands:
+      - tapOn: "Open|Åpne"
+- extendedWaitUntil:
+    visible:
+      id: "piece-detail"
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      id: "piece-product-link"
+    direction: DOWN
+- tapOn:
+    id: "piece-product-link"
+- tapOn:
+    id: "product-link-field"
+- inputText: "https://www.lindex.com/no/p/3001152-7390-rod-topp-i-ullblanding"
+- hideKeyboard
+- tapOn:
+    id: "product-link-read"
+- extendedWaitUntil:
+    visible:
+      id: "product-link-photos"
+    timeout: 60000
+- extendedWaitUntil:
+    visible:
+      id: "product-link-photo-1"
+    timeout: 20000
+- takeScreenshot: docs/redesign/screens/after/piece/product-link
+- scrollUntilVisible:
+    element:
+      id: "product-link-open"
+    direction: DOWN
+- takeScreenshot: docs/redesign/screens/after/piece/product-link-details
+- tapOn:
+    id: "product-link-save"
+- extendedWaitUntil:
+    visible:
+      id: "piece-detail"
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      id: "piece-product-link"
+    direction: DOWN
+- assertVisible: ".*lindex.com.*"
+- takeScreenshot: docs/redesign/screens/after/piece/product-link-saved
