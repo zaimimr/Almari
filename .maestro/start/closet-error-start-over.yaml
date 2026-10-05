@@ -7,7 +7,9 @@ appId: com.zaimimran.almari
     timeout: 20000
 - tapOn:
     id: "splash-start-over"
-- tapOn: "Start over"
+- tapOn:
+    text: "Start over"
+    rightOf: "Cancel"
 - extendedWaitUntil:
     notVisible: "Could not open your closet"
     timeout: 20000

@@ -8,4 +8,4 @@ appId: com.zaimimran.almari
     id: "lookalike-keep-both"
 - assertNotVisible: "These look alike"
 - assertVisible:
-    id: "job-confirm-1"
+    id: "job-ready-1"

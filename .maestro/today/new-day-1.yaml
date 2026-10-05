@@ -10,10 +10,8 @@ appId: com.zaimimran.almari
       id: "today-outfit"
     timeout: 60000
 - openLink: almari://piece/seed-blazer
-- scrollUntilVisible:
-    element: "Style this piece"
-    direction: DOWN
-- tapOn: "Style this piece"
+- tapOn:
+    id: "piece-start-with"
 - extendedWaitUntil:
     visible:
       id: "today-outfit"

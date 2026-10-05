@@ -5,11 +5,15 @@ appId: com.zaimimran.almari
 - runFlow: ../lib/open-add.yaml
 - tapOn: "Add 2 pieces"
 - assertVisible: "2 added"
-- assertVisible: "Link as a set"
+- assertNotVisible: "Link as a set"
 - assertVisible: "Start with these"
-- tapOn: "Link as a set"
-- assertVisible: "Linked"
 - tapOn: "Start with these"
+- extendedWaitUntil:
+    visible:
+      id: "today-problem"
+    timeout: 60000
+- assertVisible: "Sage kurta is marked Desi, and this outfit is Western."
+- tapOn: "Stop keeping Sage kurta"
 - extendedWaitUntil:
     visible:
       id: "today-outfit"

@@ -42,6 +42,9 @@ appId: com.zaimimran.almari
       id: "colour-result"
     timeout: 10000
 - assertVisible: "Best hijab shades"
+- scrollUntilVisible:
+    element:
+      id: "colours-go-easy"
 - assertVisible: "Go easy on"
 - assertVisible:
     id: "colours-save"

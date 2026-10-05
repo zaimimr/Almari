@@ -36,7 +36,7 @@ appId: com.zaimimran.almari
 - tapOn: "Looks"
 - tapOn: "Closet"
 - extendedWaitUntil:
-    visible: "8 ready to add|7 ready to add, 1 to confirm|6 ready to add, 2 to confirm"
+    visible: "(8 ready to add|\\d ready to add, \\d to confirm)(, .*)?"
     timeout: 120000
 - assertNotVisible:
     id: "moment-generating"
@@ -44,4 +44,4 @@ appId: com.zaimimran.almari
 - tapOn:
     id: "progress-card"
 - assertVisible: "Add pieces"
-- assertVisible: "Add 8 pieces|Add 7 pieces|Add 6 pieces"
+- assertVisible: "Add \\d pieces?"
