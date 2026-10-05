@@ -43,8 +43,14 @@ function GroupTile({
   disabled: boolean;
   onOpen: () => void;
 }) {
-  const label =
-    group.jobs.length === 1
+  const failed = group.jobs.every((job) => job.state === "failed");
+  const label = failed
+    ? t(
+        group.jobs.every((job) => job.error === "no-clothing")
+          ? "capture.noClothing"
+          : "capture.stateFailed",
+      )
+    : group.jobs.length === 1
       ? t("capture.foundOne")
       : t("capture.found", { count: group.jobs.length });
   return (
