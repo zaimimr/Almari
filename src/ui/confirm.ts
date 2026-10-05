@@ -6,6 +6,7 @@ export function confirmAction(
   description: string,
   action: string,
   cancel = t("common.cancel"),
+  destructive = true,
 ): Promise<boolean> {
   if (Platform.OS === "web")
     return Promise.resolve(window.confirm(`${title}\n\n${description}`));
@@ -19,7 +20,11 @@ export function confirmAction(
           style: "cancel",
           onPress: () => resolve(false),
         },
-        { text: action, style: "destructive", onPress: () => resolve(true) },
+        {
+          text: action,
+          style: destructive ? "destructive" : "default",
+          onPress: () => resolve(true),
+        },
       ],
       { cancelable: true, onDismiss: () => resolve(false) },
     ),

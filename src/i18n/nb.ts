@@ -1587,6 +1587,7 @@ export const nb: Record<Key, string> = {
   "capture.preparingCount": "Klargjør {n} av {total}",
   "capture.cleanAll": "Rens alle bakgrunner",
   "capture.cleanAllTitle": "Rense alle bakgrunner?",
+  "capture.cleanAllNote": "Rens alle sender bildene til Cloudflare.",
   "capture.cleanAllAction": "Rens",
   "capture.cleaning": "Renser {n} av {total}",
   "capture.fromLink": "Legg til fra lenke",
