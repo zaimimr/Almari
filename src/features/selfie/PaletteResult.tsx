@@ -15,7 +15,7 @@ import { gutterFor, theme } from "../../ui/theme";
 import { useColors } from "../../ui/useColors";
 import { Drape, Drapes } from "./Drapes";
 import type { FaceBox, PhotoSize } from "./FacePhoto";
-import { named, seasonLabel, type Palette } from "./palette";
+import { named, paletteOf, seasonLabel, type Palette } from "./palette";
 
 const step = 110;
 
@@ -135,8 +135,10 @@ export function SeasonChoice({
   onChoose: (season: Season) => void;
 }) {
   const { width } = useWindowDimensions();
+  const colors = useColors();
   const content = width - 2 * gutterFor(width);
   const card = (content - theme.space.md) / 2;
+  const dot = Math.floor((card - 2 * theme.space.xs) / 3);
   const drapes = drapePair(...seasons);
   return (
     <View style={styles.choice} testID="colours-choice">
@@ -173,6 +175,29 @@ export function SeasonChoice({
                 height={Math.round(card * 1.5)}
                 diameter={Math.round(card * 0.8)}
               />
+              <View
+                style={styles.strip}
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+              >
+                {paletteOf({ season })
+                  .best.slice(0, 9)
+                  .map((colour) => (
+                    <View
+                      key={colour.hex}
+                      style={[
+                        styles.dot,
+                        {
+                          width: dot,
+                          height: dot,
+                          borderRadius: dot / 2,
+                          backgroundColor: colour.hex,
+                          borderColor: colors.line,
+                        },
+                      ]}
+                    />
+                  ))}
+              </View>
             </Pressable>
           </Reveal>
         ))}
@@ -237,7 +262,9 @@ const styles = StyleSheet.create({
   trait: { flex: 1, gap: 2 },
   section: { gap: theme.space.sm },
   close: { flexDirection: "row", gap: theme.space.md },
-  closeCard: { flex: 1 },
+  closeCard: { flex: 1, gap: theme.space.md },
+  strip: { flexDirection: "row", flexWrap: "wrap", gap: theme.space.xs },
+  dot: { borderWidth: StyleSheet.hairlineWidth },
   choice: { gap: theme.space.lg },
   pressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
 });
