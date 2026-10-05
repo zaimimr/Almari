@@ -1579,6 +1579,7 @@ export const nb: Record<Key, string> = {
   "link.title": "Legg til fra lenke",
   "link.field": "Produktlenke",
   "link.failed": "Fant ikke noe produktbilde på den siden",
+  "link.blocked": "Klarte ikke å lese denne butikksiden",
   "lookalike.title": "Disse ser like ut",
   "lookalike.keepBoth": "Behold begge",
   "lookalike.keepOne": "Behold én",

@@ -11,6 +11,7 @@ import {
   decodeEmbedding,
   duplicateAbove,
   findDuplicate,
+  looksAlike,
   similarity,
 } from "./duplicates";
 
@@ -117,4 +118,41 @@ test("earlier photos in the same scan are compared", () => {
     ],
   };
   assert.equal(findDuplicate(closet, "job", vector(100, 1)), "first");
+});
+
+test("ivory and charcoal trousers do not look alike", () => {
+  const ivory = { rgb: [238, 232, 216] as const, share: 0.9 };
+  const charcoal = { rgb: [54, 56, 60] as const, share: 0.9 };
+  const cream = { rgb: [232, 226, 208] as const, share: 0.8 };
+  const trousers = (rgb: readonly [number, number, number]) => ({
+    kind: "trousers" as const,
+    palette: [{ rgb: [...rgb] as [number, number, number], share: 0.9 }],
+  });
+  assert.equal(looksAlike(trousers(ivory.rgb), trousers(charcoal.rgb)), false);
+  assert.equal(looksAlike(trousers(ivory.rgb), trousers(cream.rgb)), true);
+  assert.equal(
+    looksAlike(trousers(ivory.rgb), { ...trousers(ivory.rgb), kind: "kurta" }),
+    false,
+  );
+  const closet: Closet = {
+    ...emptyCloset,
+    pieces: [
+      {
+        ...piece("charcoal", vector(100, 0)),
+        kind: "trousers",
+        colors: trousers(charcoal.rgb).palette,
+      },
+    ],
+    imports: [
+      {
+        ...job("job", vector(100, 1)),
+        kind: "trousers",
+        prepared: {
+          embedding: vector(100, 1),
+          palette: trousers(ivory.rgb).palette,
+        } as unknown as Prepared,
+      },
+    ],
+  };
+  assert.equal(findDuplicate(closet, "job", vector(100, 1)), null);
 });

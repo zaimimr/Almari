@@ -1,5 +1,5 @@
 import { adviceReason } from "./quality";
-import { findDuplicate } from "./duplicates";
+import { findDuplicate, looksAlike } from "./duplicates";
 import {
   attributeKeys,
   confirmAttribute,
@@ -95,6 +95,23 @@ export function nameFor(
   return nameOptions(kind, palette, attributes)[0]!;
 }
 
+export function namingAttributes(job: ImportJob): Attributes | undefined {
+  const source = job.attributeSources?.fabric;
+  if (
+    !job.attributes?.fabric ||
+    source === "confirmed" ||
+    source === "label" ||
+    !job.prepared ||
+    !job.kind
+  )
+    return job.attributes;
+  const unsure = proposeAttributes(job.prepared.labels, {
+    category: categoryOf(job.kind),
+    kind: job.kind,
+  }).uncertain.includes("fabric");
+  return unsure ? { ...job.attributes, fabric: undefined } : job.attributes;
+}
+
 export function renameAuto(
   name: string,
   before: { kind: GarmentKind; palette: Swatch[]; attributes?: Attributes },
@@ -140,7 +157,7 @@ export function withColour(palette: Swatch[], colour: string | undefined) {
 
 export function queueImport(
   closet: Closet,
-  job: Pick<ImportJob, "id" | "source" | "createdAt" | "linkName">,
+  job: Pick<ImportJob, "id" | "source" | "createdAt" | "linkName" | "fromLink">,
 ): Closet {
   if (closet.imports.some((item) => item.id === job.id)) return closet;
   return {
@@ -269,7 +286,36 @@ export function finishImport(
       error: rejected ?? undefined,
     };
   });
-  return next === closet ? closet : reviewCapture(next, id);
+  return next === closet ? closet : mergePair(reviewCapture(next, id), id);
+}
+
+function sideBySide(a: Frame, b: Frame): boolean {
+  const overlap = Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y);
+  return (
+    overlap > 0.5 * Math.min(a.height, b.height) &&
+    Math.min(a.height, b.height) > 0.7 * Math.max(a.height, b.height)
+  );
+}
+
+function mergePair(closet: Closet, id: string): Closet {
+  const job = closet.imports.find((item) => item.id === id);
+  if (!job?.prepared || !job.captureId || !job.region || job.state === "failed")
+    return closet;
+  const twin = closet.imports.some(
+    (other) =>
+      other.id !== id &&
+      other.captureId === job.captureId &&
+      other.region &&
+      other.state !== "failed" &&
+      other.prepared &&
+      other.kind === job.kind &&
+      sideBySide(job.region!.frame, other.region.frame) &&
+      looksAlike(
+        { kind: job.kind, palette: job.prepared!.palette },
+        { kind: other.kind, palette: other.prepared.palette },
+      ),
+  );
+  return twin ? removeImport(closet, id) : closet;
 }
 
 export function keepRejected(closet: Closet, id: string): Closet {
@@ -411,9 +457,9 @@ export function correctImport(
             {
               kind: job.kind!,
               palette: job.prepared!.palette,
-              attributes: job.attributes,
+              attributes: namingAttributes(job),
             },
-            { kind, palette, attributes: job.attributes },
+            { kind, palette, attributes: namingAttributes(job) },
           )
         : job.name!);
     const sources: Sources = {
@@ -536,6 +582,7 @@ export function splitCapture(
         captureId: id,
         region: proposal.region,
         ...(index || !job.linkName ? {} : { linkName: job.linkName }),
+        ...(job.fromLink ? { fromLink: true } : {}),
         ...people,
       }))
     : [

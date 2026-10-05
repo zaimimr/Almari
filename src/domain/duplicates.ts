@@ -1,6 +1,30 @@
 import type { Closet } from "./closet";
+import { deltaE, type Swatch, toLab } from "./color";
+import { categoryOf, type GarmentKind } from "./taxonomy";
 
 export const duplicateAbove = 0.93;
+export const sameColourBelow = 15;
+
+type Look = { kind?: GarmentKind; palette?: Swatch[] };
+
+function mainSwatch(palette: Swatch[] | undefined) {
+  return (palette ?? []).reduce<Swatch | null>(
+    (best, swatch) => (!best || swatch.share > best.share ? swatch : best),
+    null,
+  );
+}
+
+export function looksAlike(a: Look, b: Look): boolean {
+  if (a.kind && b.kind && categoryOf(a.kind) !== categoryOf(b.kind))
+    return false;
+  const left = mainSwatch(a.palette);
+  const right = mainSwatch(b.palette);
+  return (
+    !left ||
+    !right ||
+    deltaE(toLab(left.rgb), toLab(right.rgb)) < sameColourBelow
+  );
+}
 
 export function decodeEmbedding(value: string): Int8Array {
   return Int8Array.from(atob(value), (char) => char.charCodeAt(0));
@@ -43,16 +67,29 @@ export function findDuplicate(
   const candidates = [
     ...closet.pieces
       .filter((piece) => piece.source === "owned" && elsewhere(piece))
-      .map((piece) => ({ id: piece.id, embedding: piece.embedding })),
+      .map((piece) => ({
+        id: piece.id,
+        embedding: piece.embedding,
+        kind: piece.kind,
+        palette: piece.colors,
+      })),
     ...earlier.map((job) => ({
       id: job.id,
       embedding: job.prepared?.embedding,
+      kind: job.kind,
+      palette: job.prepared?.palette,
     })),
   ];
+  const look = { kind: current?.kind, palette: current?.prepared?.palette };
   let best: string | null = null;
   let bestScore = duplicateAbove;
   for (const candidate of candidates) {
-    if (!candidate.embedding || candidate.id === jobId) continue;
+    if (
+      !candidate.embedding ||
+      candidate.id === jobId ||
+      !looksAlike(look, candidate)
+    )
+      continue;
     const score = similarity(embedding, candidate.embedding);
     if (score > bestScore) {
       best = candidate.id;

@@ -23,6 +23,7 @@ import {
   keepDuplicate,
   keepRejected,
   nameOptions,
+  namingAttributes,
   renameAuto,
   setImportStudio,
   withColour,
@@ -290,6 +291,14 @@ function ConfirmForm({
     : t("duplicate.title");
   const checks = job.checks ?? [];
 
+  const useAnyway = {
+    label: t("advice.useAnyway"),
+    variant: "quiet" as const,
+    onPress: () =>
+      void update((current) => dismissAdvice(current, job.id)).catch(
+        () => undefined,
+      ),
+  };
   const banner = problem ? (
     <Banner
       tone="notice"
@@ -370,26 +379,23 @@ function ConfirmForm({
     <Banner
       tone="notice"
       text={t(`advice.${job.advice}.title`)}
-      actions={[
-        {
-          label: t("capture.retake"),
-          variant: "secondary",
-          onPress: () => void retakeFrom("camera"),
-        },
-        {
-          label: t("advice.useAnyway"),
-          variant: "quiet",
-          onPress: () =>
-            void update((current) => dismissAdvice(current, job.id)).catch(
-              () => undefined,
-            ),
-        },
-      ]}
+      actions={
+        job.fromLink
+          ? [useAnyway]
+          : [
+              {
+                label: t("capture.retake"),
+                variant: "secondary",
+                onPress: () => void retakeFrom("camera"),
+              },
+              useAnyway,
+            ]
+      }
       testID="confirm-advice"
     />
   ) : null;
 
-  const retakeRow = (
+  const retakeRow = job.fromLink ? null : (
     <View style={styles.bleed}>
       <Button
         label={t("capture.retake")}
@@ -489,12 +495,12 @@ function ConfirmForm({
   const naming = (k: GarmentKind, c: string | null) => ({
     kind: k,
     palette: withColour(prepared.palette, c ?? undefined),
-    attributes: job.attributes,
+    attributes: namingAttributes(job),
   });
   const suggestions = nameOptions(
     kind,
     naming(kind, colour).palette,
-    job.attributes,
+    namingAttributes(job),
   );
 
   function chooseColour(next: string) {

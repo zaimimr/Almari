@@ -19,7 +19,7 @@ import {
 import type { CareLabel } from "./careLabel";
 import { piece as ownedPiece } from "./test-helpers";
 import { proposalsFromRegions, unparsedCapture } from "./capture";
-import { colorName, namedSwatch } from "./color";
+import { colorName, namedSwatch, type Swatch } from "./color";
 import {
   acceptImports,
   addToCapture,
@@ -35,6 +35,8 @@ import {
   finishRefresh,
   importFailure,
   isSettled,
+  nameOptions,
+  namingAttributes,
   keepDuplicate,
   jobStem,
   orphanedFiles,
@@ -876,9 +878,9 @@ const vector = (...values: number[]) =>
 test("a new photo very close to an owned piece asks Same piece or Different piece", () => {
   const owned: Piece = {
     id: "owned",
-    name: "Black hijab",
-    category: "hijab",
-    kind: "hijab",
+    name: "Sage kurta",
+    category: "tunic",
+    kind: "kurta",
     photo: "owned.png",
     createdAt: "2026-09-01T08:00:00Z",
     source: "owned",
@@ -1329,4 +1331,44 @@ test("owned pieces take over from the samples once they make an outfit", () => {
     },
   };
   assert.equal(settleWardrobe(always).styling.wardrobe, "sample");
+});
+
+test("two loafers of the same colour in one photo become one piece", () => {
+  const shoes: LabelScore[] = [{ group: "kind", value: "loafers", score: 0.6 }];
+  const side = (index: number): GarmentRegion => ({
+    kind: "pants",
+    cutout: `job-region-${index}.png`,
+    frame: { x: 0.1 + 0.4 * index, y: 0.3, width: 0.35, height: 0.4 },
+    share: 0.15,
+    partial: false,
+  });
+  const pair = (regions: GarmentRegion[], ...palettes: Swatch[][]) => {
+    let closet = splitCapture(
+      startImport(queued(), "job"),
+      "job",
+      proposalsFromRegions(regions, 0),
+    );
+    closet.imports.forEach((job, index) => {
+      closet = finishImport(
+        startImport(closet, job.id),
+        job.id,
+        prepared({
+          labels: shoes,
+          palette: palettes[index]!,
+          cutout: `${job.id}.png`,
+        }),
+      );
+    });
+    return closet.imports;
+  };
+  const brown = [{ rgb: [51, 28, 20], share: 1 }] as Swatch[];
+  const lighter = [{ rgb: [75, 49, 39], share: 1 }] as Swatch[];
+  const pale = [{ rgb: [200, 200, 200], share: 1 }] as Swatch[];
+  const both = [side(0), side(1)];
+  assert.equal(pair(both, brown, lighter).length, 1);
+  assert.equal(pair(both, brown, pale).length, 2);
+  assert.equal(
+    pair([region("upper", 1), region("pants", 5)], brown, brown).length,
+    2,
+  );
 });
