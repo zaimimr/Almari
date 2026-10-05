@@ -353,3 +353,64 @@ test("Trening without any gym clothes says so instead of styling", () => {
     "Add gym clothes to complete an outfit.",
   );
 });
+
+test("an open ankle abaya over an ankle dress is not a same-length clash", () => {
+  const dress = make("maxi dress", "dress", "dress", { length: "ankle" });
+  const abaya = make("open abaya", "layer", "abaya", { length: "ankle" });
+  const coat = make("long coat", "layer", "coat", { length: "ankle" });
+  assert.ok(!hitIds([dress, abaya]).includes("same-length-layers"));
+  assert.ok(hitIds([dress, coat]).includes("same-length-layers"));
+});
+
+test("a small print with a large print is rewarded when she mixes prints", () => {
+  const mixes = { ...neutralProfile, printOnPrint: true };
+  const blouse = make("dotted blouse", "top", "blouse", {
+    pattern: "print",
+    scale: "small",
+  });
+  const skirt = make("floral skirt", "bottom", "skirt", {
+    pattern: "print",
+    scale: "large",
+  });
+  const hits = ruleHits(ruleBook, [blouse, skirt], request(), mixes);
+  const hit = hits.find((item) => item.rule.id === "print-scale-mix")!;
+  assert.ok(hit);
+  assert.equal(
+    reasonFor(hit, request()),
+    "The small print on the dotted blouse sits well with the large print on the floral skirt.",
+  );
+  assert.ok(!hitIds([blouse, skirt]).includes("print-scale-mix"));
+});
+
+test("two large prints compete when she mixes prints", () => {
+  const mixes = { ...neutralProfile, printOnPrint: true };
+  const print = { pattern: "print", scale: "large" } as const;
+  const blouse = make("floral blouse", "top", "blouse", print);
+  const skirt = make("paisley skirt", "bottom", "skirt", print);
+  assert.ok(hitIds([blouse, skirt], {}, mixes).includes("print-same-scale"));
+  const set = { setId: "set" };
+  const top = make("set top", "top", "blouse", print, null, set);
+  const bottom = make("set skirt", "bottom", "skirt", print, null, set);
+  assert.ok(!hitIds([top, bottom], {}, mixes).includes("print-same-scale"));
+});
+
+test("satin on satin is too much shine unless it is a set", () => {
+  const satin = { fabric: "satin" } as const;
+  const blouse = make("satin blouse", "top", "blouse", satin);
+  const skirt = make("satin skirt", "bottom", "skirt", satin);
+  const jeans = make("jeans", "bottom", "jeans", { fabric: "denim" });
+  assert.ok(hitIds([blouse, skirt]).includes("shiny-on-shiny"));
+  assert.ok(!hitIds([blouse, jeans]).includes("shiny-on-shiny"));
+  const set = { setId: "set" };
+  const top = make("set top", "top", "blouse", satin, null, set);
+  const bottom = make("set skirt", "bottom", "skirt", satin, null, set);
+  assert.ok(!hitIds([top, bottom]).includes("shiny-on-shiny"));
+});
+
+test("a summer fabric with a winter fabric is a season clash", () => {
+  const linen = make("linen top", "top", "blouse", { fabric: "linen" });
+  const wool = make("wool trousers", "bottom", "trousers", { fabric: "wool" });
+  const denim = make("jeans", "bottom", "jeans", { fabric: "denim" });
+  assert.ok(hitIds([linen, wool]).includes("season-fabric-clash"));
+  assert.ok(!hitIds([linen, denim]).includes("season-fabric-clash"));
+});

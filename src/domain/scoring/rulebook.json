@@ -420,8 +420,21 @@
       "source": "western-hijab:53",
       "layer": "style",
       "if": {
-        "pair": [{ "role": ["layer", "outer"] }, { "role": ["main"] }],
-        "relation": "same-length"
+        "all": [
+          {
+            "pair": [{ "role": ["layer", "outer"] }, { "role": ["main"] }],
+            "relation": "same-length"
+          },
+          {
+            "not": {
+              "has": {
+                "role": ["outer"],
+                "kind": ["abaya"],
+                "length": ["ankle"]
+              }
+            }
+          }
+        ]
       },
       "weight": -0.5
     },
@@ -1660,6 +1673,121 @@
       "layer": "color",
       "if": { "outfit": "print-count", "op": ">=", "value": 3 },
       "weight": -0.5
+    },
+    {
+      "id": "print-scale-mix",
+      "source": "pattern:scale",
+      "layer": "color",
+      "when": { "profile": { "printOnPrint": [true] } },
+      "if": {
+        "all": [
+          { "outfit": "print-count", "op": "=", "value": 2 },
+          {
+            "has": {
+              "pattern": ["print", "stripe", "check"],
+              "scale": ["small"]
+            }
+          },
+          {
+            "has": {
+              "pattern": ["print", "stripe", "check"],
+              "scale": ["large"]
+            }
+          }
+        ]
+      },
+      "weight": 0.5,
+      "reason": true
+    },
+    {
+      "id": "print-same-scale",
+      "source": "pattern:scale",
+      "layer": "color",
+      "when": { "profile": { "printOnPrint": [true] } },
+      "if": {
+        "all": [
+          { "outfit": "print-count", "op": ">=", "value": 2 },
+          {
+            "any": [
+              {
+                "has": {
+                  "pattern": ["print", "stripe", "check"],
+                  "scale": ["large"]
+                },
+                "count": { "min": 2 }
+              },
+              {
+                "has": {
+                  "pattern": ["print", "stripe", "check"],
+                  "scale": ["medium"]
+                },
+                "count": { "min": 2 }
+              }
+            ]
+          }
+        ]
+      },
+      "weight": -0.4
+    },
+    {
+      "id": "shiny-on-shiny",
+      "source": "fabric:sheen",
+      "layer": "style",
+      "if": {
+        "all": [
+          {
+            "has": {
+              "role": ["main", "bottom", "layer", "outer"],
+              "fabric": ["satin"]
+            },
+            "count": { "min": 2 }
+          },
+          { "not": { "outfit": "set-together", "op": ">=", "value": 2 } }
+        ]
+      },
+      "weight": -0.3
+    },
+    {
+      "id": "season-fabric-clash",
+      "source": "fabric:season",
+      "layer": "style",
+      "if": {
+        "any": [
+          {
+            "all": [
+              {
+                "has": {
+                  "role": ["main"],
+                  "fabric": ["lawn", "linen", "chiffon"]
+                }
+              },
+              {
+                "has": {
+                  "role": ["bottom"],
+                  "fabric": ["wool", "velvet", "khaddar", "karandi"]
+                }
+              }
+            ]
+          },
+          {
+            "all": [
+              {
+                "has": {
+                  "role": ["main"],
+                  "fabric": ["wool", "velvet", "khaddar", "karandi"]
+                }
+              },
+              {
+                "has": {
+                  "role": ["bottom"],
+                  "fabric": ["lawn", "linen", "chiffon"]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "weight": -0.4
     },
     {
       "id": "all-light",

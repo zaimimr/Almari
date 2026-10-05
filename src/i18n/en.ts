@@ -459,6 +459,8 @@ export const en = {
   "reason.hijab-warm-fabric-cold": "The {a} is warm for a cold day.",
   "reason.hijab-cool-fabric-warm": "The {a} stays cool on a warm day.",
   "reason.volume-balanced": "The {a} balances the {b}.",
+  "reason.print-scale-mix":
+    "The small print on the {a} sits well with the large print on the {b}.",
   "reason.volume-balanced_plural": "The {a} balance the {b}.",
   "reason.belt-over-long-piece": "The {a} gives shape to the {b}.",
   "reason.dressed-up-element": "The {a} dresses it up for {occasion}.",

@@ -463,6 +463,8 @@ export const nb: Record<Key, string> = {
   "reason.hijab-warm-fabric-cold": "Stoffet i {a} holder deg varm en kald dag.",
   "reason.hijab-cool-fabric-warm": "Stoffet i {a} er luftig en varm dag.",
   "reason.volume-balanced": "Fasongen på {a} balanserer {b}.",
+  "reason.print-scale-mix":
+    "Det lille mønsteret på {a} passer med det store mønsteret på {b}.",
   "reason.volume-balanced_plural": "Fasongen på {a} balanserer {b}.",
   "reason.belt-over-long-piece": "Med {a} får {b} mer form.",
   "reason.dressed-up-element":

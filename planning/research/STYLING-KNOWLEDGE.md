@@ -77,3 +77,14 @@ The research found real disagreement on these, by person, family or region. They
 - A rated test set of 60 to 100 outfits from her real closet and the samples, each rated no, ok or would wear, across occasions and both styles, including about 15 deliberately bad outfits.
 - Main numbers: pairwise ordering accuracy, and no bad outfit in the top three.
 - Unit tests for colour classes and pair relations at the thresholds, fixed top-three results for a fixed closet and seed, and a check that ten Wore this events move a weight without breaking its limit.
+
+## How pieces fit together (researched 5 October 2026)
+
+- Silhouette: balance volume. One full half with one slim half reads best; full on both halves hides the shape (blog.petitedressing.com, robertastylelee.co.uk). Already in the rules.
+- Length: split the body roughly one third to two thirds, not in half (awellstyledlife.com, eileenfisher.com). For South Asian sets the kurti length decides the bottom: short with sharara or gharara, long with straight trousers or shalwar (barkhaboutique.com, thejaipurstudio.com). Already in the rules.
+- Layering: a layer should be clearly longer or shorter than the piece under it (tkmaxx.com). An open abaya at full length over a maxi dress is the normal way to wear it and is not a clash (abayabuth.com, mybatua.com). Added as an exception to same-length-layers.
+- Pattern scale: when mixing prints, pair a small print with a large one; two prints at the same scale fight for attention (aarp.org, today.com). Added as print-scale-mix and print-same-scale, only when she mixes prints.
+- Sheen: pair one shiny piece with matte pieces; satin on satin looks costume-like unless it is a matching set (masterclass.com, 40plusstyle.com). Added as shiny-on-shiny.
+- Season weight: summer fabrics (lawn, linen, chiffon) and winter fabrics (wool, velvet, khaddar, karandi) in the same top and bottom look mismatched (shopmashburn.com, westwoodhart.com). Added as season-fabric-clash.
+- Petite proportions: one colour column and a visible waist lengthen the line (insideoutstyleblog.com, youlookfab.com). Not added, the app does not know height or body shape.
+- Learned compatibility: Han 2017 (arxiv 1707.05691) and Vasileva 2018 (arxiv 1803.09196) learn which pieces go together from outfit data. These need large rated sets, so the rule book stays the main engine and her Wore this history tunes the weights.
