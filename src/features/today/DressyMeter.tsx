@@ -52,13 +52,19 @@ export function DressyMeter({ model }: { model: TodayModel }) {
               occasion: t(`occasion.${occasion}.phrase`),
             })}
           </Text>
-          <Button
-            label={t("today.dressy.add")}
-            variant="quiet"
-            size="small"
-            onPress={() => router.push(addPiecesRoute)}
-            testID="today-dressy-add"
-          />
+          <View style={styles.bleed}>
+            <Button
+              label={t(
+                meter.goal === "smart"
+                  ? "today.dressy.addSmart"
+                  : "today.dressy.add",
+              )}
+              variant="quiet"
+              size="small"
+              onPress={() => router.push(addPiecesRoute)}
+              testID="today-dressy-add"
+            />
+          </View>
         </View>
       ) : null}
     </View>
@@ -71,4 +77,5 @@ const styles = StyleSheet.create({
   step: { flex: 1, gap: theme.space.xs },
   bar: { height: 4, borderRadius: theme.radius.full },
   short: { alignItems: "flex-start", gap: theme.space.xs },
+  bleed: { marginLeft: -theme.space.sm },
 });

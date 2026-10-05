@@ -1205,6 +1205,7 @@ export const en = {
   "today.tip.add": "Add {name}",
   "today.tip.wear": "Wear {name}",
   "today.dressy.add": "Add a festive piece",
+  "today.dressy.addSmart": "Add a smart piece",
   "build.filling": "Filling the rest",
   "build.pieceGone": "A piece is gone",
   "role.one.main": "main piece",

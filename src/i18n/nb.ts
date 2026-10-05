@@ -1223,6 +1223,7 @@ export const nb: Record<Key, string> = {
   "today.tip.add": "Legg til {name}",
   "today.tip.wear": "Bruk {name}",
   "today.dressy.add": "Legg til et festplagg",
+  "today.dressy.addSmart": "Legg til et pent plagg",
   "build.filling": "Fyller ut resten",
   "build.pieceGone": "Et plagg er borte",
   "role.one.main": "hovedplagg",
