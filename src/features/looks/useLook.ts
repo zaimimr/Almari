@@ -9,6 +9,8 @@ import {
   lookForPieces,
   removeLook,
   renameSet,
+  planSnapshot,
+  restorePlans,
   setPlannedFor,
   type LookEntry,
 } from "../../domain/looks";
@@ -136,7 +138,7 @@ export function useLook(id: string) {
   const plan = async (date: string | null) => {
     if (!entry) return;
     if (date && !(await confirmReplace(closet, date, look?.id ?? null))) return;
-    const previous = look?.plannedFor ?? null;
+    const snapshot = planSnapshot(closet);
     const lookId = randomUUID();
     const isToday = date === todayDate();
     const done = await run((current) => {
@@ -153,10 +155,10 @@ export function useLook(id: string) {
       text: date ? plannedText(date) : t("looks.planCleared"),
       undo: () => {
         setNotice(null);
-        void run((current) => {
-          const target = lookForPieces(current, entry.pieceIds);
-          return target ? setPlannedFor(current, target.id, previous) : current;
-        }, t("common.error.save"));
+        void run(
+          (current) => restorePlans(current, snapshot),
+          t("common.error.save"),
+        );
       },
     });
   };

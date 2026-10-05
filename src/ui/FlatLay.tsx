@@ -346,7 +346,10 @@ function LaidPiece({
         ) : null}
         {mark ? badge("arrow.2.squarepath", inset) : null}
         {kept
-          ? badge("pin.fill", { top: inset.top, left: box.width * 0.08 })
+          ? badge("pin.fill", {
+              top: inset.top,
+              left: (box.width - disc) / 2,
+            })
           : null}
       </Pressable>
     </Animated.View>
@@ -573,10 +576,10 @@ export function FlatLay({
               style={[
                 styles.empty,
                 {
-                  left: laid.x * side,
-                  top: laid.y * side,
-                  width: laid.width * side,
-                  height: laid.height * side,
+                  left: (laid.x + laid.width * 0.1) * side,
+                  top: (laid.y + laid.height * 0.1) * side,
+                  width: laid.width * 0.8 * side,
+                  height: laid.height * 0.8 * side,
                   borderColor: onEmptyPress ? colors.plum : colors.lineField,
                 },
               ]}

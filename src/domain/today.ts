@@ -463,6 +463,7 @@ export function showLook(
   return withActive(base, (session) => ({
     ...session,
     revision: session.revision + 1,
+    request: { ...session.request, keptIds: [] },
     pieceIds: look.pieceIds,
     previousPieceIds: session.pieceIds,
     shown: true,

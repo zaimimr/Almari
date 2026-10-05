@@ -15,19 +15,24 @@ export function WeatherTip({ model }: { model: TodayModel }) {
       <Text role="footnote" tone="muted">
         {t(`today.tip.${tip.weather}`)}
       </Text>
-      <Button
-        label={t(replaces ? "today.tip.wear" : "today.tip.add", { name })}
-        variant="quiet"
-        size="small"
-        onPress={() =>
-          replaces ? model.pick(replaces, tip.piece) : model.addPiece(tip.piece)
-        }
-        testID="today-weather-tip-action"
-      />
+      <View style={styles.bleed}>
+        <Button
+          label={t(replaces ? "today.tip.wear" : "today.tip.add", { name })}
+          variant="quiet"
+          size="small"
+          onPress={() =>
+            replaces
+              ? model.pick(replaces, tip.piece)
+              : model.addPiece(tip.piece)
+          }
+          testID="today-weather-tip-action"
+        />
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   tip: { alignItems: "flex-start", gap: theme.space.xs },
+  bleed: { marginLeft: -theme.space.sm },
 });

@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import type { Piece } from "../../src/domain/closet";
@@ -28,6 +28,8 @@ export default function BuildLook() {
   const builder = useBuilder(params);
   const colors = useColors();
   const { ax } = useLargeText();
+  const [room, setRoom] = useState(0);
+  const lay = ax ? 240 : room > 0 ? room - 64 : undefined;
   const title = t("build.edit");
 
   if (builder.gone)
@@ -204,22 +206,24 @@ export default function BuildLook() {
           {builder.name}
         </Text>
       </View>
-      <FlatLay
-        pieces={builder.pieces}
-        size="hero"
-        maxSize={ax ? 240 : undefined}
-        emptyRoles={builder.empty}
-        state={builder.filling ? "arranging" : undefined}
-        openId={swapPiece?.id ?? null}
-        onPiecePress={(piece) =>
-          builder.setMode(
-            swapPiece?.id === piece.id
-              ? { kind: "picker" }
-              : { kind: "swap", pieceId: piece.id },
-          )
-        }
-        testID="build-collage"
-      />
+      <View style={[styles.lay, { width: lay ?? "100%" }]}>
+        <FlatLay
+          pieces={builder.pieces}
+          size="hero"
+          maxSize={lay}
+          emptyRoles={builder.empty}
+          state={builder.filling ? "arranging" : undefined}
+          openId={swapPiece?.id ?? null}
+          onPiecePress={(piece) =>
+            builder.setMode(
+              swapPiece?.id === piece.id
+                ? { kind: "picker" }
+                : { kind: "swap", pieceId: piece.id },
+            )
+          }
+          testID="build-collage"
+        />
+      </View>
     </View>
   );
 
@@ -258,7 +262,11 @@ export default function BuildLook() {
         </ScrollView>
       ) : (
         <View style={styles.fill}>
-          <ScrollView style={styles.fill} contentContainerStyle={styles.column}>
+          <ScrollView
+            style={styles.fill}
+            contentContainerStyle={styles.column}
+            onLayout={(event) => setRoom(event.nativeEvent.layout.height)}
+          >
             {collage}
           </ScrollView>
           <View style={[styles.hair, { backgroundColor: colors.line }]} />
@@ -281,6 +289,7 @@ const styles = StyleSheet.create({
     gap: theme.space.sm,
   },
   name: { flexShrink: 1 },
+  lay: { maxWidth: "100%", alignSelf: "center" },
   hair: { height: StyleSheet.hairlineWidth },
   status: {
     flexDirection: "row",

@@ -11,6 +11,7 @@ import { locale, t } from "../../i18n";
 import { now } from "../../state/clock";
 import { confirmAction } from "../../ui/confirm";
 import { shortDate } from "../../ui/dates";
+import { todayDate } from "./format";
 
 type Shown = { pieceIds: string[]; occasion?: Occasion | null };
 
@@ -43,5 +44,24 @@ export function confirmReplace(
     }),
     "",
     t("looks.replace"),
+  );
+}
+
+export function confirmMove(
+  closet: Closet,
+  date: string,
+  lookId: string,
+): Promise<boolean> {
+  const look = closet.looks.find((item) => item.id === lookId);
+  const from = look?.plannedFor;
+  if (!look || !from || from === date || from < todayDate())
+    return Promise.resolve(true);
+  return confirmAction(
+    t("looks.moveTitle", {
+      name: look.name,
+      date: shortDate(from, locale),
+    }),
+    "",
+    t("looks.move"),
   );
 }

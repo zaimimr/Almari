@@ -168,6 +168,28 @@ export function setPlannedFor(
   };
 }
 
+export function planSnapshot(closet: Pick<Closet, "looks">) {
+  return Object.fromEntries(
+    closet.looks.flatMap((look) =>
+      look.plannedFor ? [[look.id, look.plannedFor] as const] : [],
+    ),
+  );
+}
+
+export function restorePlans(
+  closet: Closet,
+  snapshot: Record<string, string>,
+): Closet {
+  return {
+    ...closet,
+    looks: closet.looks.map((look) => {
+      const { plannedFor: _, ...rest } = look;
+      const date = snapshot[look.id];
+      return date ? { ...rest, plannedFor: date } : rest;
+    }),
+  };
+}
+
 export function plannedOn(
   closet: Pick<Closet, "looks">,
   date: string,

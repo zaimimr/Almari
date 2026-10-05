@@ -11,6 +11,7 @@ import {
   showLook,
   startOccasion,
   startPlan,
+  toggleKeep,
   unsavedPlan,
 } from "./today";
 import { setPlannedFor } from "./looks";
@@ -156,8 +157,12 @@ test("showing a look keeps its exact pieces and occasion and marks it as shown",
   assert.equal(session.shown, true);
   assert.equal(session.request.occasion, "eid");
   assert.ok(session.revision > before.revision);
-  const everyday = showLook(closet, { pieceIds, occasion: null });
+  const everyday = showLook(toggleKeep(closet, before.pieceIds[0]!), {
+    pieceIds,
+    occasion: null,
+  });
   const plain = activeSession(everyday.styling.today!);
+  assert.deepEqual(plain.request.keptIds, []);
   assert.deepEqual(plain.pieceIds, pieceIds);
   assert.equal(plain.request.occasion, before.request.occasion);
 });

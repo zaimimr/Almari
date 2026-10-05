@@ -2,7 +2,11 @@ import { router, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { lookEntries, setPlannedFor } from "../../src/domain/looks";
 import type { LookEntry } from "../../src/domain/looks";
-import { confirmReplace, showOn } from "../../src/features/looks/actions";
+import {
+  confirmMove,
+  confirmReplace,
+  showOn,
+} from "../../src/features/looks/actions";
 import { entryMeta, todayDate } from "../../src/features/looks/format";
 import { locale, t } from "../../src/i18n";
 import { useCloset } from "../../src/state/closet";
@@ -19,7 +23,8 @@ export default function PlanDay() {
 
   const pick = async (entry: LookEntry) => {
     const lookId = entry.lookId;
-    if (!lookId || !(await confirmReplace(closet, date, lookId))) return;
+    if (!lookId || !(await confirmMove(closet, date, lookId))) return;
+    if (!(await confirmReplace(closet, date, lookId))) return;
     const now = date === today;
     try {
       await update((current) => {

@@ -11,7 +11,9 @@ import {
   plannedOn,
   plannedPieces,
   plannedToday,
+  planSnapshot,
   removeLook,
+  restorePlans,
   setPlannedFor,
   wearCalendar,
   weekPlan,
@@ -263,6 +265,16 @@ test("one look per day, past plans expire, and the week shows each day", () => {
     "2026-10-11",
   );
   assert.equal(plannedOn(both, "2026-10-11")?.id, "office");
+  const before = setPlannedFor(both, "eid", "2026-10-11");
+  const undone = restorePlans(
+    setPlannedFor(before, "office", "2026-10-11"),
+    planSnapshot(before),
+  );
+  assert.equal(plannedOn(undone, "2026-10-11")?.id, "eid");
+  assert.equal(
+    undone.looks.find((look) => look.id === "office")?.plannedFor,
+    undefined,
+  );
   assert.equal(
     both.looks.find((look) => look.id === "eid")?.plannedFor,
     undefined,

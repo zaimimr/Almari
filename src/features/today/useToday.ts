@@ -137,7 +137,10 @@ export function useToday() {
     showOutfit && request && !worn ? weatherTip(pieces, request, pool) : null;
   const broken = review.filter((problem) => problem.severity !== "review");
 
-  const name = request ? outfitName(pieces, request.occasion, locale) : "";
+  const savedLook = session ? lookForPieces(closet, session.pieceIds) : null;
+  const name = request
+    ? (savedLook?.name ?? outfitName(pieces, request.occasion, locale))
+    : "";
   const scorer = rulesScorer;
   const context = useMemo(() => scoreContext(closet), [closet]);
   const score = useCallback(
@@ -334,7 +337,6 @@ export function useToday() {
         : likeOutfit(current, at(), randomUUID()),
     );
 
-  const savedLook = session ? lookForPieces(closet, session.pieceIds) : null;
   const saveLook = async () => {
     if (!session || !request) return null;
     const id = randomUUID();
