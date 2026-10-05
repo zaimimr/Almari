@@ -1,0 +1,46 @@
+appId: com.zaimimran.almari
+# seed: fresh.sh,seed-capture.sh
+---
+- runFlow: ../lib/open-add.yaml
+- extendedWaitUntil:
+    visible: "3 pieces in one photo"
+    timeout: 120000
+- extendedWaitUntil:
+    notVisible:
+      id: "moment-generating"
+    timeout: 120000
+- tapOn: "3 pieces in one photo"
+- assertVisible: "3 of 3"
+- tapOn:
+    id: "region-1"
+- assertVisible: "2 of 3"
+- tapOn:
+    id: "group-all"
+- assertVisible: "3 of 3"
+- tapOn:
+    id: "group-all"
+- assertVisible: "0 of 3"
+- assertVisible:
+    id: "group-remove"
+- tapOn:
+    id: "group-all"
+- scrollUntilVisible:
+    element:
+      id: "group-draw"
+    centerElement: true
+- tapOn:
+    id: "group-draw"
+- tapOn:
+    id: "draw-area"
+- extendedWaitUntil:
+    visible:
+      id: "draw-box"
+    timeout: 30000
+- tapOn: "Use"
+- extendedWaitUntil:
+    visible:
+      id: "group-done"
+      enabled: true
+    timeout: 90000
+- assertVisible: "4 of 4"
+- assertVisible: "Add 4 pieces"

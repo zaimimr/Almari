@@ -2,19 +2,37 @@ import { useRef, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { Image } from "expo-image";
 import { randomUUID } from "expo-crypto";
+import * as Haptics from "expo-haptics";
 import { router, useLocalSearchParams } from "expo-router";
+import Animated, { FadeIn, ReduceMotion } from "react-native-reanimated";
+import ClosetVision from "../../../modules/closet-vision/src";
 import type { Frame, ImportJob } from "../../../src/domain/closet";
-import { boxFrom, resizeBox } from "../../../src/domain/capture";
+import {
+  boxAround,
+  boxFrom,
+  holds,
+  matchingPiece,
+  pickedBox,
+  resizeBox,
+  toggled,
+  toggledAll,
+} from "../../../src/domain/capture";
 import {
   acceptImports,
   addToCapture,
-  captureJobs,
+  captureMembers,
   cropCapture,
   isSettled,
+  jobFrame,
   removeImport,
   setKeepAsSet,
 } from "../../../src/domain/importing";
 import { jobPiece } from "../../../src/features/capture/jobs";
+import {
+  PickPulse,
+  RegionMark,
+  place,
+} from "../../../src/features/capture/RegionMark";
 import { t } from "../../../src/i18n";
 import { useDiscardChanges } from "../../../src/navigation/useDiscardChanges";
 import { useCloset } from "../../../src/state/closet";
@@ -32,27 +50,34 @@ import {
   Text,
   Tile,
 } from "../../../src/ui";
+import { confirmAction } from "../../../src/ui/confirm";
+import { motion } from "../../../src/ui/motion";
 import { theme } from "../../../src/ui/theme";
 import { useColors } from "../../../src/ui/useColors";
 import { useLargeText } from "../../../src/ui/useLargeText";
 
-const startBox: Frame = { x: 0.25, y: 0.25, width: 0.5, height: 0.5 };
 const step = 0.05;
 const moveStep = 0.05;
 
 const handle = 28;
 
+type Point = { x: number; y: number };
+
 type Drag =
-  | { mode: "draw"; start: { x: number; y: number }; moved: boolean }
-  | { mode: "move"; offset: { x: number; y: number }; moved: boolean }
-  | { mode: "resize"; anchor: { x: number; y: number }; moved: boolean };
+  | { mode: "draw"; start: Point; moved: boolean }
+  | { mode: "move"; start: Point; offset: Point; moved: boolean }
+  | { mode: "resize"; start: Point; anchor: Point; moved: boolean };
+
+type Drawing = { job: string | null; box: Frame | null };
 
 const clamp = (value: number, max: number) =>
   Math.min(Math.max(value, 0), Math.max(max, 0));
 
-function frameOf(job: ImportJob) {
-  return job.crop ?? job.region?.frame ?? null;
-}
+const area = (frame: Frame) => frame.width * frame.height;
+
+const boxIn = FadeIn.duration(motion.duration.base)
+  .easing(motion.easing.fall)
+  .reduceMotion(ReduceMotion.Never);
 
 function nameOf(job: ImportJob, number: number) {
   if (job.name) return job.name;
@@ -61,30 +86,35 @@ function nameOf(job: ImportJob, number: number) {
     : t("capture.photoNumber", { number });
 }
 
-function place(frame: Frame) {
-  return {
-    left: `${frame.x * 100}%`,
-    top: `${frame.y * 100}%`,
-    width: `${frame.width * 100}%`,
-    height: `${frame.height * 100}%`,
-  } as const;
+function foundNothing(job: ImportJob) {
+  return job.state === "failed" && job.error === "no-clothing" && !job.region;
 }
 
 const percent = (value: number) => Math.round(value * 100);
 
 export default function PiecesFound() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, add } = useLocalSearchParams<{ id: string; add?: string }>();
+  const entry = add === "1";
   const { closet, update } = useCloset();
   const colors = useColors();
   const { ax } = useLargeText();
-  const jobs = captureJobs(closet, id);
+  const jobs = captureMembers(closet, id);
   const [initialSet] = useState(() => jobs.some((job) => job.keepAsSet));
   const [dropped, setDropped] = useState<string[]>([]);
   const [keepSet, setKeepSet] = useState(initialSet);
-  const [drawing, setDrawing] = useState<{
-    job: string | null;
-    box: Frame;
-  } | null>(null);
+  const [drawing, setDrawing] = useState<Drawing | null>(() =>
+    entry || (jobs.length > 0 && jobs.every(foundNothing))
+      ? { job: null, box: null }
+      : null,
+  );
+  const [picking, setPicking] = useState<Point | null>(null);
+  const [picks, setPicks] = useState(0);
+  const [flash, setFlash] = useState<{ job: string; count: number } | null>(
+    null,
+  );
+  const [notice, setNotice] = useState<string | null>(null);
+  const [added, setAdded] = useState(false);
+  const pickRun = useRef(0);
   const gesture = useRef<Drag | null>(null);
   const [width, setWidth] = useState(0);
   const [aspect, setAspect] = useState(0.75);
@@ -111,29 +141,88 @@ export default function PiecesFound() {
   );
   const waiting = kept.some((job) => !isSettled(job));
   const height = width / aspect;
+  const numbered = jobs.map((job, index) => ({ job, number: index + 1 }));
+  const layered = [...numbered].sort(
+    (a, b) => area(jobFrame(b.job)) - area(jobFrame(a.job)),
+  );
 
   function point(x: number, y: number) {
     return {
-      x: width ? x / width : 0,
-      y: height ? y / height : 0,
+      x: width ? clamp(x / width, 1) : 0,
+      y: height ? clamp(y / height, 1) : 0,
     };
   }
 
+  function setBox(box: Frame | null) {
+    setDrawing((current) => (current ? { ...current, box } : current));
+  }
+
+  function others(job: string | null) {
+    return jobs.filter((item) => item.id !== job && !foundNothing(item));
+  }
+
+  function alreadyFound(match: ImportJob) {
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    setFlash((current) => ({
+      job: match.id,
+      count: (current?.count ?? 0) + 1,
+    }));
+    if (dropped.includes(match.id)) {
+      setDropped((current) => toggled(current, match.id));
+      setNotice(null);
+      setDrawing(null);
+      return;
+    }
+    setNotice(t("capture.alreadyFound"));
+    setBox(null);
+  }
+
+  function duplicateOf(job: string | null, box: Frame) {
+    const candidates = others(job);
+    const match = matchingPiece(candidates.map(jobFrame), box);
+    return match >= 0 ? candidates[match]! : null;
+  }
+
+  async function pick(at: Point) {
+    if (!drawing || busy) return;
+    const run = (pickRun.current += 1);
+    setNotice(null);
+    setPicking(at);
+    const found = await ClosetVision.pickGarment(
+      photoUri(source),
+      at.x,
+      at.y,
+    ).catch(() => null);
+    if (run !== pickRun.current) return;
+    setPicking(null);
+    const picked = found ? pickedBox(found) : null;
+    const hit = picked && holds(picked, at) ? picked : null;
+    const box = hit ?? boxAround(at);
+    const match = hit ? duplicateOf(drawing.job, hit) : null;
+    if (match) {
+      alreadyFound(match);
+      return;
+    }
+    void (hit
+      ? Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+      : Haptics.selectionAsync());
+    setPicks((count) => count + 1);
+    setBox(box);
+  }
+
   function moveBox(dx: number, dy: number) {
-    if (!drawing) return;
-    const box = drawing.box;
-    setDrawing({
-      ...drawing,
-      box: {
-        ...box,
-        x: clamp(box.x + dx, 1 - box.width),
-        y: clamp(box.y + dy, 1 - box.height),
-      },
+    const box = drawing?.box;
+    if (!box) return;
+    setBox({
+      ...box,
+      x: clamp(box.x + dx, 1 - box.width),
+      y: clamp(box.y + dy, 1 - box.height),
     });
   }
 
-  function grab(at: { x: number; y: number }): Drag {
-    const box = drawing!.box;
+  function grab(at: Point): Drag {
+    const box = drawing?.box;
+    if (!box) return { mode: "draw", start: at, moved: false };
     const near = (x: number, y: number) =>
       Math.abs((at.x - x) * width) < handle &&
       Math.abs((at.y - y) * height) < handle;
@@ -147,6 +236,7 @@ export default function PiecesFound() {
     if (corner)
       return {
         mode: "resize",
+        start: at,
         anchor: { x: corner[2], y: corner[3] },
         moved: false,
       };
@@ -158,57 +248,91 @@ export default function PiecesFound() {
     return inside
       ? {
           mode: "move",
+          start: at,
           offset: { x: at.x - box.x, y: at.y - box.y },
           moved: false,
         }
       : { mode: "draw", start: at, moved: false };
   }
 
-  function drag(current: Drag, at: { x: number; y: number }) {
-    if (!drawing) return;
-    const box = drawing.box;
-    const next =
-      current.mode === "move"
-        ? {
-            ...box,
-            x: clamp(at.x - current.offset.x, 1 - box.width),
-            y: clamp(at.y - current.offset.y, 1 - box.height),
-          }
-        : boxFrom(current.mode === "draw" ? current.start : current.anchor, at);
+  function drag(current: Drag, at: Point) {
+    const box = drawing?.box;
+    if (current.mode === "move" && box) {
+      current.moved = true;
+      setBox({
+        ...box,
+        x: clamp(at.x - current.offset.x, 1 - box.width),
+        y: clamp(at.y - current.offset.y, 1 - box.height),
+      });
+      return;
+    }
+    const next = boxFrom(
+      current.mode === "resize" ? current.anchor : current.start,
+      at,
+    );
     if (!next) return;
+    if (!current.moved) {
+      pickRun.current += 1;
+      setPicking(null);
+      setNotice(null);
+    }
     current.moved = true;
-    setDrawing({ ...drawing, box: next });
+    setBox(next);
   }
 
-  function centreBox(at: { x: number; y: number }) {
-    if (!drawing) return;
-    const box = drawing.box;
-    setDrawing({
-      ...drawing,
-      box: {
-        ...box,
-        x: clamp(at.x - box.width / 2, 1 - box.width),
-        y: clamp(at.y - box.height / 2, 1 - box.height),
-      },
+  function centreBox(at: Point) {
+    const box = drawing?.box;
+    if (!box) return;
+    setBox({
+      ...box,
+      x: clamp(at.x - box.width / 2, 1 - box.width),
+      y: clamp(at.y - box.height / 2, 1 - box.height),
     });
   }
 
   function resize(change: number) {
-    if (drawing)
-      setDrawing({ ...drawing, box: resizeBox(drawing.box, change) });
+    const box = drawing?.box;
+    if (box) setBox(resizeBox(box, change));
   }
 
   function toggle(job: string) {
+    void Haptics.selectionAsync();
+    setDropped((current) => toggled(current, job));
+  }
+
+  function toggleAll() {
+    void Haptics.selectionAsync();
     setDropped((current) =>
-      current.includes(job)
-        ? current.filter((item) => item !== job)
-        : [...current, job],
+      toggledAll(
+        jobs.map((job) => job.id),
+        current,
+      ),
     );
   }
 
+  function startAdding() {
+    setNotice(null);
+    setError(null);
+    setDrawing({ job: null, box: null });
+  }
+
+  function stopDrawing() {
+    pickRun.current += 1;
+    setPicking(null);
+    setNotice(null);
+    setError(null);
+    if (entry && !added && drawing?.job === null) router.back();
+    else setDrawing(null);
+  }
+
   async function applyBox() {
-    if (!drawing || busy) return;
+    if (!drawing?.box || busy || picking) return;
     const { job, box } = drawing;
+    const match = scanned ? null : duplicateOf(job, box);
+    if (match) {
+      alreadyFound(match);
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -217,6 +341,9 @@ export default function PiecesFound() {
           ? cropCapture(current, job, box, `${job}-${randomUUID()}`)
           : addToCapture(current, id, randomUUID(), box, now().toISOString()),
       );
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setAdded(true);
+      setNotice(null);
       setDrawing(null);
     } catch {
       setError(t("capture.saveFailed"));
@@ -230,6 +357,27 @@ export default function PiecesFound() {
       pathname: "/capture/[id]",
       params: { id: job, run: adding.map((item) => item.id).join(",") },
     });
+  }
+
+  async function removeAll() {
+    if (busy) return;
+    if (
+      !(await confirmAction(t("capture.removeTitle"), "", t("capture.remove")))
+    )
+      return;
+    setBusy(true);
+    setError(null);
+    try {
+      await changeImports(update, (current) =>
+        jobs.reduce((result, job) => removeImport(result, job.id), current),
+      );
+      allowClose();
+      if (entry) router.dismissTo("/capture");
+      else router.back();
+    } catch {
+      setError(t("capture.saveFailed"));
+      setBusy(false);
+    }
   }
 
   async function done() {
@@ -260,12 +408,141 @@ export default function PiecesFound() {
       setLastAdded(ids);
       allowClose();
       if (emptied) router.dismissTo("/closet");
+      else if (entry) router.dismissTo("/capture");
       else router.back();
     } catch {
       setError(t("capture.saveFailed"));
       setBusy(false);
     }
   }
+
+  const box = drawing?.box ?? null;
+
+  const drawArea = drawing ? (
+    <View
+      style={StyleSheet.absoluteFill}
+      testID="draw-area"
+      accessible
+      accessibilityRole="adjustable"
+      accessibilityLabel={t("capture.box")}
+      accessibilityValue={
+        box
+          ? {
+              text: t("capture.boxValue", {
+                width: percent(box.width),
+                height: percent(box.height),
+                x: percent(box.x),
+                y: percent(box.y),
+              }),
+            }
+          : undefined
+      }
+      accessibilityActions={[
+        { name: "increment", label: t("capture.larger") },
+        { name: "decrement", label: t("capture.smaller") },
+        {
+          name: "up",
+          label: t("common.move", { direction: t("direction.up") }),
+        },
+        {
+          name: "down",
+          label: t("common.move", { direction: t("direction.down") }),
+        },
+        {
+          name: "left",
+          label: t("common.move", { direction: t("direction.left") }),
+        },
+        {
+          name: "right",
+          label: t("common.move", { direction: t("direction.right") }),
+        },
+      ]}
+      onAccessibilityAction={(event) => {
+        const action = event.nativeEvent.actionName;
+        if (!box) {
+          setBox(boxAround({ x: 0.5, y: 0.5 }, 0.5));
+          return;
+        }
+        if (action === "increment") resize(step);
+        else if (action === "decrement") resize(-step);
+        else if (action === "up") moveBox(0, -moveStep);
+        else if (action === "down") moveBox(0, moveStep);
+        else if (action === "left") moveBox(-moveStep, 0);
+        else if (action === "right") moveBox(moveStep, 0);
+      }}
+      onAccessibilityEscape={stopDrawing}
+      onStartShouldSetResponder={() => true}
+      onMoveShouldSetResponder={() => true}
+      onResponderTerminationRequest={() => false}
+      onResponderGrant={(event) => {
+        gesture.current = grab(
+          point(event.nativeEvent.locationX, event.nativeEvent.locationY),
+        );
+      }}
+      onResponderMove={(event) => {
+        const current = gesture.current;
+        if (current)
+          drag(
+            current,
+            point(event.nativeEvent.locationX, event.nativeEvent.locationY),
+          );
+      }}
+      onResponderRelease={() => {
+        const current = gesture.current;
+        gesture.current = null;
+        if (!current || current.moved) return;
+        if (drawing.job === null) void pick(current.start);
+        else if (current.mode === "draw") centreBox(current.start);
+      }}
+    >
+      {box ? (
+        <Animated.View
+          key={picks}
+          entering={boxIn}
+          pointerEvents="none"
+          testID="draw-box"
+          style={[
+            styles.box,
+            {
+              borderColor: colors.blush,
+              backgroundColor: `${colors.blush}24`,
+              shadowColor: colors.ink,
+            },
+            place(box),
+          ]}
+        >
+          {(
+            [
+              { top: -8, left: -8 },
+              { top: -8, right: -8 },
+              { bottom: -8, left: -8 },
+              { bottom: -8, right: -8 },
+            ] as const
+          ).map((corner, index) => (
+            <View
+              key={index}
+              style={[
+                styles.handle,
+                corner,
+                {
+                  backgroundColor: colors.onMedia,
+                  borderColor: colors.blushStrong,
+                },
+              ]}
+            />
+          ))}
+        </Animated.View>
+      ) : null}
+      {picking ? <PickPulse at={picking} /> : null}
+      {busy ? (
+        <View
+          testID="moment-selecting"
+          pointerEvents="none"
+          style={StyleSheet.absoluteFill}
+        />
+      ) : null}
+    </View>
+  ) : null;
 
   const photo = (
     <View
@@ -282,161 +559,45 @@ export default function PiecesFound() {
         accessibilityLabel={t("capture.photo")}
         onLoad={(event) => setAspect(event.source.width / event.source.height)}
       />
-      {drawing ? (
-        <View
-          style={StyleSheet.absoluteFill}
-          testID="draw-area"
-          accessible
-          accessibilityRole="adjustable"
-          accessibilityLabel={t("capture.box")}
-          accessibilityValue={{
-            text: t("capture.boxValue", {
-              width: percent(drawing.box.width),
-              height: percent(drawing.box.height),
-              x: percent(drawing.box.x),
-              y: percent(drawing.box.y),
-            }),
-          }}
-          accessibilityActions={[
-            { name: "increment", label: t("capture.larger") },
-            { name: "decrement", label: t("capture.smaller") },
-            {
-              name: "up",
-              label: t("common.move", { direction: t("direction.up") }),
-            },
-            {
-              name: "down",
-              label: t("common.move", { direction: t("direction.down") }),
-            },
-            {
-              name: "left",
-              label: t("common.move", { direction: t("direction.left") }),
-            },
-            {
-              name: "right",
-              label: t("common.move", { direction: t("direction.right") }),
-            },
-          ]}
-          onAccessibilityAction={(event) => {
-            const action = event.nativeEvent.actionName;
-            if (action === "increment") resize(step);
-            else if (action === "decrement") resize(-step);
-            else if (action === "up") moveBox(0, -moveStep);
-            else if (action === "down") moveBox(0, moveStep);
-            else if (action === "left") moveBox(-moveStep, 0);
-            else if (action === "right") moveBox(moveStep, 0);
-          }}
-          onAccessibilityEscape={() => setDrawing(null)}
-          onStartShouldSetResponder={() => true}
-          onMoveShouldSetResponder={() => true}
-          onResponderTerminationRequest={() => false}
-          onResponderGrant={(event) => {
-            gesture.current = grab(
-              point(event.nativeEvent.locationX, event.nativeEvent.locationY),
-            );
-          }}
-          onResponderMove={(event) => {
-            const current = gesture.current;
-            if (current)
-              drag(
-                current,
-                point(event.nativeEvent.locationX, event.nativeEvent.locationY),
-              );
-          }}
-          onResponderRelease={() => {
-            const current = gesture.current;
-            gesture.current = null;
-            if (current?.mode === "draw" && !current.moved)
-              centreBox(current.start);
-          }}
-        >
-          <View
-            pointerEvents="none"
-            style={[
-              styles.box,
-              {
-                borderColor: colors.blush,
-                backgroundColor: `${colors.plumSoft}40`,
-              },
-              place(drawing.box),
-            ]}
-          >
-            {(
-              [
-                { top: -8, left: -8 },
-                { top: -8, right: -8 },
-                { bottom: -8, left: -8 },
-                { bottom: -8, right: -8 },
-              ] as const
-            ).map((corner, index) => (
-              <View
-                key={index}
-                style={[
-                  styles.handle,
-                  corner,
-                  {
-                    backgroundColor: colors.onMedia,
-                    borderColor: colors.blushStrong,
-                  },
-                ]}
-              />
-            ))}
-          </View>
-          {busy ? (
-            <View
-              testID="moment-selecting"
-              pointerEvents="none"
-              style={StyleSheet.absoluteFill}
-            />
-          ) : null}
-        </View>
-      ) : (
-        jobs.map((job, index) => {
-          const frame = frameOf(job);
-          if (!frame) return null;
-          const isDropped = dropped.includes(job.id);
-          return (
-            <Pressable
-              key={job.id}
-              testID={`region-${index + 1}`}
-              accessibilityRole="button"
-              accessibilityLabel={`${index + 1}, ${nameOf(job, index + 1)}, ${t("capture.adjust")}`}
-              hitSlop={12}
-              disabled={!isSettled(job)}
-              onPress={() => setDrawing({ job: job.id, box: frame })}
-              style={[
-                styles.outline,
-                {
-                  borderColor: isDropped ? colors.onMedia : colors.blush,
-                  borderStyle: isDropped ? "dashed" : "solid",
-                  shadowColor: colors.ink,
-                },
-                place(frame),
-              ]}
-            >
-              {ax ? null : (
-                <View
-                  style={[styles.pill, { backgroundColor: colors.scrimPill }]}
-                >
-                  <Text role="mark" tone="onMedia">
-                    {index + 1}
-                  </Text>
-                </View>
-              )}
-            </Pressable>
-          );
-        })
-      )}
+      {layered.map(({ job, number }) => {
+        if (drawing && (job.id === drawing.job || foundNothing(job)))
+          return null;
+        const name = nameOf(job, number);
+        return (
+          <RegionMark
+            key={job.id}
+            frame={jobFrame(job)}
+            number={number}
+            label={`${number}, ${name}`}
+            kept={!dropped.includes(job.id)}
+            order={number - 1}
+            compact={ax}
+            faint={Boolean(drawing)}
+            flash={flash?.job === job.id ? flash.count : 0}
+            onToggle={() => toggle(job.id)}
+            onAdjust={
+              isSettled(job)
+                ? () => {
+                    setNotice(null);
+                    setDrawing({ job: job.id, box: jobFrame(job) });
+                  }
+                : undefined
+            }
+            testID={`region-${number}`}
+          />
+        );
+      })}
+      {drawArea}
     </View>
   );
 
   if (drawing)
     return (
       <Screen
-        title={t("capture.group.title")}
+        title={drawing.job ? t("capture.group.title") : t("capture.pickPiece")}
         headerTitleVisible
         leading="cancel"
-        onCancel={() => setDrawing(null)}
+        onCancel={stopDrawing}
         footer={
           <Footer
             error={error}
@@ -444,15 +605,29 @@ export default function PiecesFound() {
               label: t("capture.useBox"),
               onPress: () => void applyBox(),
               busy,
+              disabled: !box || Boolean(picking),
               testID: "group-use-box",
             }}
           />
         }
         testID="group-screen"
       >
-        <View style={styles.content}>{photo}</View>
+        <View style={styles.content}>
+          {photo}
+          <Text
+            role="footnote"
+            tone={notice ? "rose" : "muted"}
+            style={styles.hint}
+            accessibilityLiveRegion="polite"
+            testID="group-hint"
+          >
+            {notice ?? t("capture.tapHint")}
+          </Text>
+        </View>
       </Screen>
     );
+
+  const none = kept.length === 0;
 
   return (
     <Screen
@@ -463,38 +638,69 @@ export default function PiecesFound() {
       footer={
         <Footer
           error={error}
-          waiting={waiting}
-          primary={{
-            label:
-              adding.length === 1
-                ? t("capture.addOne")
-                : t("capture.addMany", { count: adding.length }),
-            onPress: () => void done(),
-            busy,
-            disabled: adding.length === 0,
-            testID: "group-done",
-          }}
+          waiting={waiting && !none}
+          primary={
+            none
+              ? {
+                  label: t("capture.remove"),
+                  variant: "destructive",
+                  onPress: () => void removeAll(),
+                  busy,
+                  testID: "group-remove",
+                }
+              : {
+                  label:
+                    adding.length === 1
+                      ? t("capture.addOne")
+                      : t("capture.addMany", { count: adding.length }),
+                  onPress: () => void done(),
+                  busy,
+                  disabled: adding.length === 0,
+                  testID: "group-done",
+                }
+          }
         />
       }
       testID="group-screen"
     >
       <View style={styles.content}>
         {scanned ? null : photo}
+        {jobs.length > 1 ? (
+          <View style={styles.tally}>
+            <Text role="subhead" tone="muted" testID="group-count">
+              {t("capture.chosen", {
+                count: kept.length,
+                total: jobs.length,
+              })}
+            </Text>
+            <Button
+              label={
+                dropped.length
+                  ? t("capture.selectAll")
+                  : t("capture.selectNone")
+              }
+              variant="quiet"
+              size="small"
+              onPress={toggleAll}
+              testID="group-all"
+            />
+          </View>
+        ) : null}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.strip}
           testID="group-strip"
         >
-          {jobs.map((job, index) => {
-            const name = nameOf(job, index + 1);
-            const spoken = scanned ? name : `${index + 1}, ${name}`;
+          {numbered.map(({ job, number }) => {
+            const name = nameOf(job, number);
+            const spoken = scanned ? name : `${number}, ${name}`;
             const isKept = !dropped.includes(job.id);
             return (
-              <View key={job.id}>
+              <View key={job.id} style={isKept ? null : styles.left}>
                 <Tile
                   image={jobPiece(job)}
-                  label={scanned ? name : `${index + 1} ${name}`}
+                  label={scanned ? name : `${number} ${name}`}
                   meta={
                     job.state === "failed"
                       ? t(
@@ -520,7 +726,7 @@ export default function PiecesFound() {
                       : undefined
                   }
                   accessibilityLabel={spoken}
-                  testID={`group-card-${index + 1}`}
+                  testID={`group-card-${number}`}
                 />
                 <Pressable
                   accessibilityRole="checkbox"
@@ -535,7 +741,7 @@ export default function PiecesFound() {
                       borderColor: isKept ? colors.blushStrong : colors.onMedia,
                     },
                   ]}
-                  testID={`group-row-${index + 1}`}
+                  testID={`group-row-${number}`}
                 >
                   {isKept ? (
                     <Symbol
@@ -550,6 +756,17 @@ export default function PiecesFound() {
             );
           })}
         </ScrollView>
+        {scanned ? null : (
+          <View style={styles.bleed}>
+            <Button
+              label={t("capture.pickPiece")}
+              icon="plus"
+              variant="quiet"
+              onPress={startAdding}
+              testID="group-draw"
+            />
+          </View>
+        )}
         {jobs.length > 1 ? (
           <Rows>
             <Row
@@ -565,16 +782,6 @@ export default function PiecesFound() {
             />
           </Rows>
         ) : null}
-        {scanned ? null : (
-          <View style={styles.bleed}>
-            <Button
-              label={t("capture.addPiece")}
-              variant="quiet"
-              onPress={() => setDrawing({ job: null, box: startBox })}
-              testID="group-draw"
-            />
-          </View>
-        )}
       </View>
     </Screen>
   );
@@ -588,24 +795,13 @@ const styles = StyleSheet.create({
     borderCurve: "continuous",
     overflow: "hidden",
   },
-  outline: {
-    position: "absolute",
-    borderWidth: 2,
-    borderRadius: theme.radius.sm,
-    shadowOpacity: 0.6,
-    shadowRadius: 1,
-    shadowOffset: { width: 0, height: 0 },
-  },
   box: {
     position: "absolute",
-    borderWidth: 2,
+    borderWidth: 2.5,
     borderRadius: theme.radius.sm,
-  },
-  pill: {
-    alignSelf: "flex-start",
-    margin: theme.space.xs,
-    paddingHorizontal: theme.space.sm,
-    borderRadius: theme.radius.full,
+    shadowOpacity: 0.35,
+    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 0 },
   },
   handle: {
     position: "absolute",
@@ -614,7 +810,17 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 2,
   },
+  hint: { textAlign: "center" },
+  tally: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    flexWrap: "wrap",
+    marginRight: -theme.space.sm,
+    marginBottom: -theme.space.sm,
+  },
   strip: { gap: theme.space.md },
+  left: { opacity: 0.55 },
   check: {
     position: "absolute",
     top: theme.space.sm,
