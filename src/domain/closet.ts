@@ -454,6 +454,7 @@ export type Forecast = {
   low: number;
   high: number;
   attribution: { logo: string; url: string };
+  hours?: ForecastHour[];
 };
 
 export type CardLayout = "minimal" | "reasons" | "full";
@@ -482,6 +483,23 @@ export type OutfitRequest = {
   hijab: HijabPreference;
   wardrobe: WardrobeMode;
   coverage?: CoverageNeed;
+  feel?: Feel;
+};
+
+export type Feel = "comfy" | "smart" | "dressed";
+
+export type Slot = "morning" | "afternoon" | "evening";
+
+export type DayFit = {
+  id: string;
+  date: string;
+  pieceIds: string[];
+  occasion: Occasion;
+  slot: Slot;
+  celsius: number | null;
+  createdAt: string;
+  wornAt?: string;
+  wearId?: string;
 };
 
 export type Engine = "rules" | "model";
@@ -523,6 +541,7 @@ export type Styling = {
   name?: string;
   notification?: NotificationTime | null;
   weekdaysOnly?: boolean;
+  fits?: Record<string, DayFit[]>;
 };
 
 export type Closet = {
@@ -1019,7 +1038,10 @@ function isRequest(value: unknown): value is OutfitRequest {
     isWeather(value.weather) &&
     isHijabPreference(value.hijab) &&
     isWardrobe(value.wardrobe) &&
-    optional(value.coverage, isCoverageNeed)
+    optional(value.coverage, isCoverageNeed) &&
+    optional(value.feel, (feel): feel is Feel =>
+      ["comfy", "smart", "dressed"].includes(feel as string),
+    )
   );
 }
 
@@ -1433,9 +1455,46 @@ function isForecast(value: unknown): value is Forecast {
     isNumber(value.high) &&
     isRecord(value.attribution) &&
     isString(value.attribution.logo) &&
-    isString(value.attribution.url)
+    isString(value.attribution.url) &&
+    optional(
+      value.hours,
+      (hours): hours is ForecastHour[] =>
+        Array.isArray(hours) &&
+        hours.every(
+          (hour) =>
+            isRecord(hour) &&
+            isString(hour.at) &&
+            isNumber(hour.celsius) &&
+            isNumber(hour.chance) &&
+            isNumber(hour.windMs),
+        ),
+    )
   );
 }
+
+function isDayFit(value: unknown): value is DayFit {
+  return (
+    isRecord(value) &&
+    isString(value.id) &&
+    isString(value.date) &&
+    isUniqueStrings(value.pieceIds) &&
+    isOccasion(value.occasion) &&
+    ["morning", "afternoon", "evening"].includes(value.slot as string) &&
+    (value.celsius === null || isNumber(value.celsius)) &&
+    isString(value.createdAt) &&
+    optional(value.wornAt, isString) &&
+    optional(value.wearId, isString)
+  );
+}
+
+const fitDays = (value: unknown): unknown =>
+  isRecord(value)
+    ? Object.fromEntries(
+        Object.entries(value).flatMap(([date, fits]) =>
+          Array.isArray(fits) ? [[date, fits.filter(isDayFit)]] : [],
+        ),
+      )
+    : undefined;
 
 function isNeverWear(value: unknown): value is NeverWear {
   if (!isRecord(value)) return false;
@@ -1478,6 +1537,7 @@ function withOnboardingState(closet: Closet): Closet {
       notification: (value) =>
         value === null || isClockTime(value) ? value : undefined,
       weekdaysOnly: (value) => (typeof value === "boolean" ? value : undefined),
+      fits: fitDays,
     },
   );
   const profile =

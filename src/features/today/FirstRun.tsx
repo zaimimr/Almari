@@ -5,9 +5,9 @@ import { t } from "../../i18n";
 import { now } from "../../state/clock";
 import { Banner, EmptyState } from "../../ui";
 import { theme } from "../../ui/theme";
-import type { TodayModel } from "./useToday";
+import type { HomeModel } from "./useHome";
 
-export function FirstRun({ model }: { model: TodayModel }) {
+export function FirstRun({ model }: { model: HomeModel }) {
   const trySample = () =>
     void model.restyle((current) =>
       saveEverydayStyle(

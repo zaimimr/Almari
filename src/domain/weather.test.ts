@@ -148,7 +148,7 @@ test("hours for another day give no forecast", () => {
   assert.equal(forecastFor({ hours: [], attribution }, date, "x", zone), null);
 });
 
-test("a stored forecast keeps the daytime range and the attribution", () => {
+test("a stored forecast keeps the daytime range, hours and attribution", () => {
   const hours = [
     hour(7, { celsius: 2 }),
     hour(9, { celsius: 6 }),
@@ -163,6 +163,7 @@ test("a stored forecast keeps the daytime range and the attribution", () => {
       low: 6,
       high: 11,
       attribution,
+      hours,
     },
   );
 });

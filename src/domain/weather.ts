@@ -55,7 +55,13 @@ export function weatherFromForecast(
   date: string,
   timeZone?: string,
 ): ForecastWeather | null {
-  const day = daytimeHours(hours, date, timeZone);
+  return weatherFromHours(daytimeHours(hours, date, timeZone), date);
+}
+
+export function weatherFromHours(
+  day: ForecastHour[],
+  date: string,
+): ForecastWeather | null {
   if (!day.length) return null;
   const feels =
     day.reduce((sum, item) => sum + feelsLike(item.celsius, item.windMs), 0) /
@@ -89,6 +95,7 @@ export function forecastFor(
     low: Math.min(...temperatures),
     high: Math.max(...temperatures),
     attribution: result.attribution,
+    hours: result.hours,
   };
 }
 

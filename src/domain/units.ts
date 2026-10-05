@@ -6,6 +6,10 @@ export function formatTemperature(celsius: number, units: Units) {
     : `${Math.round(celsius)}°C`;
 }
 
+export function formatDegrees(celsius: number, units: Units) {
+  return `${Math.round(units === "imperial" ? (celsius * 9) / 5 + 32 : celsius)}°`;
+}
+
 export function feetAndInches(cm: number) {
   const total = Math.round(cm / 2.54);
   return { feet: Math.floor(total / 12), inches: total % 12 };

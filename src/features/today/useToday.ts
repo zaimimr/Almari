@@ -1,27 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AppState } from "react-native";
-import { useFocusEffect } from "expo-router";
 import { randomUUID } from "expo-crypto";
 import {
   isAvailable,
   type Closet,
   type OutfitRequest,
   type Piece,
-  type Weather,
+  type Slot,
 } from "../../domain/closet";
-import {
-  likedNow,
-  likeOutfit,
-  recordSaved,
-  swapPiece,
-  undoFeedback,
-  woreThis,
-  wornNow,
-} from "../../domain/feedback";
+import { addFit, fitsOn, updateFit } from "../../domain/day";
+import { recordSaved, swapPiece, woreThis } from "../../domain/feedback";
 import { saveLook as storeLook } from "../../domain/closet";
-import { lookForPieces, plannedToday } from "../../domain/looks";
+import { lookForPieces } from "../../domain/looks";
 import { outfitName } from "../../domain/outfitName";
-import type { Occasion } from "../../domain/taxonomy";
 import { rulesScorer } from "../../domain/scoring/rulesScorer";
 import { scoreContext } from "../../domain/scoring/taste";
 import { evaluateOutfit } from "../../domain/styling";
@@ -29,31 +19,15 @@ import {
   activeSession,
   applyLook,
   applyRequest,
-  backToEveryday,
-  backToToday,
-  clockFor,
-  ensureToday,
-  nextLocalDate,
-  prepareTomorrow,
   resultFor,
-  saveForecast,
-  showLook,
-  startOccasion,
   startOver,
   tryAnother,
 } from "../../domain/today";
-import { forecastFor, forecastWeather } from "../../domain/weather";
 import { weatherTip } from "../../domain/weatherTip";
 import { locale, t } from "../../i18n";
 import { useCloset } from "../../state/closet";
 import { now } from "../../state/clock";
-import { fetchForecast } from "../../state/forecast";
-import { onLaunchIntent, takeLaunchIntent } from "../../state/launch";
 import { announce } from "../../ui/announce";
-
-export type Mode = "everyday" | "occasion" | "planning" | "tomorrow";
-
-export const intents = ["everyday", "work", "gym", "party"] as const;
 
 const at = () => now().toISOString();
 
@@ -67,29 +41,15 @@ export function useToday() {
     options: { restyle?: boolean };
   } | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
-  const [hour, setHour] = useState(() => now().getHours());
-  const [foregrounded, setForegrounded] = useState(0);
-  const [forecastFailed, setForecastFailed] = useState(false);
-  const [forecastDone, setForecastDone] = useState<string | null>(null);
   const announcing = useRef(false);
-  const shownPlan = useRef<string | null>(null);
   const handledStale = useRef<string | null>(null);
 
   const today = closet.styling.today;
   const session = today ? activeSession(today) : null;
   const request = session?.request ?? null;
   const revision = session?.revision ?? 0;
-  const clock = clockFor(now());
-
-  const mode: Mode = !today
-    ? "everyday"
-    : today.active === "tomorrow" && today.tomorrow
-      ? "tomorrow"
-      : today.active === "occasion" && today.occasion
-        ? today.occasion.date
-          ? "planning"
-          : "occasion"
-        : "everyday";
+  const date = session?.date ?? today?.localDate ?? "";
+  const planning = !!session?.date && session.date !== today?.localDate;
 
   const result = useMemo(
     () =>
@@ -99,16 +59,15 @@ export function useToday() {
     [closet, today, session],
   );
 
-  const worn = wornNow(closet);
   const pieces = useMemo(
     () =>
       session
         ? session.pieceIds.flatMap((id) => {
             const piece = closet.pieces.find((item) => item.id === id);
-            return piece && (worn || isAvailable(piece)) ? [piece] : [];
+            return piece && isAvailable(piece) ? [piece] : [];
           })
         : [],
-    [closet.pieces, session, worn],
+    [closet.pieces, session],
   );
   const lostPieces = session ? session.pieceIds.length - pieces.length : 0;
 
@@ -126,14 +85,13 @@ export function useToday() {
     !!result &&
     lostPieces === 0 &&
     pieces.length > 0 &&
-    (!!worn || (result.status !== "conflict" && result.status !== "missing"));
-
+    result.status !== "conflict" &&
+    result.status !== "missing";
   const review = useMemo(
     () => (showOutfit && request ? evaluateOutfit(pieces, request, pool) : []),
     [showOutfit, pieces, request, pool],
   );
-  const tip =
-    showOutfit && request && !worn ? weatherTip(pieces, request, pool) : null;
+  const tip = showOutfit && request ? weatherTip(pieces, request, pool) : null;
   const broken = review.filter((problem) => problem.severity !== "review");
 
   const savedLook = session ? lookForPieces(closet, session.pieceIds) : null;
@@ -195,98 +153,6 @@ export function useToday() {
     announce(t("today.announce.outfit", { name }), { queue: true });
   }, [pieceKey, name]);
 
-  const takeIntent = useCallback(() => {
-    setHour(now().getHours());
-    const intent = takeLaunchIntent();
-    if (intent?.day !== "tomorrow") return;
-    const date = nextLocalDate(clockFor(now()).localDate);
-    const place = closet.styling.place;
-    const weatherFor = async (): Promise<Weather> => {
-      if (!place) return { source: "unknown" };
-      try {
-        const found = await fetchForecast(place.latitude, place.longitude);
-        const forecast = found
-          ? forecastFor(found, date, at(), clockFor(now()).timeZone)
-          : null;
-        return forecast
-          ? {
-              ...forecast.weather,
-              exposure: closet.styling.everyday?.exposure ?? null,
-            }
-          : { source: "unknown" };
-      } catch {
-        return { source: "unknown" };
-      }
-    };
-    void weatherFor().then((weather) =>
-      update((current) =>
-        prepareTomorrow(current, clockFor(now()), weather),
-      ).catch(() => undefined),
-    );
-  }, [closet.styling.place, closet.styling.everyday, update]);
-  useFocusEffect(takeIntent);
-  useEffect(() => onLaunchIntent(takeIntent), [takeIntent]);
-
-  useEffect(() => {
-    const refresh = () => {
-      void update((current) => ensureToday(current, clockFor(now()))).catch(
-        () => undefined,
-      );
-    };
-    refresh();
-    const subscription = AppState.addEventListener("change", (state) => {
-      if (state !== "active") return;
-      refresh();
-      setHour(now().getHours());
-      setForegrounded((count) => count + 1);
-    });
-    return () => subscription.remove();
-  }, [update]);
-
-  const place = closet.styling.place;
-  const stored = closet.styling.forecast;
-  const localDate = today?.localDate;
-  const needsForecast =
-    !!place && !forecastWeather(stored, clock.localDate, clock.timeZone);
-  const forecastKey = `${localDate}:${foregrounded}:${place?.latitude}:${place?.longitude}`;
-  useEffect(() => {
-    if (!place || !needsForecast) return;
-    const day = clockFor(now());
-    let active = true;
-    fetchForecast(place.latitude, place.longitude)
-      .then((found) => {
-        const fresh = found
-          ? forecastFor(found, day.localDate, at(), day.timeZone)
-          : null;
-        if (!active) return;
-        setForecastFailed(!fresh);
-        setForecastDone(forecastKey);
-        if (fresh) return update((current) => saveForecast(current, fresh));
-      })
-      .catch(() => {
-        if (!active) return;
-        setForecastFailed(true);
-        setForecastDone(forecastKey);
-      });
-    return () => {
-      active = false;
-    };
-  }, [place, needsForecast, forecastKey, update]);
-  const forecastLoading = needsForecast && forecastDone !== forecastKey;
-  const [patient, setPatient] = useState(true);
-  useEffect(() => {
-    if (!forecastLoading) return;
-    const timer = setTimeout(() => setPatient(false), 3000);
-    return () => clearTimeout(timer);
-  }, [forecastLoading]);
-  const holding =
-    forecastLoading &&
-    patient &&
-    !!session &&
-    session.cursor === 0 &&
-    !session.previousPieceIds &&
-    !session.request.keptIds.length;
-
   const stylingFailed = failed
     ? () => void run(failed.transform, failed.options)
     : null;
@@ -303,50 +169,6 @@ export function useToday() {
       last ? startOver(current) : tryAnother(current, revision),
     );
 
-  const intent = (occasion: Occasion) => {
-    if (!request) return;
-    const anchored = request.keptIds.length > 0 || !!request.garmentType;
-    if (occasion === request.occasion && !anchored) return void another();
-    if (occasion === request.occasion)
-      return void restyle((current) =>
-        applyRequest(
-          current,
-          { ...request, keptIds: [], garmentType: null },
-          revision,
-        ),
-      );
-    const everyday = closet.styling.everyday?.occasion ?? "everyday";
-    void restyle((current) =>
-      occasion === everyday
-        ? backToEveryday(current)
-        : startOccasion(current, {
-            ...request,
-            occasion,
-            keptIds: [],
-            garmentType: null,
-          }),
-    );
-  };
-
-  const keepLiked = (current: Closet) =>
-    !session || !request || lookForPieces(current, session.pieceIds)
-      ? current
-      : storeLook(current, {
-          id: randomUUID(),
-          name,
-          pieceIds: session.pieceIds,
-          createdAt: at(),
-          occasion: request.occasion,
-        });
-
-  const liked = likedNow(closet);
-  const like = () =>
-    void run((current) =>
-      liked
-        ? undoFeedback(current, liked.id)
-        : likeOutfit(keepLiked(current), at(), randomUUID()),
-    );
-
   const saveLook = async () => {
     if (!session || !request) return null;
     const id = randomUUID();
@@ -359,7 +181,7 @@ export function useToday() {
           pieceIds: ids,
           createdAt: at(),
           occasion: request.occasion,
-          ...(session.date ? { plannedFor: session.date } : {}),
+          ...(planning ? { plannedFor: date } : {}),
         }),
         ids,
         at(),
@@ -370,10 +192,32 @@ export function useToday() {
     return saved ? id : null;
   };
 
-  const wear = () =>
-    run((current) => woreThis(current, revision, at(), randomUUID()));
-  const unwear = () => {
-    if (worn) void run((current) => undoFeedback(current, worn.id));
+  const keep = (slot: Slot, celsius: number | null, fitId?: string) => {
+    if (!session || !request) return Promise.resolve(false);
+    const ids = session.pieceIds;
+    const wearId = randomUUID();
+    return run((current) => {
+      const wornAt = at();
+      const wearing = planning
+        ? current
+        : woreThis(current, revision, wornAt, wearId);
+      const marks = wearing !== current ? { wornAt, wearId } : {};
+      const existing = fitId
+        ? fitsOn(current, date).find((fit) => fit.id === fitId)
+        : undefined;
+      return existing
+        ? updateFit(wearing, date, existing.id, { pieceIds: ids, ...marks })
+        : addFit(wearing, {
+            id: randomUUID(),
+            date,
+            pieceIds: ids,
+            occasion: request.occasion,
+            slot,
+            celsius,
+            createdAt: wornAt,
+            ...marks,
+          });
+    });
   };
 
   const pick = (from: Piece, to: Piece) =>
@@ -395,41 +239,16 @@ export function useToday() {
       applyLook(current, [...(session?.pieceIds ?? []), piece.id], revision),
     );
 
-  const leaveTomorrow = () => void restyle(backToToday);
-
-  const planned =
-    mode === "everyday" && !worn
-      ? (plannedToday(closet, clock).find((look) =>
-          look.pieceIds.every((id) =>
-            closet.pieces.some(
-              (piece) => piece.id === id && isAvailable(piece),
-            ),
-          ),
-        ) ?? null)
-      : null;
-  const plannedKey =
-    planned &&
-    [...planned.pieceIds].sort().join() !==
-      [...(session?.pieceIds ?? [])].sort().join()
-      ? `${clock.localDate}:${planned.id}`
-      : null;
   const stale =
     !!today &&
     !!session &&
     (lostPieces > 0 || (broken.length > 0 && !session.shown));
   const staleKey = stale ? `${today.active}:${revision}` : null;
   useEffect(() => {
-    if (!plannedKey || !planned || busy || shownPlan.current === plannedKey)
-      return;
-    shownPlan.current = plannedKey;
-    void restyle((current) => showLook(current, planned));
-  }, [plannedKey, planned, busy, restyle]);
-  useEffect(() => {
-    if (!staleKey || plannedKey || busy || handledStale.current === staleKey)
-      return;
+    if (!staleKey || busy || handledStale.current === staleKey) return;
     handledStale.current = staleKey;
     void restyle(startOver);
-  }, [staleKey, plannedKey, busy, restyle]);
+  }, [staleKey, busy, restyle]);
 
   return {
     closet,
@@ -437,6 +256,8 @@ export function useToday() {
     session,
     request,
     revision,
+    date,
+    planning,
     result,
     pieces,
     lostPieces,
@@ -447,16 +268,11 @@ export function useToday() {
     name,
     reasonLine,
     score,
-    mode,
-    hour,
     busy,
     styling,
     error,
     setError,
     stylingFailed,
-    forecastFailed,
-    forecastLoading,
-    holding,
     run,
     restyle,
     openId,
@@ -464,17 +280,11 @@ export function useToday() {
     last,
     only,
     another,
-    intent,
-    liked: !!liked,
-    like,
     savedLook,
     saveLook,
-    worn,
-    wear,
-    unwear,
+    keep,
     pick,
     change,
-    leaveTomorrow,
     scorer,
     context,
   };

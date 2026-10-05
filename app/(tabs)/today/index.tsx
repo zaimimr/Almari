@@ -1,371 +1,482 @@
-import { useEffect, useMemo, useRef } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
-import { router } from "expo-router";
-import { plannedPieces } from "../../../src/domain/looks";
-import { replacementsFor, roleOf } from "../../../src/domain/styling";
+import { useState } from "react";
 import {
-  backToEveryday,
-  clockFor,
-  toggleKeep,
-} from "../../../src/domain/today";
-import { hijabAlternatives } from "../../../src/domain/wardrobe";
-import { ChangeStrip } from "../../../src/features/ChangeStrip";
-import { ActionArea } from "../../../src/features/today/ActionArea";
-import { DressyMeter } from "../../../src/features/today/DressyMeter";
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
+} from "react-native";
+import Animated from "react-native-reanimated";
+import { router } from "expo-router";
+import type { DayFit, Look, Units } from "../../../src/domain/closet";
+import { greeting } from "../../../src/domain/greeting";
+import { outfitName } from "../../../src/domain/outfitName";
 import { ProfileButton } from "../../../src/features/profile/ProfileButton";
 import { FirstRun } from "../../../src/features/today/FirstRun";
-import { IntentRow } from "../../../src/features/today/IntentRow";
-import { OutfitCard } from "../../../src/features/today/OutfitCard";
-import { useShareCard } from "../../../src/features/share/useShareCard";
-import { WeatherTip } from "../../../src/features/today/WeatherTip";
-import { ProblemBanner } from "../../../src/features/today/ProblemBanner";
 import {
-  useToday,
-  type TodayModel,
-} from "../../../src/features/today/useToday";
+  degrees,
+  lineText,
+  skyIcon,
+  whenLabel,
+} from "../../../src/features/today/sky";
+import {
+  useHome,
+  type Day,
+  type HomeModel,
+} from "../../../src/features/today/useHome";
 import { locale, t } from "../../../src/i18n";
-import { now } from "../../../src/state/clock";
-import { addPiecesRoute } from "../../../src/state/imports";
 import {
   Banner,
   Button,
   FlatLay,
-  Footer,
-  HeaderItem,
-  ResultBar,
+  Row,
+  Rows,
   Screen,
-  Silk,
+  Section,
+  Segmented,
+  Symbol,
   Text,
 } from "../../../src/ui";
-import { fullDate, shortWeekday, spokenDate } from "../../../src/ui/dates";
+import { fullDate, shortDate } from "../../../src/ui/dates";
+import { enter, reflow, useReduceMotion } from "../../../src/ui/motion";
 import { theme } from "../../../src/ui/theme";
-import { useGreeting } from "../../../src/features/today/useGreeting";
+import { useColors } from "../../../src/ui/useColors";
 
-const heroSize = 300;
-
-function Strip({ model }: { model: TodayModel }) {
-  const { closet, request, session, openId, setOpenId, pieces } = model;
-  const target = openId
-    ? (pieces.find((piece) => piece.id === openId) ?? null)
-    : null;
-  const role = target ? roleOf(target) : null;
-
-  const strip = useMemo(() => {
-    if (!target || !request || !session) return null;
-    if (role === "hijab") {
-      const comparison = hijabAlternatives(
-        closet,
-        request,
-        session.pieceIds,
-        model.score,
-        { all: false },
-      );
-      const marks = plannedPieces(closet, clockFor(now()));
-      const options = comparison
-        ? [comparison.current, ...comparison.options]
-        : [{ piece: target, reason: null }];
-      const partner = pieces.find((piece) => roleOf(piece) === "main");
-      return {
-        alternatives: options.map(({ piece, reason }) => ({
-          piece,
-          reason,
-          planned: marks[piece.id]
-            ? shortWeekday(marks[piece.id]!, locale)
-            : undefined,
-        })),
-        value: partner
-          ? t("change.reason.with", { piece: partner.name })
-          : undefined,
-      };
-    }
-    const replacements = replacementsFor(
-      closet.pieces,
-      request,
-      session.pieceIds,
-      target.id,
-      model.scorer,
-      model.context,
-    );
-    return {
-      alternatives: [
-        { piece: target, reason: null },
-        ...replacements
-          .filter((item) => item.piece.id !== target.id)
-          .map((item) => ({ piece: item.piece, reason: null })),
-      ],
-      value: undefined,
-    };
-  }, [target, role, request, session, closet, pieces, model]);
-
-  if (!target || !role || !request || !strip) return null;
-
-  return (
-    <ChangeStrip
-      role={role}
-      pieceId={target.id}
-      alternatives={strip.alternatives}
-      currentId={target.id}
-      open
-      onClose={() => setOpenId(null)}
-      onPick={(piece) => {
-        model.pick(target, piece);
-        setOpenId(piece.id);
-      }}
-      keep={{
-        kept: request.keptIds.includes(target.id),
-        onToggle: () =>
-          void model.run((current) => toggleKeep(current, target.id)),
-      }}
-      value={strip.value}
-      loading={model.styling}
-      testID="change-strip"
-    />
+function piecesOf(model: HomeModel, ids: string[]) {
+  return ids.flatMap((id) =>
+    model.closet.pieces.filter((piece) => piece.id === id),
   );
 }
 
-function TitleRow({ model }: { model: TodayModel }) {
-  const date = model.session?.date;
-  const tomorrow = model.mode === "tomorrow";
+function Greeting({ model }: { model: HomeModel }) {
+  const units = model.closet.styling.units;
+  const hello = greeting(model.closet.styling.name, model.hour, locale);
+  const sky = model.line ? lineText(model.line, model.day, units) : null;
+  const [before, after] = sky ? splitOnce(sky.text, sky.temp) : ["", ""];
   return (
-    <View style={styles.titleRow}>
-      <Text role="title" accessibilityRole="header" style={styles.titleText}>
-        {tomorrow
-          ? t("today.tomorrow")
-          : date
-            ? fullDate(date, locale)
-            : t("nav.today")}
+    <View style={styles.greeting}>
+      <Text role="eyebrow" tone="muted" testID="home-date">
+        {fullDate(model.date, locale)}
       </Text>
-      <Button
-        label={t("today.backToToday")}
-        variant="quiet"
-        size="small"
-        disabled={model.busy}
-        onPress={() =>
-          tomorrow ? model.leaveTomorrow() : void model.restyle(backToEveryday)
-        }
-        testID="today-back"
-      />
+      <Text role="title" style={styles.sentence} accessibilityRole="header">
+        {`${hello}.`}
+        {sky ? (
+          <>
+            {` ${before}`}
+            {after !== null ? (
+              <Text role="title" tone="plum" style={styles.sentence}>
+                {sky.temp}
+              </Text>
+            ) : null}
+            {after ?? ""}
+          </>
+        ) : null}
+      </Text>
     </View>
   );
 }
 
-function Banners({ model }: { model: TodayModel }) {
-  const { result, showOutfit } = model;
+function splitOnce(text: string, part: string): [string, string | null] {
+  const index = text.indexOf(part);
+  return index < 0
+    ? [text, null]
+    : [text.slice(0, index), text.slice(index + part.length)];
+}
+
+function Tiles({ model, units }: { model: HomeModel; units: Units }) {
+  const colors = useColors();
+  if (model.tiles.every((tile) => tile.celsius === null)) return null;
   return (
-    <>
-      {model.stylingFailed ? (
-        <Banner
-          tone="notice"
-          text={t("today.stylingFailed")}
-          actions={[
-            { label: t("common.tryAgain"), onPress: model.stylingFailed },
+    <View style={styles.tiles} testID="home-tiles">
+      {model.tiles.map((tile) => (
+        <View
+          key={tile.slot}
+          accessible
+          accessibilityLabel={`${whenLabel(tile.slot)}, ${degrees(tile.celsius, units)}`}
+          style={[
+            styles.tile,
+            { backgroundColor: colors.surface, borderColor: colors.line },
+            tile.past && styles.past,
           ]}
-          testID="today-styling-failed"
-        />
-      ) : null}
-      {result && !showOutfit && model.lostPieces === 0
-        ? result.problems
-            .slice(0, 1)
-            .map((problem) => (
-              <ProblemBanner
-                key={problem.code}
-                model={model}
-                problem={problem}
-              />
-            ))
-        : null}
-    </>
+        >
+          <Text role="footnote" tone="muted">
+            {whenLabel(tile.slot)}
+          </Text>
+          <View style={styles.tileValue}>
+            <Symbol name={skyIcon(tile.sky, tile.slot)} size={15} tone="ink" />
+            <Text role="headline" style={styles.tileTemp}>
+              {degrees(tile.celsius, units)}
+            </Text>
+          </View>
+        </View>
+      ))}
+    </View>
   );
 }
 
-function TodayFooter({ model }: { model: TodayModel }) {
-  const planning = model.mode === "planning" || model.mode === "tomorrow";
-  if (!model.showOutfit || model.holding) return null;
-  if (planning) {
-    const saved = model.savedLook;
-    return (
-      <Footer
-        primary={{
-          label: saved
-            ? t("today.openLook")
-            : t("today.saveFor", {
-                day: spokenDate(
-                  model.session?.date ?? model.today?.localDate ?? "",
-                  locale,
-                ),
-              }),
-          disabled: model.busy,
-          onPress: () => {
-            if (saved)
-              router.push({ pathname: "/look/[id]", params: { id: saved.id } });
-            else void model.saveLook();
-          },
-          testID: "today-save-look",
-        }}
-        error={model.error}
-      />
-    );
-  }
-  return model.worn ? (
-    <Footer error={model.error}>
-      <ResultBar
-        text={t("outfit.worn")}
-        action={{
-          label: t("common.undo"),
-          onPress: model.unwear,
-          disabled: model.busy,
-          testID: "today-worn-undo",
-        }}
-        testID="today-worn"
-      />
-    </Footer>
-  ) : (
-    <Footer
-      primary={{
-        label: t("outfit.wear"),
-        disabled: model.busy,
-        onPress: () => void model.wear(),
-        testID: "today-wear",
-      }}
-      error={model.error}
+function Brief({ day }: { day: Day }) {
+  const colors = useColors();
+  const [text, setText] = useState("");
+  const submit = () => {
+    const brief = text.trim();
+    if (!brief) return;
+    setText("");
+    router.push({ pathname: "/today/create", params: { day, text: brief } });
+  };
+  return (
+    <TextInput
+      value={text}
+      onChangeText={setText}
+      onSubmitEditing={submit}
+      placeholder={t("home.brief")}
+      placeholderTextColor={colors.placeholder}
+      accessibilityLabel={t("home.briefLabel")}
+      returnKeyType="go"
+      style={[styles.brief, { borderColor: colors.line, color: colors.ink }]}
+      testID="home-brief"
     />
+  );
+}
+
+function FitCard({
+  model,
+  fit,
+  units,
+  index,
+}: {
+  model: HomeModel;
+  fit: DayFit;
+  units: Units;
+  index: number;
+}) {
+  const colors = useColors();
+  const reduce = useReduceMotion();
+  const pieces = piecesOf(model, fit.pieceIds);
+  const name = outfitName(pieces, fit.occasion, locale);
+  const meta = t("home.cardMeta", {
+    when: whenLabel(fit.slot),
+    temp: degrees(fit.celsius, units),
+  }).replace(/ · $/, "");
+  const press = () =>
+    fit.wornAt || model.day === "tomorrow"
+      ? model.view(fit)
+      : void model.open(fit, fit);
+  return (
+    <Animated.View entering={enter(reduce)} layout={reflow(reduce)}>
+      <Pressable
+        onPress={press}
+        accessibilityRole="button"
+        accessibilityLabel={`${name}, ${meta}${fit.wornAt ? `, ${t("home.worn")}` : ""}`}
+        style={({ pressed }) => [
+          styles.card,
+          {
+            backgroundColor: pressed ? colors.sunken : colors.surface,
+            borderColor: colors.line,
+          },
+        ]}
+        testID={`home-fit-${index}`}
+      >
+        <View style={styles.cardLay}>
+          <FlatLay pieces={pieces} size="hero" maxSize={128} preview />
+        </View>
+        <View style={styles.cardText}>
+          <Text role="subhead" numberOfLines={1} style={styles.cardName}>
+            {t(`occasion.${fit.occasion}`)}
+          </Text>
+          <Text role="footnote" tone="muted" numberOfLines={1}>
+            {meta}
+          </Text>
+        </View>
+        {fit.wornAt ? (
+          <View style={[styles.badge, { backgroundColor: colors.plumSoft }]}>
+            <Text role="mark" tone="plum">
+              {t("home.worn")}
+            </Text>
+          </View>
+        ) : null}
+      </Pressable>
+    </Animated.View>
+  );
+}
+
+function LookCard({ model, look }: { model: HomeModel; look: Look }) {
+  const colors = useColors();
+  const pieces = piecesOf(model, look.pieceIds);
+  return (
+    <Pressable
+      onPress={() =>
+        model.day === "tomorrow"
+          ? router.push({ pathname: "/look/[id]", params: { id: look.id } })
+          : void model.open(look)
+      }
+      accessibilityRole="button"
+      accessibilityLabel={look.name}
+      style={({ pressed }) => [
+        styles.card,
+        {
+          backgroundColor: pressed ? colors.sunken : colors.surface,
+          borderColor: colors.line,
+        },
+      ]}
+    >
+      <View style={styles.cardLay}>
+        <FlatLay pieces={pieces} size="hero" maxSize={128} preview />
+      </View>
+      <View style={styles.cardText}>
+        <Text role="subhead" numberOfLines={1} style={styles.cardName}>
+          {look.name}
+        </Text>
+        {look.occasion ? (
+          <Text role="footnote" tone="muted" numberOfLines={1}>
+            {t(`occasion.${look.occasion}`)}
+          </Text>
+        ) : null}
+      </View>
+    </Pressable>
+  );
+}
+
+function AnotherCard({ day }: { day: Day }) {
+  const colors = useColors();
+  return (
+    <Pressable
+      onPress={() =>
+        router.push({ pathname: "/today/create", params: { day } })
+      }
+      accessibilityRole="button"
+      accessibilityLabel={t("home.anotherFit")}
+      style={({ pressed }) => [
+        styles.card,
+        styles.another,
+        {
+          borderColor: colors.plumSoftDeep,
+          backgroundColor: pressed ? colors.plumSoft : colors.canvas,
+        },
+      ]}
+      testID="home-another"
+    >
+      <View style={[styles.plus, { backgroundColor: colors.plumSoft }]}>
+        <Symbol name="plus" size={18} tone="plum" />
+      </View>
+      <Text role="subhead" tone="plum" style={styles.cardName}>
+        {t("home.anotherFit")}
+      </Text>
+    </Pressable>
+  );
+}
+
+function DayLane({ model, units }: { model: HomeModel; units: Units }) {
+  if (!model.fits.length && !model.looks.length) return null;
+  return (
+    <Section
+      title={model.day === "tomorrow" ? t("day.tomorrow") : t("home.yourDay")}
+      testID="home-day"
+    >
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.lane}
+        style={styles.laneBleed}
+      >
+        {model.fits.map((fit, index) => (
+          <FitCard
+            key={fit.id}
+            model={model}
+            fit={fit}
+            units={units}
+            index={index}
+          />
+        ))}
+        {model.looks.map((look) => (
+          <LookCard key={look.id} model={model} look={look} />
+        ))}
+        <AnotherCard day={model.day} />
+      </ScrollView>
+    </Section>
+  );
+}
+
+function Earlier({ model }: { model: HomeModel }) {
+  if (model.fits.length || model.looks.length || !model.earlier.length)
+    return null;
+  if (model.day === "tomorrow") return null;
+  return (
+    <Section title={t("home.earlier")} testID="home-earlier">
+      <Rows>
+        {model.earlier.map((item, index) => {
+          const pieces = piecesOf(model, item.pieceIds);
+          return (
+            <Row
+              key={item.key}
+              title={outfitName(pieces, item.occasion, locale)}
+              meta={t("home.earlierMeta", {
+                day: shortDate(item.date, locale),
+                occasion: t(`occasion.${item.occasion}`),
+              })}
+              leading={{ lay: pieces }}
+              trailing="chevron"
+              onPress={() => void model.open(item)}
+              last={index === model.earlier.length - 1}
+              testID={`home-earlier-${index}`}
+            />
+          );
+        })}
+      </Rows>
+    </Section>
   );
 }
 
 export default function TodayScreen() {
-  const model = useToday();
-  const { closet, today, mode, request, openId, setOpenId } = model;
-  const scroll = useRef<ScrollView>(null);
-  useEffect(() => {
-    if (!openId) return;
-    const timer = setTimeout(
-      () => scroll.current?.scrollToEnd({ animated: true }),
-      100,
-    );
-    return () => clearTimeout(timer);
-  }, [openId]);
-  const [title, measure] = useGreeting(closet.styling.name, model.hour);
-  const inline = mode === "planning" || mode === "tomorrow";
-  const first = !closet.styling.everyday;
-  const shareDate = model.session?.date ?? model.today?.localDate;
-  const shareCard = useShareCard({
-    pieces: model.pieces,
-    name: model.name,
-    caption: shareDate ? fullDate(shareDate, locale) : null,
-  });
-  const locked = !inline && !!model.worn;
+  const model = useHome();
+  const { closet } = model;
+  const units = closet.styling.units;
+  const header = <ProfileButton testID="header-profile" />;
 
-  const header = (
-    <View style={styles.header}>
-      {model.showOutfit && !first ? (
-        <HeaderItem
-          label={t("looks.share")}
-          icon="square.and.arrow.up"
-          onPress={() => void shareCard.share()}
-          testID="today-share"
-        />
-      ) : null}
-      <ProfileButton testID="header-profile" />
-    </View>
-  );
-
-  if (first)
+  if (!closet.styling.everyday)
     return (
-      <Screen large title={title} actions={header} testID="today">
-        {measure}
+      <Screen
+        large
+        title={greeting(closet.styling.name, model.hour, locale)}
+        actions={header}
+        testID="today"
+      >
         <FirstRun model={model} />
       </Screen>
     );
 
+  const tomorrow = model.day === "tomorrow";
+
   return (
     <Screen
-      large={!inline}
-      title={inline ? t("nav.today") : title}
-      headerTitleVisible={!inline}
+      title={t("nav.today")}
+      headerTitleVisible={false}
       actions={header}
-      footer={<TodayFooter model={model} />}
-      contentRef={scroll}
       testID="today"
     >
-      {measure}
-      {shareCard.card}
       <View style={styles.content}>
-        {inline ? (
-          <TitleRow model={model} />
-        ) : locked ? null : (
-          <IntentRow model={model} />
-        )}
-        <Banners model={model} />
-        {!today || model.holding ? (
-          <Silk
-            kind="placeholder"
-            shape="lay"
-            label={t("common.loading")}
-            style={styles.placeholder}
+        <Greeting model={model} />
+        {model.evening ? (
+          <Segmented<Day>
+            label={t("nav.today")}
+            options={[
+              { id: "today", label: t("nav.today") },
+              { id: "tomorrow", label: t("day.tomorrow") },
+            ]}
+            value={model.day}
+            onChange={model.setDay}
           />
-        ) : model.showOutfit ? (
-          <View style={styles.outfit}>
-            <View style={styles.hero}>
-              <FlatLay
-                pieces={model.pieces}
-                size="hero"
-                maxSize={heroSize}
-                swapMark={!locked}
-                keptIds={locked ? [] : request?.keptIds}
-                openId={locked ? undefined : openId}
-                revision={model.revision}
-                state={model.styling ? "arranging" : undefined}
-                onPiecePress={
-                  locked
-                    ? undefined
-                    : (piece) =>
-                        setOpenId(openId === piece.id ? null : piece.id)
-                }
-                testID="today-outfit"
-              />
-            </View>
-            {locked ? null : <Strip key={openId ?? "closed"} model={model} />}
-            <OutfitCard model={model} />
-            <DressyMeter model={model} />
-            {locked ? null : <WeatherTip model={model} />}
-            {locked ? null : <ActionArea model={model} />}
-          </View>
-        ) : model.result?.partial && model.lostPieces === 0 ? (
-          <View style={styles.hero}>
-            <FlatLay
-              pieces={model.result.partial.ids.flatMap((id) =>
-                closet.pieces.filter((piece) => piece.id === id),
-              )}
-              size="hero"
-              maxSize={heroSize}
-              emptyRoles={model.result.partial.missing}
-              onEmptyPress={() => router.push(addPiecesRoute)}
-              testID="today-partial"
+        ) : null}
+        <Tiles model={model} units={units} />
+        {model.stylingFailed ? (
+          <Banner
+            tone="notice"
+            text={t("today.stylingFailed")}
+            actions={[
+              { label: t("common.tryAgain"), onPress: model.stylingFailed },
+            ]}
+            testID="today-styling-failed"
+          />
+        ) : null}
+        <View style={styles.actions}>
+          <View style={styles.create}>
+            <Button
+              label={tomorrow ? t("home.plan") : t("home.create")}
+              icon="arrow.right"
+              iconAfter
+              busy={model.styling}
+              onPress={() =>
+                router.push({
+                  pathname: "/today/create",
+                  params: { day: model.day },
+                })
+              }
+              testID="home-create"
             />
           </View>
-        ) : null}
+          <Button
+            label={t("home.pickLook")}
+            variant="secondary"
+            onPress={() =>
+              router.push({
+                pathname: "/looks/plan",
+                params: { date: model.date },
+              })
+            }
+            testID="home-pick-look"
+          />
+        </View>
+        <Brief day={model.day} />
+        <DayLane model={model} units={units} />
+        <Earlier model={model} />
       </View>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  header: { flexDirection: "row", alignItems: "center" },
-  content: { gap: theme.space.lg },
-  outfit: { gap: theme.space.md },
-  hero: { width: "100%", maxWidth: heroSize, alignSelf: "center" },
-  placeholder: {
-    alignSelf: "center",
-    width: "100%",
-    maxWidth: heroSize,
-    aspectRatio: 1,
+  content: { gap: theme.space.lg, paddingTop: theme.space.sm },
+  greeting: { gap: theme.space.sm },
+  sentence: { fontSize: 30, lineHeight: 37 },
+  tiles: { flexDirection: "row", gap: theme.space.sm },
+  tile: {
+    flex: 1,
+    gap: theme.space.xs,
+    padding: theme.space.md,
+    borderRadius: theme.radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
   },
-  titleRow: {
+  past: { opacity: 0.5 },
+  tileValue: {
     flexDirection: "row",
-    flexWrap: "wrap",
     alignItems: "center",
-    justifyContent: "space-between",
-    gap: theme.space.sm,
+    gap: theme.space.xs,
   },
-  titleText: { flexShrink: 1 },
+  tileTemp: {
+    fontFamily: theme.fontFamily.serif,
+    fontWeight: "400",
+    fontSize: 20,
+  },
+  actions: { gap: theme.space.sm },
+  create: { alignSelf: "stretch" },
+  brief: {
+    minHeight: theme.size.touch + 4,
+    borderRadius: theme.radius.full,
+    borderWidth: 1,
+    paddingHorizontal: theme.space.lg,
+    fontSize: 17,
+  },
+  lane: { gap: theme.space.md, paddingHorizontal: theme.space.lg },
+  laneBleed: { marginHorizontal: -theme.space.lg },
+  card: {
+    width: 152,
+    padding: theme.space.md,
+    gap: theme.space.sm,
+    borderRadius: theme.radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  cardLay: { width: 128, height: 128, alignSelf: "center" },
+  cardText: { gap: 2 },
+  cardName: { fontWeight: "600" },
+  badge: {
+    position: "absolute",
+    top: theme.space.sm,
+    right: theme.space.sm,
+    paddingHorizontal: theme.space.sm,
+    paddingVertical: 2,
+    borderRadius: theme.radius.full,
+  },
+  another: {
+    alignItems: "center",
+    justifyContent: "center",
+    borderStyle: "dashed",
+    borderWidth: 1.5,
+    minHeight: 200,
+  },
+  plus: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
 });

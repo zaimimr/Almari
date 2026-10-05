@@ -46,7 +46,7 @@ enum WeatherLookup {
   static func forecast(latitude: Double, longitude: Double) async -> ForecastRecord? {
     let location = CLLocation(latitude: latitude, longitude: longitude)
     let start = Calendar.current.startOfDay(for: Date())
-    guard let end = Calendar.current.date(byAdding: .day, value: 1, to: start) else { return nil }
+    guard let end = Calendar.current.date(byAdding: .day, value: 2, to: start) else { return nil }
     do {
       let hourly = try await WeatherService.shared.weather(
         for: location, including: .hourly(startDate: start, endDate: end))

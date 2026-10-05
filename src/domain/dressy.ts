@@ -24,3 +24,10 @@ export function dressiness(pieces: Piece[], occasion: Occasion) {
     short: dressLevels.indexOf(level) < dressLevels.indexOf(goal),
   };
 }
+
+export function dressLevelOf(pieces: Piece[]): DressLevel | null {
+  const levels = factsFor(pieces, ruleBook.thresholds)
+    .filter((facts) => ["main", "layer", "outer"].includes(facts.role))
+    .map((facts) => facts.formality);
+  return levels.length ? levelOf(Math.max(...levels)) : null;
+}

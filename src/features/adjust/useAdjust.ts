@@ -21,6 +21,12 @@ export function pickPieces(ids: string[]) {
   picked = ids;
 }
 
+export function takePicked() {
+  const ids = picked;
+  picked = null;
+  return ids;
+}
+
 export function useAdjust(keep?: string) {
   const { closet, update } = useCloset();
   const today = closet.styling.today;

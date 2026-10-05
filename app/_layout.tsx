@@ -101,6 +101,11 @@ function Screens() {
           name="today/pieces"
           options={{ title: t("title.choosePieces") }}
         />
+        <Stack.Screen
+          name="today/create"
+          options={{ title: t("home.create") }}
+        />
+        <Stack.Screen name="today/fit" options={{ title: t("fit.title") }} />
       </Stack>
     </View>
   );

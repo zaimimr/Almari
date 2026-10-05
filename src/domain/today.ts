@@ -3,6 +3,7 @@ import {
   type Closet,
   type Coverage,
   type EverydayStyle,
+  type Feel,
   type Forecast,
   type ForecastWeather,
   type Occasion,
@@ -12,6 +13,7 @@ import {
   type WardrobeMode,
   type Weather,
 } from "./closet";
+import { dressLevelOf, dressLevels, type DressLevel } from "./dressy";
 import { rulesScorer } from "./scoring/rulesScorer";
 import { scoreContext } from "./scoring/taste";
 import { styleOutfits, type StyleResult } from "./styling";
@@ -72,13 +74,42 @@ export function resultFor(
   request: OutfitRequest,
   localDate: string,
 ): StyleResult {
-  return styleOutfits(
+  const result = styleOutfits(
     closet.pieces,
     request,
     seedFor(localDate, request),
     rulesScorer,
     scoreContext(closet),
   );
+  return request.feel
+    ? { ...result, outfits: byFeel(closet, result.outfits, request.feel) }
+    : result;
+}
+
+const feelLevel: Record<Feel, DressLevel> = {
+  comfy: "casual",
+  smart: "smart",
+  dressed: "festive",
+};
+
+function byFeel<T extends { ids: string[] }>(
+  closet: Closet,
+  outfits: T[],
+  feel: Feel,
+): T[] {
+  const goal = dressLevels.indexOf(feelLevel[feel]);
+  const distance = (outfit: T) => {
+    const level = dressLevelOf(
+      outfit.ids.flatMap((id) =>
+        closet.pieces.filter((piece) => piece.id === id),
+      ),
+    );
+    return level ? Math.abs(dressLevels.indexOf(level) - goal) : 1;
+  };
+  return outfits
+    .map((outfit, index) => ({ outfit, index, distance: distance(outfit) }))
+    .sort((a, b) => a.distance - b.distance || a.index - b.index)
+    .map((item) => item.outfit);
 }
 
 function sessionFor(
