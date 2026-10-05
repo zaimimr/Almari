@@ -466,6 +466,25 @@ export function dropFromToday(closet: Closet, id: string): Closet {
   });
 }
 
+function untouched(closet: Closet, session: Session, today: TodayState) {
+  const ids = [...session.pieceIds].sort().join();
+  return (
+    session.cursor === 0 &&
+    !session.previousPieceIds &&
+    !session.request.keptIds.length &&
+    !session.request.garmentType &&
+    !closet.feedback.some(
+      (event) =>
+        event.kind === "wore" &&
+        !event.undone &&
+        event.scope !== "piece" &&
+        [...event.pieceIds].sort().join() === ids &&
+        clockFor(new Date(event.at), today.timeZone).localDate ===
+          today.localDate,
+    )
+  );
+}
+
 export function saveForecast(closet: Closet, forecast: Forecast): Closet {
   const saved: Closet = {
     ...closet,
@@ -475,11 +494,15 @@ export function saveForecast(closet: Closet, forecast: Forecast): Closet {
   if (!today || today.localDate !== forecast.date) return saved;
   const refresh = (session: Session, exposure: ForecastWeather["exposure"]) => {
     const weather = { ...forecast.weather, exposure };
-    return session.request.weather.source === "manual" ||
+    if (
+      session.request.weather.source === "manual" ||
       dayOf(session, today) !== forecast.date ||
       JSON.stringify(session.request.weather) === JSON.stringify(weather)
-      ? session
-      : restyle(saved, session, today, { ...session.request, weather });
+    )
+      return session;
+    return untouched(saved, session, today)
+      ? restyle(saved, session, today, { ...session.request, weather })
+      : { ...session, request: { ...session.request, weather } };
   };
   const everyday = refresh(
     today.everyday,

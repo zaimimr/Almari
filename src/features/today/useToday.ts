@@ -265,6 +265,19 @@ export function useToday() {
     };
   }, [place, needsForecast, forecastKey, update]);
   const forecastLoading = needsForecast && forecastDone !== forecastKey;
+  const [patient, setPatient] = useState(true);
+  useEffect(() => {
+    if (!forecastLoading) return;
+    const timer = setTimeout(() => setPatient(false), 3000);
+    return () => clearTimeout(timer);
+  }, [forecastLoading]);
+  const holding =
+    forecastLoading &&
+    patient &&
+    !!session &&
+    session.cursor === 0 &&
+    !session.previousPieceIds &&
+    !session.request.keptIds.length;
 
   const stylingFailed = failed
     ? () => void run(failed.transform, failed.options)
@@ -416,6 +429,7 @@ export function useToday() {
     stylingFailed,
     forecastFailed,
     forecastLoading,
+    holding,
     run,
     restyle,
     openId,

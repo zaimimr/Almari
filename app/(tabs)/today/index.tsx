@@ -176,7 +176,7 @@ function Banners({ model }: { model: TodayModel }) {
 
 function TodayFooter({ model }: { model: TodayModel }) {
   const planning = model.mode === "planning" || model.mode === "tomorrow";
-  if (!model.showOutfit) return null;
+  if (!model.showOutfit || model.holding) return null;
   if (planning) {
     const saved = model.savedLook;
     return (
@@ -270,7 +270,7 @@ export default function TodayScreen() {
           <IntentRow model={model} />
         )}
         <Banners model={model} />
-        {!today ? (
+        {!today || model.holding ? (
           <Silk
             kind="placeholder"
             shape="lay"

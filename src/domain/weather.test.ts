@@ -19,7 +19,9 @@ import {
   everydayRequest,
   saveEverydayStyle,
   saveForecast,
+  toggleKeep,
 } from "./today";
+import { woreThis } from "./feedback";
 import {
   feelsLike,
   forecastFor,
@@ -210,6 +212,31 @@ test("a fresh forecast restyles today when no weather was chosen", () => {
     saveForecast(closet, forecast()).styling.today,
     closet.styling.today,
   );
+});
+
+test("a forecast never changes an outfit she kept a piece in", () => {
+  const closet = styled();
+  const session = activeSession(closet.styling.today!);
+  const kept = toggleKeep(closet, session.pieceIds[0]!);
+  const before = activeSession(kept.styling.today!);
+  const after = activeSession(saveForecast(kept, forecast()).styling.today!);
+  assert.deepEqual(after.pieceIds, before.pieceIds);
+  assert.equal(after.revision, before.revision);
+  assert.deepEqual(after.request.weather, forecast().weather);
+});
+
+test("a forecast never changes an outfit she is wearing", () => {
+  const closet = styled();
+  const session = activeSession(closet.styling.today!);
+  const worn = woreThis(
+    closet,
+    session.revision,
+    "2026-10-01T07:00:00.000Z",
+    "wore-1",
+  );
+  const after = activeSession(saveForecast(worn, forecast()).styling.today!);
+  assert.deepEqual(after.pieceIds, session.pieceIds);
+  assert.deepEqual(after.request.weather, forecast().weather);
 });
 
 test("a manual choice is never replaced by a forecast", () => {
