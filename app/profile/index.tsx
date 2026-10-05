@@ -115,6 +115,18 @@ export default function Profile() {
               onPress={() => router.push("/profile/answer/place")}
               testID="profile-location"
             />
+            <Row
+              title={t("own.lists")}
+              trailing={{
+                value: String(
+                  (closet.lists?.colours.length ?? 0) +
+                    (closet.lists?.fabrics.length ?? 0) +
+                    (closet.lists?.kinds.length ?? 0),
+                ),
+              }}
+              onPress={() => router.push("/profile/lists")}
+              testID="profile-lists"
+            />
           </Rows>
           <MorningOutfit
             open={open === "morning"}

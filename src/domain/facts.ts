@@ -10,6 +10,7 @@ import {
   type Fabric,
 } from "./attributes";
 import {
+  categories,
   fixedStyles,
   kindsIn,
   savePiece,
@@ -20,9 +21,10 @@ import {
   type Sparkle,
   type Warmth,
 } from "./closet";
-import { colorName, namedSwatch } from "./color";
+import { colorName } from "./color";
 import { confirmedLength, confirmedSleeve, opacity } from "./coverage";
 import { confirmedWeather } from "./pieceWeather";
+import { colourSwatch, ownKind } from "./lists";
 
 export type FactKey =
   | "colour"
@@ -146,7 +148,7 @@ export function setColour(
   if (!piece) return closet;
   return savePiece(closet, {
     ...piece,
-    colors: [namedSwatch(name), ...(piece.colors ?? []).slice(1)],
+    colors: [colourSwatch(name), ...(piece.colors ?? []).slice(1)],
     sources: { ...piece.sources, colour: "confirmed" },
   });
 }
@@ -219,6 +221,27 @@ export const attributeLabelKey = (key: AttributeKey): Key => `attribute.${key}`;
 
 export const attributeValueKey = (key: AttributeKey, value: AttributeValue) =>
   `value.${key}.${value}` as Key;
+
+export const wearSeasons: WearSeason[] = ["summer", "all-year", "winter"];
+
+const seasonWarmth: Record<WearSeason, Warmth> = {
+  summer: "light",
+  "all-year": "medium",
+  winter: "warm",
+};
+
+export function withSeason(piece: Piece, season: WearSeason): Piece {
+  return {
+    ...piece,
+    traits: { ...piece.traits, warmth: seasonWarmth[season] },
+    sources: { ...piece.sources, warmth: "confirmed" },
+  };
+}
+
+export function guessedSeason(piece: Piece): WearSeason | null {
+  const warmth = piece.traits?.warmth;
+  return warmth ? warmthSeasons[warmth] : null;
+}
 
 export function wearSeason(
   piece: Piece,
@@ -350,6 +373,39 @@ function confirmedPiece(piece: Piece, key: FactKey, option: string): Piece {
   if (!attribute || value === undefined)
     throw new Error(t("error.listedOption"));
   return confirmAttribute(piece, attribute, value);
+}
+
+export function withKind(piece: Piece, option: string): Piece {
+  const own = ownKind(option);
+  if (!own) {
+    if (!kindsIn(piece.category).some((item) => item.id === option))
+      return piece;
+    const { ownKind: _own, ...rest } = piece;
+    return confirmedPiece(rest, "kind", option);
+  }
+  const { kind: _kind, ...rest } = piece;
+  return fitAttributes({
+    ...rest,
+    category: own.category,
+    ownKind: own.id,
+    sources: { ...piece.sources, kind: "confirmed" },
+  });
+}
+
+export function withCategory(piece: Piece, option: string): Piece {
+  const category = categories.find((item) => item.id === option)?.id;
+  if (!category || category === piece.category) return piece;
+  const { kind, ownKind: _own, ...rest } = piece;
+  const keeps =
+    kind !== undefined && kindsIn(category).some((item) => item.id === kind);
+  const sources = { ...piece.sources };
+  if (!keeps) delete sources.kind;
+  return fitAttributes({
+    ...rest,
+    category,
+    ...(keeps ? { kind } : {}),
+    sources,
+  });
 }
 
 export function confirmFact(

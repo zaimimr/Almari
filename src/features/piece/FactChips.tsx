@@ -6,9 +6,14 @@ import {
   needsDetails,
   pieceCoverage,
   setColour,
+  guessedSeason,
   setSparkle,
   sparkleOf,
   wearSeason,
+  wearSeasons,
+  withCategory,
+  withKind,
+  withSeason,
   type FactKey,
 } from "../../domain/facts";
 import {
@@ -18,6 +23,7 @@ import {
   type AttributeKey,
 } from "../../domain/attributes";
 import {
+  categories,
   fixedStyles,
   kindsIn,
   savePiece,
@@ -27,12 +33,22 @@ import {
   type Sparkle,
   type Style,
 } from "../../domain/closet";
-import { colorName, colourNames, namedSwatch } from "../../domain/color";
-import { listName, locale, t, type Key } from "../../i18n";
+import {
+  colourChoices,
+  colourOf,
+  colourSwatch,
+  ownFabric,
+  ownKind,
+  ownKindsIn,
+  ownLists,
+  type ListKey,
+} from "../../domain/lists";
+import { categoryName, listName, locale, t, type Key } from "../../i18n";
 import { Chip, ChipRow, Expander, Text } from "../../ui";
 import { useColors } from "../../ui/useColors";
 import { announce } from "../../ui/announce";
 import { theme } from "../../ui/theme";
+import { AddOwn, addOwnId, addOwnOption } from "../AddOwn";
 import { colourLabel } from "../ColourChips";
 import { availabilityFact } from "./AvailabilityChip";
 import { weatherFacts } from "./WeatherChips";
@@ -42,6 +58,7 @@ export type FactRow = {
   label?: string;
   options: { id: string; label: string; swatch?: string }[];
   value: string | null;
+  adds?: ListKey;
   pick: (option: string) => (piece: Piece) => Piece;
 };
 
@@ -137,10 +154,10 @@ const addLabel = (name: string) =>
   t("fact.add", { label: name.toLocaleLowerCase(locale) });
 
 const colourOptions = () =>
-  colourNames.map((option) => ({
+  colourChoices().map((option) => ({
     id: option,
     label: colourLabel(option),
-    swatch: hex(namedSwatch(option).rgb),
+    swatch: hex(colourSwatch(option).rgb),
   }));
 
 function colourFact(piece: Piece): FactSpec {
@@ -156,12 +173,13 @@ function colourFact(piece: Piece): FactSpec {
           id: "colour",
           options: colourOptions(),
           value: null,
+          adds: "colours",
           pick: () => (latest) => latest,
         },
       ],
       transform: (option) => (closet) => setColour(closet, piece.id, option),
     };
-  const name = colorName(swatch.rgb);
+  const name = colourOf(swatch.rgb);
   const confirmed = piece.sources?.colour === "confirmed";
   const value = colourLabel(name);
   const vars = { label: t("fact.colour"), value };
@@ -176,6 +194,7 @@ function colourFact(piece: Piece): FactSpec {
         id: "colour",
         options: colourOptions(),
         value: name,
+        adds: "colours",
         pick: (option) => (latest) => latest,
       },
     ],
@@ -189,52 +208,57 @@ function colourFact(piece: Piece): FactSpec {
   };
 }
 
-function kindFact(piece: Piece): FactSpec | null {
-  if (!piece.kind) return null;
-  const tentative = piece.sources?.kind === "proposed";
+export const kindLabel = (piece: Pick<Piece, "kind" | "ownKind">) =>
+  (piece.ownKind ? ownKind(piece.ownKind)?.name : undefined) ??
+  (piece.kind ? t(`kind.${piece.kind}`) : null);
+
+function kindFact(piece: Piece): FactSpec {
+  const label = kindLabel(piece);
+  const tentative =
+    !label || (!piece.ownKind && piece.sources?.kind === "proposed");
   return {
     id: "kind",
     name: t("piece.kind"),
-    value: t(`kind.${piece.kind}`),
+    value: label ?? addLabel(t("piece.kind")),
     tentative,
     rows: [
       {
-        id: "kind",
-        options: kindsIn(piece.category).map((kind) => ({
-          id: kind.id,
-          label: t(`kind.${kind.id}`),
+        id: "category",
+        label: t("piece.category"),
+        options: categories.map((item) => ({
+          id: item.id,
+          label: categoryName(item.id),
         })),
-        value: piece.kind,
-        pick: (option) => (latest) => latest,
+        value: piece.category,
+        pick: (option) => (latest) => withCategory(latest, option),
+      },
+      {
+        id: "kind",
+        label: t("piece.kind"),
+        options: [
+          ...ownKindsIn(piece.category).map((item) => ({
+            id: item.id,
+            label: item.name,
+          })),
+          ...kindsIn(piece.category).map((kind) => ({
+            id: kind.id,
+            label: t(`kind.${kind.id}`),
+          })),
+        ],
+        value: piece.ownKind ?? piece.kind ?? null,
+        adds: "kinds",
+        pick: (option) => (latest) => withKind(latest, option),
       },
     ],
-    transform: (option) => (closet) => confirmKind(closet, piece.id, option),
-    looksRight: tentative
-      ? (latest) => ({
-          ...latest,
-          sources: { ...latest.sources, kind: "confirmed" },
-        })
-      : undefined,
+    looksRight:
+      tentative && label
+        ? (latest) => ({
+            ...latest,
+            sources: { ...latest.sources, kind: "confirmed" },
+          })
+        : undefined,
+    done: (latest) => Boolean(latest.kind || latest.ownKind),
   };
-}
-
-function confirmKind(closet: Closet, id: string, option: string): Closet {
-  const piece = closet.pieces.find((item) => item.id === id);
-  const kind = piece
-    ? kindsIn(piece.category).find((item) => item.id === option)?.id
-    : undefined;
-  if (!piece || !kind) return closet;
-  const styles = fixedStyles(kind);
-  return savePiece(closet, {
-    ...piece,
-    kind,
-    ...(styles ? { styles } : {}),
-    sources: {
-      ...piece.sources,
-      kind: "confirmed",
-      ...(styles ? { styles: "confirmed" as const } : {}),
-    },
-  });
 }
 
 const styleOf = (piece: Piece): "desi" | "western" | "both" | null => {
@@ -342,8 +366,43 @@ function sparkleFact(piece: Piece): FactSpec | null {
   };
 }
 
+function fabricRow(piece: Piece): FactRow {
+  const row = attributeRow(piece, "fabric");
+  return {
+    ...row,
+    options: [
+      ...ownLists().fabrics.map((item) => ({ id: item.id, label: item.name })),
+      ...row.options,
+    ],
+    value: piece.ownFabric ?? row.value,
+    adds: "fabrics",
+    pick: (option) => (latest) => {
+      if (ownFabric(option)) {
+        const { fabric: _fabric, ...attributes } = latest.attributes ?? {};
+        const { fabric: _source, ...sources } = latest.sources ?? {};
+        return { ...latest, attributes, sources, ownFabric: option };
+      }
+      const { ownFabric: _own, ...rest } = latest;
+      return row.pick(option)(rest);
+    },
+  };
+}
+
+function ownFabricFact(piece: Piece): FactSpec | null {
+  const own = piece.ownFabric ? ownFabric(piece.ownFabric) : undefined;
+  if (!own) return null;
+  return {
+    id: "fabric",
+    name: factName("fabric"),
+    value: own.name,
+    showKey: true,
+    rows: [fabricRow(piece)],
+  };
+}
+
 function attributeFact(piece: Piece, key: AttributeKey): FactSpec | null {
   const value = piece.attributes?.[key];
+  if (key === "fabric" && piece.ownFabric) return ownFabricFact(piece);
   if (value === undefined)
     return key === "fabric" &&
       applicableAttributes(piece.category, piece.kind).includes(key)
@@ -352,7 +411,7 @@ function attributeFact(piece: Piece, key: AttributeKey): FactSpec | null {
           name: factName(key),
           value: addLabel(factName(key)),
           tentative: true,
-          rows: [attributeRow(piece, key)],
+          rows: [fabricRow(piece)],
         }
       : null;
   const tentative = piece.sources?.[key] === "proposed";
@@ -362,7 +421,7 @@ function attributeFact(piece: Piece, key: AttributeKey): FactSpec | null {
     value: t(attributeValueKey(key, value)),
     showKey: true,
     tentative,
-    rows: [attributeRow(piece, key)],
+    rows: [key === "fabric" ? fabricRow(piece) : attributeRow(piece, key)],
     looksRight: tentative ? (latest) => confirmShown(latest, [key]) : undefined,
   };
 }
@@ -384,14 +443,32 @@ function sheerFact(piece: Piece): FactSpec | null {
   };
 }
 
-function seasonFact(piece: Piece): FactSpec | null {
-  const season = wearSeason(piece);
-  if (!season) return null;
+function seasonFact(piece: Piece): FactSpec {
+  const known = wearSeason(piece);
+  const season = known?.season ?? guessedSeason(piece);
+  const confirmed = known?.source === "confirmed";
   return {
     id: "season",
     name: t("fact.season"),
-    value: t(`value.season.${season.season}`),
-    showKey: true,
+    value: season ? t(`value.season.${season}`) : addLabel(t("fact.season")),
+    showKey: Boolean(season),
+    tentative: !confirmed,
+    rows: [
+      {
+        id: "season",
+        options: wearSeasons.map((id) => ({
+          id,
+          label: t(`value.season.${id}`),
+        })),
+        value: season,
+        pick: (option) => (latest) =>
+          wearSeasons.includes(option as never)
+            ? withSeason(latest, option as (typeof wearSeasons)[number])
+            : latest,
+      },
+    ],
+    looksRight:
+      season && !confirmed ? (latest) => withSeason(latest, season) : undefined,
   };
 }
 
@@ -425,6 +502,11 @@ const briefFacts = ["kind", "colour", "season", "availability"];
 export const moreFacts = (piece: Piece) =>
   factSpecs(piece).filter((spec) => !briefFacts.includes(spec.id));
 
+const shownElsewhere = ["kind", "colour", "availability"];
+
+export const detailFacts = (piece: Piece) =>
+  factSpecs(piece).filter((spec) => !shownElsewhere.includes(spec.id));
+
 export function FactChips({
   piece,
   onChange,
@@ -436,8 +518,9 @@ export function FactChips({
 }) {
   const colors = useColors();
   const specs = more
-    ? moreFacts(piece)
+    ? detailFacts(piece)
     : factSpecs(piece).filter((spec) => briefFacts.includes(spec.id));
+  const [adding, setAdding] = useState<ListKey | null>(null);
   const [open, setOpen] = useState<string | null>(null);
   const [shown, setShown] = useState<string | null>(null);
   const [lineEnd, setLineEnd] = useState<string | null>(null);
@@ -547,6 +630,27 @@ export function FactChips({
     );
   };
 
+  const choose = (spec: FactSpec, row: FactRow, next: string) => {
+    const apply = row.pick(next);
+    const after = apply(piece);
+    const transform = spec.transform
+      ? spec.transform(next)
+      : edit(piece, apply);
+    void run(spec, transform, after).then(() => {
+      if (spec.done && !spec.done(after)) return;
+      if (spec.id === "coverage" && after !== piece) {
+        const verdict = pieceCoverage(after);
+        if (verdict)
+          announce(
+            t("piece.fact.known", {
+              label: spec.name,
+              value: t(`pieceCoverage.${verdict}` as Key),
+            }),
+          );
+      }
+    });
+  };
+
   const body = (spec: FactSpec): ReactNode =>
     spec.rows?.map((row) => (
       <View key={row.id} style={styles.row}>
@@ -557,35 +661,35 @@ export function FactChips({
         ) : null}
         <ChipRow
           label={row.label ? undefined : spec.name}
-          options={row.options.map((option) => ({
-            ...option,
-            accessibilityLabel: `${option.label}, ${row.label ?? spec.name}`,
-          }))}
+          options={[
+            ...row.options.map((option) => ({
+              ...option,
+              accessibilityLabel: `${option.label}, ${row.label ?? spec.name}`,
+            })),
+            ...(row.adds ? [addOwnOption()] : []),
+          ]}
           value={row.value}
           inSurface
           testID={`fact-${spec.id}-${row.id}`}
           onChange={(next) => {
             if (typeof next !== "string" || busy) return;
-            const apply = row.pick(next);
-            const after = apply(piece);
-            const transform = spec.transform
-              ? spec.transform(next)
-              : edit(piece, apply);
-            void run(spec, transform, after).then(() => {
-              if (spec.done && !spec.done(after)) return;
-              if (spec.id === "coverage" && after !== piece) {
-                const verdict = pieceCoverage(after);
-                if (verdict)
-                  announce(
-                    t("piece.fact.known", {
-                      label: spec.name,
-                      value: t(`pieceCoverage.${verdict}` as Key),
-                    }),
-                  );
-              }
-            });
+            if (next === addOwnId && row.adds) setAdding(row.adds);
+            else choose(spec, row, next);
           }}
         />
+        {row.adds && adding === row.adds ? (
+          <AddOwn
+            list={row.adds}
+            category={piece.category}
+            photo={piece.colors?.map((swatch) => swatch.rgb)}
+            onAdded={(id) => {
+              setAdding(null);
+              choose(spec, row, id);
+            }}
+            onCancel={() => setAdding(null)}
+            testID={`fact-${spec.id}-own`}
+          />
+        ) : null}
       </View>
     ));
 

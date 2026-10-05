@@ -11,10 +11,12 @@ import {
   kindsIn,
   savePiece,
   type Category,
+  type Closet,
   type GarmentKind,
   type Piece,
 } from "../../domain/closet";
-import { namedSwatch } from "../../domain/color";
+import { fitAttributes } from "../../domain/attributes";
+import { colourSwatch, ownKind, ownKindsIn } from "../../domain/lists";
 import { nameFor } from "../../domain/importing";
 import { confirmEdits } from "../../domain/recognition";
 import { categoryName, kindName, stylesName, t } from "../../i18n";
@@ -28,6 +30,7 @@ import {
   Banner,
   Button,
   ChipRow,
+  Expander,
   Field,
   Footer,
   Row,
@@ -38,7 +41,9 @@ import {
 } from "../../ui";
 import { theme } from "../../ui/theme";
 import { useColors } from "../../ui/useColors";
+import { AddOwn, addOwnId, addOwnOption } from "../AddOwn";
 import { ColourChips } from "../ColourChips";
+import { FactChips } from "../piece/FactChips";
 import { styleChoices, stylesOf } from "./ConfirmPiece";
 
 const commonColours = ["Black", "White", "Beige", "Navy", "Red", "Green"];
@@ -46,12 +51,15 @@ const commonColours = ["Black", "White", "Beige", "Navy", "Red", "Green"];
 type StyleChoice = ReturnType<typeof styleChoices>[number]["id"];
 
 export function AddByHand() {
-  const { update } = useCloset();
+  const { closet, update } = useCloset();
   const colors = useColors();
   const [id] = useState(() => randomUUID());
   const [image, setImage] = useState<string | null>(null);
   const [category, setCategory] = useState<Category | null>(null);
-  const [kind, setKind] = useState<GarmentKind | null>(null);
+  const [kind, setKind] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [facts, setFacts] = useState<Piece | null>(null);
+  const [more, setMore] = useState(false);
   const [style, setStyle] = useState<StyleChoice>("desi");
   const [colour, setColour] = useState<string | null>(null);
   const [typed, setTyped] = useState<string | null>(null);
@@ -60,8 +68,15 @@ export function AddByHand() {
   const [openFailed, setOpenFailed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const own = kind ? ownKind(kind) : undefined;
+  const garment = own ? undefined : ((kind as GarmentKind | null) ?? undefined);
   const name =
-    typed ?? (kind ? nameFor(kind, colour ? [namedSwatch(colour)] : []) : "");
+    typed ??
+    (own
+      ? own.name
+      : garment
+        ? nameFor(garment, colour ? [colourSwatch(colour)] : [])
+        : "");
   const dirty = Boolean(image || category || kind || colour || typed);
   const allowClose = useDiscardChanges(dirty, busy);
   const kindOptions = category
@@ -69,7 +84,7 @@ export function AddByHand() {
         .map((option) => option.id)
         .filter(isOffered)
     : [];
-  const fixed = kind ? fixedStyles(kind) : undefined;
+  const fixed = garment ? fixedStyles(garment) : undefined;
   const complete = Boolean(image && category && kind && name.trim());
 
   async function pick(source: "camera" | "library") {
@@ -102,6 +117,34 @@ export function AddByHand() {
     }
   }
 
+  const draft: Piece | null = category
+    ? fitAttributes({
+        id,
+        name: name.trim() || categoryName(category),
+        category,
+        ...(garment ? { kind: garment } : {}),
+        ...(own ? { ownKind: own.id } : {}),
+        photo: image ?? id,
+        createdAt: now().toISOString(),
+        source: "owned" as const,
+        styles: fixed ?? stylesOf(style),
+        attributes: facts?.attributes ?? {},
+        sources: facts?.sources ?? {},
+        ...(facts?.traits ? { traits: facts.traits } : {}),
+        ...(facts?.ownFabric ? { ownFabric: facts.ownFabric } : {}),
+      })
+    : null;
+
+  const changeFacts = async (transform: (current: Closet) => Closet) => {
+    if (!draft) return;
+    const next = transform({ ...closet, pieces: [draft] }).pieces[0];
+    if (!next) return;
+    setTouched(true);
+    setFacts(next);
+    if (!fixed && next.sources?.styles === "confirmed" && next.styles?.length)
+      setStyle(next.styles.length > 1 ? "both" : next.styles[0]!);
+  };
+
   async function save() {
     if (!complete || busy) return;
     setBusy(true);
@@ -110,20 +153,31 @@ export function AddByHand() {
     try {
       photo = await keepPhoto(image!);
       const styles = fixed ?? stylesOf(style);
-      const edited: Piece = confirmEdits(undefined, {
+      const plain: Piece = confirmEdits(undefined, {
         id,
         name: name.trim(),
         category: category!,
-        kind: kind!,
+        ...(garment ? { kind: garment } : {}),
+        ...(own ? { ownKind: own.id } : {}),
         photo,
         createdAt: now().toISOString(),
         source: "owned",
         styles,
       });
+      const edited: Piece =
+        facts && draft
+          ? {
+              ...plain,
+              attributes: draft.attributes,
+              sources: { ...draft.sources, ...plain.sources },
+              ...(draft.traits ? { traits: draft.traits } : {}),
+              ...(draft.ownFabric ? { ownFabric: draft.ownFabric } : {}),
+            }
+          : plain;
       const piece: Piece = colour
         ? {
             ...edited,
-            colors: [namedSwatch(colour)],
+            colors: [colourSwatch(colour)],
             sources: { ...edited.sources, colour: "confirmed" },
           }
         : edited;
@@ -231,7 +285,8 @@ export function AddByHand() {
           onChange={(next) => {
             if (typeof next !== "string") return;
             setTouched(true);
-            if (next !== category) setKind(null);
+            if (next !== category && !(own && own.category === next))
+              setKind(null);
             setCategory(next as Category);
           }}
           testID="manual-category"
@@ -239,17 +294,40 @@ export function AddByHand() {
         {category ? (
           <ChipRow
             label={t("piece.kind")}
-            options={kindOptions.map((option) => ({
-              id: option as string,
-              label: kindName(option),
-            }))}
+            options={[
+              ...ownKindsIn(category).map((option) => ({
+                id: option.id,
+                label: option.name,
+              })),
+              ...kindOptions.map((option) => ({
+                id: option as string,
+                label: kindName(option),
+              })),
+              addOwnOption(),
+            ]}
             value={kind}
             onChange={(next) => {
               if (typeof next !== "string") return;
               setTouched(true);
-              setKind(next as GarmentKind);
+              if (next === addOwnId) setAdding(true);
+              else setKind(next);
             }}
             testID="manual-kind"
+          />
+        ) : null}
+        {category && adding ? (
+          <AddOwn
+            list="kinds"
+            category={category}
+            onAdded={(next) => {
+              setAdding(false);
+              const added = ownKind(next);
+              if (added && added.category !== category)
+                setCategory(added.category);
+              setKind(next);
+            }}
+            onCancel={() => setAdding(false)}
+            testID="manual-own-kind"
           />
         ) : null}
         {fixed ? (
@@ -292,6 +370,17 @@ export function AddByHand() {
           returnKeyType="done"
           testID="manual-name"
         />
+        {draft ? (
+          <Expander
+            id="manual-more"
+            title={t("editor.moreDetails")}
+            open={more}
+            onToggle={() => setMore((open) => !open)}
+            testID="manual-more"
+          >
+            <FactChips piece={draft} onChange={changeFacts} more />
+          </Expander>
+        ) : null}
         {touched && !complete ? (
           <Text role="footnote" tone="muted">
             {t("manual.missing")}
