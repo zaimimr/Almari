@@ -23,5 +23,8 @@ appId: com.zaimimran.almari
 - assertVisible: "Worn today"
 - assertNotVisible:
     id: "today-another"
-- assertNotVisible:
-    id: "today-intent-work"
+- tapOn:
+    id: "today-intent-party"
+- extendedWaitUntil:
+    visible: "Wear this"
+    timeout: 60000
