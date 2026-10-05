@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
   drapes: { gap: theme.space.md },
   pager: { flexGrow: 0 },
   drape: {
-    borderRadius: 16,
+    borderRadius: theme.radius.md,
     borderCurve: "continuous",
     alignItems: "center",
     justifyContent: "center",

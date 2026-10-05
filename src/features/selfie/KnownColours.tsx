@@ -56,15 +56,23 @@ function SeasonCard({
       style={[
         styles.card,
         {
-          backgroundColor: selected ? colors.plumSoft : colors.surface,
-          borderColor: selected ? colors.plum : colors.line,
+          backgroundColor: colors.surface,
+          borderColor: selected ? colors.blushEdge : colors.line,
         },
       ]}
     >
       <Fan season={season} />
-      <Text role="subhead" tone={selected ? "plum" : "ink"}>
-        {seasonLabel(season)}
-      </Text>
+      <Text role="subhead">{seasonLabel(season)}</Text>
+      {selected ? (
+        <View
+          style={[
+            styles.picked,
+            { backgroundColor: colors.blush, borderColor: colors.blushEdge },
+          ]}
+        >
+          <Symbol name="checkmark" size={11} tone="ink" weight="semibold" />
+        </View>
+      ) : null}
     </Pressable>
   );
 }
@@ -221,9 +229,20 @@ const styles = StyleSheet.create({
     gap: theme.space.sm,
     paddingTop: theme.space.lg,
     paddingBottom: theme.space.md,
-    borderWidth: 1.5,
+    borderWidth: 2,
     borderRadius: theme.radius.md,
     borderCurve: "continuous",
+  },
+  picked: {
+    position: "absolute",
+    top: theme.space.sm,
+    right: theme.space.sm,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    alignItems: "center",
+    justifyContent: "center",
   },
   fan: { width: 96, height: 60, alignItems: "center" },
   blade: {

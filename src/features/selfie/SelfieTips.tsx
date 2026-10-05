@@ -1,8 +1,11 @@
 import { StyleSheet, View } from "react-native";
+import { seasons } from "../../domain/closet";
+import { labHex, seasonColours } from "../../domain/colourAnalysis";
 import { t } from "../../i18n";
 import { Symbol, Text } from "../../ui";
 import { theme } from "../../ui/theme";
 import { useColors } from "../../ui/useColors";
+import { useLargeText } from "../../ui/useLargeText";
 
 const tips = [
   ["colours.tip.daylight", "sun.max"],
@@ -11,10 +14,48 @@ const tips = [
   ["colours.tip.lip", "mouth"],
 ] as const;
 
+const ring = 176;
+const bead = 26;
+
+function Halo() {
+  const colors = useColors();
+  const radius = (ring - bead) / 2;
+  return (
+    <View
+      style={styles.halo}
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+    >
+      {seasons.map((season, index) => {
+        const angle = (index / seasons.length) * 2 * Math.PI - Math.PI / 2;
+        return (
+          <View
+            key={season}
+            style={[
+              styles.bead,
+              {
+                left: radius + radius * Math.cos(angle),
+                top: radius + radius * Math.sin(angle),
+                backgroundColor: labHex(seasonColours(season)[0]!),
+                borderColor: colors.line,
+              },
+            ]}
+          />
+        );
+      })}
+      <View style={[styles.face, { backgroundColor: colors.surface }]}>
+        <Symbol name="face.smiling" size={48} tone="plum" />
+      </View>
+    </View>
+  );
+}
+
 export function SelfieTips() {
   const colors = useColors();
+  const { ax } = useLargeText();
   return (
     <View style={styles.tips} testID="selfie-tips">
+      {ax ? null : <Halo />}
       <View style={[styles.card, { backgroundColor: colors.surface }]}>
         {tips.map(([tip, icon]) => (
           <View key={tip} style={styles.tip}>
@@ -36,6 +77,28 @@ export function SelfieTips() {
 
 const styles = StyleSheet.create({
   tips: { gap: theme.space.lg },
+  halo: {
+    width: ring,
+    height: ring,
+    alignSelf: "center",
+    alignItems: "center",
+    justifyContent: "center",
+    marginVertical: theme.space.lg,
+  },
+  bead: {
+    position: "absolute",
+    width: bead,
+    height: bead,
+    borderRadius: bead / 2,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  face: {
+    width: ring - 2 * bead - 2 * theme.space.md,
+    height: ring - 2 * bead - 2 * theme.space.md,
+    borderRadius: ring,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   tip: { flexDirection: "row", alignItems: "center", gap: theme.space.md },
   icon: {
     width: 40,
