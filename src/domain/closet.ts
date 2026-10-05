@@ -230,8 +230,24 @@ export type NeverWear =
   | { colour: string; on: "clothes" | "hijabs" }
   | { pattern: Pattern };
 
-export const notificationTimes = ["06:00", "07:00", "08:00", "21:00"] as const;
-export type NotificationTime = (typeof notificationTimes)[number];
+export type NotificationTime = `${number}:${number}`;
+export const notificationTimes: readonly NotificationTime[] = [
+  "06:00",
+  "07:00",
+  "08:00",
+  "21:00",
+];
+
+export function isClockTime(value: unknown): value is NotificationTime {
+  if (typeof value !== "string" || !/^\d\d:\d\d$/.test(value)) return false;
+  const [hour, minute] = value.split(":").map(Number) as [number, number];
+  return hour < 24 && minute < 60;
+}
+
+export function clockTime(hour: number, minute: number): NotificationTime {
+  const pad = (part: number) => String(part).padStart(2, "0");
+  return `${pad(hour)}:${pad(minute)}` as NotificationTime;
+}
 
 export const bodyShapes = [
   "pear",
@@ -276,7 +292,7 @@ export type StyleProfile = {
   bodyShape: BodyShape | null;
   fit: "loose" | "structured" | "depends" | null;
   colourLean: "bold" | "soft" | "depends" | null;
-  styleLean: "desi" | "western" | "both" | null;
+  styleLean: "desi" | "abaya" | "western" | "both" | null;
   colour: ColourProfile | null;
   beltOverOuter: boolean | null;
   minTopLength: Length | null;
@@ -486,6 +502,7 @@ export type Styling = {
   scan: ScanMode;
   name?: string;
   notification?: NotificationTime | null;
+  weekdaysOnly?: boolean;
 };
 
 export type Closet = {
@@ -1284,7 +1301,7 @@ function isProfile(value: unknown): value is StyleProfile {
     isNullableIn(bodyShapes)(value.bodyShape) &&
     isNullableIn(["loose", "structured", "depends"])(value.fit) &&
     isNullableIn(["bold", "soft", "depends"])(value.colourLean) &&
-    isNullableIn(["desi", "western", "both"])(value.styleLean) &&
+    isNullableIn(["desi", "abaya", "western", "both"])(value.styleLean) &&
     (value.colour === null || isColourProfile(value.colour))
   );
 }
@@ -1358,7 +1375,9 @@ function withOnboardingState(closet: Closet): Closet {
     closet.styling as Record<string, unknown>,
     {
       name: (name) => (isString(name) ? name : undefined),
-      notification: oneOf([null, ...notificationTimes]),
+      notification: (value) =>
+        value === null || isClockTime(value) ? value : undefined,
+      weekdaysOnly: (value) => (typeof value === "boolean" ? value : undefined),
     },
   );
   const profile =

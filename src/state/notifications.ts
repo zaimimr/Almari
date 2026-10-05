@@ -7,6 +7,7 @@ export type NotificationPlan = {
   title: string;
   body: string;
   data: { day: "today" | "tomorrow" };
+  weekdays?: number[];
 };
 
 export async function askNotificationPermission(): Promise<
@@ -35,8 +36,22 @@ export async function syncSchedule(plan: NotificationPlan | null) {
 async function schedule(plan: NotificationPlan | null) {
   await Notifications.cancelAllScheduledNotificationsAsync();
   if (!plan || (await notificationPermission()) !== "granted") return;
+  const content = { title: plan.title, body: plan.body, data: plan.data };
+  if (plan.weekdays) {
+    for (const weekday of plan.weekdays)
+      await Notifications.scheduleNotificationAsync({
+        content,
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
+          weekday,
+          hour: plan.hour,
+          minute: plan.minute,
+        },
+      });
+    return;
+  }
   await Notifications.scheduleNotificationAsync({
-    content: { title: plan.title, body: plan.body, data: plan.data },
+    content,
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
       hour: plan.hour,

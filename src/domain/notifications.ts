@@ -10,10 +10,11 @@ export type NotificationPlan = {
   title: string;
   body: string;
   data: { day: "today" | "tomorrow" };
+  weekdays?: number[];
 };
 
 export function notificationPlan(
-  styling: Pick<Styling, "notification" | "name">,
+  styling: Pick<Styling, "notification" | "name" | "weekdaysOnly">,
   locale: Locale,
 ): NotificationPlan | null {
   if (!styling.notification) return null;
@@ -28,5 +29,8 @@ export function notificationPlan(
     title: greeting(styling.name, hour, locale),
     body: translate({ en, nb }, locale, `notify.${day}`),
     data: { day },
+    ...(styling.weekdaysOnly
+      ? { weekdays: day === "today" ? [2, 3, 4, 5, 6] : [1, 2, 3, 4, 5] }
+      : {}),
   };
 }
