@@ -1,8 +1,17 @@
 import { useRef, useState } from "react";
 import { Image } from "expo-image";
-import { Share, StyleSheet, View } from "react-native";
+import {
+  ActionSheetIOS,
+  Alert,
+  PixelRatio,
+  Platform,
+  Share,
+  StyleSheet,
+  View,
+} from "react-native";
 import { captureRef } from "react-native-view-shot";
 import type { Piece } from "../../domain/closet";
+import { t } from "../../i18n";
 import { FlatLay, Text } from "../../ui";
 import { theme } from "../../ui/theme";
 import { useColors } from "../../ui/useColors";
@@ -12,8 +21,8 @@ const mark = require("../../../assets/brand/mark.png");
 export type ShareFormat = "story" | "post";
 
 const frames = {
-  story: { width: 360, height: 640, lay: 312, output: [1080, 1920] },
-  post: { width: 360, height: 450, lay: 248, output: [1080, 1350] },
+  story: { width: 360, height: 640, lay: 280, output: [1080, 1920] },
+  post: { width: 360, height: 450, lay: 236, output: [1080, 1350] },
 } as const;
 
 const hidden = {
@@ -27,24 +36,62 @@ export type ShareContent = {
   caption?: string | null;
 };
 
-export function useShareCard(
-  content: ShareContent,
-  format: ShareFormat = "story",
-) {
+const formats: ShareFormat[] = ["story", "post"];
+
+function chooseFormat(): Promise<ShareFormat | null> {
+  const labels = formats.map((format) => t(`share.${format}`));
+  return new Promise((resolve) => {
+    if (Platform.OS === "ios") {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: [...labels, t("common.cancel")],
+          cancelButtonIndex: labels.length,
+        },
+        (index) => resolve(formats[index] ?? null),
+      );
+      return;
+    }
+    Alert.alert(
+      t("looks.share"),
+      undefined,
+      [
+        ...formats.map((format, index) => ({
+          text: labels[index]!,
+          onPress: () => resolve(format),
+        })),
+        {
+          text: t("common.cancel"),
+          style: "cancel" as const,
+          onPress: () => resolve(null),
+        },
+      ],
+      { cancelable: true, onDismiss: () => resolve(null) },
+    );
+  });
+}
+
+export function useShareCard(content: ShareContent) {
   const colors = useColors();
-  const ref = useRef<View>(null);
+  const story = useRef<View>(null);
+  const post = useRef<View>(null);
   const [busy, setBusy] = useState(false);
-  const frame = frames[format];
 
   const share = async () => {
-    if (busy || !ref.current) return;
+    if (busy) return;
+    const format = await chooseFormat();
+    const ref = format === "post" ? post : story;
+    if (!format || !ref.current) return;
     setBusy(true);
     try {
+      const [width, height] = frames[format].output;
+      const scale = PixelRatio.get();
       const url = await captureRef(ref, {
-        format: "png",
-        width: frame.output[0],
-        height: frame.output[1],
+        format: "jpg",
+        quality: 0.92,
+        width: width / scale,
+        height: height / scale,
         result: "tmpfile",
+        fileName: "almari",
       });
       await Share.share({ url });
     } catch {
@@ -54,23 +101,26 @@ export function useShareCard(
     }
   };
 
-  const card = (
-    <View pointerEvents="none" style={styles.away} {...hidden}>
+  const render = (format: ShareFormat) => {
+    const frame = frames[format];
+    return (
       <View
-        ref={ref}
+        ref={format === "post" ? post : story}
         collapsable={false}
         style={[
           styles.card,
-          {
-            width: frame.width,
-            height: frame.height,
-            backgroundColor: colors.canvas,
-          },
+          format === "post" && styles.cardPost,
+          { width: frame.width, height: frame.height },
         ]}
       >
         <View style={styles.head}>
           {content.caption ? (
-            <Text role="eyebrow" allowFontScaling={false} numberOfLines={1}>
+            <Text
+              role="eyebrow"
+              allowFontScaling={false}
+              numberOfLines={1}
+              style={styles.center}
+            >
               {content.caption}
             </Text>
           ) : null}
@@ -78,11 +128,13 @@ export function useShareCard(
             role={format === "story" ? "display" : "title"}
             allowFontScaling={false}
             numberOfLines={2}
+            adjustsFontSizeToFit
+            style={styles.center}
           >
             {content.name}
           </Text>
         </View>
-        <View style={styles.lay}>
+        <View style={[styles.paper, { backgroundColor: colors.canvas }]}>
           <FlatLay pieces={content.pieces} size="hero" maxSize={frame.lay} />
         </View>
         <View style={styles.brand}>
@@ -97,6 +149,13 @@ export function useShareCard(
           </Text>
         </View>
       </View>
+    );
+  };
+
+  const card = (
+    <View pointerEvents="none" style={styles.away} {...hidden}>
+      {render("story")}
+      {render("post")}
     </View>
   );
 
@@ -106,18 +165,31 @@ export function useShareCard(
 const styles = StyleSheet.create({
   away: { position: "absolute", left: -10000, top: 0 },
   card: {
+    backgroundColor: theme.brand.ivory,
     paddingHorizontal: theme.space.xl,
-    paddingVertical: theme.space.xxl,
-    justifyContent: "space-between",
+    paddingTop: theme.space.xxxl,
+    paddingBottom: theme.space.xl,
+    gap: theme.space.xl,
   },
-  head: { gap: theme.space.sm },
-  lay: { flex: 1, justifyContent: "center", alignItems: "center" },
+  cardPost: {
+    paddingTop: theme.space.xl,
+    paddingBottom: theme.space.lg,
+    gap: theme.space.lg,
+  },
+  head: { gap: theme.space.sm, alignItems: "center" },
+  center: { textAlign: "center" },
+  paper: {
+    flex: 1,
+    borderRadius: theme.radius.lg,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   brand: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: theme.space.xs,
   },
-  mark: { width: 28, height: 28 },
+  mark: { width: 24, height: 24 },
   word: { letterSpacing: 3 },
 });

@@ -1448,6 +1448,8 @@ export const nb: Record<Key, string> = {
   "looks.replace": "Erstatt",
   "looks.moveTitle": "Flytte {name} fra {date}?",
   "looks.move": "Flytt",
+  "share.story": "Story",
+  "share.post": "Innlegg",
   "looks.share": "Del",
   "looks.sameAs": "Samme som {name}",
   "calendar.planned": "{date}, planlagt",

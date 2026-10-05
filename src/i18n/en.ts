@@ -1430,6 +1430,8 @@ export const en = {
   "looks.replace": "Replace",
   "looks.moveTitle": "Move {name} from {date}?",
   "looks.move": "Move",
+  "share.story": "Story",
+  "share.post": "Post",
   "looks.share": "Share",
   "looks.sameAs": "Same as {name}",
   "calendar.planned": "{date}, planned",

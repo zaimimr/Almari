@@ -246,10 +246,11 @@ export default function TodayScreen() {
   const [title, measure] = useGreeting(closet.styling.name, model.hour);
   const inline = mode === "planning" || mode === "tomorrow";
   const first = !closet.styling.everyday;
+  const shareDate = model.session?.date ?? model.today?.localDate;
   const shareCard = useShareCard({
     pieces: model.pieces,
     name: model.name,
-    caption: model.session?.date ? fullDate(model.session.date, locale) : null,
+    caption: shareDate ? fullDate(shareDate, locale) : null,
   });
   const locked = !inline && !!model.worn;
 
