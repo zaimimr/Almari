@@ -292,6 +292,8 @@ export const laundryDone = (closet: Closet, ids: string[]): Closet =>
     closet,
   );
 
+export const defaultCurrency = "NOK";
+
 export function costPerWear(piece: Piece, wears: number): number | null {
   return piece.price ? piece.price.amount / Math.max(wears, 1) : null;
 }

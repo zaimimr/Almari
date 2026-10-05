@@ -12,6 +12,7 @@ import {
   type FactKey,
 } from "../../domain/facts";
 import {
+  applicableAttributes,
   confirmAttribute,
   optionsFor,
   type AttributeKey,
@@ -27,7 +28,7 @@ import {
   type Style,
 } from "../../domain/closet";
 import { colorName, colourNames, namedSwatch } from "../../domain/color";
-import { listName, t, type Key } from "../../i18n";
+import { listName, locale, t, type Key } from "../../i18n";
 import { Chip, ChipRow, Expander, Text } from "../../ui";
 import { useColors } from "../../ui/useColors";
 import { announce } from "../../ui/announce";
@@ -132,9 +133,34 @@ function confirmShown(piece: Piece, keys: (FactKey | AttributeKey)[]): Piece {
   }, piece);
 }
 
-function colourFact(piece: Piece): FactSpec | null {
+const addLabel = (name: string) =>
+  t("fact.add", { label: name.toLocaleLowerCase(locale) });
+
+const colourOptions = () =>
+  colourNames.map((option) => ({
+    id: option,
+    label: colourLabel(option),
+    swatch: hex(namedSwatch(option).rgb),
+  }));
+
+function colourFact(piece: Piece): FactSpec {
   const swatch = piece.colors?.[0];
-  if (!swatch) return null;
+  if (!swatch)
+    return {
+      id: "colour",
+      name: t("fact.colour"),
+      value: addLabel(t("fact.colour")),
+      tentative: true,
+      rows: [
+        {
+          id: "colour",
+          options: colourOptions(),
+          value: null,
+          pick: () => (latest) => latest,
+        },
+      ],
+      transform: (option) => (closet) => setColour(closet, piece.id, option),
+    };
   const name = colorName(swatch.rgb);
   const confirmed = piece.sources?.colour === "confirmed";
   const value = colourLabel(name);
@@ -148,11 +174,7 @@ function colourFact(piece: Piece): FactSpec | null {
     rows: [
       {
         id: "colour",
-        options: colourNames.map((option) => ({
-          id: option,
-          label: colourLabel(option),
-          swatch: hex(namedSwatch(option).rgb),
-        })),
+        options: colourOptions(),
         value: name,
         pick: (option) => (latest) => latest,
       },
@@ -322,7 +344,17 @@ function sparkleFact(piece: Piece): FactSpec | null {
 
 function attributeFact(piece: Piece, key: AttributeKey): FactSpec | null {
   const value = piece.attributes?.[key];
-  if (value === undefined) return null;
+  if (value === undefined)
+    return key === "fabric" &&
+      applicableAttributes(piece.category, piece.kind).includes(key)
+      ? {
+          id: key,
+          name: factName(key),
+          value: addLabel(factName(key)),
+          tentative: true,
+          rows: [attributeRow(piece, key)],
+        }
+      : null;
   const tentative = piece.sources?.[key] === "proposed";
   return {
     id: key,
