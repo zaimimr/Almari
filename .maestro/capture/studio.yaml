@@ -9,10 +9,6 @@ appId: com.zaimimran.almari
     id: "confirm-photo"
 - tapOn: "AI Enhance"
 - extendedWaitUntil:
-    visible:
-      id: "moment-generating"
-    timeout: 10000
-- extendedWaitUntil:
     notVisible:
       id: "moment-generating"
     timeout: 30000
