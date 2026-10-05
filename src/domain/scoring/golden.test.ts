@@ -127,11 +127,12 @@ test("a closet with one hijab and one tunic explains what is missing instead of 
   assert.equal(result.status, "missing");
   assert.deepEqual(
     result.problems.map((problem) => problem.message),
-    [
-      "Add trousers or a skirt that suits a Western outfit.",
-      "Add shoes to complete an outfit.",
-    ],
+    ["Add shoes and trousers or a skirt to complete an outfit."],
   );
+  assert.deepEqual(result.partial, {
+    ids: ["my-tunic", "my-hijab"],
+    missing: ["bottom", "shoes"],
+  });
 });
 
 test("style settings never let an outfit past the hard constraints", () => {

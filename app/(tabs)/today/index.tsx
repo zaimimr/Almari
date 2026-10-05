@@ -21,6 +21,7 @@ import {
 } from "../../../src/features/today/useToday";
 import { locale, t } from "../../../src/i18n";
 import { now } from "../../../src/state/clock";
+import { addPiecesRoute } from "../../../src/state/imports";
 import {
   Banner,
   Button,
@@ -292,6 +293,19 @@ export default function TodayScreen() {
             <Strip key={openId ?? "closed"} model={model} />
             <OutfitCard model={model} />
             <ActionArea model={model} />
+          </View>
+        ) : model.result?.partial && model.lostPieces === 0 ? (
+          <View style={styles.hero}>
+            <FlatLay
+              pieces={model.result.partial.ids.flatMap((id) =>
+                closet.pieces.filter((piece) => piece.id === id),
+              )}
+              size="hero"
+              maxSize={heroSize}
+              emptyRoles={model.result.partial.missing}
+              onEmptyPress={() => router.push(addPiecesRoute)}
+              testID="today-partial"
+            />
           </View>
         ) : null}
       </View>

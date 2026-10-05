@@ -1127,11 +1127,18 @@ export const nb: Record<Key, string> = {
   "styling.addShoes": "Legg til sko.",
   "styling.gapBottom":
     "Legg til bukser eller et skjørt som passer til et antrekk i stilen {style}.",
-  "styling.gapHijab": "Legg til en hijab for å fullføre et antrekk.",
   "styling.gapMain":
     "Legg til en topp, tunika eller kjole for å sette sammen et helt antrekk.",
   "styling.gapShoes": "Legg til sko for å fullføre et antrekk.",
-  "styling.gapGym": "Ingen treningsklær ennå",
+  "styling.gapList": "Legg til {list} for å fullføre et antrekk.",
+  "styling.need.main": "en topp, tunika eller kjole",
+  "styling.need.bottom": "bukser eller et skjørt",
+  "styling.need.shoes": "sko",
+  "styling.need.hijab": "en hijab",
+  "styling.need.gymClothes": "treningsklær",
+  "styling.need.gymTop": "en treningstopp eller T-skjorte",
+  "styling.need.gymBottom": "tights eller joggebukse",
+  "styling.need.sneakers": "joggesko",
   "styling.kindNone": "Det finnes ingen {kind} i denne garderoben ennå.",
   "styling.kindOtherStyle":
     "Plagget av typen {kind} er merket {other}. Det finnes ingen {kind} til et antrekk i stilen {style}.",
@@ -1198,6 +1205,7 @@ export const nb: Record<Key, string> = {
   "capture.colourLabel": "Farge: {colour}",
   "common.editColourHint": "Åpner fargevalg",
   "build.slotEmpty": "Mangler {role}",
+  "today.addRole": "Legg til {role}",
   "build.filling": "Fyller ut resten",
   "build.pieceGone": "Et plagg er borte",
   "role.one.main": "hovedplagg",

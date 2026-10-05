@@ -43,6 +43,7 @@ export type FlatLayProps = {
   state?: "arranging" | "loading";
   swapMark?: boolean;
   emptyRoles?: Role[];
+  onEmptyPress?: (role: Role) => void;
   preview?: boolean;
   hiddenPieces?: boolean;
   revision?: number;
@@ -353,6 +354,7 @@ export function FlatLay({
   state,
   swapMark = false,
   emptyRoles = [],
+  onEmptyPress,
   preview = false,
   hiddenPieces = false,
   revision,
@@ -548,13 +550,18 @@ export function FlatLay({
       ) : side > 0 ? (
         <LayoutAnimationConfig key={revision} skipEntering>
           {empties.map(({ role, piece, laid }) => (
-            <View
+            <Pressable
               key={piece.id}
               nativeID={`${prefix}-${piece.id}`}
-              accessible={!silent}
-              accessibilityLabel={t("build.slotEmpty", {
-                role: t(`role.one.${role}`),
-              })}
+              accessible={!silent || Boolean(onEmptyPress)}
+              accessibilityRole={onEmptyPress ? "button" : undefined}
+              accessibilityLabel={t(
+                onEmptyPress ? "today.addRole" : "build.slotEmpty",
+                { role: t(`role.one.${role}`) },
+              )}
+              disabled={!onEmptyPress}
+              onPress={() => onEmptyPress?.(role)}
+              testID={onEmptyPress ? `empty-${role}` : undefined}
               style={[
                 styles.empty,
                 {
@@ -562,10 +569,14 @@ export function FlatLay({
                   top: laid.y * side,
                   width: laid.width * side,
                   height: laid.height * side,
-                  borderColor: colors.lineField,
+                  borderColor: onEmptyPress ? colors.plum : colors.lineField,
                 },
               ]}
-            />
+            >
+              {onEmptyPress ? (
+                <Symbol name="plus" size={theme.size.iconInline} tone="plum" />
+              ) : null}
+            </Pressable>
           ))}
           {[
             ...swap.outgoing
@@ -622,6 +633,8 @@ const styles = StyleSheet.create({
     borderStyle: "dashed",
     borderRadius: theme.radius.print,
     borderCurve: "continuous",
+    alignItems: "center",
+    justifyContent: "center",
   },
   mark: {
     position: "absolute",

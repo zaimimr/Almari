@@ -1,4 +1,4 @@
-import { t } from "../i18n";
+import { t, type Key } from "../i18n";
 import {
   isAvailable,
   kindLabel,
@@ -78,6 +78,7 @@ export type StyleResult = {
   outfits: Candidate[];
   problems: Problem[];
   limited: boolean;
+  partial?: { ids: string[]; missing: Role[] };
 };
 
 const maxCombinations = 4000;
@@ -136,12 +137,8 @@ function fitsStyle(piece: Piece, style: Style) {
   return !piece.styles || piece.styles.includes(style);
 }
 
-const activewear: readonly string[] = [
-  "leggings",
-  "joggers",
-  "sports-top",
-  "hoodie",
-];
+const gymMains: readonly string[] = ["sports-top", "hoodie", "t-shirt"];
+const gymBottoms: readonly string[] = ["leggings", "joggers", "shorts"];
 
 const offAtGym: readonly string[] = ["heels", "blazer"];
 
@@ -150,6 +147,9 @@ function fitsOccasion(piece: Piece, request: OutfitRequest) {
   if (piece.category === "dress" || piece.category === "bag") return false;
   if (piece.category === "accessory") return false;
   if (piece.kind && offAtGym.includes(piece.kind)) return false;
+  const role = roleOf(piece);
+  if (role === "main") return gymMains.includes(piece.kind ?? "");
+  if (role === "bottom") return gymBottoms.includes(piece.kind ?? "");
   if (piece.category === "shoes") return piece.kind === "sneakers";
   if (piece.kind === "coat")
     return (
@@ -420,6 +420,37 @@ function diversify(
   return ordered;
 }
 
+type Need = "main" | "bottom" | "shoes" | "hijab";
+
+const needOrder: Need[] = ["shoes", "hijab", "main", "bottom"];
+
+function needMessage(needs: Need[], request: OutfitRequest) {
+  const gym = request.occasion === "gym";
+  if (!gym && needs.length === 1 && needs[0] === "main")
+    return t("styling.gapMain");
+  if (!gym && needs.length === 1 && needs[0] === "bottom")
+    return t("styling.gapBottom", { style: styleLabel(request.style) });
+  if (!gym && needs.length === 1 && needs[0] === "shoes")
+    return t("styling.gapShoes");
+  const clothes = gym && needs.includes("main") && needs.includes("bottom");
+  const words = [...needs]
+    .sort((a, b) => needOrder.indexOf(a) - needOrder.indexOf(b))
+    .flatMap((need): Key[] => {
+      if (clothes && need === "bottom") return [];
+      if (clothes && need === "main") return ["styling.need.gymClothes"];
+      if (gym && need === "main") return ["styling.need.gymTop"];
+      if (gym && need === "bottom") return ["styling.need.gymBottom"];
+      if (gym && need === "shoes") return ["styling.need.sneakers"];
+      return [`styling.need.${need}`];
+    })
+    .map((key) => t(key));
+  const list =
+    words.length > 1
+      ? `${words.slice(0, -1).join(", ")} ${t("word.and")} ${words[words.length - 1]}`
+      : words[0]!;
+  return t("styling.gapList", { list });
+}
+
 function mainPieceWords(style: Style) {
   return t("styling.noMainForStyle", { style: styleLabel(style) });
 }
@@ -516,21 +547,6 @@ export function styleOutfits(
   const eligible = available.filter(
     (piece) => fitsStyle(piece, request.style) && fitsOccasion(piece, request),
   );
-  if (
-    request.occasion === "gym" &&
-    ![...kept, ...eligible].some(
-      (piece) => piece.kind && activewear.includes(piece.kind),
-    )
-  )
-    return fail("missing", [
-      {
-        code: "missing-role",
-        severity: "missing",
-        message: t("styling.gapGym"),
-        ids: [],
-        actions: [{ type: "add-pieces" }],
-      },
-    ]);
   const keptRole = (role: Role) =>
     kept.filter((piece) => roleOf(piece) === role);
   const eligibleRole = (role: Role) =>
@@ -572,41 +588,80 @@ export function styleOutfits(
     }
   }
 
+  const gym = request.occasion === "gym";
   const gaps: Problem[] = [];
-  const gap = (message: string, actions: ProblemAction[] = []) =>
-    gaps.push({
-      code: "missing-role",
-      severity: "missing",
-      message,
-      ids: [],
-      actions,
-    });
+  const needs: Need[] = [];
   const mains = keptRole("main").length
     ? keptRole("main")
     : eligibleRole("main");
   if (!mains.length) {
-    if (available.some((piece) => roleOf(piece) === "main"))
-      gap(mainPieceWords(request.style), [
-        { type: "set-style", style: otherStyle(request.style) },
-      ]);
-    else gap(t("styling.gapMain"), [{ type: "add-pieces" }]);
+    if (
+      available.some(
+        (piece) => roleOf(piece) === "main" && fitsOccasion(piece, request),
+      )
+    )
+      gaps.push({
+        code: "missing-role",
+        severity: "missing",
+        message: mainPieceWords(request.style),
+        ids: [],
+        actions: [{ type: "set-style", style: otherStyle(request.style) }],
+      });
+    else needs.push("main");
   }
   const bottoms = keptRole("bottom").length
     ? keptRole("bottom")
     : eligibleRole("bottom");
-  if (mains.length && mains.every(needsBottom) && !bottoms.length)
-    gap(t("styling.gapBottom", { style: styleLabel(request.style) }), [
-      { type: "add-pieces" },
-    ]);
+  if (
+    !bottoms.length &&
+    (mains.length ? mains.every(needsBottom) : gym && needs.includes("main"))
+  )
+    needs.push("bottom");
   if (!keptRole("shoes").length && !eligibleRole("shoes").length)
-    gap(t("styling.gapShoes"), [{ type: "add-pieces" }]);
+    needs.push("shoes");
   if (
     request.hijab === "always" &&
     !keptRole("hijab").length &&
     !eligibleRole("hijab").length
   )
-    gap(t("styling.gapHijab"), [{ type: "add-pieces" }]);
-  if (gaps.length) return fail("missing", gaps);
+    needs.push("hijab");
+  if (needs.length)
+    gaps.push({
+      code: "missing-role",
+      severity: "missing",
+      message: needMessage(needs, request),
+      ids: [],
+      actions: [{ type: "add-pieces" }],
+    });
+  if (gaps.length) {
+    const partial =
+      needs.length && gaps.length === 1
+        ? {
+            ids: (["main", "bottom", "shoes", "hijab"] as const).flatMap(
+              (role) => {
+                if (needs.includes(role)) return [];
+                if (role === "hijab" && request.hijab === "not-needed")
+                  return [];
+                if (keptRole(role).length)
+                  return keptRole(role).map((piece) => piece.id);
+                const first = [...eligibleRole(role)].sort(
+                  (a, b) => hash(seed + a.id) - hash(seed + b.id),
+                )[0];
+                if (!first) return [];
+                if (
+                  role === "bottom" &&
+                  mains.length &&
+                  !mains.some(needsBottom)
+                )
+                  return [];
+                return [first.id];
+              },
+            ),
+            missing: needs,
+          }
+        : undefined;
+    return { ...fail("missing", gaps), ...(partial ? { partial } : {}) };
+  }
 
   const warm =
     request.weather.source !== "unknown" && request.weather.warmth === "warm";
