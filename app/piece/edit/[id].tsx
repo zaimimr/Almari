@@ -81,6 +81,11 @@ const hex = (name: string) =>
     .rgb.map((part) => part.toString(16).padStart(2, "0"))
     .join("")}`;
 
+const paletteName = (piece: Piece) => {
+  const main = mainColourName(piece.colors);
+  return colourNames.find((option) => option.toLowerCase() === main) ?? null;
+};
+
 const priceText = (piece: Piece) =>
   piece.price ? String(piece.price.amount) : "";
 
@@ -145,7 +150,13 @@ function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
     });
     setFacts(next.pieces.find((item) => item.id === piece.id) ?? facts);
   };
-  const colour = mainColourName(facts.colors);
+  const colour = paletteName(facts);
+  const [colourOrder] = useState(() => {
+    const first = paletteName(piece);
+    return first
+      ? [first, ...colourNames.filter((option) => option !== first)]
+      : colourNames;
+  });
 
   const variantPiece = { ...piece, photo };
   const shown = newPhoto ? null : shownOf(piece, photo);
@@ -443,12 +454,12 @@ function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
         <ChipRow
           label={t("fact.colour")}
           layout="scroll"
-          options={colourNames.map((option) => ({
+          options={colourOrder.map((option) => ({
             id: option,
             label: colourLabel(option),
             swatch: hex(option),
           }))}
-          value={colour ?? null}
+          value={colour}
           onChange={(next) => {
             if (typeof next !== "string" || busy) return;
             void changeFacts((current) => setColour(current, piece.id, next));
