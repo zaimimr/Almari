@@ -71,6 +71,9 @@ const kindPoses: Record<string, string> = {
   belt: "as an overhead flat lay in a loose oval or gentle curve, with the buckle and belt end visible. Preserve the original width, holes, hardware and material",
 };
 
+const general =
+  "as a clean front view, laid out neatly and fully visible exactly as it appears in the source, with the same colour, pattern, shape and details";
+
 const fits: Record<string, { type: string; fit: string }> = {
   "wide-leg": { type: "trousers", fit: "wide-leg" },
 };
@@ -81,12 +84,16 @@ export function studioPrompt({
   colour,
 }: Omit<StudioRequest, "image">): string {
   const fit = kind ? fits[kind] : undefined;
+  const group = category ? nouns[category] : null;
   const type =
-    fit?.type ?? (kind ? kind.replaceAll("-", " ") : nouns[category]);
-  const pose = (kind && kindPoses[kind]) ?? categoryPoses[category];
+    fit?.type ?? (kind ? kind.replaceAll("-", " ") : (group ?? "item"));
+  const pose =
+    (kind && kindPoses[kind]) ?? (category ? categoryPoses[category] : general);
   return [
     "Create a premium e-commerce catalogue photograph of the exact item shown in the source photo, suitable for a digital wardrobe.",
-    `ITEM. Item category: ${type} (${nouns[category]}).${fit ? ` Fit: ${fit.fit}.` : ""} It must stay ${type}. Never turn it into another kind of clothing. Preserve the item's original design. The source photo is the authority for its appearance.`,
+    group || kind
+      ? `ITEM. Item category: ${type}${group ? ` (${group})` : ""}.${fit ? ` Fit: ${fit.fit}.` : ""} It must stay ${type}. Never turn it into another kind of clothing. Preserve the item's original design. The source photo is the authority for its appearance.`
+      : "ITEM. Identify the clothing item or accessory from the source photo and keep it exactly that kind of item. Never turn it into another kind of clothing. Preserve the item's original design. The source photo is the authority for its appearance.",
     colour ? `Its main colour is ${colour}.` : null,
     "PRODUCT FIDELITY. Preserve the item's colour, pattern, print, fabric texture, sheen, transparency, silhouette, proportions and construction. Keep the original length, width, cut, sleeves, neckline, waistband, hems, seams, pockets, fastenings, embroidery and any existing logos or lettering. Do not redesign, embellish, simplify or substitute the item. Do not invent details that are not visible in the source. If the item is plain, keep it plain, with no added pattern, print or embroidery. If presentation and fidelity conflict, prioritize fidelity.",
     `PREPARATION AND ARRANGEMENT. Remove the original background and any person, mannequin, hanger or unrelated objects. Repair edges that were cut or damaged by background removal so the outline is complete and natural. Arrange the item neatly ${pose}. Smooth accidental wrinkles and handling creases while preserving intentional pleats, gathers, ruching, fabric texture and natural folds. Give the item a clean, balanced silhouette with subtle fabric volume. Do not stretch, slim, inflate or force it into perfect symmetry.`,

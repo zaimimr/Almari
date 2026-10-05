@@ -14,7 +14,7 @@ export type Category = (typeof categories)[number];
 
 export type StudioRequest = {
   image: File;
-  category: Category;
+  category?: Category;
   kind?: string;
   name?: string;
   colour?: string;
@@ -52,7 +52,6 @@ export function parseStudioRequest(
   if (image.size === 0) return { error: "image", status: 400 };
   if (image.size > maxImageBytes) return { error: "size", status: 413 };
   const category = form.get("category");
-  if (!isCategory(category)) return { error: "category", status: 400 };
   const kind = form.get("kind");
   if (
     kind !== null &&
@@ -61,7 +60,7 @@ export function parseStudioRequest(
     return { error: "kind", status: 400 };
   return {
     image,
-    category,
+    category: isCategory(category) ? category : undefined,
     kind: kind ?? undefined,
     name: text(form, "name", 60),
     colour: text(form, "colour", 40),
