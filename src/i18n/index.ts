@@ -52,4 +52,10 @@ export const styleName = (id: Style) => t(`style.${id}`);
 export const stylesName = (styles: readonly Style[]) =>
   styles.map(styleName).join(` ${t("word.and")} `);
 
+export function listName(items: readonly string[]): string {
+  if (items.length < 2) return items[0] ?? "";
+  const comma = locale === "en" && items.length > 2 ? "," : "";
+  return `${items.slice(0, -1).join(", ")}${comma} ${t("word.and")} ${items.at(-1)}`;
+}
+
 export const occasionName = (id: Occasion) => t(`occasion.${id}`);

@@ -27,7 +27,7 @@ import {
   type Style,
 } from "../../domain/closet";
 import { colorName, colourNames, namedSwatch } from "../../domain/color";
-import { locale, t, type Key } from "../../i18n";
+import { listName, t, type Key } from "../../i18n";
 import { Chip, ChipRow, Expander, Text } from "../../ui";
 import { useColors } from "../../ui/useColors";
 import { announce } from "../../ui/announce";
@@ -269,7 +269,6 @@ function coverageFact(piece: Piece): FactSpec | null {
       : attributeRow(piece, key as AttributeKey, factName(key)),
   );
   const suggested = reads.filter((key) => isProposed(piece, key));
-  const list = new Intl.ListFormat(locale, { type: "unit", style: "narrow" });
   return {
     id: "coverage",
     name: t("fact.coverage"),
@@ -279,7 +278,7 @@ function coverageFact(piece: Piece): FactSpec | null {
     showKey: true,
     tentative: open.length > 0,
     spokenValue: open.length
-      ? list.format(open.map((key) => factName(key)))
+      ? listName(open.map((key) => factName(key)))
       : undefined,
     rows,
     looksRight: suggested.length

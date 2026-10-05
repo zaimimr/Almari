@@ -11,7 +11,7 @@ import { clockFor, stylePiece } from "../../src/domain/today";
 import { setArchived } from "../../src/domain/wardrobe";
 import { FactChips } from "../../src/features/piece/FactChips";
 import { usePiece, wearLine } from "../../src/features/piece/usePiece";
-import { locale, t } from "../../src/i18n";
+import { listName, locale, t } from "../../src/i18n";
 import { fibreLabel } from "../../src/state/careLabel";
 import { now } from "../../src/state/clock";
 import {
@@ -32,7 +32,6 @@ type CareLabel = NonNullable<Piece["label"]>;
 function labelMeta(label: CareLabel | undefined): string | undefined {
   if (!label) return undefined;
   const percent = new Intl.NumberFormat(locale, { style: "percent" });
-  const list = new Intl.ListFormat(locale, { type: "unit", style: "narrow" });
   const fibres = label.materials.map((material) =>
     material.percent === null
       ? fibreLabel(material.fibre)
@@ -42,7 +41,7 @@ function labelMeta(label: CareLabel | undefined): string | undefined {
         }),
   );
   const parts = [
-    fibres.length ? list.format(fibres) : "",
+    fibres.length ? listName(fibres) : "",
     label.size ? t("careLabel.lineSize", { size: label.size }) : "",
     label.brand ? t("careLabel.lineBrand", { brand: label.brand }) : "",
     label.origin ? t("careLabel.lineOrigin", { origin: label.origin }) : "",

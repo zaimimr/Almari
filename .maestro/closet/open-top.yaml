@@ -1,0 +1,20 @@
+appId: com.zaimimran.almari
+# seed: seed-closet.sh
+---
+- runFlow: ../lib/open-closet.yaml
+- scrollUntilVisible:
+    element:
+      id: "tile-seed-tunic"
+    direction: DOWN
+- tapOn:
+    id: "tile-seed-tunic"
+- extendedWaitUntil:
+    visible:
+      id: "piece-facts"
+    timeout: 5000
+- tapOn:
+    id: "piece-edit"
+- extendedWaitUntil:
+    visible:
+      id: "piece-edit-screen"
+    timeout: 5000
