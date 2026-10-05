@@ -290,11 +290,7 @@ export default function TodayScreen() {
       {measure}
       {shareCard.card}
       <View style={styles.content}>
-        {inline ? (
-          <TitleRow model={model} />
-        ) : locked ? null : (
-          <IntentRow model={model} />
-        )}
+        {inline ? <TitleRow model={model} /> : <IntentRow model={model} />}
         <Banners model={model} />
         {!today || model.holding ? (
           <Silk

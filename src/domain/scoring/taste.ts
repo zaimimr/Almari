@@ -98,9 +98,15 @@ export function wearBoost(ids: string[], wear: Record<string, number>) {
 
 export function wearCounts(events: FeedbackEvent[]) {
   const counts: Record<string, number> = {};
+  const seen = new Set<string>();
   for (const event of events)
     if (event.kind === "wore" && !event.undone)
-      for (const id of event.pieceIds) counts[id] = (counts[id] ?? 0) + 1;
+      for (const id of event.pieceIds) {
+        const day = `${id}:${event.at.slice(0, 10)}`;
+        if (seen.has(day)) continue;
+        seen.add(day);
+        counts[id] = (counts[id] ?? 0) + 1;
+      }
   return counts;
 }
 

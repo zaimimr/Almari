@@ -20,7 +20,7 @@ import {
   woreThis,
   wornNow,
 } from "./feedback";
-import { lookEntries } from "./looks";
+import { lookEntries, wearCalendar } from "./looks";
 import { addSampleWardrobe } from "./samples";
 import { baseWeights, rulesScorer } from "./scoring/rulesScorer";
 import {
@@ -32,6 +32,7 @@ import {
 import { replacementsFor } from "./styling";
 import {
   activeSession,
+  dressAgain,
   resultFor,
   saveEverydayStyle,
   startOccasion,
@@ -353,4 +354,37 @@ test("piece wears do not clear today's worn outfit", () => {
   );
   assert.equal(wornNow(marked)?.id, "w1");
   assert.equal(woreThis(marked, current.revision, at, "w2"), marked);
+});
+
+test("she can dress again the same day and both outfits count", () => {
+  const work = styled("work");
+  const first = session(work);
+  const worn = woreThis(work, first.revision, at, "w1");
+  assert.ok(wornNow(worn));
+  const evening = dressAgain(worn, "dinner");
+  const second = session(evening);
+  assert.equal(second.request.occasion, "dinner");
+  assert.ok(second.pieceIds.length);
+  assert.notDeepEqual(second.pieceIds, first.pieceIds);
+  assert.equal(wornNow(evening), null);
+  const both = woreThis(
+    evening,
+    second.revision,
+    "2026-10-01T17:00:00.000Z",
+    "w2",
+  );
+  assert.ok(wornNow(both));
+  const day = wearCalendar(both, "2026-10", "en")["2026-10-01"]!;
+  assert.deepEqual(day.wears.map((wear) => wear.eventId).sort(), ["w1", "w2"]);
+  const counts = wearCounts(both.feedback);
+  for (const id of new Set([...first.pieceIds, ...second.pieceIds]))
+    assert.equal(counts[id], 1, id);
+});
+
+test("dressing again for the same occasion still gives an outfit", () => {
+  const work = styled("work");
+  const first = session(work);
+  const worn = woreThis(work, first.revision, at, "w1");
+  const again = dressAgain(worn, "work");
+  assert.ok(session(again).pieceIds.length);
 });
