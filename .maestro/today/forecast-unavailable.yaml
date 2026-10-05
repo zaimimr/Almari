@@ -10,7 +10,7 @@ appId: com.zaimimran.almari
       id: "today-outfit"
     timeout: 60000
 - assertNotVisible:
-    id: "today-reason"
+    id: "today-weather"
     text: "Oslo.*"
 - assertNotVisible:
     id: "forecast-mark"

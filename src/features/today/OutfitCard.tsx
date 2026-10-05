@@ -1,4 +1,4 @@
-import { Linking, StyleSheet, View } from "react-native";
+import { Linking, Pressable, StyleSheet, View } from "react-native";
 import type { Forecast, Weather } from "../../domain/closet";
 import { locale, t } from "../../i18n";
 import { Button, Text } from "../../ui";
@@ -58,7 +58,7 @@ export function OutfitCard({ model }: { model: TodayModel }) {
       : forecast && place
         ? forecastText(forecast, place.name)
         : weatherText(request.weather);
-  const caption = [weather, model.reasonLine].filter(Boolean).join(" · ");
+  const reason = model.reasonLine;
 
   return (
     <View style={styles.card}>
@@ -81,22 +81,30 @@ export function OutfitCard({ model }: { model: TodayModel }) {
           testID={model.liked ? "today-like-on" : "today-like"}
         />
       </View>
-      {caption ? (
-        <Text role="footnote" tone="muted" testID="today-reason">
-          {caption}
-        </Text>
-      ) : null}
-      {forecast ? (
-        <View style={styles.mark}>
-          <Button
-            label={t("forecast.mark")}
-            accessibilityLabel={t("forecast.markLabel")}
-            variant="quiet"
-            size="small"
-            onPress={() => void Linking.openURL(forecast.attribution.url)}
-            testID="forecast-mark"
-          />
+      {weather ? (
+        <View style={styles.weather}>
+          <Text role="footnote" tone="muted" testID="today-weather">
+            {weather}
+          </Text>
+          {forecast ? (
+            <Pressable
+              accessibilityRole="link"
+              accessibilityLabel={t("forecast.markLabel")}
+              hitSlop={theme.space.md}
+              onPress={() => void Linking.openURL(forecast.attribution.url)}
+              testID="forecast-mark"
+            >
+              <Text role="mark" tone="muted" style={styles.link}>
+                {t("forecast.mark")}
+              </Text>
+            </Pressable>
+          ) : null}
         </View>
+      ) : null}
+      {reason ? (
+        <Text role="footnote" tone="muted" testID="today-reason">
+          {reason}
+        </Text>
       ) : null}
     </View>
   );
@@ -110,5 +118,11 @@ const styles = StyleSheet.create({
     gap: theme.space.sm,
   },
   title: { flex: 1, minWidth: 0 },
-  mark: { alignItems: "flex-start" },
+  weather: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "baseline",
+    columnGap: theme.space.sm,
+  },
+  link: { fontSize: 11, fontWeight: "400", textDecorationLine: "underline" },
 });
