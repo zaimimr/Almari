@@ -42,6 +42,7 @@ import {
   tryAnother,
 } from "../../domain/today";
 import { forecastFor, forecastWeather } from "../../domain/weather";
+import { weatherTip } from "../../domain/weatherTip";
 import { locale, t } from "../../i18n";
 import { useCloset } from "../../state/closet";
 import { now } from "../../state/clock";
@@ -119,6 +120,7 @@ export function useToday() {
     [closet.pieces, request],
   );
 
+  const worn = wornNow(closet);
   const showOutfit =
     !!result &&
     lostPieces === 0 &&
@@ -130,6 +132,8 @@ export function useToday() {
     () => (showOutfit && request ? evaluateOutfit(pieces, request, pool) : []),
     [showOutfit, pieces, request, pool],
   );
+  const tip =
+    showOutfit && request && !worn ? weatherTip(pieces, request, pool) : null;
   const broken = review.filter((problem) => problem.severity !== "review");
 
   const name = request ? outfitName(pieces, request.occasion, locale) : "";
@@ -352,7 +356,6 @@ export function useToday() {
     return saved ? id : null;
   };
 
-  const worn = wornNow(closet);
   const wear = () =>
     run((current) => woreThis(current, revision, at(), randomUUID()));
   const unwear = () => {
@@ -372,6 +375,11 @@ export function useToday() {
           applyRequest(current, { ...request, ...next }, revision),
         )
       : Promise.resolve(false);
+
+  const addPiece = (piece: Piece) =>
+    void restyle((current) =>
+      applyLook(current, [...(session?.pieceIds ?? []), piece.id], revision),
+    );
 
   const leaveTomorrow = () => void restyle(backToToday);
 
@@ -417,6 +425,8 @@ export function useToday() {
     lostPieces,
     showOutfit,
     broken,
+    tip,
+    addPiece,
     name,
     reasonLine,
     score,

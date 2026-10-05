@@ -15,6 +15,7 @@ import { DressyMeter } from "../../../src/features/today/DressyMeter";
 import { FirstRun } from "../../../src/features/today/FirstRun";
 import { IntentRow } from "../../../src/features/today/IntentRow";
 import { OutfitCard } from "../../../src/features/today/OutfitCard";
+import { WeatherTip } from "../../../src/features/today/WeatherTip";
 import { ProblemBanner } from "../../../src/features/today/ProblemBanner";
 import {
   useToday,
@@ -312,6 +313,7 @@ export default function TodayScreen() {
             {locked ? null : <Strip key={openId ?? "closed"} model={model} />}
             <OutfitCard model={model} />
             <DressyMeter model={model} />
+            {locked ? null : <WeatherTip model={model} />}
             {locked ? null : <ActionArea model={model} />}
           </View>
         ) : model.result?.partial && model.lostPieces === 0 ? (
