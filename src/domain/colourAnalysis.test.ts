@@ -15,6 +15,7 @@ import {
   seasonFor,
   seasonFromSwatch,
   skinSwatches,
+  typologyAngle,
   undertoneOf,
 } from "./colourAnalysis";
 
@@ -29,20 +30,37 @@ test("Lab converts back to the same sRGB colour", () => {
   assert.equal(labHex(toLab([200, 120, 90])), "#c8785a");
 });
 
-test("undertone follows the skin hue angle with a yellowness floor", () => {
-  assert.equal(undertoneOf([60, 10, 16.1]), "warm");
-  assert.equal(undertoneOf([60, 10, 16]), "neutral");
-  assert.equal(undertoneOf([60, 12, 13.4]), "neutral");
-  assert.equal(undertoneOf([60, 12, 13.3]), "cool");
-  assert.equal(undertoneOf([55, 6, 8]), "cool");
-  assert.equal(toLch([55, 6, 8])[2] > 48, true);
+test("undertone follows the skin hue angle with an olive band", () => {
+  assert.equal(undertoneOf([60, 12, 10.1]), "warm");
+  assert.equal(undertoneOf([60, 12, 10]), "neutral");
+  assert.equal(undertoneOf([60, 12, 7.8]), "neutral");
+  assert.equal(undertoneOf([60, 12, 7.7]), "cool");
+  assert.equal(undertoneOf([60, 11, 22]), "warm");
+  assert.equal(undertoneOf([60, 8, 18]), "neutral");
+  assert.equal(toLch([60, 8, 18])[2] > 62, true);
 });
 
-test("depth follows skin lightness", () => {
-  assert.equal(depthOf([65, 10, 18]), "light");
-  assert.equal(depthOf([64.9, 10, 18]), "medium");
-  assert.equal(depthOf([48, 10, 18]), "medium");
-  assert.equal(depthOf([47.9, 10, 18]), "deep");
+test("depth follows the individual typology angle", () => {
+  assert.equal(typologyAngle([50, 10, 20]), 0);
+  assert.equal(depthOf([70, 10, 20]), "light");
+  assert.equal(depthOf([60, 10, 20]), "medium");
+  assert.equal(depthOf([53, 12, 18]), "deep");
+  assert.equal(depthOf([45, 26, 18]), "deep");
+  assert.equal(depthOf([62, 6, 6]), "light");
+});
+
+test("deep brown skin in warm light lands in a deep season", () => {
+  for (const skin of [
+    [45, 26, 18],
+    [49, 11, 12],
+    [40, 33, 39],
+    [27, 6, 6],
+    [48, 13, 5],
+  ] as Lab[]) {
+    const { season, depth } = analyseColours(skin, null, [25, 4, 8]);
+    assert.equal(depth, "deep", JSON.stringify(skin));
+    assert.ok(season.startsWith("deep-"), season);
+  }
 });
 
 test("contrast uses the outfit contrast levels on the known colours", () => {
@@ -111,7 +129,7 @@ test("every season is reachable from the decision table", () => {
     [
       { undertone: "neutral", depth: "medium", contrast: "low" },
       60,
-      "soft-summer",
+      "soft-autumn",
     ],
     [
       { undertone: "warm", depth: "medium", contrast: "medium" },
@@ -141,7 +159,7 @@ test("every season is reachable from the decision table", () => {
     [
       { undertone: "neutral", depth: "medium", contrast: "medium" },
       60,
-      "soft-summer",
+      "soft-autumn",
     ],
     [
       { undertone: "neutral", depth: "medium", contrast: "medium" },
@@ -169,11 +187,11 @@ test("measured colours become a full profile", () => {
     source: "measured",
   });
   assert.equal(
-    analyseColours([60, 14, 11], [8, 1, 1], [25, 2, 3]).season,
+    analyseColours([57, 16, 10], [5, 1, 1], [25, 2, 3]).season,
     "clear-winter",
   );
   assert.equal(
-    analyseColours([52, 11, 20], [20, 3, 5], null).season,
+    analyseColours([55, 11, 20], [20, 3, 5], null).season,
     "warm-autumn",
   );
 });
@@ -255,10 +273,10 @@ test("best colours give twelve Lab colours per season with the expected characte
 });
 
 test("moving a sample point re-reads that colour and the season with it", () => {
-  const measured = analyseColours([70, 10, 20], [30, 5, 10], [35, 5, 10]);
+  const measured = analyseColours([70, 12, 20], [30, 5, 10], [35, 5, 10]);
   assert.equal(measured.season, "light-spring");
-  const deeper = resampleColours(measured, "skin", [40, 14, 12]);
-  assert.deepEqual(deeper.skin, [40, 14, 12]);
+  const deeper = resampleColours(measured, "skin", [40, 14, 8]);
+  assert.deepEqual(deeper.skin, [40, 14, 8]);
   assert.equal(deeper.depth, "deep");
   assert.equal(deeper.undertone, "cool");
   assert.equal(deeper.season, "deep-winter");
@@ -269,7 +287,7 @@ test("moving a sample point re-reads that colour and the season with it", () => 
   assert.equal(
     hair.contrast,
     contrastOf([
-      [70, 10, 20],
+      [70, 12, 20],
       [80, 2, 8],
       [35, 5, 10],
     ]),

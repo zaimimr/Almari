@@ -38,8 +38,12 @@ appId: com.zaimimran.almari
     visible:
       id: "colour-result"
     timeout: 60000
-- assertVisible: "Best hijab shades"
-- assertVisible: "Go easy on"
+- scrollUntilVisible:
+    element: "Best hijab shades"
+- scrollUntilVisible:
+    element: "Go easy on"
+- scrollUntilVisible:
+    element: "These don't look like me"
 - tapOn: "These don't look like me"
 - assertVisible: "Retake"
 - assertVisible: "Wearing a hijab in the photo"
