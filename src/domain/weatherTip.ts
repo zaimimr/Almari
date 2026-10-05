@@ -41,10 +41,13 @@ export function weatherTip(
     (piece) => roleOf(piece) === "layer" || roleOf(piece) === "outer",
   );
   if (layers.some((piece) => piece.traits?.warmth === "warm")) return null;
+  const abaya = layers.some(
+    (piece) => piece.kind === "abaya" && roleOf(piece) === "outer",
+  );
   const warm = pool
     .filter(
       (piece) =>
-        (roleOf(piece) === "outer" || roleOf(piece) === "layer") &&
+        (roleOf(piece) === "outer" || (!abaya && roleOf(piece) === "layer")) &&
         piece.traits?.warmth === "warm" &&
         fits(piece, outfit, request),
     )
@@ -55,10 +58,6 @@ export function weatherTip(
   return {
     weather: "cold",
     piece: warm,
-    replaces:
-      layers.find((piece) => roleOf(piece) === roleOf(warm)) ??
-      (roleOf(warm) === "layer"
-        ? (layers.find((piece) => roleOf(piece) === "outer") ?? null)
-        : null),
+    replaces: layers.find((piece) => roleOf(piece) === roleOf(warm)) ?? null,
   };
 }
