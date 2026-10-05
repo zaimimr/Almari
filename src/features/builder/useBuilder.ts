@@ -121,8 +121,8 @@ export function useBuilder(params: { id?: string }) {
     }
     const role = roleOf(piece);
     const isWhole = (item: Piece) =>
-      item.category === "dress" ||
-      (item.kind === "abaya" && roleOf(item) === "main");
+      roleOf(item) === "main" &&
+      (item.category === "dress" || item.kind === "abaya");
     const whole = isWhole(piece);
     apply([
       ...selected.filter((id) => {
