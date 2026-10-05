@@ -9,6 +9,7 @@ import { useReminders } from "../src/features/looks/useReminders";
 import { t } from "../src/i18n";
 import { ClosetProvider } from "../src/state/closet";
 import { onHandoff } from "../src/state/launch";
+import { TelemetryProvider } from "../src/state/telemetry";
 import { stackOptions } from "../src/navigation/options";
 import { discardStudioModel } from "../src/storage/local";
 
@@ -20,12 +21,14 @@ export default function RootLayout() {
     discardStudioModel().catch(() => undefined);
   }, []);
   return (
-    <SafeAreaProvider>
-      <ClosetProvider overlay={<Splash />}>
-        <StatusBar style="dark" />
-        <Screens />
-      </ClosetProvider>
-    </SafeAreaProvider>
+    <TelemetryProvider>
+      <SafeAreaProvider>
+        <ClosetProvider overlay={<Splash />}>
+          <StatusBar style="dark" />
+          <Screens />
+        </ClosetProvider>
+      </SafeAreaProvider>
+    </TelemetryProvider>
   );
 }
 

@@ -12,6 +12,7 @@ import {
   photoUri,
 } from "../storage/local";
 import { fixtures } from "../testing/fixtures";
+import { track } from "./telemetry";
 
 export type StudioPiece = {
   category: Category;
@@ -68,6 +69,23 @@ export async function isOffline() {
 }
 
 export async function renderStudio(
+  source: string,
+  id: string,
+  piece: StudioPiece,
+): Promise<string> {
+  track("studio_enhance_requested", { category: piece.category });
+  try {
+    return await makeStudio(source, id, piece);
+  } catch (error) {
+    track("studio_enhance_failed", {
+      category: piece.category,
+      reason: studioFailure(error),
+    });
+    throw error;
+  }
+}
+
+async function makeStudio(
   source: string,
   id: string,
   piece: StudioPiece,
