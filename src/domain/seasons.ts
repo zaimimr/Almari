@@ -336,7 +336,17 @@ export function seasonNeutrals(season: Season): Lab[] {
   return neutrals[season].map(toLab);
 }
 
-export const hairShades: { id: string; lab: Lab }[] = [
+export type HairShade =
+  | "black"
+  | "dark-brown"
+  | "brown"
+  | "light-brown"
+  | "auburn"
+  | "red"
+  | "blonde"
+  | "grey";
+
+export const hairShades: { id: HairShade; lab: Lab }[] = [
   { id: "black", lab: [12, 1, 1] },
   { id: "dark-brown", lab: [22, 4, 7] },
   { id: "brown", lab: [32, 7, 13] },
@@ -347,7 +357,10 @@ export const hairShades: { id: string; lab: Lab }[] = [
   { id: "grey", lab: [70, 0, 2] },
 ];
 
-export const eyeShades: { id: string; lab: Lab }[] = [
+export type EyeShade =
+  "dark-brown" | "brown" | "hazel" | "green" | "blue" | "grey";
+
+export const eyeShades: { id: EyeShade; lab: Lab }[] = [
   { id: "dark-brown", lab: [22, 5, 8] },
   { id: "brown", lab: [32, 9, 16] },
   { id: "hazel", lab: [42, 6, 22] },

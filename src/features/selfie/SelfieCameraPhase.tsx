@@ -6,11 +6,16 @@ import {
   type SelfieCameraHandle,
 } from "../../../modules/closet-vision/src";
 import type { Retake } from "../../domain/colourAnalysis";
-import type { CameraReading, Guide } from "../../domain/selfieGuide";
+import type {
+  CameraReading,
+  Guide,
+  SelfieChecks,
+} from "../../domain/selfieGuide";
 import { t, type Key } from "../../i18n";
 import { openSettings } from "../../state/notifications";
-import { Button, FaceCircle, useMeasuredMax } from "../../ui";
+import { Button, FaceCircle, Symbol, Text, useMeasuredMax } from "../../ui";
 import { gutterFor, theme } from "../../ui/theme";
+import { useColors } from "../../ui/useColors";
 import type { CameraState } from "./useSelfie";
 
 const guides: Guide[] = [
@@ -31,6 +36,44 @@ const slotTexts: Key[] = [
   "colours.cameraFailed",
 ];
 
+const checkIcons = {
+  light: "sun.max",
+  framing: "face.smiling",
+  still: "hand.raised",
+} as const;
+
+function Checks({ checks }: { checks: SelfieChecks | null }) {
+  const colors = useColors();
+  return (
+    <View style={styles.checks} testID="colours-checks">
+      {(Object.keys(checkIcons) as (keyof SelfieChecks)[]).map((check) => {
+        const ok = checks?.[check] ?? false;
+        return (
+          <View
+            key={check}
+            accessible
+            accessibilityLabel={t(`colours.check.${check}`)}
+            accessibilityState={{ checked: ok }}
+            style={[
+              styles.check,
+              { backgroundColor: ok ? colors.plumSoft : colors.sunken },
+            ]}
+          >
+            <Symbol
+              name={ok ? "checkmark.circle.fill" : checkIcons[check]}
+              size={15}
+              tone={ok ? "plum" : "muted"}
+            />
+            <Text role="footnote" tone={ok ? "plum" : "muted"}>
+              {t(`colours.check.${check}`)}
+            </Text>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
 function messageFor(
   camera: CameraState,
   guide: Guide | null,
@@ -45,6 +88,7 @@ function messageFor(
 export function SelfieCameraPhase({
   camera,
   guide,
+  checks,
   retake,
   hold,
   cameraRef,
@@ -58,6 +102,7 @@ export function SelfieCameraPhase({
 }: {
   camera: CameraState;
   guide: Guide | null;
+  checks: SelfieChecks | null;
   retake: Retake | "failed" | null;
   hold: SharedValue<number>;
   cameraRef: RefObject<SelfieCameraHandle | null>;
@@ -121,6 +166,7 @@ export function SelfieCameraPhase({
           />
         ) : null}
       </FaceCircle>
+      {live && !measuring ? <Checks checks={checks} /> : null}
       <View style={styles.actions}>
         {camera === "denied" ? (
           <Button
@@ -153,4 +199,17 @@ export function SelfieCameraPhase({
 const styles = StyleSheet.create({
   camera: { gap: theme.space.sm },
   actions: { alignItems: "center", gap: theme.space.xs },
+  checks: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: theme.space.sm,
+  },
+  check: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: theme.space.xs,
+    paddingHorizontal: theme.space.md,
+    paddingVertical: 6,
+    borderRadius: theme.radius.full,
+  },
 });

@@ -145,6 +145,7 @@ export default function Onboarding() {
           <StepColours
             answers={answers}
             onSelfie={() => router.push("/onboarding/colours")}
+            onKnown={() => router.push("/onboarding/known")}
           />
         );
       case "done":

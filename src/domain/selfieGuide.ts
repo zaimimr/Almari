@@ -46,6 +46,18 @@ export function selfieGuide(reading: CameraReading): Guide {
   return "ready";
 }
 
+export type SelfieChecks = { light: boolean; framing: boolean; still: boolean };
+
+export function selfieChecks(reading: CameraReading): SelfieChecks {
+  const { face, brightness, motion } = reading;
+  const framing = selfieGuide({ ...reading, brightness: null, motion: 0 });
+  return {
+    light: brightness !== null && brightness >= guideLimits.dark,
+    framing: face !== null && framing === "ready",
+    still: face !== null && motion <= guideLimits.motion,
+  };
+}
+
 export type GuideSample = { guide: Guide; at: number };
 
 export function readyToCapture(

@@ -1,14 +1,9 @@
 import { StyleSheet, View } from "react-native";
 import type { ColourProfile } from "../../domain/closet";
+import { shiftSeason, shifts, type Shift } from "../../domain/seasons";
 import { t } from "../../i18n";
-import { Button, Expander, Row, Segmented } from "../../ui";
+import { Button, Chip, Expander, Row } from "../../ui";
 import { theme } from "../../ui/theme";
-
-const undertones = ["cool", "neutral", "warm"] as const;
-const depths = ["light", "medium", "deep"] as const;
-const contrasts = ["low", "medium", "high"] as const;
-
-type Change = Partial<Pick<ColourProfile, "undertone" | "depth" | "contrast">>;
 
 export function NotMe({
   open,
@@ -16,7 +11,7 @@ export function NotMe({
   profile,
   hairCovered,
   onHairCovered,
-  onAdjust,
+  onShift,
   onRetake,
 }: {
   open: boolean;
@@ -24,7 +19,7 @@ export function NotMe({
   profile: ColourProfile;
   hairCovered: boolean;
   onHairCovered: (next: boolean) => void;
-  onAdjust: (change: Change) => void;
+  onShift: (shift: Shift) => void;
   onRetake: () => void;
 }) {
   return (
@@ -42,6 +37,23 @@ export function NotMe({
       </View>
       <Expander id="colours-not-me" headless open={open} onToggle={onToggle}>
         <View style={styles.body}>
+          <View style={styles.shifts}>
+            {shifts.map((shift) => (
+              <Chip
+                key={shift}
+                label={t(`colours.shift.${shift}`)}
+                kind="action"
+                disabled={!shiftSeason(profile.season, shift)}
+                onPress={() => onShift(shift)}
+                testID={`colours-shift-${shift}`}
+              />
+            ))}
+          </View>
+          <Row
+            title={t("colours.hairCovered")}
+            trailing={{ toggle: hairCovered, onToggle: onHairCovered }}
+            testID="colours-hair"
+          />
           <View style={styles.start}>
             <Button
               label={t("colours.retakeButton")}
@@ -51,35 +63,6 @@ export function NotMe({
               testID="colours-retake"
             />
           </View>
-          <Row
-            title={t("colours.hairCovered")}
-            trailing={{ toggle: hairCovered, onToggle: onHairCovered }}
-            testID="colours-hair"
-          />
-          <Segmented
-            label={t("colours.undertone")}
-            options={undertones.map((id) => ({
-              id,
-              label: t(`undertone.${id}`),
-            }))}
-            value={profile.undertone}
-            onChange={(undertone) => onAdjust({ undertone })}
-          />
-          <Segmented
-            label={t("colours.depth")}
-            options={depths.map((id) => ({ id, label: t(`depth.${id}`) }))}
-            value={profile.depth}
-            onChange={(depth) => onAdjust({ depth })}
-          />
-          <Segmented
-            label={t("colours.contrast")}
-            options={contrasts.map((id) => ({
-              id,
-              label: t(`contrast.${id}`),
-            }))}
-            value={profile.contrast}
-            onChange={(contrast) => onAdjust({ contrast })}
-          />
         </View>
       </Expander>
     </View>
@@ -90,4 +73,5 @@ const styles = StyleSheet.create({
   notMe: { gap: theme.space.sm },
   start: { alignItems: "flex-start" },
   body: { gap: theme.space.lg },
+  shifts: { flexDirection: "row", flexWrap: "wrap", gap: theme.space.sm },
 });

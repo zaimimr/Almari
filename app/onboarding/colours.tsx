@@ -40,6 +40,7 @@ export default function Colours() {
         <SelfieCameraPhase
           camera={selfie.camera}
           guide={selfie.guide}
+          checks={selfie.checks}
           retake={selfie.retake}
           hold={selfie.hold}
           cameraRef={selfie.cameraRef}
@@ -57,7 +58,15 @@ export default function Colours() {
           profile={profile}
           palette={palette}
           photo={selfie.photo}
+          face={selfie.face}
+          size={selfie.size}
           plain={selfie.plain}
+          close={
+            selfie.measured && selfie.close
+              ? [selfie.measured, selfie.close]
+              : null
+          }
+          onPick={selfie.pick}
         >
           <NotMe
             open={notMe}
@@ -65,7 +74,7 @@ export default function Colours() {
             profile={profile}
             hairCovered={selfie.hairCovered}
             onHairCovered={selfie.setHairCovered}
-            onAdjust={selfie.adjust}
+            onShift={selfie.shift}
             onRetake={() => {
               setNotMe(false);
               selfie.retakePhoto();

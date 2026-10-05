@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   guideLimits,
   readyToCapture,
+  selfieChecks,
   selfieGuide,
   type CameraReading,
 } from "./selfieGuide";
@@ -102,4 +103,27 @@ test("capture fires once ready has held 700 ms and resets when the guide leaves 
     ),
     true,
   );
+});
+
+test("the three live checks pass on their own", () => {
+  assert.deepEqual(selfieChecks(good), {
+    light: true,
+    framing: true,
+    still: true,
+  });
+  assert.deepEqual(selfieChecks(read({ brightness: 0.1 })), {
+    light: false,
+    framing: true,
+    still: true,
+  });
+  assert.deepEqual(selfieChecks(read({ yaw: 40, motion: 0.2 })), {
+    light: true,
+    framing: false,
+    still: false,
+  });
+  assert.deepEqual(selfieChecks(read({ face: null, brightness: null })), {
+    light: false,
+    framing: false,
+    still: false,
+  });
 });
