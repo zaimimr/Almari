@@ -965,6 +965,11 @@ export const nb: Record<Key, string> = {
   "common.saveLook": "Lagre antrekket",
   "common.showAllPieces": "Vis alle plagg",
   "start.error.title": "Kunne ikke åpne garderoben",
+  "start.error.restore": "Gjenopprett siste lagring",
+  "start.error.startOver": "Start på nytt",
+  "start.error.startOverTitle": "Starte på nytt?",
+  "start.error.startOverBody":
+    "Garderoben åpnes tom. En kopi av den skadede garderoben blir liggende på telefonen.",
   "error.closetOpening":
     "Garderoben din åpnes fortsatt. Prøv igjen om et øyeblikk.",
   "error.listedOption": "Velg ett av alternativene i listen.",

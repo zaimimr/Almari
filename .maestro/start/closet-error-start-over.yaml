@@ -1,0 +1,13 @@
+appId: com.zaimimran.almari
+# seed: broken-closet.sh
+---
+- launchApp
+- extendedWaitUntil:
+    visible: "Could not open your closet"
+    timeout: 20000
+- tapOn:
+    id: "splash-start-over"
+- tapOn: "Start over"
+- extendedWaitUntil:
+    notVisible: "Could not open your closet"
+    timeout: 20000

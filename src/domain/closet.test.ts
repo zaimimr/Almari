@@ -730,3 +730,27 @@ test("new optional fields survive a round trip", () => {
   assert.equal(again.styling.notification, "21:00");
   assert.deepEqual(again.setNames, { "a,b": "Eid lunch" });
 });
+
+test("a damaged closet can be restored from the last good save or set aside", async () => {
+  const good = JSON.stringify(closetV2);
+  const { store, storage } = keyed({ "closet.v2": good });
+  const repository = new ClosetRepository(storage);
+  await repository.load();
+  assert.equal(store.get("closet.v3.backup"), good);
+  store.set("closet.v3", "{");
+  const broken = new ClosetRepository(storage);
+  await assert.rejects(broken.load());
+  assert.equal(await broken.hasBackup(), true);
+  await broken.restoreBackup("t1");
+  assert.equal(store.get("closet.v3.corrupt-t1"), "{");
+  await broken.load();
+  assert.equal(broken.getSnapshot().pieces.length, closetV2.pieces.length);
+  store.set("closet.v3", "{");
+  await broken.startOver("t2");
+  assert.equal(store.get("closet.v3.corrupt-t2"), "{");
+  assert.equal(await storage.read(), null);
+  assert.equal(
+    await new ClosetRepository(keyed({}).storage).hasBackup(),
+    false,
+  );
+});

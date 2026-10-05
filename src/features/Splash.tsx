@@ -19,6 +19,7 @@ import { t } from "../i18n";
 import { useClosetStatus } from "../state/closet";
 import { handOff } from "../state/launch";
 import { announce } from "../ui/announce";
+import { confirmAction } from "../ui/confirm";
 import { Button } from "../ui/Button";
 import { motion, timing, useAfterWait, useReduceMotion } from "../ui/motion";
 import { Text } from "../ui/Text";
@@ -41,7 +42,7 @@ export function Splash() {
 }
 
 function Overlay() {
-  const { status, retry } = useClosetStatus();
+  const { status, retry, restore, startOver } = useClosetStatus();
   const reduce = useReduceMotion();
   const { ax } = useLargeText();
   const insets = useSafeAreaInsets();
@@ -195,13 +196,39 @@ function Overlay() {
               </Text>
             </View>
             <View style={styles.action}>
+              {restore ? (
+                <Button
+                  label={t("start.error.restore")}
+                  variant="primary"
+                  size="regular"
+                  busy={status === "loading"}
+                  onPress={restore}
+                  testID="splash-restore"
+                />
+              ) : (
+                <Button
+                  label={t("common.tryAgain")}
+                  variant="primary"
+                  size="regular"
+                  busy={status === "loading"}
+                  onPress={retry}
+                  testID="splash-try-again"
+                />
+              )}
               <Button
-                label={t("common.tryAgain")}
-                variant="primary"
-                size="regular"
-                busy={status === "loading"}
-                onPress={retry}
-                testID="splash-try-again"
+                label={t("start.error.startOver")}
+                variant="destructive"
+                disabled={status === "loading"}
+                onPress={() =>
+                  void confirmAction(
+                    t("start.error.startOverTitle"),
+                    t("start.error.startOverBody"),
+                    t("start.error.startOver"),
+                  ).then((confirmed) => {
+                    if (confirmed) startOver();
+                  })
+                }
+                testID="splash-start-over"
               />
             </View>
           </Animated.View>
@@ -246,5 +273,9 @@ const styles = StyleSheet.create({
   tile: { width: size, height: size },
   block: { alignItems: "center", paddingHorizontal: theme.space.lg },
   title: { textAlign: "center", marginTop: theme.space.xl },
-  action: { marginTop: theme.space.xl },
+  action: {
+    marginTop: theme.space.xl,
+    alignItems: "center",
+    gap: theme.space.sm,
+  },
 });

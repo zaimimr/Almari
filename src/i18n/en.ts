@@ -952,6 +952,11 @@ export const en = {
   "common.saveLook": "Save look",
   "common.showAllPieces": "Show all pieces",
   "start.error.title": "Could not open your closet",
+  "start.error.restore": "Restore last save",
+  "start.error.startOver": "Start over",
+  "start.error.startOverTitle": "Start over?",
+  "start.error.startOverBody":
+    "Your closet opens empty. A copy of the damaged closet stays on this phone.",
   "error.closetOpening": "Your closet is still opening. Try again in a moment.",
   "error.listedOption": "Choose one of the listed options.",
   "error.setTooSmall": "Choose at least two pieces",
