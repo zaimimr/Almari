@@ -25,8 +25,10 @@ export function Drape({
   width,
   height,
   diameter,
+  label,
 }: {
   colour: Colour;
+  label?: string;
   photo: string;
   face: FaceBox | null;
   size: PhotoSize | null;
@@ -47,7 +49,7 @@ export function Drape({
         ring={light ? "#FFFFFF" : "rgba(255,255,255,0.85)"}
       />
       <Text role="headline" tone={light ? "ink" : "onMedia"}>
-        {colour.name}
+        {label ?? colour.name}
       </Text>
     </View>
   );
@@ -72,8 +74,8 @@ export function Drapes({
   const [mode, setMode] = useState<Mode>("best");
   const [page, setPage] = useState(0);
   const colours = mode === "best" ? best : avoid;
-  const height = Math.round(width * 1.05);
-  const diameter = Math.round(width * 0.66);
+  const height = Math.round(width * 0.92);
+  const diameter = Math.round(width * 0.62);
   return (
     <View style={styles.drapes}>
       <Segmented

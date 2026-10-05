@@ -175,7 +175,7 @@ export const paletteLimits = {
   colours: 12,
   minShare: 0.012,
   merge: 9,
-  background: { lightness: 88, chroma: 8 },
+  background: { lightness: 82, chroma: 8 },
   shadow: 12,
   rounds: 12,
 };

@@ -1,0 +1,45 @@
+appId: com.zaimimran.almari
+---
+- addMedia:
+    - "../../assets/fixtures/palette-card.jpg"
+- runFlow: ../lib/sample-closet.yaml
+- tapOn:
+    id: "header-profile"
+- scrollUntilVisible:
+    element:
+      id: "tile-colours"
+- tapOn:
+    id: "tile-colours"
+- tapOn:
+    id: "colours-known"
+- assertVisible: "My colours"
+- takeScreenshot: docs/colour-scan/screens/known
+- tapOn:
+    id: "known-card"
+- extendedWaitUntil:
+    visible: "Photo, \\d+ [A-Za-z]+, \\d+:\\d+"
+    timeout: 20000
+- tapOn: "Photo, \\d+ [A-Za-z]+, \\d+:\\d+"
+- runFlow:
+    when:
+      visible: "Add|Done"
+    commands:
+      - tapOn: "Add|Done"
+- extendedWaitUntil:
+    visible:
+      id: "known-card-swatches"
+    timeout: 30000
+- takeScreenshot: docs/colour-scan/screens/known-card
+- tapOn:
+    id: "known-swatch-0"
+- scrollUntilVisible:
+    element:
+      id: "known-eyes"
+- tapOn: "Hazel"
+- takeScreenshot: docs/colour-scan/screens/known-traits
+- tapOn:
+    id: "known-save"
+- assertVisible:
+    id: "colours-saved"
+- assertVisible: "Cool winter"
+- takeScreenshot: docs/colour-scan/screens/known-saved

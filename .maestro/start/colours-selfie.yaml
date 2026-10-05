@@ -12,7 +12,7 @@ appId: com.zaimimran.almari
       id: "tile-colours"
 - tapOn:
     id: "tile-colours"
-- tapOn: "Take a selfie"
+- tapOn: "Scan my face"
 - assertVisible: "Daylight, facing a window"
 - assertVisible: "Wipe the lens"
 - assertVisible: "No glasses"
@@ -43,7 +43,8 @@ appId: com.zaimimran.almari
 - tapOn: "These don't look like me"
 - assertVisible: "Retake"
 - assertVisible: "Wearing a hijab in the photo"
-- tapOn: "Cool"
+- tapOn:
+    id: "colours-shift-deeper"
 - assertVisible:
     id: "colour-result"
 - tapOn: "Save colours"

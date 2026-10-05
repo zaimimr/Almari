@@ -1,0 +1,67 @@
+# seed: selfie.sh
+appId: com.zaimimran.almari
+---
+- addMedia:
+    - "../../assets/fixtures/selfie.jpg"
+- runFlow: ../lib/sample-closet.yaml
+- tapOn:
+    id: "header-profile"
+- scrollUntilVisible:
+    element:
+      id: "tile-colours"
+- tapOn:
+    id: "tile-colours"
+- tapOn:
+    id: "colours-selfie"
+- assertVisible: "Daylight, facing a window"
+- takeScreenshot: docs/colour-scan/screens/tips
+- tapOn: "Open camera"
+- tapOn:
+    id: "colours-library"
+- extendedWaitUntil:
+    visible: "Photo, \\d+ [A-Za-z]+, \\d+:\\d+"
+    timeout: 20000
+- tapOn: "Photo, \\d+ [A-Za-z]+, \\d+:\\d+"
+- runFlow:
+    when:
+      visible: "Add|Done"
+    commands:
+      - tapOn: "Add|Done"
+- extendedWaitUntil:
+    visible:
+      id: "colour-result"
+    timeout: 60000
+- assertVisible: "Your season"
+- assertVisible:
+    id: "colours-drapes"
+- takeScreenshot: docs/colour-scan/screens/reveal
+- swipe:
+    from:
+      id: "colours-drapes"
+    direction: LEFT
+- tapOn: "Avoid"
+- takeScreenshot: docs/colour-scan/screens/avoid
+- scrollUntilVisible:
+    element:
+      id: "colours-metals"
+- assertVisible: "Neutrals"
+- assertVisible: "Metals"
+- takeScreenshot: docs/colour-scan/screens/palette
+- scrollUntilVisible:
+    element:
+      id: "colours-not-me"
+- tapOn:
+    id: "colours-not-me"
+- scrollUntilVisible:
+    element:
+      id: "colours-retake"
+- assertVisible: "Warmer"
+- assertVisible: "Softer"
+- takeScreenshot: docs/colour-scan/screens/not-me
+- tapOn:
+    id: "colours-shift-lighter"
+- assertVisible:
+    id: "colour-result"
+- tapOn: "Save colours"
+- assertVisible:
+    id: "colours-saved"

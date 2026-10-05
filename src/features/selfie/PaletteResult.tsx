@@ -114,6 +114,7 @@ function CloseSeasons({
               >
                 <Drape
                   colour={named(seasonColours(season)[0]!)}
+                  label={seasonLabel(season)}
                   photo={photo}
                   face={face}
                   size={size}
@@ -122,13 +123,6 @@ function CloseSeasons({
                   diameter={Math.round(card * 0.6)}
                 />
               </View>
-              <Text
-                role="subhead"
-                tone={selected ? "plum" : "muted"}
-                style={styles.center}
-              >
-                {seasonLabel(season)}
-              </Text>
             </Pressable>
           );
         })}
@@ -202,12 +196,11 @@ const styles = StyleSheet.create({
   trait: { flex: 1, gap: 2 },
   section: { gap: theme.space.sm },
   close: { flexDirection: "row", gap: theme.space.md },
-  closeCard: { flex: 1, gap: theme.space.sm },
+  closeCard: { flex: 1 },
   closeFrame: {
     borderWidth: 2,
     borderRadius: theme.radius.lg,
     padding: 2,
     overflow: "hidden",
   },
-  center: { textAlign: "center" },
 });

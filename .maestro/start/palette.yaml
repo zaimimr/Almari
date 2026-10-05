@@ -12,7 +12,7 @@ appId: com.zaimimran.almari
       id: "tile-colours"
 - tapOn:
     id: "tile-colours"
-- tapOn: "Take a selfie"
+- tapOn: "Scan my face"
 - tapOn: "Open camera"
 - tapOn:
     id: "colours-library"

@@ -311,10 +311,18 @@ final class SelfieColours {
   func palettePixels(uri: String) throws -> [[Double]] {
     let (bitmap, _) = try load(uri, parse: false)
     let step = max(1, max(bitmap.width, bitmap.height) / 72)
+    let reach = 3
+    let close = { (a: Colour, b: Colour) in
+      abs(a.r - b.r) < 0.05 && abs(a.g - b.g) < 0.05 && abs(a.b - b.b) < 0.05
+    }
     var colours: [Colour] = []
-    for y in stride(from: 0, to: bitmap.height, by: step) {
-      for x in stride(from: 0, to: bitmap.width, by: step) {
-        colours.append(bitmap.colour(x, y))
+    for y in stride(from: reach, to: bitmap.height - reach, by: step) {
+      for x in stride(from: reach, to: bitmap.width - reach, by: step) {
+        let colour = bitmap.colour(x, y)
+        let even = [(reach, 0), (-reach, 0), (0, reach), (0, -reach)].allSatisfy {
+          close(colour, bitmap.colour(x + $0.0, y + $0.1))
+        }
+        if even { colours.append(colour) }
       }
     }
     let whites = colours.filter { $0.saturation < 0.15 }.sorted { $0.luma > $1.luma }
