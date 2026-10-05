@@ -120,7 +120,7 @@ export function colorName(rgb: Rgb) {
   for (const entry of paletteLab) {
     const d = Math.hypot(
       entry.lab[0] - target[0],
-      entry.lab[1] - target[1],
+      (entry.lab[1] - target[1]) * 1.4,
       entry.lab[2] - target[2],
     );
     if (d < distance) {

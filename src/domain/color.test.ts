@@ -70,6 +70,7 @@ test("sample garment colours get the names a person would use", () => {
     [[106, 109, 85], "Olive"],
     [[167, 174, 152], "Sage"],
     [[141, 118, 105], "Taupe"],
+    [[178, 156, 139], "Taupe"],
   ];
   for (const [rgb, name] of cases) assert.equal(colorName(rgb), name);
 });
