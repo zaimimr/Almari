@@ -23,6 +23,7 @@ export type TextTone =
   | "disabled"
   | "placeholder"
   | "plum"
+  | "rose"
   | "error"
   | "onPlum"
   | "onMedia";
@@ -33,6 +34,7 @@ export const toneColor: Record<TextTone, keyof Colors> = {
   disabled: "inkDisabled",
   placeholder: "placeholder",
   plum: "plum",
+  rose: "blushStrong",
   error: "error",
   onPlum: "onPlum",
   onMedia: "onMedia",

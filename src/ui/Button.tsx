@@ -25,6 +25,7 @@ export type ButtonProps = {
   icon?: SFSymbol;
   iconAfter?: boolean;
   selectedIcon?: SFSymbol;
+  selectedTone?: TextTone;
   selected?: boolean;
   busy?: boolean;
   busyLabel?: string;
@@ -74,6 +75,7 @@ export function Button({
   icon,
   iconAfter = false,
   selectedIcon,
+  selectedTone = "ink",
   selected,
   busy = false,
   busyLabel,
@@ -180,7 +182,11 @@ export function Button({
         ) : null}
         {selectedIcon ? (
           <Animated.View style={[styles.layer, solid]}>
-            <Symbol name={selectedIcon} size={theme.size.iconBar} tone="ink" />
+            <Symbol
+              name={selectedIcon}
+              size={theme.size.iconBar}
+              tone={selectedTone}
+            />
           </Animated.View>
         ) : null}
       </Pressable>

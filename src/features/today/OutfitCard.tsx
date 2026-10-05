@@ -76,6 +76,7 @@ export function OutfitCard({ model }: { model: TodayModel }) {
           variant="icon"
           icon="heart"
           selectedIcon="heart.fill"
+          selectedTone="rose"
           selected={model.liked}
           onPress={model.like}
           testID={model.liked ? "today-like-on" : "today-like"}
