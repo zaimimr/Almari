@@ -234,6 +234,7 @@ export default function TodayScreen() {
   const [title, measure] = useGreeting(closet.styling.name, model.hour);
   const inline = mode === "planning" || mode === "tomorrow";
   const first = !closet.styling.everyday;
+  const locked = !inline && !!model.worn;
 
   const header = (
     <HeaderItem
@@ -263,7 +264,11 @@ export default function TodayScreen() {
     >
       {measure}
       <View style={styles.content}>
-        {inline ? <TitleRow model={model} /> : <IntentRow model={model} />}
+        {inline ? (
+          <TitleRow model={model} />
+        ) : locked ? null : (
+          <IntentRow model={model} />
+        )}
         <Banners model={model} />
         {!today ? (
           <Silk
@@ -279,20 +284,23 @@ export default function TodayScreen() {
                 pieces={model.pieces}
                 size="hero"
                 maxSize={heroSize}
-                swapMark
+                swapMark={!locked}
                 keptIds={request?.keptIds}
-                openId={openId}
+                openId={locked ? undefined : openId}
                 revision={model.revision}
                 state={model.styling ? "arranging" : undefined}
-                onPiecePress={(piece) =>
-                  setOpenId(openId === piece.id ? null : piece.id)
+                onPiecePress={
+                  locked
+                    ? undefined
+                    : (piece) =>
+                        setOpenId(openId === piece.id ? null : piece.id)
                 }
                 testID="today-outfit"
               />
             </View>
-            <Strip key={openId ?? "closed"} model={model} />
+            {locked ? null : <Strip key={openId ?? "closed"} model={model} />}
             <OutfitCard model={model} />
-            <ActionArea model={model} />
+            {locked ? null : <ActionArea model={model} />}
           </View>
         ) : model.result?.partial && model.lostPieces === 0 ? (
           <View style={styles.hero}>
