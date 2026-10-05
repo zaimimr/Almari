@@ -120,7 +120,10 @@ export function useBuilder(params: { id?: string }) {
       return;
     }
     const role = roleOf(piece);
-    const whole = piece.category === "dress" || piece.kind === "abaya";
+    const isWhole = (item: Piece) =>
+      item.category === "dress" ||
+      (item.kind === "abaya" && roleOf(item) === "main");
+    const whole = isWhole(piece);
     apply([
       ...selected.filter((id) => {
         const other = closet.pieces.find((item) => item.id === id);
@@ -128,11 +131,7 @@ export function useBuilder(params: { id?: string }) {
         const otherRole = roleOf(other);
         if (otherRole === role) return false;
         if (whole && otherRole === "bottom") return false;
-        if (
-          role === "bottom" &&
-          (other.category === "dress" || other.kind === "abaya")
-        )
-          return false;
+        if (role === "bottom" && isWhole(other)) return false;
         return true;
       }),
       piece.id,

@@ -265,11 +265,7 @@ test("one look per day, past plans expire, and the week shows each day", () => {
     "2026-10-11",
   );
   assert.equal(plannedOn(both, "2026-10-11")?.id, "office");
-  const before = setPlannedFor(
-    both,
-    "eid",
-    "2026-10-11",
-  );
+  const before = setPlannedFor(both, "eid", "2026-10-11");
   const undone = restorePlans(
     setPlannedFor(before, "office", "2026-10-11"),
     planSnapshot(before),
