@@ -160,7 +160,7 @@ export function AddOwn({
         value={name}
         onChangeText={setName}
         maxLength={40}
-        autoFocus
+        autoFocus={list !== "colours"}
         returnKeyType="done"
         onSubmitEditing={() => void save()}
         testID={`${id}-name`}
