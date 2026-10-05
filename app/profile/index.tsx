@@ -1,5 +1,11 @@
 import { useState } from "react";
-import { Pressable, StyleSheet, useWindowDimensions, View } from "react-native";
+import {
+  Linking,
+  Pressable,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import Constants from "expo-constants";
 import { router } from "expo-router";
 import type { Language, Units } from "../../src/domain/closet";
@@ -34,7 +40,7 @@ export default function Profile() {
   const { closet, update, reset } = useCloset();
   const { open, toggle } = useOneExpander<Open>();
   const summary = profileSummary(closet);
-  const { name, place } = closet.styling;
+  const { name, place, forecast } = closet.styling;
   const [exportFailed, setExportFailed] = useState(false);
   const { fontScale } = useWindowDimensions();
 
@@ -184,6 +190,20 @@ export default function Profile() {
               version: Constants.expoConfig?.version ?? "",
             })}
           </Text>
+          {forecast ? (
+            <Pressable
+              accessibilityRole="link"
+              accessibilityLabel={t("forecast.markLabel")}
+              hitSlop={theme.space.md}
+              onPress={() => void Linking.openURL(forecast.attribution.url)}
+              style={styles.mark}
+              testID="forecast-mark"
+            >
+              <Text role="mark" tone="muted" style={styles.link}>
+                {t("forecast.mark")}
+              </Text>
+            </Pressable>
+          ) : null}
         </View>
       </View>
     </Screen>
@@ -195,4 +215,6 @@ const styles = StyleSheet.create({
   head: { gap: theme.space.xs },
   block: { gap: theme.space.lg },
   foot: { gap: theme.space.xs },
+  mark: { alignSelf: "flex-start" },
+  link: { fontSize: 11, fontWeight: "400", textDecorationLine: "underline" },
 });
