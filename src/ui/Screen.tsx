@@ -118,9 +118,22 @@ function useShowPart(
 function useKeyboardSpace(ride: boolean, resting: number) {
   const keyboard = useAnimatedKeyboard();
   const lift = theme.space.md - resting;
-  return useAnimatedStyle(() => ({
-    height: ride ? Math.max(0, keyboard.height.get() + lift) : 0,
+  const held = useSharedValue(false);
+  const kept = useSharedValue(0);
+  useAnimatedReaction(
+    () => (ride ? Math.max(0, keyboard.height.get() + lift) : 0),
+    (height) => {
+      if (!held.get()) kept.set(height);
+    },
+  );
+  const style = useAnimatedStyle(() => ({
+    height: held.get()
+      ? kept.get()
+      : ride
+        ? Math.max(0, keyboard.height.get() + lift)
+        : 0,
   }));
+  return { style, held };
 }
 
 export function Screen({
@@ -303,8 +316,14 @@ export function Screen({
                 { backgroundColor: under ? colors.line : "transparent" },
               ]}
             />
-            {footer}
-            <Animated.View style={keyboardSpace} />
+            <View
+              onTouchStart={() => keyboardSpace.held.set(true)}
+              onTouchEnd={() => keyboardSpace.held.set(false)}
+              onTouchCancel={() => keyboardSpace.held.set(false)}
+            >
+              {footer}
+            </View>
+            <Animated.View style={keyboardSpace.style} />
           </>
         ) : null}
       </View>
