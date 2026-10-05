@@ -12,7 +12,7 @@ import { scoreContext } from "./scoring/taste";
 import { evaluateOutfit, roleOf, type Problem } from "./styling";
 import { activeSession, everydayRequest, resultFor } from "./today";
 
-function baseRequest(closet: Closet): OutfitRequest {
+export function baseRequest(closet: Closet): OutfitRequest {
   const { today, everyday, wardrobe, profile } = closet.styling;
   if (today) return activeSession(today).request;
   if (everyday)

@@ -2,6 +2,7 @@ import type { Attributes } from "./attributes";
 import {
   isAvailable,
   savePiece,
+  setAway,
   type Closet,
   type Look,
   type OutfitRequest,
@@ -11,6 +12,7 @@ import {
 import { filterPieces, lastWorn, noFilter } from "./closetFilters";
 import { toLab, toLch } from "./color";
 import { hasAnyWear } from "./feedback";
+import { wearDate } from "./looks";
 import { confirmedWeather } from "./pieceWeather";
 import { isNeverWear, wearMoreIds } from "./preferences";
 import { evaluateOutfit, roleOf, type Problem } from "./styling";
@@ -253,4 +255,39 @@ export function rediscover(closet: Closet, clock: Clock, limit = 6): Piece[] {
       (piece) => context.lastWorn[piece.id] ?? "",
     ).filter((piece) => context.lastWorn[piece.id]),
   ].slice(0, limit);
+}
+
+export function laundryLoad(closet: Closet, day: string): Piece[] {
+  const worn = new Set(
+    closet.feedback.flatMap((event) =>
+      event.kind === "wore" &&
+      !event.undone &&
+      wearDate(closet, event.at) === day
+        ? event.pieceIds
+        : [],
+    ),
+  );
+  return closet.pieces.filter(
+    (piece) =>
+      piece.source === "owned" && isAvailable(piece) && worn.has(piece.id),
+  );
+}
+
+export const inWash = (closet: Closet): Piece[] =>
+  closet.pieces.filter((piece) => piece.away === "wash");
+
+export const intoWash = (closet: Closet, ids: string[]): Closet =>
+  ids.reduce((next, id) => setAway(next, id, "wash"), closet);
+
+export const laundryDone = (closet: Closet, ids: string[]): Closet =>
+  ids.reduce(
+    (next, id) =>
+      next.pieces.find((piece) => piece.id === id)?.away === "wash"
+        ? setAway(next, id, null)
+        : next,
+    closet,
+  );
+
+export function costPerWear(piece: Piece, wears: number): number | null {
+  return piece.price ? piece.price.amount / Math.max(wears, 1) : null;
 }

@@ -30,7 +30,7 @@ export function keyedStorage(
     },
     write: (value) => set(closetKeys[0], value),
     async clear() {
-      for (const key of closetKeys) await remove(key);
+      for (const key of [...closetKeys, backupKey]) await remove(key);
     },
     keepBackup: (value) => set(backupKey, value),
     readBackup: () => get(backupKey),

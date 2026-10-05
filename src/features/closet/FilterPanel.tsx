@@ -7,7 +7,7 @@ import {
 } from "react-native";
 import type { Category, Piece } from "../../domain/closet";
 import { colorName, namedSwatch } from "../../domain/color";
-import type { ClosetFilter } from "../../domain/closetFilters";
+import { closetSorts, type ClosetFilter } from "../../domain/closetFilters";
 import type { WearSeason } from "../../domain/facts";
 import { categoryName, t } from "../../i18n";
 import { Button, Chip, ChipRow, Text } from "../../ui";
@@ -22,9 +22,11 @@ const hex = (name: string) =>
     .rgb.map((part) => part.toString(16).padStart(2, "0"))
     .join("")}`;
 
-type Show = "not-worn-lately" | "never-worn" | "away" | "archived";
+type Show =
+  "forgotten" | "not-worn-lately" | "never-worn" | "away" | "archived";
 
 const showLabels: Record<Show, string> = {
+  forgotten: "closet.forgotten",
   "not-worn-lately": "closet.notWornLately",
   "never-worn": "closet.neverWorn",
   away: "closet.unavailable",
@@ -72,6 +74,16 @@ export function FilterRow({
       style={{ marginHorizontal: -gutter }}
       contentContainerStyle={[styles.row, { paddingHorizontal: gutter }]}
     >
+      <Chip
+        label={t("closet.filter")}
+        kind="control"
+        opens="expander"
+        expanded={open}
+        selected={values.length > 0}
+        accessibilityValue={values.join(", ")}
+        onPress={onToggle}
+        testID="chip-more"
+      />
       <View accessibilityRole="radiogroup" style={styles.row}>
         {(["all", ...offered] as const).map((id) => (
           <Chip
@@ -84,16 +96,6 @@ export function FilterRow({
           />
         ))}
       </View>
-      <Chip
-        label={t("closet.filter")}
-        kind="control"
-        opens="expander"
-        expanded={open}
-        selected={values.length > 0}
-        accessibilityValue={values.join(", ")}
-        onPress={onToggle}
-        testID="chip-more"
-      />
     </ScrollView>
   );
 }
@@ -138,7 +140,6 @@ export function FilterPanel({
   onChange: (next: Partial<ClosetFilter>) => void;
   onClear: () => void;
 }) {
-  const { large } = useLargeText();
   const [labelWidth, setLabelWidth] = useState(0);
   const measure = (width: number) =>
     setLabelWidth((current) => Math.max(current, Math.ceil(width)));
@@ -168,7 +169,7 @@ export function FilterPanel({
               optional
               options={names.map((name) => ({
                 id: colourId(name),
-                label: large ? colourLabel(name) : "",
+                label: colourLabel(name),
                 swatch: hex(name),
                 accessibilityLabel: colourLabel(name),
               }))}
@@ -211,7 +212,9 @@ export function FilterPanel({
           onChange={(next) =>
             onChange({
               wear:
-                next === "not-worn-lately" || next === "never-worn"
+                next === "forgotten" ||
+                next === "not-worn-lately" ||
+                next === "never-worn"
                   ? next
                   : null,
               availability:
@@ -221,8 +224,26 @@ export function FilterPanel({
           testID="show"
         />,
       )}
-      <View style={styles.clear}>
-        {filtered ? (
+      {group(
+        t("closet.sort"),
+        <ChipRow
+          layout="scroll"
+          optional
+          options={closetSorts.map((id) => ({
+            id,
+            label: t(`closet.sort.${id}`),
+          }))}
+          value={filter.sort}
+          onChange={(next) =>
+            onChange({
+              sort: closetSorts.find((id) => id === next) ?? null,
+            })
+          }
+          testID="sort"
+        />,
+      )}
+      {filtered ? (
+        <View style={styles.clear}>
           <Button
             variant="quiet"
             size="small"
@@ -230,8 +251,8 @@ export function FilterPanel({
             onPress={onClear}
             testID="closet-clear"
           />
-        ) : null}
-      </View>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -242,5 +263,5 @@ const styles = StyleSheet.create({
   group: { flexDirection: "row", alignItems: "center", gap: theme.space.md },
   groupStacked: { flexDirection: "column", alignItems: "stretch" },
   chips: { flex: 1 },
-  clear: { minHeight: theme.size.controlSmall, alignItems: "flex-start" },
+  clear: { alignItems: "flex-start" },
 });
