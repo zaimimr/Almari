@@ -6,9 +6,9 @@ appId: com.zaimimran.almari
     id: "header-profile"
 - scrollUntilVisible:
     element:
-      id: "tile-fit"
+      id: "tile-finish"
 - tapOn:
-    id: "tile-fit"
+    id: "tile-finish"
 - assertVisible: "How do you like your clothes to sit?"
 - tapOn:
     id: "card-structured"

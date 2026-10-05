@@ -6,6 +6,12 @@ appId: com.zaimimran.almari
     permissions:
       all: allow
 - extendedWaitUntil:
+    visible:
+      id: "welcome-start"
+    timeout: 20000
+- tapOn:
+    id: "welcome-start"
+- extendedWaitUntil:
     visible: "What is your name\\?"
     timeout: 20000
 - assertVisible:

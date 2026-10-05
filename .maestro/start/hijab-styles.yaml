@@ -6,6 +6,12 @@ appId: com.zaimimran.almari
     permissions:
       all: allow
 - extendedWaitUntil:
+    visible:
+      id: "welcome-start"
+    timeout: 20000
+- tapOn:
+    id: "welcome-start"
+- extendedWaitUntil:
     visible: "What is your name\\?"
     timeout: 20000
 - repeat:
@@ -15,7 +21,8 @@ appId: com.zaimimran.almari
     commands:
       - tapOn:
           id: "onboarding-next"
-- tapOn: "Always"
+- tapOn:
+    id: "hijab-always"
 - tapOn: "Next"
 - assertVisible: "Which styles do you wear?"
 - assertVisible:
@@ -58,7 +65,8 @@ appId: com.zaimimran.almari
     text: "checkbox, unchecked"
 - tapOn: "Back"
 - assertVisible: "Do you wear a hijab?"
-- tapOn: "No"
+- tapOn:
+    id: "hijab-no"
 - tapOn: "Next"
 - assertVisible: "How covered do you like your everyday outfits?"
 - assertVisible:
