@@ -44,10 +44,23 @@ function revealAt(reduce: boolean, index: number) {
   return rise;
 }
 
-function Reveal({ index, children }: { index: number; children: ReactNode }) {
+function Reveal({
+  index,
+  grow,
+  children,
+}: {
+  index: number;
+  grow?: boolean;
+  children: ReactNode;
+}) {
   const reduce = useReduceMotion();
   return (
-    <Animated.View entering={revealAt(reduce, index)}>{children}</Animated.View>
+    <Animated.View
+      entering={revealAt(reduce, index)}
+      style={grow ? styles.grow : undefined}
+    >
+      {children}
+    </Animated.View>
   );
 }
 
@@ -134,11 +147,13 @@ export function SeasonChoice({
   size: PhotoSize | null;
   onChoose: (season: Season) => void;
 }) {
-  const { width } = useWindowDimensions();
-  const colors = useColors();
+  const { width, height } = useWindowDimensions();
   const content = width - 2 * gutterFor(width);
-  const card = (content - theme.space.md) / 2;
-  const dot = Math.floor((card - 2 * theme.space.xs) / 3);
+  const card = Math.floor((content - theme.space.md) / 2);
+  const chip = card / 3;
+  const tall = Math.round(
+    Math.max(card * 1.3, Math.min(card * 1.9, height - card - 360)),
+  );
   const drapes = drapePair(...seasons);
   return (
     <View style={styles.choice} testID="colours-choice">
@@ -153,7 +168,7 @@ export function SeasonChoice({
         accessibilityLabel={t("colours.choose")}
       >
         {seasons.map((season, index) => (
-          <Reveal key={season} index={1 + index}>
+          <Reveal key={season} index={1 + index} grow>
             <Pressable
               onPress={() => onChoose(season)}
               accessibilityRole="radio"
@@ -172,11 +187,11 @@ export function SeasonChoice({
                 face={face}
                 size={size}
                 width={card}
-                height={Math.round(card * 1.5)}
-                diameter={Math.round(card * 0.8)}
+                height={tall}
+                diameter={Math.round(card * 0.78)}
               />
               <View
-                style={styles.strip}
+                style={[styles.strip, { width: card }]}
                 accessibilityElementsHidden
                 importantForAccessibility="no-hide-descendants"
               >
@@ -185,16 +200,11 @@ export function SeasonChoice({
                   .map((colour) => (
                     <View
                       key={colour.hex}
-                      style={[
-                        styles.dot,
-                        {
-                          width: dot,
-                          height: dot,
-                          borderRadius: dot / 2,
-                          backgroundColor: colour.hex,
-                          borderColor: colors.line,
-                        },
-                      ]}
+                      style={{
+                        width: chip,
+                        height: chip,
+                        backgroundColor: colour.hex,
+                      }}
                     />
                   ))}
               </View>
@@ -262,9 +272,15 @@ const styles = StyleSheet.create({
   trait: { flex: 1, gap: 2 },
   section: { gap: theme.space.sm },
   close: { flexDirection: "row", gap: theme.space.md },
-  closeCard: { flex: 1, gap: theme.space.md },
-  strip: { flexDirection: "row", flexWrap: "wrap", gap: theme.space.xs },
-  dot: { borderWidth: StyleSheet.hairlineWidth },
+  closeCard: { gap: theme.space.sm },
+  grow: { flex: 1 },
+  strip: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    overflow: "hidden",
+    borderRadius: theme.radius.md,
+    borderCurve: "continuous",
+  },
   choice: { gap: theme.space.lg },
   pressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
 });
