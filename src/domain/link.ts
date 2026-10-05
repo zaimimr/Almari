@@ -11,7 +11,7 @@ const entities: Record<string, string> = {
   nbsp: " ",
 };
 
-function decode(text: string): string {
+export function decode(text: string): string {
   return text.replace(
     /&(#x[0-9a-f]+|#\d+|[a-z]+);/gi,
     (whole, code: string) => {
@@ -26,7 +26,7 @@ function decode(text: string): string {
   );
 }
 
-function attribute(tag: string, name: string): string | null {
+export function attribute(tag: string, name: string): string | null {
   const match = new RegExp(
     `\\s${name}\\s*=\\s*("([^"]*)"|'([^']*)'|([^\\s>]+))`,
     "i",

@@ -1,0 +1,68 @@
+{
+  "product": {
+    "id": 6627892166736,
+    "title": "Premium Viscose",
+    "vendor": "Verona Collection",
+    "body_html": "<p>Our premium 100% viscose is the softest highest quality hijab you will find GUARANTEED!</p>\n<p>CUSTOM COLORS, and fabric- found only on VERONA</p>\n<p> </p>",
+    "options": [
+      {
+        "name": "Color",
+        "position": 1,
+        "values": ["Burnt Orange", "Rust", "Taupe", "Black"]
+      },
+      {
+        "name": "Size",
+        "position": 2,
+        "values": ["Basic", "Maxi"]
+      }
+    ],
+    "variants": [
+      {
+        "id": 39612690038864,
+        "title": "Burnt Orange / Basic",
+        "price": "12.00",
+        "option1": "Burnt Orange",
+        "option2": "Basic"
+      },
+      {
+        "id": 39709800038480,
+        "title": "Burnt Orange / Maxi",
+        "price": "12.00",
+        "option1": "Burnt Orange",
+        "option2": "Maxi"
+      },
+      {
+        "id": 39612690071632,
+        "title": "Rust / Basic",
+        "price": "12.00",
+        "option1": "Rust",
+        "option2": "Basic"
+      },
+      {
+        "id": 39709800071248,
+        "title": "Rust / Maxi",
+        "price": "12.00",
+        "option1": "Rust",
+        "option2": "Maxi"
+      }
+    ],
+    "images": [
+      {
+        "id": 29508959109200,
+        "src": "https://cdn.shopify.com/s/files/1/0704/7797/products/3.jpg?v=1644431996"
+      },
+      {
+        "id": 29508959141968,
+        "src": "https://cdn.shopify.com/s/files/1/0704/7797/products/2_2727f985-46ad-4ad6-8b10-1e18380a88b2.jpg?v=1644431996"
+      },
+      {
+        "id": 29508953604176,
+        "src": "https://cdn.shopify.com/s/files/1/0704/7797/products/1.jpg?v=1644431996"
+      },
+      {
+        "id": 29508953702480,
+        "src": "https://cdn.shopify.com/s/files/1/0704/7797/products/2.jpg?v=1644431996"
+      }
+    ]
+  }
+}
