@@ -13,9 +13,15 @@ appId: com.zaimimran.almari
     visible:
       id: "look-seed-look-eid"
     timeout: 10000
+- assertVisible: "This week"
+- assertVisible: "Sunday 11 October, Eid lunch"
+- assertVisible: "Saved"
 - assertVisible: "Eid lunch, Eid · Planned for Sun 11 Oct, 3 pieces"
 - assertVisible: "Office navy, Work, 4 pieces"
-- assertVisible: "Worn"
+- scrollUntilVisible:
+    element:
+      text: "Worn"
+    centerElement: true
 - assertVisible: ".*, Everyday · 2 Oct, 4 pieces"
 - takeScreenshot: docs/redesign/screens/after/looks/looks
 - tapOn:

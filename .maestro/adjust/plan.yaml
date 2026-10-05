@@ -9,14 +9,14 @@ appId: com.zaimimran.almari
 - tapOn: "Choose a date"
 - tapOn:
     id: "pick-2026-10-11"
-- assertVisible: "Sat 11 Oct"
+- assertVisible: "Sun 11 Oct"
 - takeScreenshot: docs/redesign/screens/after/adjust/adjust
 - tapOn: "Show outfit"
 - extendedWaitUntil:
     visible:
       id: "today-outfit"
     timeout: 60000
-- assertVisible: "Sat 11 Oct"
+- assertVisible: "Sun 11 Oct"
 - assertVisible: "Back to today"
 - assertNotVisible: "Wear this"
 - assertVisible: "Save for.*"
@@ -31,4 +31,4 @@ appId: com.zaimimran.almari
 - tapOn: "Back to today"
 - assertVisible: "Wear this"
 - tapOn: "Looks"
-- assertVisible: "Planned for Sat 11 Oct"
+- assertVisible: "Planned for Sun 11 Oct"

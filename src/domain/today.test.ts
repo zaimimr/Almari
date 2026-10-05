@@ -8,6 +8,7 @@ import {
   prepareTomorrow,
   replacePiece,
   resumePlan,
+  showLook,
   startOccasion,
   startPlan,
   unsavedPlan,
@@ -142,4 +143,21 @@ test("opening tomorrow's outfit again keeps the evening's changes", () => {
   const again = prepareTomorrow(kept, clock, weather);
   assert.equal(again.styling.today!.active, "tomorrow");
   assert.ok(activeSession(again.styling.today!).pieceIds.includes(hijab.id));
+});
+
+test("showing a look keeps its exact pieces and occasion and marks it as shown", () => {
+  const closet = styledSample("2026-10-10T09:00:00+02:00");
+  const before = activeSession(closet.styling.today!);
+  const pieceIds = before.pieceIds.slice(0, 2);
+  const shown = showLook(closet, { pieceIds, occasion: "eid" });
+  const today = shown.styling.today!;
+  const session = activeSession(today);
+  assert.deepEqual(session.pieceIds, pieceIds);
+  assert.equal(session.shown, true);
+  assert.equal(session.request.occasion, "eid");
+  assert.ok(session.revision > before.revision);
+  const everyday = showLook(closet, { pieceIds, occasion: null });
+  const plain = activeSession(everyday.styling.today!);
+  assert.deepEqual(plain.pieceIds, pieceIds);
+  assert.equal(plain.request.occasion, before.request.occasion);
 });

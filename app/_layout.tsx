@@ -5,6 +5,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Splash } from "../src/features/Splash";
+import { useReminders } from "../src/features/looks/useReminders";
 import { t } from "../src/i18n";
 import { ClosetProvider } from "../src/state/closet";
 import { onHandoff } from "../src/state/launch";
@@ -30,6 +31,7 @@ export default function RootLayout() {
 
 function Screens() {
   const [hidden, setHidden] = useState(true);
+  useReminders();
 
   useEffect(() => onHandoff(() => setHidden(false)), []);
 

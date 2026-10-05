@@ -47,7 +47,7 @@ import { locale, t } from "../../i18n";
 import { useCloset } from "../../state/closet";
 import { now } from "../../state/clock";
 import { fetchForecast } from "../../state/forecast";
-import { takeLaunchIntent } from "../../state/launch";
+import { onLaunchIntent, takeLaunchIntent } from "../../state/launch";
 import { announce } from "../../ui/announce";
 
 export type Mode = "everyday" | "occasion" | "planning" | "tomorrow";
@@ -195,37 +195,37 @@ export function useToday() {
     announce(t("today.announce.outfit", { name }), { queue: true });
   }, [pieceKey, name]);
 
-  useFocusEffect(
-    useCallback(() => {
-      setHour(now().getHours());
-      const intent = takeLaunchIntent();
-      if (intent?.day !== "tomorrow") return;
-      const date = nextLocalDate(clockFor(now()).localDate);
-      const place = closet.styling.place;
-      const weatherFor = async (): Promise<Weather> => {
-        if (!place) return { source: "unknown" };
-        try {
-          const found = await fetchForecast(place.latitude, place.longitude);
-          const forecast = found
-            ? forecastFor(found, date, at(), clockFor(now()).timeZone)
-            : null;
-          return forecast
-            ? {
-                ...forecast.weather,
-                exposure: closet.styling.everyday?.exposure ?? null,
-              }
-            : { source: "unknown" };
-        } catch {
-          return { source: "unknown" };
-        }
-      };
-      void weatherFor().then((weather) =>
-        update((current) =>
-          prepareTomorrow(current, clockFor(now()), weather),
-        ).catch(() => undefined),
-      );
-    }, [closet.styling.place, closet.styling.everyday, update]),
-  );
+  const takeIntent = useCallback(() => {
+    setHour(now().getHours());
+    const intent = takeLaunchIntent();
+    if (intent?.day !== "tomorrow") return;
+    const date = nextLocalDate(clockFor(now()).localDate);
+    const place = closet.styling.place;
+    const weatherFor = async (): Promise<Weather> => {
+      if (!place) return { source: "unknown" };
+      try {
+        const found = await fetchForecast(place.latitude, place.longitude);
+        const forecast = found
+          ? forecastFor(found, date, at(), clockFor(now()).timeZone)
+          : null;
+        return forecast
+          ? {
+              ...forecast.weather,
+              exposure: closet.styling.everyday?.exposure ?? null,
+            }
+          : { source: "unknown" };
+      } catch {
+        return { source: "unknown" };
+      }
+    };
+    void weatherFor().then((weather) =>
+      update((current) =>
+        prepareTomorrow(current, clockFor(now()), weather),
+      ).catch(() => undefined),
+    );
+  }, [closet.styling.place, closet.styling.everyday, update]);
+  useFocusEffect(takeIntent);
+  useEffect(() => onLaunchIntent(takeIntent), [takeIntent]);
 
   useEffect(() => {
     const refresh = () => {
