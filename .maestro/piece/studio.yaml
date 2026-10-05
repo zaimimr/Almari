@@ -22,12 +22,12 @@ appId: com.zaimimran.almari
     visible:
       id: "piece-edit-screen"
     timeout: 10000
-- tapOn: "Clean background"
-- assertVisible: "Clean background sends this photo to Cloudflare\\."
+- tapOn: "AI Enhance"
+- assertVisible: "AI Enhance sends this photo to Cloudflare\\."
 - extendedWaitUntil:
     visible:
       id: "edit-hero"
     timeout: 60000
 - assertVisible:
-    text: "Clean background"
+    text: "AI Enhance"
     selected: true

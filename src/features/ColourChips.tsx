@@ -19,6 +19,7 @@ export function ColourChips({
   inSurface,
   label,
   first,
+  guessed,
   testID,
 }: {
   value: string | null;
@@ -26,6 +27,7 @@ export function ColourChips({
   inSurface?: boolean;
   label?: string;
   first?: string[];
+  guessed?: boolean;
   testID?: string;
 }) {
   const [all, setAll] = useState(!first?.length);
@@ -49,6 +51,7 @@ export function ColourChips({
         else if (typeof next === "string") onPick(next);
       }}
       inSurface={inSurface}
+      guessed={guessed}
       testID={testID}
     />
   );
