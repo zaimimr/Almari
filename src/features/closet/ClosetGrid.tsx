@@ -8,6 +8,7 @@ import {
 } from "react";
 import { FlatList, StyleSheet, useWindowDimensions, View } from "react-native";
 import type { Piece } from "../../domain/closet";
+import { hasBackground } from "../../domain/background";
 import type { ClosetSection } from "../../domain/closetFilters";
 import { mainColourName } from "../../domain/color";
 import { needsDetails } from "../../domain/facts";
@@ -38,7 +39,11 @@ const hasDot = (piece: Piece) =>
 
 function tileLabel(piece: Piece, meta: string | undefined) {
   const colour = mainColourName(piece.colors);
-  const marks = [meta, hasDot(piece) ? t("piece.needsDetails") : undefined]
+  const marks = [
+    meta,
+    hasDot(piece) ? t("piece.needsDetails") : undefined,
+    hasBackground(piece) ? t("background.has") : undefined,
+  ]
     .filter(Boolean)
     .join(", ");
   return [piece.name, colour ? colourLabel(colour) : "", marks]
@@ -70,6 +75,7 @@ const Row = memo(function Row({
   side,
   selecting,
   selected,
+  clearing,
   onPress,
   onLongPress,
 }: {
@@ -77,11 +83,13 @@ const Row = memo(function Row({
   side: number;
   selecting: boolean;
   selected: string;
+  clearing: string;
   onPress: (piece: Piece) => void;
   onLongPress: (piece: Piece) => void;
 }) {
   const colors = useColors();
   const chosen = selected.split(",");
+  const busy = clearing.split(",");
   return (
     <View style={styles.row}>
       {pieces.map((piece) => {
@@ -94,6 +102,10 @@ const Row = memo(function Row({
                 image={piece}
                 size="cell"
                 dot={hasDot(piece)}
+                state={busy.includes(piece.id) ? "preparing" : undefined}
+                busyLabel={
+                  busy.includes(piece.id) ? t("background.removing") : undefined
+                }
                 selected={selecting && isSelected}
                 selectedLabel={
                   selecting && !isSelected ? t("common.notSelected") : undefined
@@ -114,6 +126,17 @@ const Row = memo(function Row({
                 <Symbol name="moon.zzz" size={13} tone="onMedia" />
               </View>
             ) : null}
+            {hasBackground(piece) ? (
+              <View
+                style={[styles.backdrop, { backgroundColor: colors.scrimPill }]}
+                pointerEvents="none"
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+                testID={`tile-background-${piece.id}`}
+              >
+                <Symbol name="square.dashed" size={13} tone="onMedia" />
+              </View>
+            ) : null}
           </View>
         );
       })}
@@ -126,6 +149,7 @@ export function ClosetGrid({
   headings,
   selecting,
   selected,
+  clearing = [],
   chips,
   header,
   empty,
@@ -136,6 +160,7 @@ export function ClosetGrid({
   headings: boolean;
   selecting: boolean;
   selected: string[];
+  clearing?: string[];
   chips: ReactElement;
   header: ReactElement;
   empty?: ReactElement;
@@ -234,6 +259,10 @@ export function ClosetGrid({
               .filter((piece) => selected.includes(piece.id))
               .map((piece) => piece.id)
               .join(",")}
+            clearing={item.pieces
+              .filter((piece) => clearing.includes(piece.id))
+              .map((piece) => piece.id)
+              .join(",")}
             onPress={press}
             onLongPress={longPress}
           />
@@ -253,6 +282,13 @@ const styles = StyleSheet.create({
   moon: {
     position: "absolute",
     right: theme.space.sm,
+    bottom: theme.space.sm,
+    padding: theme.space.xs,
+    borderRadius: theme.radius.full,
+  },
+  backdrop: {
+    position: "absolute",
+    left: theme.space.sm,
     bottom: theme.space.sm,
     padding: theme.space.xs,
     borderRadius: theme.radius.full,

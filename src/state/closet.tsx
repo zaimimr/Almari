@@ -18,6 +18,7 @@ import {
 import { LocaleContext, locale, setLanguage } from "../i18n";
 import { closetStorage } from "../storage/local";
 import { fixtures, loadFixtures } from "../testing/fixtures";
+import { useStudioRepair } from "./background";
 import { useAttributeRefresh, useImportRunner } from "./imports";
 
 type ClosetStatus = {
@@ -50,6 +51,7 @@ export function ClosetProvider({
   );
   useImportRunner(repository, status === "ready");
   useAttributeRefresh(repository, status === "ready");
+  useStudioRepair(repository, status === "ready");
 
   useEffect(() => {
     let active = true;
@@ -139,6 +141,7 @@ export function useCloset() {
   return {
     closet,
     update: repository.update.bind(repository),
+    read: repository.getSnapshot,
     reset: repository.reset.bind(repository),
   };
 }

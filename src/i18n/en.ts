@@ -1619,6 +1619,11 @@ export const en = {
   "quick.wearMore": "Choose pieces to wear more",
   "quick.details": "Add piece details",
   "common.save": "Save",
+  "background.remove": "Remove background",
+  "background.removing": "Removing background",
+  "background.removed": "Background removed",
+  "background.failed": "Could not remove the background",
+  "background.has": "Has background",
 };
 
 export type Key = keyof typeof en;

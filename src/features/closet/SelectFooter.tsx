@@ -12,6 +12,7 @@ export function SelectFooter({
   selecting,
   canAct,
   canLink,
+  canClear,
   putAwayShown,
   expanded,
   result,
@@ -19,11 +20,13 @@ export function SelectFooter({
   onWorn,
   onLink,
   onPutAway,
+  onClear,
   onChange,
 }: {
   selecting: boolean;
   canAct: boolean;
   canLink: boolean;
+  canClear: boolean;
   putAwayShown: boolean;
   expanded: Expanded;
   result: SelectResult;
@@ -31,6 +34,7 @@ export function SelectFooter({
   onWorn: (day: "today" | "yesterday") => void;
   onLink: () => void;
   onPutAway: () => void;
+  onClear: () => void;
   onChange: (next: { season: WearSeason } | { category: Category }) => void;
 }) {
   const markWorn = {
@@ -79,6 +83,12 @@ export function SelectFooter({
       testID: "select-put-away",
     },
     changeAction,
+    {
+      label: t("background.remove"),
+      onPress: onClear,
+      disabled: !canClear,
+      testID: "select-remove-background",
+    },
   ];
   const content =
     result && "text" in result ? (

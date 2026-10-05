@@ -1639,4 +1639,9 @@ export const nb: Record<Key, string> = {
   "quick.wearMore": "Velg plagg du vil bruke mer",
   "quick.details": "Legg til plaggdetaljer",
   "common.save": "Lagre",
+  "background.remove": "Fjern bakgrunn",
+  "background.removing": "Fjerner bakgrunnen",
+  "background.removed": "Bakgrunnen er fjernet",
+  "background.failed": "Kunne ikke fjerne bakgrunnen",
+  "background.has": "Har bakgrunn",
 };

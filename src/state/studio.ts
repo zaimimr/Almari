@@ -43,7 +43,10 @@ async function fixtureStudio(source: string, id: string) {
   await new Promise((resolve) => setTimeout(resolve, 1500));
   if (fixtures.studio !== "ok")
     throw new Error(fixtureErrors[fixtures.studio ?? "fail"]);
-  return keepPhotoAs(photoUri(source), `${id}-studio`);
+  return keepPhotoAs(
+    photoUri(source),
+    `${id}-studio-${Date.now().toString(36)}`,
+  );
 }
 
 async function studioInput(source: string, id: string) {
@@ -109,15 +112,24 @@ export async function renderStudio(
   }
   const type = response.headers.get("content-type") ?? "";
   const extension = type.includes("png") ? ".png" : ".jpg";
+  const name = `${id}-studio-${Date.now().toString(36)}`;
   if (!ClosetVision.isAvailable())
-    return keepPhotoBytes(bytes, `${id}-studio${extension}`);
-  const raw = await keepPhotoBytes(bytes, `${id}-studio-raw${extension}`);
+    return keepPhotoBytes(bytes, `${name}${extension}`);
+  const raw = await keepPhotoBytes(bytes, `${name}-raw${extension}`);
+  const clear = await clearStudio(raw, name);
+  if (!clear) return raw;
+  void discardPhoto(raw).catch(() => undefined);
+  return clear;
+}
+
+export async function clearStudio(
+  file: string,
+  name: string,
+): Promise<string | null> {
   try {
-    const white = await ClosetVision.whitenBackground(photoUri(raw), id);
-    void discardPhoto(raw).catch(() => undefined);
-    return white;
+    return await ClosetVision.clearBackground(photoUri(file), name);
   } catch {
-    return raw;
+    return null;
   }
 }
 

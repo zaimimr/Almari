@@ -174,6 +174,7 @@ export default function ClosetScreen() {
             selecting={selecting}
             canAct={screen.owned.length > 0}
             canLink={screen.owned.length > 1}
+            canClear={screen.backed.length > 0}
             putAwayShown={putAwayShown}
             expanded={screen.expanded}
             result={screen.result}
@@ -181,6 +182,7 @@ export default function ClosetScreen() {
             onWorn={screen.markWorn}
             onLink={screen.linkSelected}
             onPutAway={() => screen.putAway(!putAwayShown)}
+            onClear={() => void screen.clearBackgrounds()}
             onChange={screen.changeAll}
           />
         ) : undefined
@@ -224,6 +226,7 @@ export default function ClosetScreen() {
           headings={filter.category === "all" && screen.sections.length > 1}
           selecting={selecting}
           selected={selected}
+          clearing={screen.clearing}
           chips={
             <FilterRow
               filter={filter}
