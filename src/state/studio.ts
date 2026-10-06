@@ -19,6 +19,7 @@ export type StudioPiece = {
   kind?: GarmentKind;
   name?: string;
   colour?: string | null;
+  note?: string;
 };
 
 type StudioProblem = "offline" | "limit" | "failed";
@@ -98,6 +99,7 @@ async function makeStudio(
   if (piece.kind) body.append("kind", piece.kind);
   if (piece.name?.trim()) body.append("name", piece.name.trim());
   if (piece.colour) body.append("colour", piece.colour);
+  if (piece.note) body.append("note", piece.note);
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), studioTimeout);
   let response: Response;

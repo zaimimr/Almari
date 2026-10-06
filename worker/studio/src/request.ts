@@ -18,6 +18,7 @@ export type StudioRequest = {
   kind?: string;
   name?: string;
   colour?: string;
+  note?: string;
 };
 
 export const maxImageBytes = 8 * 1024 * 1024;
@@ -64,6 +65,7 @@ export function parseStudioRequest(
     kind: kind ?? undefined,
     name: text(form, "name", 60),
     colour: text(form, "colour", 40),
+    note: text(form, "note", 200),
   };
 }
 

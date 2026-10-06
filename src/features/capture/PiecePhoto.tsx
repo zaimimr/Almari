@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import Animated, {
   FadeIn,
@@ -12,7 +12,7 @@ import Animated, {
 import { Image } from "expo-image";
 import type { Piece } from "../../domain/closet";
 import { t } from "../../i18n";
-import { Button, Segmented, Silk, Text } from "../../ui";
+import { Button, Field, Segmented, Silk, Text } from "../../ui";
 import { motion, timing, useReduceMotion } from "../../ui/motion";
 import { photoSource } from "../../ui/photos";
 import { theme } from "../../ui/theme";
@@ -112,7 +112,7 @@ export function PiecePhoto({
   onChange: (next: PhotoView) => void;
   making?: boolean;
   made?: boolean;
-  onMake?: () => void;
+  onMake?: (note?: string) => void;
   adjust?: {
     label: string;
     onPress: () => void;
@@ -139,6 +139,8 @@ export function PiecePhoto({
   const locked = disabled || making;
   const offersStudio = sorted.some((choice) => choice.id === "studio");
   const busyLabel = t("photo.cleanMaking");
+  const [fix, setFix] = useState("");
+  const remake = () => onMake?.(fix.trim() || undefined);
 
   return (
     <View style={styles.block} testID={testID}>
@@ -195,15 +197,28 @@ export function PiecePhoto({
         />
       ) : null}
       {made && onMake && !making ? (
-        <View style={styles.lead}>
-          <Button
-            variant="secondary"
-            icon="arrow.clockwise"
-            label={t("photo.aiAgain")}
-            disabled={disabled}
-            onPress={onMake}
-            testID="photo-ai-again"
+        <View style={styles.fix}>
+          <Field
+            label={t("photo.aiFix")}
+            placeholder={t("photo.aiFixHint")}
+            value={fix}
+            onChangeText={setFix}
+            maxLength={200}
+            editable={!disabled}
+            returnKeyType="done"
+            onSubmitEditing={remake}
+            testID="photo-ai-fix"
           />
+          <View style={styles.lead}>
+            <Button
+              variant="secondary"
+              icon="arrow.clockwise"
+              label={t("photo.aiAgain")}
+              disabled={disabled}
+              onPress={remake}
+              testID="photo-ai-again"
+            />
+          </View>
         </View>
       ) : null}
       {message ? (
@@ -217,7 +232,7 @@ export function PiecePhoto({
                 label={t("common.tryAgain")}
                 variant="quiet"
                 disabled={locked}
-                onPress={onMake}
+                onPress={remake}
               />
             </View>
           ) : null}
@@ -252,5 +267,6 @@ const styles = StyleSheet.create({
   },
   adjust: { position: "absolute", top: theme.space.sm, right: theme.space.sm },
   lead: { alignItems: "flex-start", gap: theme.space.sm },
+  fix: { gap: theme.space.sm },
   bleed: { marginLeft: -theme.space.sm },
 });

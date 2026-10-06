@@ -127,6 +127,21 @@ describe("studioPrompt", () => {
     expect(prompt).not.toContain("Denim shorts");
     expect(prompt).toContain("Its main colour is light blue.");
   });
+
+  it("adds the owner's note and lets it win over the guesses", () => {
+    expect(studioPrompt({ category: "top" })).not.toContain("OWNER NOTE");
+    const prompt = studioPrompt({
+      category: "top",
+      colour: "navy",
+      note: "it is black, not navy",
+    });
+    expect(prompt).toContain(
+      "The owner describes the item: it is black, not navy.",
+    );
+    expect(prompt.indexOf("OWNER NOTE")).toBeLessThan(
+      prompt.indexOf("STUDIO STYLE"),
+    );
+  });
 });
 
 describe("image header", () => {
@@ -192,6 +207,13 @@ describe("parseStudioRequest", () => {
       form({ image: png(), category: "top", name: `"${"a".repeat(100)}"` }),
     );
     expect(parsed).toMatchObject({ name: "a".repeat(60) });
+    const noted = parseStudioRequest(
+      form({ image: png(), note: `keep "long" sleeves ${"b".repeat(300)}` }),
+    );
+    expect(noted).toMatchObject({
+      note: expect.stringMatching(/^keep long sleeves b+$/),
+    });
+    expect((noted as { note: string }).note).toHaveLength(200);
   });
 
   it("checks install ids", () => {

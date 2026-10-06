@@ -1532,6 +1532,8 @@ export const nb: Record<Key, string> = {
   "fact.sparkle": "Pynt",
   "photo.adjust": "Juster",
   "photo.aiAgain": "Lag på nytt",
+  "photo.aiFix": "Ikke riktig? Beskriv plagget",
+  "photo.aiFixHint": "Svart, ikke marineblå. Lange ermer.",
   "photo.clean": "AI-forbedret",
   "photo.cleanDone": "AI-forbedring er klar",
   "photo.cleanFailed": "Kunne ikke lage AI-forbedring",

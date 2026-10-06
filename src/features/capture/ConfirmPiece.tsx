@@ -622,7 +622,7 @@ function ConfirmForm({
       setAnswer(next.attributes?.[attributeAsked]);
   };
 
-  async function makeStudio() {
+  async function makeStudio(note?: string) {
     if (!studioSource || studio.making) return;
     const before = prepared!.studio;
     const file = await studio.make(studioSource, job.id, {
@@ -630,6 +630,7 @@ function ConfirmForm({
       kind,
       name,
       colour,
+      note,
     });
     if (!file) return;
     let applied = false;
@@ -834,7 +835,7 @@ function ConfirmForm({
           onChange={pickPhoto}
           making={studio.making}
           made={Boolean(prepared.studio)}
-          onMake={() => void makeStudio()}
+          onMake={(note) => void makeStudio(note)}
           adjust={adjust}
           message={studio.message}
           note={offerStudio && !prepared.studio}

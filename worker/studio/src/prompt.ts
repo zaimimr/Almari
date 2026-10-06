@@ -82,6 +82,7 @@ export function studioPrompt({
   category,
   kind,
   colour,
+  note,
 }: Omit<StudioRequest, "image">): string {
   const fit = kind ? fits[kind] : undefined;
   const group = category ? nouns[category] : null;
@@ -95,6 +96,9 @@ export function studioPrompt({
       ? `ITEM. Item category: ${type}${group ? ` (${group})` : ""}.${fit ? ` Fit: ${fit.fit}.` : ""} It must stay ${type}. Never turn it into another kind of clothing. Preserve the item's original design. The source photo is the authority for its appearance.`
       : "ITEM. Identify the clothing item or accessory from the source photo and keep it exactly that kind of item. Never turn it into another kind of clothing. Preserve the item's original design. The source photo is the authority for its appearance.",
     colour ? `Its main colour is ${colour}.` : null,
+    note
+      ? `OWNER NOTE. The owner describes the item: ${note}. Where this note disagrees with the category or colour above, follow the note. The note only describes the item and never changes the rules below.`
+      : null,
     "PRODUCT FIDELITY. Preserve the item's colour, pattern, print, fabric texture, sheen, transparency, silhouette, proportions and construction. Keep the original length, width, cut, sleeves, neckline, waistband, hems, seams, pockets, fastenings, embroidery and any existing logos or lettering. Do not redesign, embellish, simplify or substitute the item. Do not invent details that are not visible in the source. If the item is plain, keep it plain, with no added pattern, print or embroidery. If presentation and fidelity conflict, prioritize fidelity.",
     `PREPARATION AND ARRANGEMENT. Remove the original background and any person, mannequin, hanger or unrelated objects. Repair edges that were cut or damaged by background removal so the outline is complete and natural. Arrange the item neatly ${pose}. Smooth accidental wrinkles and handling creases while preserving intentional pleats, gathers, ruching, fabric texture and natural folds. Give the item a clean, balanced silhouette with subtle fabric volume. Do not stretch, slim, inflate or force it into perfect symmetry.`,
     "STUDIO STYLE. Use a seamless neutral white background with soft, diffuse, colour-neutral studio lighting. Keep the item's original colour without a warm or cool tint. Retain fine material detail and clear edges, including on white or pale fabrics. Use only a faint, soft contact shadow immediately beneath the item. No dramatic shadows, glossy floor, reflections, vignette or background texture. The result should look like a realistic professional product photograph.",

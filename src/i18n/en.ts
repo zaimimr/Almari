@@ -1513,6 +1513,8 @@ export const en = {
   "fact.sparkle": "Sparkle",
   "photo.adjust": "Adjust",
   "photo.aiAgain": "Regenerate",
+  "photo.aiFix": "Not right? Describe the piece",
+  "photo.aiFixHint": "Black, not navy. Long sleeves.",
   "photo.clean": "AI Enhanced",
   "photo.cleanDone": "AI Enhance ready",
   "photo.cleanFailed": "Could not make AI Enhance",

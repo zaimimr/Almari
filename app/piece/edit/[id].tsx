@@ -232,7 +232,7 @@ function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
             : null,
         ].filter((choice): choice is PhotoChoice => choice !== null);
 
-  async function makeClean() {
+  async function makeClean(note?: string) {
     const source = studioSource(piece);
     if (!source || studio.making) return;
     const before = piece.variants?.studio;
@@ -241,6 +241,7 @@ function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
       kind,
       name,
       colour: mainColourName(piece.colors),
+      note,
     });
     if (!file) return;
     await update((current) => {
@@ -481,7 +482,7 @@ function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
           onChange={pickShown}
           making={studio.making}
           made={studioMade && !newPhoto}
-          onMake={() => void makeClean()}
+          onMake={(note) => void makeClean(note)}
           adjust={
             cutoutOffered
               ? {
