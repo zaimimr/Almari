@@ -17,10 +17,8 @@ appId: com.zaimimran.almari
 - assertVisible: "Everyday"
 - assertVisible: "Work"
 - assertVisible: "Gym"
-- assertVisible: "Party"
-- tapOn:
-    id: "create-occasion"
-    text: "Work"
+- assertVisible: "Party.*"
+- tapOn: "Work"
 - tapOn:
     id: "create-submit"
 - extendedWaitUntil:
