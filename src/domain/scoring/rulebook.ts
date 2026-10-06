@@ -134,6 +134,7 @@ export type RuleBook = {
 const roles: Role[] = [
   "main",
   "bottom",
+  "under",
   "layer",
   "outer",
   "hijab",

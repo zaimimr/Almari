@@ -82,12 +82,13 @@ const known = new WeakMap<Piece, Facts>();
 
 export function factsFor(pieces: Piece[], thresholds: Thresholds): Facts[] {
   return pieces.map((piece) => {
+    const role = roleOf(piece, pieces);
     const cached = known.get(piece);
-    if (cached) return cached;
+    if (cached) return cached.role === role ? cached : { ...cached, role };
     const attributes = piece.attributes ?? {};
     const facts: Facts = {
       piece,
-      role: roleOf(piece),
+      role,
       print:
         printPatterns.includes(attributes.pattern ?? "") ||
         (attributes.pattern === "embroidered" &&
@@ -413,6 +414,7 @@ const pluralKinds = [
   "jeans",
   "shorts",
   "leggings",
+  "tights",
   "joggers",
   "wide-leg",
 ];

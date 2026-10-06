@@ -15,7 +15,7 @@ import {
   roleOf,
   styleOutfits,
 } from "../styling";
-import { rulesScorer } from "./rulesScorer";
+import { features, rulesScorer } from "./rulesScorer";
 import { scoreContext } from "./taste";
 
 const samples = addSampleWardrobe(emptyCloset);
@@ -249,7 +249,7 @@ test("only a hijab or an instant hijab fills the hijab slot", () => {
 const pick = (...ids: string[]) =>
   ids.map((id) => samples.pieces.find((piece) => piece.id === `sample-${id}`)!);
 
-test("a maxi dress alone beats the same dress over trousers on a warm day", () => {
+test("a maxi dress is penalised over a shalwar but not over slim trousers", () => {
   const warm = request({
     occasion: "everyday",
     weather: {
@@ -259,22 +259,14 @@ test("a maxi dress alone beats the same dress over trousers on a warm day", () =
       exposure: null,
     },
   });
-  const alone = rulesScorer.score(
-    pick("olive-maxi-dress", "ivory-hijab", "chocolate-loafers"),
-    warm,
-    context,
-  ).score;
-  const layered = rulesScorer.score(
-    pick(
-      "olive-maxi-dress",
-      "ivory-trousers",
-      "ivory-hijab",
-      "chocolate-loafers",
-    ),
-    warm,
-    context,
-  ).score;
-  assert.ok(alone > layered);
+  const hits = (...ids: string[]) =>
+    features(
+      pick("olive-maxi-dress", ...ids, "ivory-hijab", "chocolate-loafers"),
+      warm,
+      context.profile,
+    );
+  assert.equal(hits("ivory-salwar")["dress-with-bottom"], 1);
+  assert.equal(hits("ivory-trousers")["dress-with-bottom"], undefined);
 });
 
 test("a blazer under an open abaya scores below either layer alone", () => {

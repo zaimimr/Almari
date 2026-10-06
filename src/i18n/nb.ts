@@ -34,6 +34,7 @@ export const nb: Record<Key, string> = {
   "kind.jeans": "Jeans",
   "kind.shorts": "Shorts",
   "kind.leggings": "Tights",
+  "kind.tights": "Strømpebukse",
   "kind.joggers": "Joggebukse",
   "kind.wide-leg": "Vide bukser",
   "kind.shalwar": "Shalwar",
@@ -1142,6 +1143,8 @@ export const nb: Record<Key, string> = {
     "{names} kan ikke brukes sammen. Et antrekk bruker {count} av disse: {role}.",
   "styling.tooManyOfOne":
     "{names} kan ikke brukes sammen. Et antrekk bruker ett av disse: {role}.",
+  "styling.dressWithSkirt":
+    "{names} kan ikke brukes sammen. En kjole brukes ikke med skjørt.",
   "styling.unmarkedMany": "{names} er ikke merket desi eller vestlig ennå.",
   "styling.unmarkedOne": "{names} er ikke merket desi eller vestlig ennå.",
   "role.accessory": "tilbehør",
@@ -1152,6 +1155,7 @@ export const nb: Record<Key, string> = {
   "role.main": "hovedplagg",
   "role.outer": "yttertøy",
   "role.shoes": "par sko",
+  "role.under": "plagg under",
   "nav.profile": "Profil",
   "stats.title": "Garderoben i tall",
   "stats.pieces": "Plagg",
@@ -1217,6 +1221,7 @@ export const nb: Record<Key, string> = {
   "role.one.hijab": "hijab",
   "role.one.bag": "veske",
   "role.one.accessory": "tilbehør",
+  "role.one.under": "plagg under",
 
   "calendar.previous": "Forrige måned",
   "calendar.next": "Neste måned",
@@ -1403,6 +1408,7 @@ export const nb: Record<Key, string> = {
   "role.the.hijab": "hijaben",
   "role.the.bag": "vesken",
   "role.the.accessory": "tilbehøret",
+  "role.the.under": "plagget under",
   "adjust.today": "I dag",
   "calendar.day": "{date}, brukt",
   "calendar.emptyMonth": "Ingen looker brukt i {month}",

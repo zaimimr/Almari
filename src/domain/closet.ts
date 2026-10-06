@@ -229,6 +229,7 @@ export type Weather =
       precipitation: "dry" | "rain" | "snow";
       exposure: "mostly-indoors" | "time-outside" | null;
       at: string;
+      feelsLike?: number;
     };
 
 export type ForecastWeather = Extract<Weather, { source: "forecast" }>;

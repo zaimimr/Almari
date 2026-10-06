@@ -90,6 +90,7 @@ test("a mild dry day becomes a forecast for that date", () => {
     precipitation: "dry",
     exposure: null,
     at: date,
+    feelsLike: 12,
   });
 });
 

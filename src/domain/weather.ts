@@ -74,7 +74,19 @@ export function weatherFromHours(
     precipitation: wet("snow") ? "snow" : wet("rain") ? "rain" : "dry",
     exposure: null,
     at: date,
+    feelsLike: Math.round(feels * 10) / 10,
   };
+}
+
+const bucketFeels = { warm: 20, mild: 13, cold: 3 };
+
+export function neededWarmth(weather: Weather): number | null {
+  if (weather.source === "unknown") return null;
+  const feels =
+    weather.source === "forecast" && weather.feelsLike !== undefined
+      ? weather.feelsLike
+      : bucketFeels[weather.warmth];
+  return feels >= warmFrom ? 0 : feels >= 12 ? 1 : feels >= 5 ? 2 : 3;
 }
 
 export function forecastFor(

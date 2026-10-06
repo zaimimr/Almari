@@ -11,10 +11,12 @@ import type { ScoreContext, Scorer } from "./scoring/types";
 import { coverageProblems } from "./coverage";
 import { confirmedWeather, unconfirmedWeather } from "./pieceWeather";
 import { isNeverWear } from "./preferences";
+import { neededWarmth } from "./weather";
 
 export type Role =
   | "main"
   | "bottom"
+  | "under"
   | "layer"
   | "outer"
   | "hijab"
@@ -25,6 +27,7 @@ export type Role =
 const roleLimits: Record<Role, number> = {
   main: 1,
   bottom: 1,
+  under: 1,
   layer: 1,
   outer: 1,
   hijab: 1,
@@ -71,6 +74,7 @@ export type Candidate = {
   score: number;
   reasons: string[];
   problems: Problem[];
+  outdoor: string[];
 };
 
 export type StyleResult = {
@@ -84,7 +88,19 @@ export type StyleResult = {
 const maxCombinations = 4000;
 const maxOutfits = 30;
 
-export function roleOf(piece: Piece): Role {
+const overSkirts: readonly string[] = [
+  "skirt",
+  "lehenga",
+  "sharara",
+  "gharara",
+];
+const underKinds: readonly string[] = ["tights", "leggings", "churidar"];
+const baseTops: readonly string[] = ["blouse", "shirt", "t-shirt", "top"];
+
+const wears = (outfit: Piece[], kinds: readonly string[]) =>
+  outfit.some((piece) => kinds.includes(piece.kind ?? ""));
+
+export function roleOf(piece: Piece, outfit: Piece[] = []): Role {
   switch (piece.kind) {
     case "abaya":
       return piece.traits?.open === false ? "main" : "outer";
@@ -93,6 +109,13 @@ export function roleOf(piece: Piece): Role {
     case "shawl":
     case "underscarf":
       return "accessory";
+    case "tights":
+      return "under";
+    case "leggings":
+    case "churidar":
+      return wears(outfit, overSkirts) ? "under" : "bottom";
+    case "sweater":
+      return wears(outfit, baseTops) ? "layer" : "main";
     default:
       break;
   }
@@ -105,6 +128,19 @@ export function roleOf(piece: Piece): Role {
       return piece.category;
   }
 }
+
+const kindWarmth: Partial<Record<string, number>> = {
+  sweater: 2,
+  hoodie: 2,
+  abaya: 1,
+  cardigan: 1,
+  blazer: 1,
+  waistcoat: 1,
+  jacket: 2,
+  coat: 3,
+};
+
+export const warmthOf = (piece: Piece) => kindWarmth[piece.kind ?? ""] ?? 0;
 
 function needsBottom(piece: Piece) {
   return piece.category === "top" || piece.category === "tunic";
@@ -174,8 +210,28 @@ function names(pieces: Piece[]) {
 
 function structureProblems(pieces: Piece[], kept: boolean): Problem[] {
   const problems: Problem[] = [];
+  const release = (group: Piece[]) =>
+    kept
+      ? group.map((piece) => ({ type: "release" as const, id: piece.id }))
+      : [];
+  const dress = pieces.filter(
+    (piece) => piece.category === "dress" && roleOf(piece, pieces) === "main",
+  );
+  const skirts = pieces.filter((piece) =>
+    overSkirts.includes(piece.kind ?? ""),
+  );
+  if (dress.length && skirts.length)
+    problems.push({
+      code: "kept-conflict",
+      severity: "conflict",
+      message: t("styling.dressWithSkirt", {
+        names: names([...dress, ...skirts]),
+      }),
+      ids: [...dress, ...skirts].map((piece) => piece.id),
+      actions: release([...dress, ...skirts]),
+    });
   for (const role of Object.keys(roleLimits) as Role[]) {
-    const group = pieces.filter((piece) => roleOf(piece) === role);
+    const group = pieces.filter((piece) => roleOf(piece, pieces) === role);
     if (group.length > roleLimits[role]) {
       problems.push({
         code: "kept-conflict",
@@ -192,9 +248,7 @@ function structureProblems(pieces: Piece[], kept: boolean): Problem[] {
                 role: roleName(role),
               }),
         ids: group.map((piece) => piece.id),
-        actions: kept
-          ? group.map((piece) => ({ type: "release" as const, id: piece.id }))
-          : [],
+        actions: release(group),
       });
     }
   }
@@ -230,7 +284,8 @@ function weatherProblems(
   const clear: ProblemAction[] =
     weather.source === "manual" ? [{ type: "clear-weather" }] : [];
   const problems: Problem[] = [];
-  const shoes = outfit.find((piece) => roleOf(piece) === "shoes");
+  const role = (piece: Piece) => roleOf(piece, outfit);
+  const shoes = outfit.find((piece) => role(piece) === "shoes");
   const shoeIds = shoes ? [shoes.id] : [];
   const poolShoes = pool.filter((piece) => roleOf(piece) === "shoes");
   const unconfirmed = (piece: Piece, message: string): Problem => ({
@@ -242,7 +297,7 @@ function weatherProblems(
   });
   if (weather.warmth === "cold" && outside(request)) {
     const layers = outfit.filter(
-      (piece) => roleOf(piece) === "layer" || roleOf(piece) === "outer",
+      (piece) => role(piece) === "layer" || role(piece) === "outer",
     );
     const maybe = layers.find(
       (piece) => unconfirmedWeather(piece, "warmth") === "warm",
@@ -309,7 +364,8 @@ export function evaluateOutfit(
     ...structureProblems(outfit, false),
     ...styleProblems(outfit, request),
   ];
-  const mains = outfit.filter((piece) => roleOf(piece) === "main");
+  const role = (piece: Piece) => roleOf(piece, outfit);
+  const mains = outfit.filter((piece) => role(piece) === "main");
   const missing = (message: string): Problem => ({
     code: "incomplete",
     severity: "missing",
@@ -320,14 +376,14 @@ export function evaluateOutfit(
   if (!mains.length) problems.push(missing(t("styling.addMain")));
   if (
     mains.some(needsBottom) &&
-    !outfit.some((piece) => roleOf(piece) === "bottom")
+    !outfit.some((piece) => role(piece) === "bottom")
   )
     problems.push(missing(t("styling.addBottom")));
-  if (!outfit.some((piece) => roleOf(piece) === "shoes"))
+  if (!outfit.some((piece) => role(piece) === "shoes"))
     problems.push(missing(t("styling.addShoes")));
   if (
     request.hijab === "always" &&
-    !outfit.some((piece) => roleOf(piece) === "hijab")
+    !outfit.some((piece) => role(piece) === "hijab")
   )
     problems.push(missing(t("styling.addHijab")));
   if (
@@ -341,7 +397,7 @@ export function evaluateOutfit(
         }),
       ),
     );
-  const worn = (role: Role) => outfit.find((piece) => roleOf(piece) === role);
+  const worn = (wanted: Role) => outfit.find((piece) => role(piece) === wanted);
   problems.push(
     ...coverageProblems(
       {
@@ -357,7 +413,7 @@ export function evaluateOutfit(
   const unmarked = outfit.filter(
     (piece) =>
       !piece.styles &&
-      ["main", "outer", "layer", "bottom"].includes(roleOf(piece)),
+      ["main", "outer", "layer", "bottom"].includes(role(piece)),
   );
   if (unmarked.length)
     problems.push({
@@ -551,7 +607,7 @@ export function styleOutfits(
     (piece) => fitsStyle(piece, request.style) && fitsOccasion(piece, request),
   );
   const keptRole = (role: Role) =>
-    kept.filter((piece) => roleOf(piece) === role);
+    kept.filter((piece) => roleOf(piece, kept) === role);
   const eligibleRole = (role: Role) =>
     eligible.filter((piece) => roleOf(piece) === role);
 
@@ -666,26 +722,92 @@ export function styleOutfits(
     return { ...fail("missing", gaps), ...(partial ? { partial } : {}) };
   }
 
-  const warm =
-    request.weather.source !== "unknown" && request.weather.warmth === "warm";
-  const layerOptions = (role: "layer" | "outer") => {
-    if (keptRole(role).length) return [keptRole(role)];
-    const options = eligibleRole(role).filter(
-      (piece) => !warm || piece.kind === type,
-    );
-    return [[], ...options.map((piece) => [piece])];
+  const target = neededWarmth(request.weather);
+  const outdoors = outside(request);
+  const free = (piece: Piece) => !kept.includes(piece) && piece.kind !== type;
+  const warmth = (pieces: Piece[]) =>
+    pieces.reduce((sum, piece) => sum + warmthOf(piece), 0);
+  const layerCombos = (prefix: Piece[]): Piece[][] => {
+    const layers = keptRole("layer").length
+      ? [keptRole("layer")]
+      : [
+          [],
+          ...[
+            ...eligibleRole("layer"),
+            ...(wears(prefix, baseTops)
+              ? eligible.filter((piece) => piece.kind === "sweater")
+              : []),
+          ].map((piece) => [piece]),
+        ];
+    const outers = keptRole("outer").length
+      ? [keptRole("outer")]
+      : [
+          [],
+          ...eligibleRole("outer")
+            .filter(
+              (piece) =>
+                target === null ||
+                outdoors ||
+                target >= 2 ||
+                piece.kind === type,
+            )
+            .map((piece) => [piece]),
+        ];
+    const cross = (layer: Piece[]) =>
+      outers.map((outer) => [...layer, ...outer]);
+    if (target === null) return layers.flatMap(cross);
+    const indoor = (layer: Piece[]) => warmth([...prefix, ...layer]);
+    const reachable = Math.min(target, 1, Math.max(...layers.map(indoor)));
+    const fitting = layers.filter((layer) => {
+      const total = indoor(layer);
+      return (
+        total >= reachable &&
+        layer.filter(free).every((piece) => total - warmthOf(piece) < reachable)
+      );
+    });
+    if (!outdoors) return fitting.flatMap(cross);
+    return fitting.flatMap((layer) => {
+      const totals = outers.map((outer) => indoor(layer) + warmth(outer));
+      const enough = totals.filter((total) => total >= target);
+      const goal = enough.length ? Math.min(...enough) : Math.max(...totals);
+      return outers
+        .filter(
+          (outer, at) =>
+            totals[at] === goal || (outer.length > 0 && !outer.some(free)),
+        )
+        .map((outer) => [...layer, ...outer]);
+    });
+  };
+  const underOptions = (prefix: Piece[]): Piece[][] => {
+    if (keptRole("under").length) return [keptRole("under")];
+    if (
+      !wears(prefix, overSkirts) &&
+      !prefix.some((piece) => piece.category === "dress")
+    )
+      return [[]];
+    return [
+      [],
+      ...eligible
+        .filter(
+          (piece) =>
+            underKinds.includes(piece.kind ?? "") &&
+            !prefix.includes(piece) &&
+            roleOf(piece, [...prefix, piece]) === "under",
+        )
+        .map((piece) => [piece]),
+    ];
   };
   const fixedOr = (role: Role, options: Piece[][]) =>
     keptRole(role).length ? [keptRole(role)] : options;
 
-  const slots: Piece[][][] = [
+  const slotsFor = (prefix: Piece[]): Piece[][][] => [
     fixedOr("hijab", [
       ...(request.hijab === "not-needed" || !eligibleRole("hijab").length
         ? [[]]
         : eligibleRole("hijab").map((piece) => [piece])),
     ]),
-    layerOptions("layer"),
-    layerOptions("outer"),
+    underOptions(prefix),
+    layerCombos(prefix),
     fixedOr(
       "shoes",
       eligibleRole("shoes").map((piece) => [piece]),
@@ -702,6 +824,7 @@ export function styleOutfits(
   const consider = (ids: Piece[]): number | null => {
     const key = ids.map((piece) => piece.id).join();
     if (considered.has(key)) return considered.get(key)!;
+    if (new Set(ids).size !== ids.length) return null;
     considered.set(key, null);
     const problems = evaluateOutfit(ids, request, pool);
     if (problems.some((problem) => problem.severity !== "review")) {
@@ -720,6 +843,9 @@ export function styleOutfits(
       score,
       reasons,
       problems,
+      outdoor: ids
+        .filter((piece) => roleOf(piece, ids) === "outer")
+        .map((piece) => piece.id),
     };
     (problems.length ? reviews : outfits).push(candidate);
     const rank = problems.length ? score - 100 : score;
@@ -758,7 +884,16 @@ export function styleOutfits(
       ? [keptRole("bottom")]
       : needsBottom(main)
         ? bottoms.map((piece) => [piece])
-        : [[], ...bottoms.map((piece) => [piece])];
+        : [
+            [],
+            ...bottoms
+              .filter(
+                (piece) =>
+                  main.category !== "dress" ||
+                  !overSkirts.includes(piece.kind ?? ""),
+              )
+              .map((piece) => [piece]),
+          ];
     return bottomOptions.map((bottom) => [main, ...bottom]);
   });
   const chosenPairs =
@@ -773,20 +908,23 @@ export function styleOutfits(
       : pairs;
   if (chosenPairs.length < pairs.length) limited = true;
   const budget = Math.max(1, Math.floor(maxCombinations / chosenPairs.length));
-  const total = slots.reduce((product, options) => product * options.length, 1);
-  const combination = (prefix: Piece[], index: number) => {
-    const outfit = [...prefix];
-    let rest = index;
-    for (const options of slots) {
-      outfit.push(...options[rest % options.length]!);
-      rest = Math.floor(rest / options.length);
-    }
-    return outfit;
-  };
   for (const prefix of chosenPairs) {
+    const slots = slotsFor(prefix);
+    const total = slots.reduce(
+      (product, options) => product * options.length,
+      1,
+    );
+    const combination = (index: number) => {
+      const outfit = [...prefix];
+      let rest = index;
+      for (const options of slots) {
+        outfit.push(...options[rest % options.length]!);
+        rest = Math.floor(rest / options.length);
+      }
+      return outfit;
+    };
     if (total <= budget) {
-      for (let index = 0; index < total; index++)
-        consider(combination(prefix, index));
+      for (let index = 0; index < total; index++) consider(combination(index));
       continue;
     }
     limited = true;

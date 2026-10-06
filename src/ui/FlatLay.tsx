@@ -74,6 +74,7 @@ const gleamPeak = 0.35;
 const dressing: Record<Role, number> = {
   main: 0,
   bottom: 1,
+  under: 1,
   layer: 2,
   outer: 2,
   shoes: 3,
@@ -85,6 +86,7 @@ const dressing: Record<Role, number> = {
 const slotCategory: Record<Role, Category> = {
   main: "top",
   bottom: "bottom",
+  under: "bottom",
   layer: "layer",
   outer: "layer",
   shoes: "shoes",

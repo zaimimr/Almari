@@ -32,6 +32,7 @@ export const en = {
   "kind.jeans": "Jeans",
   "kind.shorts": "Shorts",
   "kind.leggings": "Leggings",
+  "kind.tights": "Tights",
   "kind.joggers": "Joggers",
   "kind.wide-leg": "Wide-leg",
   "kind.shalwar": "Shalwar",
@@ -1124,6 +1125,8 @@ export const en = {
     "{names} cannot be worn together. An outfit uses {count} of these {role}.",
   "styling.tooManyOfOne":
     "{names} cannot be worn together. An outfit uses one of these {role}.",
+  "styling.dressWithSkirt":
+    "{names} cannot be worn together. A dress is not worn with a skirt.",
   "styling.unmarkedMany": "{names} are not marked Desi or Western yet.",
   "styling.unmarkedOne": "{names} is not marked Desi or Western yet.",
   "role.accessory": "accessories",
@@ -1134,6 +1137,7 @@ export const en = {
   "role.main": "main pieces",
   "role.outer": "outer layers",
   "role.shoes": "pairs of shoes",
+  "role.under": "pieces worn underneath",
   "nav.profile": "Profile",
   "stats.title": "Closet stats",
   "stats.pieces": "Pieces",
@@ -1199,6 +1203,7 @@ export const en = {
   "role.one.hijab": "hijab",
   "role.one.bag": "bag",
   "role.one.accessory": "accessory",
+  "role.one.under": "piece worn underneath",
 
   "calendar.previous": "Previous month",
   "calendar.next": "Next month",
@@ -1384,6 +1389,7 @@ export const en = {
   "role.the.hijab": "the hijab",
   "role.the.bag": "the bag",
   "role.the.accessory": "the accessory",
+  "role.the.under": "the piece worn underneath",
   "adjust.today": "Today",
   "calendar.day": "{date}, worn",
   "calendar.emptyMonth": "No looks worn in {month}",

@@ -157,12 +157,42 @@
           { "has": { "role": ["bottom"] } },
           {
             "not": {
+              "has": {
+                "role": ["bottom"],
+                "kind": ["trousers", "jeans", "leggings", "churidar"]
+              }
+            }
+          },
+          {
+            "not": {
               "has": { "category": ["dress"], "length": ["thigh", "knee"] }
             }
           }
         ]
       },
       "weight": -2.5
+    },
+    {
+      "id": "long-dress-over-slim-bottom",
+      "source": "legacy:dress-bottom",
+      "layer": "style",
+      "if": {
+        "all": [
+          { "has": { "role": ["main"], "category": ["dress"] } },
+          {
+            "has": {
+              "role": ["bottom"],
+              "kind": ["trousers", "jeans", "leggings", "churidar"]
+            }
+          },
+          {
+            "not": {
+              "has": { "category": ["dress"], "length": ["thigh", "knee"] }
+            }
+          }
+        ]
+      },
+      "weight": -1.5
     },
     {
       "id": "hijab-solid-with-print",

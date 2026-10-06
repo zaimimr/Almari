@@ -22,6 +22,7 @@ const table: Record<string, string[]> = {
     "Jeans",
     "Shorts",
     "Leggings",
+    "Tights",
     "Joggers",
     "Wide-leg",
     "Shalwar",
@@ -46,7 +47,7 @@ const table: Record<string, string[]> = {
   accessory: ["Dupatta", "Jewellery", "Belt"],
 };
 
-test("the taxonomy offers 9 categories and 51 subcategories in the agreed order", () => {
+test("the taxonomy offers 9 categories and 52 subcategories in the agreed order", () => {
   assert.deepEqual(
     categories.map((category) => category.label),
     [
@@ -61,7 +62,7 @@ test("the taxonomy offers 9 categories and 51 subcategories in the agreed order"
       "Accessories",
     ],
   );
-  assert.equal(offeredKinds.length, 51);
+  assert.equal(offeredKinds.length, 52);
   for (const category of categories)
     assert.deepEqual(
       kindsIn(category.id).map((kind) => kind.label),
@@ -91,8 +92,8 @@ test("every subcategory id stored before version 3 keeps its category", () => {
     ["dupatta", "accessory"],
   ];
   for (const [id, category] of before) assert.equal(categoryOf(id), category);
-  assert.equal(garmentKinds.length, 53);
-  assert.equal(new Set(garmentKinds.map((kind) => kind.id)).size, 53);
+  assert.equal(garmentKinds.length, 54);
+  assert.equal(new Set(garmentKinds.map((kind) => kind.id)).size, 54);
   assert.deepEqual(retiredKinds, ["shoes", "bag"]);
   assert.equal(isOffered("shoes"), false);
   assert.equal(isOffered("bag"), false);
@@ -142,6 +143,7 @@ test("fixed styles follow the agreed table", () => {
     "sports-top",
     "hoodie",
     "leggings",
+    "tights",
     "joggers",
   ];
   let decided = 0;
@@ -157,7 +159,7 @@ test("fixed styles follow the agreed table", () => {
   assert.equal(decided, 19);
 });
 
-test("the bundled label file describes every offered subcategory but the gym kinds, and both styles", () => {
+test("the bundled label file describes every offered subcategory but the gym kinds and tights, and both styles", () => {
   const file = JSON.parse(
     readFileSync(
       "modules/closet-vision/ios/Resources/garment-labels.json",
@@ -177,7 +179,10 @@ test("the bundled label file describes every offered subcategory but the gym kin
     offeredKinds
       .map((kind) => kind.id)
       .filter(
-        (id) => !["sports-top", "hoodie", "leggings", "joggers"].includes(id),
+        (id) =>
+          !["sports-top", "hoodie", "leggings", "tights", "joggers"].includes(
+            id,
+          ),
       ),
   );
   assert.deepEqual(values("style"), ["desi", "western"]);
