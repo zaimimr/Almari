@@ -142,7 +142,7 @@ final class FrameReader {
         "CILanczosScaleTransform", parameters: [kCIInputScaleKey: 2048 / edge, kCIInputAspectRatioKey: 1.0])
       image = image.transformed(by: CGAffineTransform(translationX: -image.extent.minX, y: -image.extent.minY))
     }
-    let area = box.insetBy(dx: -0.06, dy: -0.06).intersection(CGRect(x: 0, y: 0, width: 1, height: 1))
+    let area = box.insetBy(dx: -0.2, dy: -0.2).intersection(CGRect(x: 0, y: 0, width: 1, height: 1))
     let width = image.extent.width
     let height = image.extent.height
     let rect = CGRect(
@@ -157,8 +157,7 @@ final class FrameReader {
       x: (box.minX - area.minX) / area.width, y: (box.minY - area.minY) / area.height,
       width: box.width / area.width, height: box.height / area.height)
     guard
-      let piece = found.map({ (cut: parse.cutout(crop, region: $0), frame: parse.normalizedFrame(of: $0),
-        outline: parse.cutoutFrame(of: $0), share: $0.share, kind: kind) })
+      let piece = found.map({ held(crop, parse: parse, region: $0, kind: kind) })
         ?? cutItem(crop, parse: parse, inside: local)
     else { return nil }
     let name = "\(id)-region-1.png"
@@ -190,6 +189,22 @@ final class FrameReader {
     outlined.name = stickerName
     outlined.frame = place(piece.outline.insetBy(dx: -pad / rect.width, dy: -pad / rect.height))
     return (record, outlined)
+  }
+
+  private func held(_ crop: CIImage, parse: ClothesParse, region: FoundRegion, kind: String)
+    -> (cut: CIImage, frame: CGRect, outline: CGRect, share: Double, kind: String)
+  {
+    guard let subject = GarmentPipeline.subjectCut(crop, parse: parse, region: region, context: parser.context) else {
+      return (
+        parse.cutout(crop, region: region), parse.normalizedFrame(of: region), parse.cutoutFrame(of: region),
+        region.share, kind
+      )
+    }
+    let extent = crop.extent
+    let frame = CGRect(
+      x: subject.bounds.minX / extent.width, y: 1 - subject.bounds.maxY / extent.height,
+      width: subject.bounds.width / extent.width, height: subject.bounds.height / extent.height)
+    return (subject.cut, frame, frame, region.share, kind)
   }
 
   private static let body: Set<ClothesClass> = [.hair, .face, .leftArm, .rightArm, .leftLeg, .rightLeg]

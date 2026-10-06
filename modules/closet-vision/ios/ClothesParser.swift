@@ -27,6 +27,13 @@ struct ClothesParse {
     return image(inside.map { $0 ? 255 : 0 })
   }
 
+  func allowed(for region: FoundRegion, grow: Int) -> CIImage {
+    var own = [Bool](repeating: false, count: grid.labels.count)
+    for index in region.pixels { own[index] = true }
+    own = GarmentRegions.spread(own, width: grid.width, height: grid.height, radius: grow, value: true)
+    return image(grid.labels.indices.map { grid.labels[$0] == 0 || own[$0] ? 255 : 0 }, outside: .white)
+  }
+
   func normalizedFrame(of region: FoundRegion) -> CGRect {
     let scaleX = area.width / CGFloat(grid.width)
     let scaleY = area.height / CGFloat(grid.height)
@@ -75,7 +82,7 @@ struct ClothesParse {
     .transformed(by: CGAffineTransform(translationX: -rect.minX, y: -rect.minY))
   }
 
-  private func image(_ bytes: [UInt8]) -> CIImage {
+  private func image(_ bytes: [UInt8], outside: CIColor = .black) -> CIImage {
     let provider = CGDataProvider(data: Data(bytes) as CFData)!
     let small = CGImage(
       width: grid.width, height: grid.height, bitsPerComponent: 8, bitsPerPixel: 8, bytesPerRow: grid.width,
@@ -88,7 +95,7 @@ struct ClothesParse {
       .clampedToExtent()
       .applyingGaussianBlur(sigma: 1.5)
       .cropped(to: area)
-      .composited(over: CIImage(color: .black).cropped(to: extent))
+      .composited(over: CIImage(color: outside).cropped(to: extent))
   }
 }
 
