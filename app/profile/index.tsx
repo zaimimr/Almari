@@ -10,6 +10,9 @@ import Constants from "expo-constants";
 import { router } from "expo-router";
 import type { Language, Units } from "../../src/domain/closet";
 import { resetCloset } from "../../src/domain/onboarding";
+import { removeRule } from "../../src/domain/personalRules";
+import { kindLabel } from "../../src/domain/taxonomy";
+import { formatDegrees } from "../../src/domain/units";
 import { clockFor, setWardrobe } from "../../src/domain/today";
 import { MorningOutfit } from "../../src/features/profile/MorningOutfit";
 import { StyleBoard } from "../../src/features/profile/StyleBoard";
@@ -42,7 +45,7 @@ export default function Profile() {
   const { closet, update, reset } = useCloset();
   const { open, toggle } = useOneExpander<Open>();
   const summary = profileSummary(closet);
-  const { name, place, forecast } = closet.styling;
+  const { name, place, forecast, rules = [], units } = closet.styling;
   const [exportFailed, setExportFailed] = useState(false);
   const { fontScale } = useWindowDimensions();
 
@@ -130,6 +133,41 @@ export default function Profile() {
               testID="profile-lists"
             />
           </Rows>
+          {rules.length ? (
+            <View style={styles.rules}>
+              <Text role="eyebrow" accessibilityRole="header">
+                {t("rules.title")}
+              </Text>
+              <Rows>
+                {rules.map((rule) => {
+                  const words = {
+                    kind: kindLabel(rule.kind).toLowerCase(),
+                    temp: formatDegrees(rule.aboveTemp, units),
+                  };
+                  return (
+                    <Row
+                      key={rule.kind}
+                      title={t("rules.item", words)}
+                      trailing={{
+                        action: {
+                          label: t("common.remove"),
+                          accessibilityLabel: t("rules.removeLabel", words),
+                          onPress: () =>
+                            void update((current) =>
+                              removeRule(current, rule.kind),
+                            ).catch(() => undefined),
+                          variant: "quiet",
+                          size: "small",
+                          testID: `profile-rule-remove-${rule.kind}`,
+                        },
+                      }}
+                      testID={`profile-rule-${rule.kind}`}
+                    />
+                  );
+                })}
+              </Rows>
+            </View>
+          ) : null}
           <MorningOutfit
             open={open === "morning"}
             onToggle={() => toggle("morning")}
@@ -243,6 +281,7 @@ const styles = StyleSheet.create({
   page: { gap: theme.space.xxxl },
   head: { gap: theme.space.xs },
   block: { gap: theme.space.lg },
+  rules: { gap: theme.space.sm },
   foot: { gap: theme.space.xs },
   mark: { alignSelf: "flex-start" },
   link: { fontSize: 11, fontWeight: "400", textDecorationLine: "underline" },

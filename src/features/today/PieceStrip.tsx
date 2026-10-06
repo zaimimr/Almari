@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { plannedPieces } from "../../domain/looks";
 import { replacementsFor, roleOf } from "../../domain/styling";
-import { clockFor, toggleKeep } from "../../domain/today";
+import { clockFor, isRequired, toggleKeep } from "../../domain/today";
 import { hijabAlternatives } from "../../domain/wardrobe";
 import { locale, t } from "../../i18n";
 import { now } from "../../state/clock";
@@ -82,6 +82,9 @@ export function PieceStrip({ model }: { model: TodayModel }) {
         onToggle: () =>
           void model.run((current) => toggleKeep(current, target.id)),
       }}
+      onRemove={
+        isRequired(role, request) ? undefined : () => model.remove(target)
+      }
       value={strip.value}
       loading={model.styling}
       testID="change-strip"

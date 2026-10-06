@@ -14,9 +14,10 @@ import {
   type Weather,
 } from "./closet";
 import { dressLevelOf, dressLevels, type DressLevel } from "./dressy";
+import { ruleAllows } from "./personalRules";
 import { rulesScorer } from "./scoring/rulesScorer";
 import { scoreContext } from "./scoring/taste";
-import { roleOf, styleOutfits, type StyleResult } from "./styling";
+import { roleOf, styleOutfits, type Role, type StyleResult } from "./styling";
 import { weatherFor } from "./weather";
 
 export type Clock = { localDate: string; timeZone: string };
@@ -75,7 +76,7 @@ export function resultFor(
   localDate: string,
 ): StyleResult {
   const result = styleOutfits(
-    closet.pieces,
+    closet.pieces.filter(ruleAllows(closet, request, localDate)),
     request,
     seedFor(localDate, request),
     rulesScorer,
@@ -445,6 +446,43 @@ export function replacePiece(
       revision: session.revision + 1,
       request: { ...session.request, keptIds: swap(session.request.keptIds) },
       pieceIds: swap(session.pieceIds),
+      previousPieceIds: session.pieceIds,
+    };
+  });
+}
+
+export function isRequired(role: Role, request: OutfitRequest): boolean {
+  return (
+    role === "main" ||
+    role === "bottom" ||
+    role === "shoes" ||
+    (role === "hijab" && request.hijab === "always")
+  );
+}
+
+export function leaveOut(
+  closet: Closet,
+  id: string,
+  expectedRevision: number,
+): Closet {
+  return withActive(closet, (session) => {
+    const piece = closet.pieces.find((item) => item.id === id);
+    if (
+      !piece ||
+      session.revision !== expectedRevision ||
+      !session.pieceIds.includes(id) ||
+      isRequired(roleOf(piece), session.request)
+    )
+      return session;
+    return {
+      ...session,
+      revision: session.revision + 1,
+      request: {
+        ...session.request,
+        keptIds: session.request.keptIds.filter((item) => item !== id),
+        excludedIds: [...new Set([...session.request.excludedIds, id])],
+      },
+      pieceIds: session.pieceIds.filter((item) => item !== id),
       previousPieceIds: session.pieceIds,
     };
   });

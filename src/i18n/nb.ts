@@ -1727,4 +1727,11 @@ export const nb: Record<Key, string> = {
   "fit.plan": "Planlegg dette",
   "fit.save": "Lagre i samlingen",
   "fit.planned": "Planlagt for i morgen",
+  "change.removeLabel": "Fjern {name}",
+  "rules.ask": "Slutte å legge til {kind} over {temp}?",
+  "rules.yes": "Ja",
+  "rules.notNow": "Ikke nå",
+  "rules.title": "Mine regler",
+  "rules.item": "Ingen {kind} over {temp}",
+  "rules.removeLabel": "Fjern regel: ingen {kind} over {temp}",
 };
