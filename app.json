@@ -2,7 +2,7 @@
   "expo": {
     "name": "Almari",
     "slug": "almari",
-    "version": "0.1.17",
+    "version": "0.1.18",
     "scheme": "almari",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
@@ -76,14 +76,7 @@
           "locationWhenInUsePermission": "Find your city for the weather. Rounded to your city, sent only to Apple for the forecast."
         }
       ],
-      "@react-native-community/datetimepicker",
-      [
-        "posthog-react-native/expo",
-        {
-          "dotenvFile": ".env",
-          "skipOnConflict": true
-        }
-      ]
+      "@react-native-community/datetimepicker"
     ],
     "icon": "./assets/brand/icon.png",
     "locales": {
