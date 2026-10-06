@@ -1,4 +1,4 @@
-import type { Closet, Piece, SampleTraits } from "./closet";
+import type { Closet, Occasion, Piece, SampleTraits } from "./closet";
 
 const createdAt = "2026-09-30T18:00:00.000Z";
 const both = ["western", "desi"] as Piece["styles"];
@@ -234,7 +234,182 @@ catalog.push({
   catalog: 2,
 });
 
-export const sampleCatalogVersion = 3;
+const dressy: Occasion[] = ["dinner", "eid", "party", "wedding", "barat"];
+
+catalog.push(
+  ...(
+    [
+      {
+        id: "sample-black-hijab",
+        name: "Black jersey hijab",
+        category: "hijab",
+        kind: "hijab",
+        styles: both,
+        traits: { tone: "dark", occasions: ["everyday", "work", "dinner"] },
+        attributes: { pattern: "solid", fabric: "jersey", formality: 1 },
+        colors: [{ rgb: [30, 30, 33], share: 1 }],
+      },
+      {
+        id: "sample-champagne-hijab",
+        name: "Champagne satin hijab",
+        category: "hijab",
+        kind: "hijab",
+        styles: both,
+        traits: { tone: "light", occasions: dressy },
+        attributes: { pattern: "solid", fabric: "satin", formality: 4 },
+        colors: [{ rgb: [214, 190, 150], share: 1 }],
+      },
+      {
+        id: "sample-blue-tunic",
+        name: "Dusty blue tunic",
+        category: "tunic",
+        kind: "tunic",
+        styles: ["western"],
+        traits: { tone: "mid", occasions: ["everyday", "work"] },
+        attributes: {
+          length: "thigh",
+          sleeve: "long",
+          volume: "straight",
+          pattern: "solid",
+          fabric: "cotton",
+          embellishment: "none",
+          formality: 2,
+        },
+        colors: [{ rgb: [120, 140, 170], share: 1 }],
+      },
+      {
+        id: "sample-rose-kurta",
+        name: "Rose embroidered kurta",
+        category: "tunic",
+        kind: "kurta",
+        styles: ["desi"],
+        traits: {
+          tone: "mid",
+          occasions: ["everyday", "work", "dinner", "eid"],
+        },
+        attributes: {
+          length: "knee",
+          sleeve: "long",
+          volume: "straight",
+          pattern: "embroidered",
+          fabric: "cotton",
+          embellishment: "light",
+          formality: 3,
+        },
+        colors: [{ rgb: [190, 130, 135], share: 1 }],
+      },
+      {
+        id: "sample-maroon-kameez",
+        name: "Maroon silk kameez",
+        category: "tunic",
+        kind: "kameez",
+        styles: ["desi"],
+        traits: {
+          tone: "dark",
+          occasions: ["eid", "party", "wedding", "barat"],
+        },
+        attributes: {
+          length: "knee",
+          sleeve: "long",
+          volume: "straight",
+          pattern: "embroidered",
+          fabric: "silk",
+          embellishment: "heavy",
+          formality: 5,
+        },
+        colors: [{ rgb: [115, 30, 45], share: 1 }],
+      },
+      {
+        id: "sample-emerald-dress",
+        name: "Emerald satin maxi dress",
+        category: "dress",
+        kind: "dress",
+        styles: ["western"],
+        traits: { tone: "dark", occasions: dressy },
+        attributes: {
+          length: "ankle",
+          sleeve: "long",
+          volume: "straight",
+          pattern: "solid",
+          fabric: "satin",
+          embellishment: "none",
+          formality: 4,
+        },
+        colors: [{ rgb: [18, 95, 70], share: 1 }],
+      },
+      {
+        id: "sample-gold-salwar",
+        name: "Gold silk shalwar",
+        category: "bottom",
+        kind: "shalwar",
+        styles: ["desi"],
+        traits: {
+          tone: "mid",
+          occasions: ["eid", "party", "wedding", "barat"],
+        },
+        attributes: {
+          length: "ankle",
+          volume: "voluminous",
+          pattern: "solid",
+          fabric: "silk",
+          embellishment: "none",
+          formality: 4,
+        },
+        colors: [{ rgb: [200, 165, 90], share: 1 }],
+      },
+      {
+        id: "sample-camel-blazer",
+        name: "Camel wool blazer",
+        category: "layer",
+        kind: "blazer",
+        styles: ["western"],
+        traits: {
+          tone: "mid",
+          occasions: ["work", "dinner"],
+          warmth: "medium",
+        },
+        attributes: {
+          length: "thigh",
+          sleeve: "long",
+          volume: "straight",
+          pattern: "solid",
+          fabric: "wool",
+          embellishment: "none",
+          formality: 3,
+        },
+        colors: [{ rgb: [176, 136, 92], share: 1 }],
+      },
+      {
+        id: "sample-gold-loafers",
+        name: "Gold metallic loafers",
+        category: "shoes",
+        kind: "loafers",
+        styles: both,
+        traits: { tone: "mid", occasions: dressy },
+        attributes: { formality: 4 },
+        colors: [{ rgb: [190, 155, 85], share: 1 }],
+      },
+      {
+        id: "sample-gold-bag",
+        name: "Gold evening bag",
+        category: "bag",
+        kind: "handbag",
+        styles: both,
+        traits: { tone: "mid", occasions: dressy },
+        attributes: { formality: 4 },
+        colors: [{ rgb: [196, 160, 90], share: 1 }],
+      },
+    ] as Piece[]
+  ).map((piece) => ({
+    ...piece,
+    source: "sample" as const,
+    photo: `sample:${piece.id.replace("sample-", "")}`,
+    createdAt: "2026-10-06T09:00:00.000Z",
+    catalog: 4,
+  })),
+);
+
+export const sampleCatalogVersion = 4;
 
 export const samplePieces: Piece[] = catalog.map(
   ({ catalog: _catalog, ...piece }) => piece,
@@ -279,10 +454,22 @@ export function addSampleWardrobe(closet: Closet): Closet {
         piece.catalog > closet.sampleCatalog && !existingIds.has(piece.id),
     )
     .map(({ catalog: _catalog, ...piece }) => piece);
+  const pieces = closet.pieces.map((piece) =>
+    refreshed(
+      piece.id.startsWith("sample-") || isSamplePhoto(piece.photo)
+        ? { ...piece, source: "sample" }
+        : piece,
+    ),
+  );
+  const ownsPieces = pieces.some((piece) => piece.source === "owned");
   return {
     ...closet,
     sampleCatalog: sampleCatalogVersion,
-    pieces: [...closet.pieces.map(refreshed), ...additions],
+    pieces: [...pieces, ...additions],
+    styling:
+      ownsPieces && closet.styling.wardrobe === "sample"
+        ? { ...closet.styling, wardrobe: "owned", today: null }
+        : closet.styling,
   };
 }
 

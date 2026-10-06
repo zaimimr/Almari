@@ -57,19 +57,17 @@ const pieceOf = (closet: Closet, id: string) =>
   closet.pieces.find((piece) => piece.id === id)!;
 
 test("archived pieces are left out of every suggestion, like away pieces", () => {
-  assert.equal(
-    suggested(samples).some((ids) => ids.includes("sample-mauve-hijab")),
-    true,
-  );
+  const hijab = suggested(samples)[0]!.find((id) => id.endsWith("-hijab"))!;
+  assert.ok(hijab);
   const closet = setArchived(
     setAway(samples, "sample-navy-blazer", "wash"),
-    "sample-mauve-hijab",
+    hijab,
     true,
   );
   const outfits = suggested(closet);
   assert.ok(outfits.length);
   for (const ids of outfits) {
-    assert.equal(ids.includes("sample-mauve-hijab"), false);
+    assert.equal(ids.includes(hijab), false);
     assert.equal(ids.includes("sample-navy-blazer"), false);
   }
 });
@@ -187,10 +185,14 @@ const hijab = (
   createdAt: day,
   source: "sample",
 });
+const fourHijabs = ["sample-black-hijab", "sample-champagne-hijab"].reduce(
+  removePiece,
+  samples,
+);
 const hijabs = [
   hijab("sample-rose-hijab", "Rose hijab", [214, 140, 160]),
   hijab("sample-sky-hijab", "Sky hijab", [140, 180, 220]),
-].reduce(savePiece, samples);
+].reduce(savePiece, fourHijabs);
 const preference = [
   "sample-sky-hijab",
   "sample-chocolate-hijab",
@@ -300,7 +302,7 @@ test("R03 using a hijab changes only the hijab and undo restores the outfit", ()
 
 test("R03 a closet with one hijab shows no alternatives, and no hijab means no comparison", () => {
   const single = removePiece(
-    removePiece(samples, "sample-ivory-hijab"),
+    removePiece(fourHijabs, "sample-ivory-hijab"),
     "sample-chocolate-hijab",
   );
   assert.deepEqual(

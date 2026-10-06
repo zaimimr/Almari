@@ -1,11 +1,6 @@
 import CoreImage
 import Foundation
 
-struct LightCorrection {
-  var gains: [CGFloat] = [1, 1, 1]
-  var exposure: CGFloat = 0
-}
-
 struct GarmentBitmap {
   let width: Int
   let height: Int
@@ -79,79 +74,5 @@ struct GarmentEnhancer {
       }
     }
     return result
-  }
-
-  func correction(photo: CIImage, mask: CIImage) -> LightCorrection {
-    let neutral = neutralPixels(photo: photo, mask: mask)
-    guard neutral.count >= 200 else { return LightCorrection() }
-    let count = Double(neutral.count)
-    let means = [
-      neutral.reduce(0) { $0 + $1.red } / count,
-      neutral.reduce(0) { $0 + $1.green } / count,
-      neutral.reduce(0) { $0 + $1.blue } / count,
-    ]
-    let grey = means.reduce(0, +) / 3
-    let lightness = neutral.reduce(0) { $0 + $1.lab.l } / count / 100
-    return LightCorrection(
-      gains: means.map { CGFloat(min(1.06, max(0.94, grey / max($0, 1)))) },
-      exposure: lightness < 0.45 ? CGFloat(min(0.4, log2(0.45 / lightness))) : 0
-    )
-  }
-
-  func enhance(_ garment: CIImage, correction: LightCorrection) -> CIImage {
-    let balanced = garment.applyingFilter(
-      "CIColorMatrix",
-      parameters: [
-        "inputRVector": CIVector(x: correction.gains[0], y: 0, z: 0, w: 0),
-        "inputGVector": CIVector(x: 0, y: correction.gains[1], z: 0, w: 0),
-        "inputBVector": CIVector(x: 0, y: 0, z: correction.gains[2], w: 0),
-      ])
-    let exposed =
-      correction.exposure > 0
-      ? balanced.applyingFilter("CIExposureAdjust", parameters: [kCIInputEVKey: correction.exposure])
-      : balanced
-    return
-      exposed
-      .applyingFilter(
-        "CIHighlightShadowAdjust", parameters: ["inputShadowAmount": 0.25, "inputHighlightAmount": 1.0]
-      )
-      .applyingFilter("CIUnsharpMask", parameters: [kCIInputRadiusKey: 1.5, kCIInputIntensityKey: 0.35])
-      .cropped(to: garment.extent)
-  }
-
-  func withShadow(_ image: CIImage) -> CIImage {
-    let side = max(image.extent.width, image.extent.height)
-    let shadow =
-      image
-      .applyingFilter(
-        "CIColorMatrix",
-        parameters: [
-          "inputRVector": CIVector(x: 0, y: 0, z: 0, w: 0),
-          "inputGVector": CIVector(x: 0, y: 0, z: 0, w: 0),
-          "inputBVector": CIVector(x: 0, y: 0, z: 0, w: 0),
-          "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 0.2),
-        ]
-      )
-      .applyingGaussianBlur(sigma: Double(side * 0.012))
-      .transformed(by: CGAffineTransform(translationX: 0, y: -side * 0.01))
-    return image.composited(over: shadow).cropped(to: image.extent)
-  }
-
-  func meanHue(_ image: CIImage) -> (hue: Double, chroma: Double)? {
-    let picture = bitmap(image, longEdge: 256)
-    var a = 0.0
-    var b = 0.0
-    var count = 0.0
-    for index in 0..<(picture.width * picture.height) {
-      let pixel = picture.rgb(index)
-      if pixel.alpha < 0.9 { continue }
-      let lab = Self.lab(red: pixel.red, green: pixel.green, blue: pixel.blue)
-      a += lab.a
-      b += lab.b
-      count += 1
-    }
-    guard count > 0 else { return nil }
-    let hue = atan2(b / count, a / count) * 180 / .pi
-    return (hue < 0 ? hue + 360 : hue, (a * a + b * b).squareRoot() / count)
   }
 }

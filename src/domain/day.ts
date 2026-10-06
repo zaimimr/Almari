@@ -8,7 +8,6 @@ import type {
   Style,
 } from "./closet";
 import { addDays } from "./looks";
-import { roleOf } from "./styling";
 import type { Occasion } from "./taxonomy";
 import { clockFor } from "./today";
 import { localTime, wetChance, weatherFromHours } from "./weather";
@@ -264,18 +263,6 @@ export function removeFit(closet: Closet, date: string, id: string): Closet {
   return changeFits(closet, date, (fits) =>
     fits.filter((fit) => fit.id !== id),
   );
-}
-
-export function wornMains(closet: Closet, date: string): string[] {
-  const ids = fitsOn(closet, date)
-    .filter((fit) => fit.wornAt)
-    .flatMap((fit) => fit.pieceIds);
-  return [...new Set(ids)].filter((id) => {
-    const piece = closet.pieces.find((item) => item.id === id);
-    if (!piece) return false;
-    const role = roleOf(piece);
-    return role === "main" || role === "bottom";
-  });
 }
 
 export type Earlier = {

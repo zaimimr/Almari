@@ -140,7 +140,7 @@ function fitsStyle(piece: Piece, style: Style) {
 const gymMains: readonly string[] = ["sports-top", "hoodie", "t-shirt"];
 const gymBottoms: readonly string[] = ["leggings", "joggers", "shorts"];
 
-const offAtGym: readonly string[] = ["heels", "blazer"];
+const offAtGym: readonly string[] = ["heels", "blazer", "cardigan"];
 const dressyHijabFabrics: readonly string[] = ["chiffon", "silk", "satin"];
 
 function fitsOccasion(piece: Piece, request: OutfitRequest) {
@@ -698,7 +698,11 @@ export function styleOutfits(
   const reviews: Candidate[] = [];
   let limited = false;
   let coverageBlocked = false;
-  const consider = (ids: Piece[]) => {
+  const considered = new Map<string, number | null>();
+  const consider = (ids: Piece[]): number | null => {
+    const key = ids.map((piece) => piece.id).join();
+    if (considered.has(key)) return considered.get(key)!;
+    considered.set(key, null);
     const problems = evaluateOutfit(ids, request, pool);
     if (problems.some((problem) => problem.severity !== "review")) {
       if (
@@ -708,7 +712,7 @@ export function styleOutfits(
         )
       )
         coverageBlocked = true;
-      return;
+      return null;
     }
     const { score, reasons } = scorer.score(ids, request, context);
     const candidate = {
@@ -718,6 +722,9 @@ export function styleOutfits(
       problems,
     };
     (problems.length ? reviews : outfits).push(candidate);
+    const rank = problems.length ? score - 100 : score;
+    considered.set(key, rank);
+    return rank;
   };
   const extras = [
     keptRole("bag").length ? [] : eligibleRole("bag"),
@@ -783,11 +790,31 @@ export function styleOutfits(
       continue;
     }
     limited = true;
-    const key = seed + prefix.map((piece) => piece.id).join();
-    const seen = new Set<number>();
-    for (let attempt = 0; seen.size < budget && attempt < budget * 2; attempt++)
-      seen.add(hash(`${key}:${attempt}`) % total);
-    for (const index of seen) consider(combination(prefix, index));
+    const build = (picks: number[]) => [
+      ...prefix,
+      ...slots.flatMap((options, slot) => options[picks[slot]!]!),
+    ];
+    let picks = slots.map((options) =>
+      options.length > 1 && options[0]!.length
+        ? hash(seed + prefix.map((piece) => piece.id).join()) % options.length
+        : 0,
+    );
+    let best = consider(build(picks)) ?? -Infinity;
+    for (let round = 0; round < 3; round++) {
+      let improved = false;
+      slots.forEach((options, slot) =>
+        options.forEach((_, option) => {
+          if (option === picks[slot]) return;
+          const next = picks.map((pick, at) => (at === slot ? option : pick));
+          const score = consider(build(next));
+          if (score === null || score <= best) return;
+          best = score;
+          picks = next;
+          improved = true;
+        }),
+      );
+      if (!improved) break;
+    }
   }
   const coreIds = new Set(
     pool

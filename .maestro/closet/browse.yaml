@@ -45,9 +45,5 @@ appId: com.zaimimran.almari
       id: "tile-seed-tunic"
     direction: DOWN
 - assertVisible: "Rose tunic, Pink, Needs details"
-- scrollUntilVisible:
-    element:
-      id: "tile-sample-mauve-hijab"
-    direction: DOWN
-    visibilityPercentage: 1
-- takeScreenshot: docs/redesign/screens/after/closet/samples
+- assertNotVisible:
+    id: "tile-sample-mauve-hijab"

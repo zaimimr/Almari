@@ -21,6 +21,13 @@ import {
 } from "./attributes";
 import { isCareLabel, withCareLabel, type CareLabel } from "./careLabel";
 import { colourNames, isSwatches, type Swatch } from "./color";
+import {
+  cleanLists,
+  dropUnknownOwn,
+  emptyLists,
+  isOwnId,
+  type Lists,
+} from "./lists";
 import type { ProductLink } from "./productLink";
 import { t } from "../i18n";
 import { withWeatherProposals } from "./pieceWeather";
@@ -135,6 +142,8 @@ export type Piece = {
   washedAt?: string;
   price?: Price;
   link?: ProductLink;
+  ownKind?: string;
+  ownFabric?: string;
 };
 
 export type Price = { amount: number; currency: string };
@@ -189,6 +198,9 @@ export type ImportJob = {
   linkName?: string;
   fromLink?: boolean;
   link?: ProductLink;
+  ownKind?: string;
+  ownFabric?: string;
+  traits?: Traits;
 };
 
 export type Look = {
@@ -555,6 +567,7 @@ export type Closet = {
   photoTipsSeen?: boolean;
   attributeRefresh?: number;
   setNames?: Record<string, string>;
+  lists?: Lists;
 };
 
 export const neutralProfile: StyleProfile = {
@@ -742,7 +755,9 @@ function isPiece(value: unknown): value is Piece {
     optional(value.setId, isString) &&
     optional(value.washedAt, isString) &&
     optional(value.price, isPrice) &&
-    optional(value.link, isProductLink)
+    optional(value.link, isProductLink) &&
+    optional(value.ownKind, isOwnId) &&
+    optional(value.ownFabric, isOwnId)
   );
 }
 
@@ -959,9 +974,14 @@ function isImportJob(value: unknown): value is ImportJob {
     optional(value.linkName, isString) &&
     optional(value.fromLink, isBoolean) &&
     optional(value.link, isProductLink) &&
-    optional(value.colour, (name): name is string =>
-      colourNames.includes(name as string),
+    optional(
+      value.colour,
+      (name): name is string =>
+        colourNames.includes(name as string) || isOwnId(name),
     ) &&
+    optional(value.ownKind, isOwnId) &&
+    optional(value.ownFabric, isOwnId) &&
+    optional(value.traits, isTraits) &&
     (!["ready", "review"].includes(value.state as string) ||
       (value.prepared !== undefined &&
         value.kind !== undefined &&
@@ -1366,9 +1386,16 @@ function decodeStored(
   ) {
     throw unreadable();
   }
+  const { lists: stored, ...rest } = value as Closet;
+  const lists = cleanLists(stored);
+  const known = lists ?? emptyLists;
   return withStylistState({
-    ...(value as Closet),
-    imports: (value.imports as ImportJob[]) ?? [],
+    ...rest,
+    ...(lists ? { lists } : {}),
+    pieces: rest.pieces.map((piece) => dropUnknownOwn(piece, known)),
+    imports: ((value.imports as ImportJob[]) ?? []).map((job) =>
+      dropUnknownOwn(job, known),
+    ),
   });
 }
 
@@ -1601,8 +1628,19 @@ export function savePiece(closet: Closet, piece: Piece): Closet {
   const clean = withWeatherProposals({ ...piece, name: piece.name.trim() });
   if (!isPiece(clean)) throw new Error(t("closet.pieceInvalid"));
   const exists = closet.pieces.some((item) => item.id === piece.id);
+  const leavesSample =
+    !exists && clean.source === "owned" && closet.styling.wardrobe === "sample";
   return {
     ...closet,
+    ...(leavesSample
+      ? {
+          styling: {
+            ...closet.styling,
+            wardrobe: "owned" as const,
+            today: null,
+          },
+        }
+      : {}),
     pieces: exists
       ? closet.pieces.map((item) => (item.id === piece.id ? clean : item))
       : [clean, ...closet.pieces],
@@ -1625,7 +1663,7 @@ export function withVariant(piece: Piece, variant: Variant): Piece {
 
 export function studioSource(piece: Piece): string | null {
   if (!pieceVariant(piece)) return null;
-  return piece.variants!.enhanced ?? piece.variants!.plain!;
+  return piece.variants!.plain!;
 }
 
 export function withStudio(piece: Piece, studio: string): Piece {

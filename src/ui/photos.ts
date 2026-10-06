@@ -15,6 +15,16 @@ const samplePhotos: Record<string, number> = {
   "sample:chocolate-loafers": require("../../assets/wardrobe/chocolate-loafers.png"),
   "sample:taupe-bag": require("../../assets/wardrobe/taupe-bag.png"),
   "sample:olive-maxi-dress": require("../../assets/wardrobe/olive-maxi-dress.png"),
+  "sample:maroon-kameez": require("../../assets/wardrobe/maroon-kameez.png"),
+  "sample:emerald-dress": require("../../assets/wardrobe/emerald-dress.png"),
+  "sample:black-hijab": require("../../assets/wardrobe/black-hijab.png"),
+  "sample:champagne-hijab": require("../../assets/wardrobe/champagne-hijab.png"),
+  "sample:gold-bag": require("../../assets/wardrobe/gold-bag.png"),
+  "sample:gold-salwar": require("../../assets/wardrobe/gold-salwar.png"),
+  "sample:camel-blazer": require("../../assets/wardrobe/camel-blazer.png"),
+  "sample:gold-loafers": require("../../assets/wardrobe/gold-loafers.png"),
+  "sample:blue-tunic": require("../../assets/wardrobe/blue-tunic.png"),
+  "sample:rose-kurta": require("../../assets/wardrobe/rose-kurta.png"),
 };
 
 export function photoSource(photo: string): ImageSource | number {

@@ -7,6 +7,7 @@ import {
   baselineMs,
   heldPiece,
   holdMs,
+  itemPiece,
   paddedBox,
   previewBox,
   readFrame,
@@ -45,6 +46,7 @@ function frame(
   at: number,
   paints: Paint[],
   hands: [number, number][] = [],
+  found: { people?: number; items?: Paint[] } = {},
 ): ScanFrame {
   const cells = scanCols * scanRows;
   const labels = new Uint8Array(cells);
@@ -62,8 +64,20 @@ function frame(
     labels,
     colours,
     hands: hands.map(([x, y]) => ({ x, y })),
+    people: found.people ?? 1,
+    items: found.items ? mask(found.items) : null,
     parseMs: 50,
   };
+}
+
+function mask(paints: Paint[]) {
+  const items = new Uint8Array(scanCols * scanRows);
+  paints.forEach((paint, index) => {
+    for (let y = paint.y; y < paint.y + paint.h; y++)
+      for (let x = paint.x; x < paint.x + paint.w; x++)
+        items[y * scanCols + x] = index + 1;
+  });
+  return items;
 }
 
 const her: Paint[] = [
@@ -152,7 +166,7 @@ test("the same region without hands at its edges is not held", () => {
   );
 });
 
-test("a small region, shoes and her own unchanged clothes are not held", () => {
+test("a small region and her own unchanged clothes are not held, held shoes are", () => {
   const state = withBaseline();
   const small: Paint = { label: dress, rgb: rose, x: 16, y: 14, w: 3, h: 3 };
   assert.equal(
@@ -164,8 +178,8 @@ test("a small region, shoes and her own unchanged clothes are not held", () => {
   );
   const shoes: Paint = { label: shoe, rgb: rose, x: 10, y: 12, w: 16, h: 26 };
   assert.equal(
-    heldPiece(state.baseline!, frame(2000, [...her, shoes], edgeHands)),
-    null,
+    heldPiece(state.baseline!, frame(2000, [...her, shoes], edgeHands))?.kind,
+    "item",
   );
   assert.equal(heldPiece(state.baseline!, frame(2000, her, edgeHands)), null);
 });
@@ -396,4 +410,56 @@ test("a scan crop is padded a tenth on each side and stays inside the photo", ()
   const edge = paddedBox({ x: 0, y: 0.5, width: 0.9, height: 0.5 });
   assert.ok(near(edge.x, 0) && near(edge.width, 0.99));
   assert.ok(near(edge.y, 0.45) && near(edge.y + edge.height, 1));
+});
+
+const mug: Paint = { label: 0, rgb: rose, x: 12, y: 14, w: 10, h: 12 };
+const jacket: Paint = { label: upper, rgb: navy, x: 8, y: 8, w: 20, h: 28 };
+const mugHands: [number, number][] = [[12 / scanCols, 20 / scanRows]];
+
+test("with nobody in view, a held jacket is found without a baseline", () => {
+  const seen = frame(0, [jacket], [], { people: 0, items: [jacket] });
+  assert.equal(itemPiece(seen)?.kind, "upper");
+  const { captures } = run(startScan, [
+    seen,
+    frame(400, [jacket], [], { people: 0, items: [jacket] }),
+    frame(800, [jacket], [], { people: 0, items: [jacket] }),
+  ]);
+  assert.equal(captures.length, 1);
+  assert.equal(captures[0]!.kind, "upper");
+});
+
+test("with nobody in view, any object in a hand is an item", () => {
+  const held = itemPiece(
+    frame(0, [mug], mugHands, { people: 0, items: [mug] }),
+  );
+  assert.equal(held?.kind, "item");
+  assert.equal(
+    itemPiece(frame(0, [mug], [], { people: 0, items: [mug] })),
+    null,
+  );
+});
+
+test("a foreground filling the whole view is not an item", () => {
+  const wall: Paint = {
+    label: 0,
+    rgb: rose,
+    x: 0,
+    y: 0,
+    w: scanCols,
+    h: scanRows,
+  };
+  assert.equal(
+    itemPiece(frame(0, [wall], mugHands, { people: 0, items: [wall] })),
+    null,
+  );
+});
+
+test("an unknown object held in front of her is an item", () => {
+  const state = withBaseline();
+  const box: Paint = { label: 0, rgb: rose, x: 10, y: 12, w: 16, h: 26 };
+  const held = heldPiece(
+    state.baseline!,
+    frame(1250, [...her, box], edgeHands, { items: [...her, box] }),
+  );
+  assert.equal(held?.kind, "item");
 });

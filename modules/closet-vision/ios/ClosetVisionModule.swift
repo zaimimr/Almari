@@ -335,10 +335,8 @@ final class GarmentPipeline {
       .cropped(to: rect)
       .transformed(by: CGAffineTransform(translationX: -rect.minX, y: -rect.minY))
       let garment = scaled(cut, longEdge: 1536)
-      let enhancer = GarmentEnhancer(context: context)
       try FileManager.default.createDirectory(at: photos, withIntermediateDirectories: true)
-      let placed = try place(
-        garment, correction: enhancer.correction(photo: photo, mask: cover), id: id, enhancer: enhancer)
+      let placed = try place(garment, id: id)
       var record = CutoutEditRecord()
       record.cutout = placed.cutout
       record.enhanced = placed.enhanced
@@ -380,9 +378,7 @@ final class GarmentPipeline {
     ).cropped(to: extent)
   }
 
-  private func place(
-    _ garment: CIImage, correction: LightCorrection, id: String, enhancer: GarmentEnhancer
-  ) throws -> PlacedGarment {
+  private func place(_ garment: CIImage, id: String) throws -> PlacedGarment {
     let side = (max(garment.extent.width, garment.extent.height) * 1.2).rounded(.up)
     let square = CGRect(x: 0, y: 0, width: side, height: side)
     let offsetX = ((side - garment.extent.width) / 2).rounded()
@@ -391,8 +387,7 @@ final class GarmentPipeline {
     let canvas = CIImage(color: .clear).cropped(to: square)
     let cutout = "\(id).png"
     try write(garment.transformed(by: place).composited(over: canvas), to: cutout, extent: square)
-    let improved = enhancer.withShadow(
-      enhancer.enhance(garment, correction: correction).transformed(by: place).composited(over: canvas))
+    let improved = garment.transformed(by: place).composited(over: canvas)
     let enhanced = "\(id)-enhanced.png"
     try write(improved, to: enhanced, extent: square)
     let thumbnail = "\(id)-thumb.png"
@@ -741,8 +736,7 @@ final class GarmentPipeline {
       }
     }
     if found {
-      let correction = mask.map { enhancer.correction(photo: image, mask: $0) } ?? LightCorrection()
-      let placed = try place(spot == nil ? eroded(garment) : garment, correction: correction, id: id, enhancer: enhancer)
+      let placed = try place(spot == nil ? eroded(garment) : garment, id: id)
       result.cutout = placed.cutout
       result.enhanced = placed.enhanced
       result.thumbnail = placed.thumbnail

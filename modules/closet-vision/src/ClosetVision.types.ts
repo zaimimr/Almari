@@ -130,6 +130,8 @@ export type ScanFrameEvent = {
   labels: string;
   colours: string;
   hands: number[][];
+  people?: number;
+  items?: string;
   milliseconds: Record<string, number>;
 };
 

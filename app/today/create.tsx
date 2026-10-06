@@ -17,7 +17,6 @@ import {
   windowSky,
   windowTemp,
   windowWeather,
-  wornMains,
   type When,
 } from "../../src/domain/day";
 import { roleOf } from "../../src/domain/styling";
@@ -27,6 +26,7 @@ import {
   nextLocalDate,
   startOccasion,
   startPlan,
+  wornMains,
 } from "../../src/domain/today";
 import { forecastWeather } from "../../src/domain/weather";
 import { takePicked } from "../../src/features/adjust/useAdjust";
@@ -160,18 +160,19 @@ export default function CreateFit() {
           feel,
           garmentType: null,
           keptIds: kept,
-          excludedIds: tomorrow
-            ? []
-            : wornMains(ready, date).filter((id) => !kept.includes(id)),
+          excludedIds: [],
           weather: forecast
             ? { ...forecast, exposure: preset?.exposure ?? null }
             : tomorrow
               ? { source: "unknown" }
               : everyday.weather,
         };
-        return tomorrow
-          ? startPlan(ready, request, date)
-          : startOccasion(ready, request);
+        if (tomorrow) return startPlan(ready, request, date);
+        const worn = wornMains(ready).filter((id) => !kept.includes(id));
+        const fresh = startOccasion(ready, { ...request, excludedIds: worn });
+        return worn.length && !fresh.styling.today?.occasion?.pieceIds.length
+          ? startOccasion(ready, request)
+          : fresh;
       });
       router.push({
         pathname: "/today/fit",

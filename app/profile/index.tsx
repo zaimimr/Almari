@@ -10,11 +10,13 @@ import Constants from "expo-constants";
 import { router } from "expo-router";
 import type { Language, Units } from "../../src/domain/closet";
 import { resetCloset } from "../../src/domain/onboarding";
+import { clockFor, setWardrobe } from "../../src/domain/today";
 import { MorningOutfit } from "../../src/features/profile/MorningOutfit";
 import { StyleBoard } from "../../src/features/profile/StyleBoard";
 import { profileSummary } from "../../src/features/profile/useProfile";
 import { t, useLocale } from "../../src/i18n";
 import { useCloset } from "../../src/state/closet";
+import { now } from "../../src/state/clock";
 import { shareData } from "../../src/state/export";
 import { syncSchedule } from "../../src/state/notifications";
 import { discardAllPhotos } from "../../src/storage/local";
@@ -115,6 +117,18 @@ export default function Profile() {
               onPress={() => router.push("/profile/answer/place")}
               testID="profile-location"
             />
+            <Row
+              title={t("own.lists")}
+              trailing={{
+                value: String(
+                  (closet.lists?.colours.length ?? 0) +
+                    (closet.lists?.fabrics.length ?? 0) +
+                    (closet.lists?.kinds.length ?? 0),
+                ),
+              }}
+              onPress={() => router.push("/profile/lists")}
+              testID="profile-lists"
+            />
           </Rows>
           <MorningOutfit
             open={open === "morning"}
@@ -161,6 +175,21 @@ export default function Profile() {
             />
           </Expander>
           <Rows>
+            <Row
+              title={t("settings.sampleCloset")}
+              trailing={{
+                toggle: closet.styling.wardrobe === "sample",
+                onToggle: (next) =>
+                  void update((current) =>
+                    setWardrobe(
+                      current,
+                      next ? "sample" : "owned",
+                      clockFor(now()),
+                    ),
+                  ).catch(() => undefined),
+              }}
+              testID="settings-sample-closet"
+            />
             <Row
               title={t("settings.export")}
               onPress={() => void exportData()}

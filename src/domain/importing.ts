@@ -16,7 +16,6 @@ import {
   categories,
   categoryOf,
   fixedStyles,
-  isAvailable,
   kindLabel,
   savePiece,
   type Category,
@@ -28,16 +27,17 @@ import {
   type Prepared,
   type Sources,
   type Style,
+  type Traits,
   type Variant,
 } from "./closet";
 import { categoryForRegion, wholePhoto, type CapturePlan } from "./capture";
 import { withCareLabel, type CareLabel } from "./careLabel";
-import { colorName, namedSwatch, type Swatch } from "./color";
+import type { Swatch } from "./color";
+import { colourSwatch, colourWord, ownKind } from "./lists";
 import { attributeCheck, proposeAttributes, recognize } from "./recognition";
 import { withProductLink } from "./productLink";
 import { isSamplePhoto } from "./samples";
 import { linkSet } from "./sets";
-import { missingRoles } from "./styling";
 
 export type CheckReason =
   "uncertain" | "no-cutout" | "several" | "attribute" | "partial";
@@ -54,9 +54,9 @@ function nameSlots(
   attributes?: Attributes,
 ): (string | null)[] {
   const noun = kindLabel(kind).toLowerCase();
-  const colour = palette[0] ? colorName(palette[0].rgb) : null;
+  const colour = palette[0] ? colourWord(palette[0].rgb) : null;
   const second =
-    palette[1] && palette[1].share >= 0.2 ? colorName(palette[1].rgb) : null;
+    palette[1] && palette[1].share >= 0.2 ? colourWord(palette[1].rgb) : null;
   const fabric = fabrics.find((item) => item.id === attributes?.fabric);
   const pattern = patterns.find(
     (item) => item.id !== "solid" && item.id === attributes?.pattern,
@@ -134,6 +134,7 @@ export function rejectReason(
   prepared: Prepared,
   size?: { width: number; height: number },
   known?: Category,
+  held = false,
 ): RejectReason | null {
   if (size && Math.min(size.width, size.height) < smallerThan)
     return "no-clothing";
@@ -145,6 +146,7 @@ export function rejectReason(
   const kinds = prepared.labels.filter((label) => label.group === "kind");
   if (
     !known &&
+    !held &&
     kinds.length &&
     Math.max(...kinds.map((label) => label.score)) < minKindScore
   )
@@ -153,7 +155,7 @@ export function rejectReason(
 }
 
 export function withColour(palette: Swatch[], colour: string | undefined) {
-  return colour ? [namedSwatch(colour), ...palette.slice(1)] : palette;
+  return colour ? [colourSwatch(colour), ...palette.slice(1)] : palette;
 }
 
 export function queueImport(
@@ -269,7 +271,9 @@ export function finishImport(
     };
     if (job.region?.partial && !checks.includes("partial"))
       checks.push("partial");
-    const rejected = rejectReason(prepared, size, known);
+    const held = job.region?.kind === "item";
+    if (held && !checks.includes("uncertain")) checks.push("uncertain");
+    const rejected = rejectReason(prepared, size, known, held);
     const fabric = details.uncertain.includes("fabric")
       ? undefined
       : (described.attributes as Attributes | undefined)?.fabric;
@@ -281,7 +285,7 @@ export function finishImport(
       name:
         job.linkName ?? nameFor(recognition.kind, prepared.palette, { fabric }),
       styles,
-      question: recognition.question ?? undefined,
+      question: recognition.question ?? (held ? "category" : undefined),
       sources,
       attributes: described.attributes,
       attributeSources: described.sources,
@@ -432,6 +436,53 @@ export function recoverImports(closet: Closet): Closet {
   };
 }
 
+export type Details = {
+  attributes?: Attributes;
+  sources?: Sources;
+  traits?: Traits;
+  ownFabric?: string;
+};
+
+const weatherKeys = ["warmth", "rain", "snow"] as const;
+
+export function confirmedTraits(details: Details): {
+  traits: Traits;
+  sources: Sources;
+} {
+  const traits: Traits = {};
+  const sources: Sources = {};
+  for (const key of weatherKeys) {
+    const value = details.traits?.[key];
+    if (value === undefined || details.sources?.[key] !== "confirmed") continue;
+    Object.assign(traits, { [key]: value });
+    sources[key] = "confirmed";
+  }
+  return { traits, sources };
+}
+
+export function withConfirmed(
+  described: Described,
+  details: Details,
+): Described {
+  let next = described;
+  for (const key of attributeKeys) {
+    const value = details.attributes?.[key];
+    if (value === undefined || details.sources?.[key] !== "confirmed") continue;
+    next = confirmAttribute(next, key, value);
+  }
+  const sheer = details.attributes?.sheer;
+  if (sheer !== undefined && details.sources?.sheer === "confirmed")
+    next = {
+      ...next,
+      attributes: { ...next.attributes, sheer },
+      sources: { ...next.sources, sheer: "confirmed" },
+    };
+  if (!details.ownFabric) return next;
+  const { fabric: _fabric, ...attributes } = next.attributes ?? {};
+  const { fabric: _source, ...sources } = next.sources ?? {};
+  return { ...next, attributes, sources };
+}
+
 export function correctImport(
   closet: Closet,
   id: string,
@@ -443,6 +494,8 @@ export function correctImport(
     variant?: Variant;
     attribute?: { key: AttributeKey; value: AttributeValue };
     colour?: string;
+    ownKind?: string | null;
+    details?: Details;
   },
 ): Closet {
   return updateJob(closet, id, (job) => {
@@ -493,8 +546,31 @@ export function correctImport(
         change.attribute.key,
         change.attribute.value,
       );
+    const details = change.details;
+    if (details) described = withConfirmed(described, details);
+    const weather = details ? confirmedTraits(details) : null;
+    const own =
+      change.ownKind === undefined
+        ? job.ownKind
+        : (change.ownKind ?? undefined);
+    const ownFabric = details ? details.ownFabric : job.ownFabric;
+    const {
+      ownKind: _ownKind,
+      ownFabric: _ownFabric,
+      traits: _traits,
+      ...base
+    } = job;
     return {
-      ...job,
+      ...base,
+      ...(own ? { ownKind: own } : {}),
+      ...(ownFabric ? { ownFabric } : {}),
+      ...(weather
+        ? Object.keys(weather.traits).length
+          ? { traits: weather.traits }
+          : {}
+        : job.traits
+          ? { traits: job.traits }
+          : {}),
       prepared: { ...job.prepared!, palette },
       colour,
       kind,
@@ -506,7 +582,7 @@ export function correctImport(
       keepOriginal: change.keepOriginal ?? job.keepOriginal,
       variant: change.variant ?? job.variant,
       duplicateOf: undefined,
-      sources,
+      sources: weather ? { ...sources, ...weather.sources } : sources,
       question: undefined,
       checks: [],
       state: "ready",
@@ -530,7 +606,7 @@ export function setImportLabel(
 
 export function importStudioSource(job: ImportJob): string | null {
   if (!job.prepared?.cutout || !job.prepared.enhanced) return null;
-  return job.prepared.enhanced;
+  return job.prepared.cutout;
 }
 
 export function setImportStudio(
@@ -763,6 +839,7 @@ export function pieceFromImport(job: ImportJob): Piece | null {
       : enhanced && job.variant !== "plain"
         ? enhanced
         : job.prepared.cutout!;
+  const own = job.ownKind ? ownKind(job.ownKind) : undefined;
   const styles = job.styles ?? fixedStyles(job.kind);
   const sources: Sources =
     job.sources ??
@@ -770,9 +847,10 @@ export function pieceFromImport(job: ImportJob): Piece | null {
   const piece: Piece = {
     id: job.id,
     name: job.name,
-    category: categoryOf(job.kind),
-    kind: job.kind,
+    category: own?.category ?? categoryOf(job.kind),
+    ...(own ? { ownKind: own.id } : { kind: job.kind }),
     ...(styles ? { styles } : {}),
+    ...(job.traits ? { traits: job.traits } : {}),
     sources,
     photo: useCutout ? cutoutPhoto : job.prepared.original,
     ...(enhanced
@@ -792,11 +870,18 @@ export function pieceFromImport(job: ImportJob): Piece | null {
     source: "owned",
     ...(job.captureId ? { captureId: job.captureId } : {}),
   };
+  const described = withDetails(piece, {
+    attributes: job.attributes,
+    sources: job.attributeSources,
+  });
   const accepted: Piece = {
-    ...withDetails(piece, {
-      attributes: job.attributes,
-      sources: job.attributeSources,
-    }),
+    ...(job.ownFabric
+      ? {
+          ...described,
+          ...withConfirmed(described, { ownFabric: job.ownFabric }),
+          ownFabric: job.ownFabric,
+        }
+      : described),
     ...(job.prepared.palette.length ? { colors: job.prepared.palette } : {}),
     ...(job.prepared.embedding ? { embedding: job.prepared.embedding } : {}),
   };
@@ -821,25 +906,9 @@ export function acceptImports(closet: Closet, only?: string[]): Closet {
   }
   for (const [captureId, ids] of sets)
     if (ids.length > 1) next = linkSet(next, ids, captureId);
-  return settleWardrobe({
+  return {
     ...next,
     imports: next.imports.filter((job) => !accepted.includes(job.id)),
-  });
-}
-
-export function settleWardrobe(closet: Closet): Closet {
-  if (closet.styling.wardrobe !== "sample") return closet;
-  const owned = closet.pieces.filter(
-    (piece) => piece.source === "owned" && isAvailable(piece),
-  );
-  if (
-    missingRoles(owned, { hijab: closet.styling.everyday?.hijab ?? null })
-      .length
-  )
-    return closet;
-  return {
-    ...closet,
-    styling: { ...closet.styling, wardrobe: "owned", today: null },
   };
 }
 

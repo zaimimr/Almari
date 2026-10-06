@@ -7,11 +7,11 @@ appId: com.zaimimran.almari
     id: "job-ready-1"
 - assertVisible:
     id: "confirm-photo"
-- tapOn: "AI Enhance"
+- tapOn: "AI Enhanced"
 - extendedWaitUntil:
     notVisible:
       id: "moment-generating"
     timeout: 30000
 - assertVisible:
-    text: "AI Enhance"
+    text: "AI Enhanced"
     selected: true

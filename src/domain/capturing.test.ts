@@ -7,6 +7,7 @@ import {
   type Prepared,
 } from "./closet";
 import { proposalsFromRegions } from "./capture";
+import { addScanCapture } from "./scan";
 import {
   correctImport,
   failImport,
@@ -94,6 +95,29 @@ test("a region found as a bag stays a bag even with weak labels", () => {
   });
   assert.equal(rejectReason(weak, undefined, "bag"), null);
   assert.equal(rejectReason(weak), "no-clothing");
+});
+
+test("an object held up to the live camera is kept and asks for its category", () => {
+  const held = addScanCapture(emptyCloset, "scan", {
+    id: "job",
+    source: "job-original.jpg",
+    createdAt: "2026-10-01T08:00:00Z",
+    region: {
+      kind: "item",
+      cutout: "job-region-1.png",
+      frame: { x: 0.2, y: 0.2, width: 0.5, height: 0.5 },
+      share: 0.2,
+      partial: false,
+    },
+  });
+  const job = finishImport(
+    startImport(held, "job"),
+    "job",
+    prepared({ labels: [{ group: "kind", value: "belt", score: 0.08 }] }),
+  ).imports[0]!;
+  assert.equal(job.state, "review");
+  assert.equal(job.error, undefined);
+  assert.ok(job.checks?.includes("uncertain"));
 });
 
 test("a waiting job can fail before it starts", () => {

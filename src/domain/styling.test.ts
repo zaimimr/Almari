@@ -29,7 +29,19 @@ import {
 } from "./today";
 
 const clock = { localDate: "2026-10-01", timeZone: "Europe/Oslo" };
-const samples = addSampleWardrobe(emptyCloset);
+const leanSamples = [
+  "sample-black-hijab",
+  "sample-champagne-hijab",
+  "sample-blue-tunic",
+  "sample-rose-kurta",
+  "sample-maroon-kameez",
+  "sample-emerald-dress",
+  "sample-gold-salwar",
+  "sample-camel-blazer",
+  "sample-gold-loafers",
+  "sample-gold-bag",
+];
+const samples = leanSamples.reduce(removePiece, addSampleWardrobe(emptyCloset));
 const context = scoreContext(emptyCloset);
 const byId = (closet: Closet, id: string) =>
   closet.pieces.find((piece) => piece.id === id)!;

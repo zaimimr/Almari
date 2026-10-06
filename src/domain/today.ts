@@ -16,7 +16,7 @@ import {
 import { dressLevelOf, dressLevels, type DressLevel } from "./dressy";
 import { rulesScorer } from "./scoring/rulesScorer";
 import { scoreContext } from "./scoring/taste";
-import { styleOutfits, type StyleResult } from "./styling";
+import { roleOf, styleOutfits, type StyleResult } from "./styling";
 import { weatherFor } from "./weather";
 
 export type Clock = { localDate: string; timeZone: string };
@@ -285,6 +285,45 @@ function withOccasion(
 
 export function startOccasion(closet: Closet, request: OutfitRequest): Closet {
   return withOccasion(closet, request);
+}
+
+export function wornToday(closet: Closet): string[] {
+  const today = closet.styling.today;
+  if (!today) return [];
+  return [
+    ...new Set(
+      closet.feedback.flatMap((event) =>
+        event.kind === "wore" &&
+        !event.undone &&
+        clockFor(new Date(event.at), today.timeZone).localDate ===
+          today.localDate
+          ? event.pieceIds
+          : [],
+      ),
+    ),
+  ];
+}
+
+export function wornMains(closet: Closet): string[] {
+  return wornToday(closet).filter((id) => {
+    const piece = closet.pieces.find((item) => item.id === id);
+    return !!piece && ["main", "bottom"].includes(roleOf(piece));
+  });
+}
+
+export function dressAgain(closet: Closet, occasion: Occasion): Closet {
+  const today = closet.styling.today;
+  if (!today) return closet;
+  const request = activeSession(today).request;
+  const worn = wornMains(closet);
+  const fresh = { ...request, occasion, keptIds: [], garmentType: null };
+  const next = withOccasion(closet, {
+    ...fresh,
+    excludedIds: [...new Set([...request.excludedIds, ...worn])],
+  });
+  return next.styling.today?.occasion?.pieceIds.length
+    ? next
+    : withOccasion(closet, fresh);
 }
 
 export function startPlan(

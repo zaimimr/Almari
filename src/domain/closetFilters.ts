@@ -10,7 +10,8 @@ import {
 } from "./closet";
 import { en } from "../i18n/en";
 import { nb } from "../i18n/nb";
-import { colorName, toLab, toLch } from "./color";
+import { toLab, toLch } from "./color";
+import { colourOf as colourId, ownColour, ownKind } from "./lists";
 import {
   colourKeys,
   needsDetails,
@@ -80,7 +81,7 @@ const availabilityOf = (piece: Piece): Availability =>
       : "archived";
 
 const colourOf = (piece: Piece) =>
-  piece.colors?.[0] ? colorName(piece.colors[0].rgb) : null;
+  piece.colors?.[0] ? colourId(piece.colors[0].rgb) : null;
 
 const time = (iso: string) => Date.parse(iso);
 
@@ -143,6 +144,8 @@ function matchesSearch(piece: Piece, search: string): boolean {
   return [
     piece.name,
     colour ?? "",
+    (colour ? ownColour(colour)?.name : undefined) ?? "",
+    (piece.ownKind ? ownKind(piece.ownKind)?.name : undefined) ?? "",
     ...keys.flatMap((key) => [en[key], nb[key]]),
   ].some((text) => text.toLowerCase().includes(query));
 }
@@ -202,8 +205,13 @@ export function groupByCategory(
   sort: ClosetSort | null = null,
   worn: Record<string, number> = {},
 ): ClosetSection[] {
-  const owned = pieces.filter((piece) => piece.source !== "sample");
-  const samples = pieces.filter((piece) => piece.source === "sample");
+  const mixed = pieces.some((piece) => piece.source !== "sample");
+  const owned = mixed
+    ? pieces.filter((piece) => piece.source !== "sample")
+    : [...pieces];
+  const samples = mixed
+    ? pieces.filter((piece) => piece.source === "sample")
+    : [];
   const chosen = sorter(sort, worn);
   const sections: ClosetSection[] = categories.map(({ id }) => ({
     id,

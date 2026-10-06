@@ -5,19 +5,10 @@ let sRGB = CGColorSpace(name: CGColorSpace.sRGB)!
 let context = CIContext(options: [.workingColorSpace: sRGB])
 let enhancer = GarmentEnhancer(context: context)
 let quality = PhotoQuality(enhancer: enhancer)
-let hueTolerance = 3.0
-let castTolerance = 4.0
 var failures: [String] = []
-var largestShift = 0.0
-var largestCastShift = 0.0
 
 func check(_ passed: Bool, _ message: String) {
   if !passed { failures.append(message) }
-}
-
-func hueDistance(_ first: Double, _ second: Double) -> Double {
-  let difference = abs(first - second).truncatingRemainder(dividingBy: 360)
-  return min(difference, 360 - difference)
 }
 
 func tinted(_ image: CIImage, _ red: CGFloat, _ green: CGFloat, _ blue: CGFloat) -> CIImage {
@@ -43,40 +34,6 @@ func scene(_ garment: CIImage, sheet: CIImage, canvas: CGRect) -> (photo: CIImag
     ])
   let mask = silhouette.composited(over: CIImage(color: .black)).cropped(to: canvas)
   return (photo, mask)
-}
-
-func checkEnhancement(_ name: String, _ garment: CIImage, canvas: CGRect, grey: CIImage) -> CIImage? {
-  guard let before = enhancer.meanHue(garment) else {
-    check(false, "\(name) has no opaque pixels")
-    return nil
-  }
-  let neutral = scene(garment, sheet: grey, canvas: canvas)
-  let plain = enhancer.correction(photo: neutral.photo, mask: neutral.mask)
-  check(
-    plain.gains.allSatisfy { abs($0 - 1) < 0.02 } && plain.exposure == 0,
-    "\(name) changed white balance or exposure in neutral light: \(plain)")
-  let enhanced = enhancer.enhance(garment, correction: plain)
-  if let after = enhancer.meanHue(enhanced) {
-    if before.chroma >= 6 {
-      let shift = hueDistance(before.hue, after.hue)
-      largestShift = max(largestShift, shift)
-      check(shift <= hueTolerance, "\(name) hue moved \(shift) degrees in neutral light")
-    } else {
-      check(after.chroma - before.chroma < 3, "\(name) gained color in neutral light")
-    }
-  }
-  let warmGarment = tinted(garment, 1.08, 1, 0.9)
-  let warm = scene(warmGarment, sheet: tinted(grey, 1.08, 1, 0.9), canvas: canvas)
-  let cast = enhancer.correction(photo: warm.photo, mask: warm.mask)
-  check(cast.gains[0] < 1 && cast.gains[2] > 1, "\(name) warm light was not corrected: \(cast)")
-  if before.chroma >= 6, let corrected = enhancer.meanHue(enhancer.enhance(warmGarment, correction: cast)) {
-    let shift = hueDistance(before.hue, corrected.hue)
-    largestCastShift = max(largestCastShift, shift)
-    check(shift <= castTolerance, "\(name) hue after correcting warm light is \(shift) degrees from the original")
-  }
-  let dim = enhancer.correction(photo: tinted(neutral.photo, 0.5, 0.5, 0.5), mask: neutral.mask)
-  check(dim.exposure > 0 && dim.exposure <= 0.4, "\(name) dim light exposure \(dim.exposure)")
-  return enhanced
 }
 
 func checkQuality(_ name: String, _ garment: CIImage, canvas: CGRect, grey: CIImage) {
@@ -140,7 +97,6 @@ for file in files {
   let size = garment.extent.size
   let canvas = garment.extent.insetBy(dx: -size.width * 0.25, dy: -size.height * 0.25)
   let grey = CIImage(color: CIColor(red: 0.62, green: 0.62, blue: 0.62))
-  guard let enhanced = checkEnhancement(name, garment, canvas: canvas, grey: grey) else { continue }
   checkQuality(name, garment, canvas: canvas, grey: grey)
   if let output {
     let side = (max(size.width, size.height) * 1.06).rounded(.up)
@@ -151,16 +107,10 @@ for file in files {
     try context.writePNGRepresentation(
       of: garment.transformed(by: offset).composited(over: clear),
       to: output.appendingPathComponent("\(name).png"), format: .RGBA8, colorSpace: sRGB)
-    try context.writePNGRepresentation(
-      of: enhancer.withShadow(enhanced.transformed(by: offset).composited(over: clear)),
-      to: output.appendingPathComponent("\(name)-enhanced.png"), format: .RGBA8, colorSpace: sRGB)
   }
 }
 
-print(
-  String(
-    format: "hue shift max %.1f degrees in neutral light, %.1f degrees after warm light correction, %d garments",
-    largestShift, largestCastShift, files.count))
+print("\(files.count) garments")
 if failures.isEmpty {
   print("PASS")
 } else {

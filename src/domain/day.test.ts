@@ -15,10 +15,9 @@ import {
   windowFor,
   windowTemp,
   windowWeather,
-  wornMains,
 } from "./day";
 import { woreThis } from "./feedback";
-import { activeSession, startOccasion } from "./today";
+import { activeSession, startOccasion, wornMains } from "./today";
 import { oslo, styledSample } from "./test-helpers";
 
 const date = "2026-10-06";
@@ -136,13 +135,13 @@ test("fits are kept per day, survive a reload and old days fall away", () => {
 test("a second fit of the day leaves out the worn main pieces", () => {
   const closet = styledSample("2026-10-06T08:00:00+02:00");
   const session = activeSession(closet.styling.today!);
-  const worn = updateFit(
-    addFit(closet, fit("a", { pieceIds: session.pieceIds })),
-    date,
-    "a",
-    { wornAt: "2026-10-06T08:00:00.000Z" },
+  const worn = woreThis(
+    closet,
+    session.revision,
+    "2026-10-06T06:00:00.000Z",
+    "wear-a",
   );
-  const mains = wornMains(worn, date);
+  const mains = wornMains(worn);
   assert.ok(mains.length > 0);
   const evening = startOccasion(worn, {
     ...session.request,
