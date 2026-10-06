@@ -1,4 +1,1 @@
-- Outfits can layer: leggings or tights under a skirt or dress, a sweater or cardigan over a top.
-- Warmer or colder days decide how many layers you get, and coats and abayas are added for outside.
-- Remove any extra piece from an outfit. After a few removals, Almari asks if it should stop adding it.
-- See and undo your own rules in Profile under My rules.
+# What goes out next. Bullets only.

@@ -2,7 +2,7 @@
   "expo": {
     "name": "Almari",
     "slug": "almari",
-    "version": "0.1.19",
+    "version": "0.1.20",
     "scheme": "almari",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
