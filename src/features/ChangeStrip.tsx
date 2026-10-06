@@ -19,6 +19,7 @@ export type ChangeStripProps = {
   onClose: () => void;
   onPick: (piece: Piece) => void;
   keep?: { kept: boolean; onToggle: () => void };
+  onRemove?: () => void;
   value?: string;
   onShowAll?: () => void;
   onEditColour?: (piece: Piece) => void;
@@ -47,6 +48,7 @@ export function ChangeStrip({
   onClose,
   onPick,
   keep,
+  onRemove,
   value,
   onShowAll,
   onEditColour,
@@ -103,6 +105,18 @@ export function ChangeStrip({
               name: current.piece.name,
             })}
             testID="change-keep"
+          />
+        ) : null}
+        {onRemove && current ? (
+          <Button
+            label={t("common.remove")}
+            accessibilityLabel={t("change.removeLabel", {
+              name: current.piece.name,
+            })}
+            variant="quiet"
+            size="small"
+            onPress={onRemove}
+            testID="change-remove"
           />
         ) : null}
         <Pressable

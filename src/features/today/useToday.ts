@@ -8,7 +8,13 @@ import {
   type Slot,
 } from "../../domain/closet";
 import { addFit, fitsOn, updateFit } from "../../domain/day";
-import { recordSaved, swapPiece, woreThis } from "../../domain/feedback";
+import {
+  recordSaved,
+  removeFromOutfit,
+  swapPiece,
+  woreThis,
+} from "../../domain/feedback";
+import { answerRule, ruleToAsk } from "../../domain/personalRules";
 import { saveLook as storeLook } from "../../domain/closet";
 import { lookForPieces } from "../../domain/looks";
 import { outfitName } from "../../domain/outfitName";
@@ -227,6 +233,20 @@ export function useToday() {
       if (saved) announce(t("result.changed"), { queue: true });
     });
 
+  const remove = (piece: Piece) => {
+    setOpenId(null);
+    void run((current) =>
+      removeFromOutfit(current, piece.id, revision, at(), randomUUID()),
+    ).then((saved) => {
+      if (saved) announce(t("result.removed"), { queue: true });
+    });
+  };
+
+  const ruleAsk = useMemo(() => ruleToAsk(closet), [closet]);
+  const answerAsk = (accept: boolean) => {
+    if (ruleAsk) void run((current) => answerRule(current, ruleAsk, accept));
+  };
+
   const change = (next: Partial<OutfitRequest>) =>
     request
       ? restyle((current) =>
@@ -284,6 +304,9 @@ export function useToday() {
     saveLook,
     keep,
     pick,
+    remove,
+    ruleAsk,
+    answerAsk,
     change,
     scorer,
     context,

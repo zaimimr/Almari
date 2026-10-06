@@ -369,7 +369,17 @@ export type FeedbackKind =
   | "hijab-mismatch"
   | "not-my-style"
   | "liked"
-  | "disliked";
+  | "disliked"
+  | "removed";
+
+export type Removal = {
+  id: string;
+  kind: GarmentKind | null;
+  role: string;
+  feels: number | null;
+};
+
+export type PersonalRule = { kind: GarmentKind; aboveTemp: number };
 
 export type FeedbackEvent = {
   id: string;
@@ -380,6 +390,7 @@ export type FeedbackEvent = {
   engine?: Engine;
   cursor?: number;
   swap?: { from: string; to: string };
+  removed?: Removal;
   undone?: boolean;
   against?: string[];
   scope?: "piece";
@@ -555,6 +566,8 @@ export type Styling = {
   notification?: NotificationTime | null;
   weekdaysOnly?: boolean;
   fits?: Record<string, DayFit[]>;
+  rules?: PersonalRule[];
+  ruleAsked?: GarmentKind[];
 };
 
 export type Closet = {
@@ -1119,7 +1132,22 @@ const feedbackKinds: FeedbackKind[] = [
   "not-my-style",
   "liked",
   "disliked",
+  "removed",
 ];
+
+function isRemoval(value: unknown): value is Removal {
+  return (
+    isRecord(value) &&
+    isString(value.id) &&
+    (value.kind === null || isKind(value.kind)) &&
+    isString(value.role) &&
+    (value.feels === null || isNumber(value.feels))
+  );
+}
+
+function isPersonalRule(value: unknown): value is PersonalRule {
+  return isRecord(value) && isKind(value.kind) && isNumber(value.aboveTemp);
+}
 
 function isFeedbackEvent(value: unknown): value is FeedbackEvent {
   return (
@@ -1135,6 +1163,7 @@ function isFeedbackEvent(value: unknown): value is FeedbackEvent {
       (swap): swap is { from: string; to: string } =>
         isRecord(swap) && isString(swap.from) && isString(swap.to),
     ) &&
+    optional(value.removed, isRemoval) &&
     optional(value.undone, isBoolean) &&
     optional(value.against, isUniqueStrings) &&
     optional(value.cursor, (cursor): cursor is number =>
@@ -1566,6 +1595,8 @@ function withOnboardingState(closet: Closet): Closet {
         value === null || isClockTime(value) ? value : undefined,
       weekdaysOnly: (value) => (typeof value === "boolean" ? value : undefined),
       fits: fitDays,
+      rules: listOf(isPersonalRule),
+      ruleAsked: listOf(isKind),
     },
   );
   const profile =

@@ -1713,6 +1713,13 @@ export const en = {
   "fit.plan": "Plan this",
   "fit.save": "Save to Looks",
   "fit.planned": "Planned for tomorrow",
+  "change.removeLabel": "Remove {name}",
+  "rules.ask": "Stop adding {kind} above {temp}?",
+  "rules.yes": "Yes",
+  "rules.notNow": "Not now",
+  "rules.title": "My rules",
+  "rules.item": "No {kind} above {temp}",
+  "rules.removeLabel": "Remove rule: no {kind} above {temp}",
 };
 
 export type Key = keyof typeof en;

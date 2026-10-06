@@ -12,8 +12,15 @@ import { factsFor } from "./scoring/rules";
 import { ruleBook } from "./scoring/rulebook";
 import { baseWeights, features } from "./scoring/rulesScorer";
 import { countPairs, learnPreference } from "./scoring/taste";
-import type { Candidate } from "./styling";
-import { activeSession, clockFor, replacePiece, resultFor } from "./today";
+import { feelsFor } from "./personalRules";
+import { roleOf, type Candidate } from "./styling";
+import {
+  activeSession,
+  clockFor,
+  leaveOut,
+  replacePiece,
+  resultFor,
+} from "./today";
 import { t } from "../i18n";
 
 export type Chip =
@@ -134,6 +141,9 @@ export function rebuildTaste(closet: Closet, profile: StyleProfile): Taste {
       taste = countPairs(taste, event.pieceIds, "worn");
     if (event.kind === "not-my-style" || event.kind === "disliked")
       taste = countPairs(taste, event.pieceIds, "rejected");
+    if (event.kind === "removed" && event.removed)
+      for (const other of event.against ?? [])
+        taste = countPairs(taste, [event.removed.id, other], "rejected");
     const shown = piecesFor(closet, event.pieceIds);
     const other = piecesFor(closet, event.against ?? []);
     if (!shown.length || !other.length) continue;
@@ -470,6 +480,31 @@ export function swapPiece(
   return withFeedback(swapped, {
     ...eventFor(after, "swap", after.pieceIds, at, id, before.pieceIds),
     swap: { from: fromId, to: toId },
+  });
+}
+
+export function removeFromOutfit(
+  closet: Closet,
+  pieceId: string,
+  expectedRevision: number,
+  at: string,
+  id: string,
+): Closet {
+  const today = closet.styling.today;
+  const piece = closet.pieces.find((item) => item.id === pieceId);
+  if (!today || !piece) return closet;
+  const before = activeSession(today);
+  const removed = leaveOut(closet, pieceId, expectedRevision);
+  if (removed === closet) return closet;
+  const after = activeSession(removed.styling.today!);
+  return withFeedback(removed, {
+    ...eventFor(before, "removed", before.pieceIds, at, id, after.pieceIds),
+    removed: {
+      id: pieceId,
+      kind: piece.kind ?? null,
+      role: roleOf(piece),
+      feels: feelsFor(closet, before.request, before.date ?? today.localDate),
+    },
   });
 }
 

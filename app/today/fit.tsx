@@ -6,6 +6,7 @@ import type { Slot } from "../../src/domain/closet";
 import { fitsOn, removeFit, unwearFit } from "../../src/domain/day";
 import { undoFeedback } from "../../src/domain/feedback";
 import { outfitName } from "../../src/domain/outfitName";
+import { kindLabel } from "../../src/domain/taxonomy";
 import { DressyMeter } from "../../src/features/today/DressyMeter";
 import { PieceStrip } from "../../src/features/today/PieceStrip";
 import { ProblemBanner } from "../../src/features/today/ProblemBanner";
@@ -184,6 +185,28 @@ function FitEditor({
               />
             </View>
             <PieceStrip key={openId ?? "closed"} model={model} />
+            {model.ruleAsk ? (
+              <Banner
+                tone="notice"
+                text={t("rules.ask", {
+                  kind: kindLabel(model.ruleAsk.kind).toLowerCase(),
+                  temp: degrees(model.ruleAsk.aboveTemp, units),
+                })}
+                actions={[
+                  {
+                    label: t("rules.yes"),
+                    onPress: () => model.answerAsk(true),
+                    testID: "rule-ask-yes",
+                  },
+                  {
+                    label: t("rules.notNow"),
+                    onPress: () => model.answerAsk(false),
+                    testID: "rule-ask-not-now",
+                  },
+                ]}
+                testID="rule-ask"
+              />
+            ) : null}
             <Animated.View
               key={model.revision}
               entering={enter(reduce)}
