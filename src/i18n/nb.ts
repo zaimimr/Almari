@@ -954,6 +954,7 @@ export const nb: Record<Key, string> = {
   "build.countMany": "{count} plagg i antrekket",
   "build.countOne": "1 plagg i antrekket",
   "build.edit": "Endre antrekket",
+  "build.new": "Lag et antrekk",
   "build.empty": "Legg til noen plagg for å begynne på antrekket.",
   "build.name": "Navn på antrekket",
   "build.nameHint": "f.eks. Myke lag",

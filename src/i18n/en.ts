@@ -939,6 +939,7 @@ export const en = {
   "build.countMany": "{count} pieces in your look",
   "build.countOne": "1 piece in your look",
   "build.edit": "Edit your look",
+  "build.new": "Build a look",
   "build.empty": "Add a few pieces to start building your look.",
   "build.name": "Look name",
   "build.nameHint": "e.g. Soft layers",

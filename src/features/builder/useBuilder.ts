@@ -34,7 +34,8 @@ export function useBuilder(params: { id?: string }) {
   const [source] = useState(() =>
     params.id ? closet.looks.find((look) => look.id === params.id) : undefined,
   );
-  const gone = !source;
+  const fresh = !params.id;
+  const gone = !fresh && !source;
   const [startIds] = useState(() => source?.pieceIds ?? []);
   const [initial] = useState(() =>
     startIds.filter((id) => closet.pieces.some((piece) => piece.id === id)),
@@ -96,7 +97,9 @@ export function useBuilder(params: { id?: string }) {
     closet.pieces.filter((piece) => piece.id === id),
   );
 
-  const dirty = !!source && setKey(source.pieceIds) !== setKey(selected);
+  const dirty = source
+    ? setKey(source.pieceIds) !== setKey(selected)
+    : selected.length > 0;
   const swapId = mode.kind === "swap" ? mode.pieceId : null;
   const [swapOrder, setSwapOrder] = useState<string[]>([]);
   if (swapId && !swapOrder.includes(swapId)) {
@@ -162,14 +165,21 @@ export function useBuilder(params: { id?: string }) {
   }
 
   async function save() {
-    if (saving || !selected.length || !source || same) return;
+    if (saving || !selected.length || same) return;
+    const look = source ?? {
+      id: randomUUID(),
+      name: "",
+      pieceIds: [],
+      createdAt: now().toISOString(),
+      occasion,
+    };
     setSaving(true);
     setLine(null);
     try {
       await update((current) =>
         recordSaved(
           saveLook(current, {
-            ...source,
+            ...look,
             name: name || outfitName(pieces, occasion, locale),
             pieceIds: selected,
           }),
@@ -190,6 +200,7 @@ export function useBuilder(params: { id?: string }) {
 
   return {
     closet,
+    fresh,
     gone,
     pieces,
     selected,

@@ -30,7 +30,7 @@ export default function BuildLook() {
   const { ax } = useLargeText();
   const [room, setRoom] = useState(0);
   const lay = ax ? 240 : room > 0 ? room - 64 : undefined;
-  const title = t("build.edit");
+  const title = builder.fresh ? t("build.new") : t("build.edit");
 
   if (builder.gone)
     return <Screen title={title} gone={{ title: t("look.goneTitle") }} />;
@@ -237,7 +237,7 @@ export default function BuildLook() {
       footer={
         <Footer
           primary={{
-            label: t("common.saveChanges"),
+            label: builder.fresh ? t("build.save") : t("common.saveChanges"),
             onPress: () => void builder.save(),
             disabled:
               !builder.selected.length ||

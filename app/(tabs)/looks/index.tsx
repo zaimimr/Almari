@@ -25,6 +25,12 @@ export default function LooksScreen() {
       actions={
         <View style={styles.actions}>
           <HeaderItem
+            label={t("build.new")}
+            icon="plus"
+            onPress={() => router.push("/look/build")}
+            testID="header-build"
+          />
+          <HeaderItem
             label={t("calendar.title")}
             icon="calendar"
             onPress={() => router.push("/looks/calendar")}
