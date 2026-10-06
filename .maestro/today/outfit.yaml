@@ -7,42 +7,15 @@ appId: com.zaimimran.almari
       all: allow
 - extendedWaitUntil:
     visible:
-      id: "today-outfit"
+      id: "home-create"
     timeout: 60000
-- assertVisible: "Good morning, Sara"
+- assertVisible: "Good morning, Sara.*"
+- runFlow: ../lib/open-fit.yaml
 - assertVisible:
-    id: "today-intent"
+    id: "fit-name"
 - assertVisible:
-    id: "today-like"
-- assertNotVisible:
-    id: "today-not-for-me"
-- assertNotVisible:
-    id: "today-save"
-- assertVisible:
-    id: "today-reason"
+    id: "fit-weather"
 - assertVisible: "Wear this"
 - assertVisible: "Another"
-- assertVisible: "Adjust"
-- assertNotVisible:
-    id: "today-start-with"
+- assertVisible: "Edit answers"
 - takeScreenshot: docs/redesign/screens/after/today/today
-- tapOn:
-    id: "today-like"
-- assertVisible:
-    id: "today-like-on"
-- tapOn:
-    id: "today-like-on"
-- assertVisible:
-    id: "today-like"
-- copyTextFrom:
-    id: "today-title"
-- evalScript: ${output.title = maestro.copiedText}
-- stopApp
-- launchApp
-- extendedWaitUntil:
-    visible:
-      id: "today-outfit"
-    timeout: 60000
-- assertVisible:
-    id: "today-title"
-    text: ${output.title}

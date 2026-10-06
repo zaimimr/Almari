@@ -2,6 +2,7 @@ appId: com.zaimimran.almari
 # UC-F07-02
 ---
 - runFlow: ../lib/sample-closet.yaml
+- runFlow: ../lib/open-fit.yaml
 - runFlow: ../lib/open-adjust.yaml
 - tapOn: "Party or mehndi"
 - tapOn: "Desi"
@@ -11,4 +12,4 @@ appId: com.zaimimran.almari
       id: "today-outfit"
     timeout: 60000
 - assertVisible:
-    id: "today-intent-party"
+    id: "fit-name"

@@ -55,7 +55,7 @@ appId: com.zaimimran.almari
     id: "done-sample"
 - extendedWaitUntil:
     visible:
-      id: "today-outfit"
+      id: "home-create"
     timeout: 60000
 - tapOn:
     id: "header-profile"

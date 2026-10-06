@@ -7,8 +7,9 @@ appId: com.zaimimran.almari
       all: allow
 - extendedWaitUntil:
     visible:
-      id: "today-outfit"
+      id: "home-create"
     timeout: 60000
+- runFlow: ../lib/open-fit.yaml
 - takeScreenshot: docs/redesign/screens/after/today/today-ax5
 - tapOn:
     id: "outfit-piece-seed-.*hijab"
@@ -20,7 +21,7 @@ appId: com.zaimimran.almari
     id: "change-strip-header"
 - scrollUntilVisible:
     element:
-      id: "today-adjust"
+      id: "fit-edit"
     direction: DOWN
 - waitForAnimationToEnd
 - swipe:
@@ -29,15 +30,15 @@ appId: com.zaimimran.almari
     duration: 3000
 - waitForAnimationToEnd
 - tapOn:
-    id: "today-another"
+    id: "fit-another"
 - scrollUntilVisible:
     element:
-      id: "today-another"
+      id: "fit-another"
     direction: DOWN
     timeout: 60000
 - takeScreenshot: docs/redesign/screens/after/today/another-ax5
 - takeScreenshot: docs/redesign/screens/after/today/today-scrolled-ax5
 - tapOn: "Wear this"
 - extendedWaitUntil:
-    visible: "Worn today"
+    visible: "Worn"
     timeout: 10000

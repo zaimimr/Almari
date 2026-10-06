@@ -2,6 +2,7 @@ appId: com.zaimimran.almari
 # UC-F08-02
 ---
 - runFlow: ../lib/sample-closet.yaml
+- runFlow: ../lib/open-fit.yaml
 - tapOn:
     id: "outfit-piece-sample-.*-hijab"
 - extendedWaitUntil:
@@ -19,9 +20,9 @@ appId: com.zaimimran.almari
     index: 1
 - scrollUntilVisible:
     element:
-      id: "today-another"
+      id: "fit-another"
     direction: DOWN
     centerElement: true
     timeout: 60000
-- assertNotVisible:
-    id: "today-undo"
+- assertVisible:
+    id: "fit-name"

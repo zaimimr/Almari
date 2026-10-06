@@ -218,7 +218,6 @@ export default function CreateFit() {
     >
       <Section title={t("create.for")}>
         <ChipRow
-          label={t("create.for")}
           options={occasionOptions()}
           value={occasion}
           onChange={(next) => next && setOccasion(next as Occasion)}
@@ -275,7 +274,6 @@ export default function CreateFit() {
       </Section>
       <Section title={t("create.feel")}>
         <Segmented<Feel>
-          label={t("create.feel")}
           options={feels.map((id) => ({ id, label: t(`feel.${id}`) }))}
           value={feel}
           onChange={setFeel}
@@ -318,9 +316,6 @@ export default function CreateFit() {
           />
           {hijabs.length && base.hijab === "always" ? (
             <View style={styles.hijab}>
-              <Text role="footnote" tone="muted">
-                {t("create.hijab")}
-              </Text>
               <ChipRow
                 label={t("create.hijab")}
                 layout="scroll"

@@ -28,7 +28,9 @@ appId: com.zaimimran.almari
 - assertVisible:
     id: "moment-generating"
 - tapOn: "Today"
-- tapOn: "Another"
+- runFlow: ../lib/open-fit.yaml
+- tapOn:
+    id: "fit-another"
 - extendedWaitUntil:
     visible:
       id: "today-outfit"

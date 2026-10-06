@@ -2,6 +2,7 @@ appId: com.zaimimran.almari
 # UC-F08-04
 ---
 - runFlow: ../lib/sample-closet.yaml
+- runFlow: ../lib/open-fit.yaml
 - tapOn:
     id: "outfit-piece-sample-.*-hijab"
 - extendedWaitUntil:
@@ -20,14 +21,15 @@ appId: com.zaimimran.almari
     id: "change-strip-header"
 - scrollUntilVisible:
     element:
-      id: "today-another"
+      id: "fit-another"
     direction: DOWN
     centerElement: true
 - waitForAnimationToEnd
-- tapOn: "Another"
+- tapOn:
+    id: "fit-another"
 - scrollUntilVisible:
     element:
-      id: "today-another"
+      id: "fit-another"
     direction: DOWN
     centerElement: true
     timeout: 60000

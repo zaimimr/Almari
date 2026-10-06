@@ -7,6 +7,18 @@ appId: com.zaimimran.almari
       all: allow
 - extendedWaitUntil:
     visible:
+      id: "home-create"
+    timeout: 60000
+- tapOn:
+    id: "home-create"
+- extendedWaitUntil:
+    visible:
+      id: "create-submit"
+    timeout: 10000
+- tapOn:
+    id: "create-submit"
+- extendedWaitUntil:
+    visible:
       id: "today-problem"
     timeout: 60000
 - assertVisible: ".*Add shoes.*"

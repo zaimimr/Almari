@@ -6,7 +6,7 @@ appId: com.zaimimran.almari
 - launchApp
 - extendedWaitUntil:
     visible:
-      id: "today-outfit"
+      id: "home-create"
     timeout: 60000
 - extendedWaitUntil:
     notVisible:

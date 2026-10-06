@@ -17,7 +17,7 @@ appId: com.zaimimran.almari
 - launchApp
 - extendedWaitUntil:
     visible:
-      id: "today-outfit"
+      id: "home-create"
     timeout: 20000
 - tapOn: "Closet"
 - tapOn:

@@ -19,4 +19,4 @@ appId: com.zaimimran.almari
       id: "today-outfit"
     timeout: 60000
 - assertVisible:
-    id: "today-intent"
+    id: "fit-name"

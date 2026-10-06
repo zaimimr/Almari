@@ -7,7 +7,7 @@ appId: com.zaimimran.almari
       camera: deny
 - extendedWaitUntil:
     visible:
-      id: "today-outfit"
+      id: "home-create"
     timeout: 20000
 - tapOn: "Closet"
 - tapOn:

@@ -2,19 +2,29 @@ appId: com.zaimimran.almari
 # UC-F06-04
 ---
 - runFlow: ../lib/sample-closet.yaml
+- runFlow: ../lib/open-fit.yaml
 - tapOn: "Wear this"
-- assertVisible: "Worn today"
-- assertVisible:
-    id: "today-worn-undo"
+- extendedWaitUntil:
+    visible:
+      id: "home-fit-0"
+    timeout: 10000
+- assertVisible: "Worn"
 - tapOn: "Looks"
 - extendedWaitUntil:
     visible: "Looks"
     timeout: 10000
 - tapOn: "Today"
 - extendedWaitUntil:
-    visible: "Worn today"
+    visible:
+      id: "home-fit-0"
     timeout: 10000
 - tapOn:
-    id: "today-worn-undo"
+    id: "home-fit-0"
+- extendedWaitUntil:
+    visible:
+      id: "fit-view"
+    timeout: 10000
+- assertVisible: "Worn today"
+- tapOn:
+    id: "fit-undo"
 - assertNotVisible: "Worn today"
-- assertVisible: "Wear this"

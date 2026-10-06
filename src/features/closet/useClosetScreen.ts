@@ -326,7 +326,7 @@ export function useClosetScreen() {
         ? startOccasion(ready, builderRequest(ready, ids))
         : current;
     });
-    router.navigate("/(tabs)/today");
+    router.push("/today/fit");
   };
 
   return {

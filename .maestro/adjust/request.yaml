@@ -2,6 +2,7 @@ appId: com.zaimimran.almari
 # UC-F07-01
 ---
 - runFlow: ../lib/sample-closet.yaml
+- runFlow: ../lib/open-fit.yaml
 - runFlow: ../lib/open-adjust.yaml
 - tapOn: "Desi"
 - tapOn: "Show outfit"

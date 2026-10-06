@@ -357,7 +357,6 @@ export default function TodayScreen() {
         <Greeting model={model} />
         {model.evening ? (
           <Segmented<Day>
-            label={t("nav.today")}
             options={[
               { id: "today", label: t("nav.today") },
               { id: "tomorrow", label: t("day.tomorrow") },

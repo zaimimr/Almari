@@ -138,7 +138,7 @@ export default function PieceDetail() {
     }
     void act((current) => stylePiece(current, pieceId, clockFor(now()))).then(
       (saved) => {
-        if (saved) router.navigate("/(tabs)/today" as Href);
+        if (saved) router.push("/today/fit");
       },
     );
   };

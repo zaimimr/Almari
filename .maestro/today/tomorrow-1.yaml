@@ -6,38 +6,31 @@ appId: com.zaimimran.almari
     permissions:
       all: allow
 - extendedWaitUntil:
-    visible: "Tomorrow's outfit"
-    timeout: 60000
-- extendedWaitUntil:
     visible:
-      id: "today-outfit"
+      id: "home-create"
     timeout: 60000
-- assertVisible: "Back to today"
-- assertNotVisible: "Wear this"
-- scrollUntilVisible:
-    element:
-      id: "today-another"
-    direction: DOWN
-    centerElement: true
-- waitForAnimationToEnd
-- tapOn: "Another"
-- extendedWaitUntil:
-    visible:
-      id: "today-outfit"
-    timeout: 60000
-- assertVisible: "Save for.*"
-- assertNotVisible:
-    id: "today-intent"
-- scrollUntilVisible:
-    element:
-      id: "today-back"
-    direction: UP
-- waitForAnimationToEnd
+- assertVisible: "Tomorrow"
+- assertVisible:
+    id: "home-create"
+    text: "Plan tomorrow"
 - tapOn:
-    id: "today-back"
+    id: "home-create"
 - extendedWaitUntil:
     visible:
-      id: "today-intent"
+      id: "create-submit"
+    timeout: 10000
+- assertVisible:
+    id: "create-when-morning"
+- tapOn:
+    id: "create-submit"
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
     timeout: 60000
-- assertVisible: "Wear this"
-- assertNotVisible: "Show.*"
+- assertVisible: "Plan this"
+- assertNotVisible: "Wear this"
+- tapOn: "Plan this"
+- extendedWaitUntil:
+    visible:
+      id: "home-fit-0"
+    timeout: 10000

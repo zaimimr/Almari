@@ -10,5 +10,5 @@ appId: com.zaimimran.almari
 - tapOn: "Back"
 - extendedWaitUntil:
     visible:
-      id: "today-outfit"
+      id: "home-create"
     timeout: 10000

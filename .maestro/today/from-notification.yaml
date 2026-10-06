@@ -7,7 +7,7 @@ appId: com.zaimimran.almari
       all: allow
 - extendedWaitUntil:
     visible:
-      id: "today-outfit"
+      id: "home-create"
     timeout: 60000
 - assertNotVisible: "Profile and settings"
-- assertNotVisible: "Tomorrow's outfit"
+- assertNotVisible: "Tomorrow"

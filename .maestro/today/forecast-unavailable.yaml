@@ -7,10 +7,7 @@ appId: com.zaimimran.almari
       all: allow
 - extendedWaitUntil:
     visible:
-      id: "today-outfit"
+      id: "home-create"
     timeout: 60000
-- assertNotVisible:
-    id: "today-weather"
-    text: "Oslo.*"
 - assertNotVisible:
     id: "forecast-mark"

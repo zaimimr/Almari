@@ -24,7 +24,7 @@ appId: com.zaimimran.almari
 - tapOn: "Try the sample closet"
 - extendedWaitUntil:
     visible:
-      id: "today-outfit"
+      id: "home-create"
     timeout: 60000
 - tapOn: "Closet"
 - scrollUntilVisible:

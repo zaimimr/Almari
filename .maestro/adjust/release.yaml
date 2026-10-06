@@ -2,6 +2,7 @@ appId: com.zaimimran.almari
 # UC-F07-04
 ---
 - runFlow: ../lib/sample-closet.yaml
+- runFlow: ../lib/open-fit.yaml
 - scrollUntilVisible:
     element: "Keep.*"
     timeout: 60000

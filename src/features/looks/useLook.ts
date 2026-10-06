@@ -179,7 +179,7 @@ export function useLook(id: string) {
   const showOnToday = async () => {
     if (!entry) return;
     if (await run(showOn(entry), t("common.error.save")))
-      router.dismissTo("/(tabs)/today");
+      router.push("/today/fit");
   };
 
   const wearAgain = async () => {

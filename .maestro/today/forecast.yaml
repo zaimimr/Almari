@@ -7,9 +7,10 @@ appId: com.zaimimran.almari
       all: allow
 - extendedWaitUntil:
     visible:
-      id: "today-weather"
-      text: "Oslo 4 to 9°.*"
+      id: "home-create"
     timeout: 60000
+- assertVisible:
+    id: "home-tiles"
 - assertNotVisible:
     id: "forecast-mark"
 - tapOn:

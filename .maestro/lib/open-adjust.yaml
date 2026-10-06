@@ -1,13 +1,11 @@
 appId: com.zaimimran.almari
 ---
-- scrollUntilVisible:
-    element:
-      id: "today-adjust"
-    direction: DOWN
-    centerElement: true
-- waitForAnimationToEnd
-- tapOn:
-    id: "today-adjust"
+- openLink: "almari://today/adjust"
+- runFlow:
+    when:
+      visible: "Open"
+    commands:
+      - tapOn: "Open"
 - extendedWaitUntil:
     visible:
       id: "adjust"

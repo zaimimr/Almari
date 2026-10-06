@@ -7,7 +7,13 @@ appId: com.zaimimran.almari
       all: allow
 - extendedWaitUntil:
     visible:
-      id: "today-outfit"
+      id: "home-fit-0"
     timeout: 60000
-- assertNotVisible: "Tomorrow's outfit"
+- assertNotVisible: "Tomorrow"
+- tapOn:
+    id: "home-fit-0"
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
+    timeout: 10000
 - assertVisible: "Wear this"

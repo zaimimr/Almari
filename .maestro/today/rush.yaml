@@ -6,13 +6,45 @@ appId: com.zaimimran.almari
       all: allow
 - extendedWaitUntil:
     visible:
-      id: "today-outfit"
+      id: "home-create"
     timeout: 60000
 - tapOn:
-    id: "today-intent-work"
+    id: "home-create"
+- extendedWaitUntil:
+    visible:
+      id: "create-submit"
+    timeout: 10000
+- tapOn:
+    id: "create-occasion"
+    text: "Party"
+- tapOn:
+    id: "create-submit"
 - extendedWaitUntil:
     visible:
       id: "today-outfit"
     timeout: 60000
 - tapOn: "Wear this"
-- assertVisible: "Worn today"
+- extendedWaitUntil:
+    visible:
+      id: "home-another"
+    timeout: 10000
+- tapOn:
+    id: "home-another"
+- extendedWaitUntil:
+    visible:
+      id: "create-submit"
+    timeout: 10000
+- tapOn:
+    id: "create-occasion"
+    text: "Everyday"
+- tapOn:
+    id: "create-submit"
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
+    timeout: 60000
+- tapOn: "Wear this"
+- extendedWaitUntil:
+    visible:
+      id: "home-fit-1"
+    timeout: 10000

@@ -2,24 +2,23 @@ appId: com.zaimimran.almari
 # UC-F06-03
 ---
 - runFlow: ../lib/sample-closet.yaml
+- runFlow: ../lib/open-fit.yaml
 - copyTextFrom:
-    id: "today-title"
+    id: "fit-name"
 - evalScript: ${output.first = maestro.copiedText}
 - scrollUntilVisible:
     element:
-      id: "today-another"
+      id: "fit-another"
     direction: DOWN
     centerElement: true
 - waitForAnimationToEnd
-- tapOn: "Another"
+- tapOn:
+    id: "fit-another"
 - extendedWaitUntil:
     visible:
       id: "today-outfit"
     timeout: 60000
 - assertNotVisible:
-    id: "today-undo"
-- assertNotVisible:
-    id: "today-not-for-me"
-- assertVisible:
-    id: "today-adjust"
+    id: "fit-name"
+    text: ${output.first}
 - takeScreenshot: docs/redesign/screens/after/today/another
