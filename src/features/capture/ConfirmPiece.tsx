@@ -117,8 +117,9 @@ function questionText(
 }
 
 function photoChoiceOf(job: ImportJob): PhotoView {
+  if (!job.keepOriginal && job.variant === "studio" && job.prepared?.studio)
+    return "studio";
   if (!job.prepared?.cutout || job.keepOriginal) return "original";
-  if (job.variant === "studio" && job.prepared.studio) return "studio";
   return "cutout";
 }
 
