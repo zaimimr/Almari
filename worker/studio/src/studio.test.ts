@@ -170,6 +170,11 @@ describe("studioPrompt", () => {
     expect(prompt).not.toContain("both short legs naturally separated");
     expect(prompt).not.toContain("never lengthen the legs");
     expect(prompt).toContain("highest-priority description");
+    expect(prompt).toContain(
+      "front-side-up overhead flat lay resting directly",
+    );
+    expect(prompt).toContain("empty neckline");
+    expect(prompt).toContain("Never reproduce a standing garment, mannequin");
   });
   it("uses a descriptive item name over an incorrect automatic category even without a note", () => {
     const prompt = studioPrompt({
