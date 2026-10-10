@@ -35,6 +35,7 @@ import {
   withColour,
 } from "../../domain/importing";
 import { importCutout } from "../../domain/cutout";
+import { studioDetails } from "../../domain/studio";
 import { attributeLabelKey, attributeValueKey } from "../../domain/facts";
 import { ownKind, ownKindsIn } from "../../domain/lists";
 import { rankCategories, rankKinds } from "../../domain/recognition";
@@ -504,13 +505,11 @@ function ConfirmForm({
   const attributeAsked = job.attributeCheck;
   const studioSource = importStudioSource(job);
   const offerStudio = studioOffered() && Boolean(studioSource);
-  const photoOptions: PhotoView[] = !prepared.cutout
-    ? ["original"]
-    : [
-        "cutout",
-        "original",
-        ...(offerStudio || prepared.studio ? (["studio"] as const) : []),
-      ];
+  const photoOptions: PhotoView[] = [
+    ...(prepared.cutout ? (["cutout"] as const) : []),
+    "original",
+    ...(offerStudio || prepared.studio ? (["studio"] as const) : []),
+  ];
   const photoChoices = photoOptions.map((view): PhotoChoice => {
     const preview = jobPhoto({
       ...job,
@@ -631,6 +630,22 @@ function ConfirmForm({
       name,
       colour,
       note,
+      original: prepared!.original,
+      area: prepared!.area ?? undefined,
+      details: studioDetails({
+        attributes: {
+          ...(facts?.attributes ?? job.attributes),
+          ...(attributeAsked && answer !== undefined
+            ? { [attributeAsked]: answer }
+            : {}),
+        },
+        sources: {
+          ...(facts?.sources ?? job.attributeSources),
+          ...(attributeAsked && answer !== undefined
+            ? { [attributeAsked]: "confirmed" as const }
+            : {}),
+        },
+      }),
     });
     if (!file) return;
     let applied = false;

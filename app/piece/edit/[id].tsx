@@ -9,7 +9,6 @@ import {
   fixedStyles,
   isOffered,
   kindsIn,
-  pieceVariant,
   removePiece,
   savePiece,
   studioSource,
@@ -28,6 +27,7 @@ import {
 } from "../../../src/domain/lists";
 import { setColour } from "../../../src/domain/facts";
 import { pieceCutout } from "../../../src/domain/cutout";
+import { studioDetails } from "../../../src/domain/studio";
 import { confirmedTraits, filesInUse } from "../../../src/domain/importing";
 import { confirmEdits } from "../../../src/domain/recognition";
 import { unlinkPiece } from "../../../src/domain/sets";
@@ -67,6 +67,13 @@ function shownOf(piece: Piece, photo: string): PhotoView | null {
   if (variants.enhanced && photo === variants.enhanced) return "cutout";
   if (variants.plain && photo === variants.plain) return "cutout";
   if (piece.original && photo === piece.original) return "original";
+  if (
+    piece.source === "owned" &&
+    !piece.variants?.plain &&
+    !piece.variants?.enhanced &&
+    photo === piece.photo
+  )
+    return "original";
   return null;
 }
 
@@ -145,7 +152,7 @@ function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
 
   const fileFor = (next: PhotoView) =>
     next === "original"
-      ? piece.original
+      ? (piece.original ?? piece.photo)
       : next === "studio"
         ? piece.variants?.studio
         : (piece.variants?.plain ?? piece.variants?.enhanced);
@@ -192,7 +199,9 @@ function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
     !kindConfirmed;
 
   const shown = newPhoto ? "original" : (shownOf(piece, photo) ?? "cutout");
-  const hasVariants = Boolean(pieceVariant(piece) || piece.original);
+  const hasVariants = Boolean(
+    piece.variants?.plain || piece.original || (owned && studioOffered()),
+  );
   const studioMade = Boolean(piece.variants?.studio);
   const cleanOffered = studioMade || studioOffered();
   const cutout = pieceCutout(piece);
@@ -213,10 +222,10 @@ function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
                 raw: false,
               }
             : null,
-          piece.original
+          piece.original || (!cutoutFile && owned)
             ? {
                 id: "original",
-                image: { ...piece, photo: piece.original },
+                image: { ...piece, photo: piece.original ?? piece.photo },
                 raw: true,
               }
             : null,
@@ -240,8 +249,11 @@ function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
       category,
       kind,
       name,
-      colour: mainColourName(piece.colors),
+      colour,
       note,
+      original: piece.original,
+      area: piece.cutoutArea,
+      details: studioDetails(facts),
     });
     if (!file) return;
     await update((current) => {
@@ -250,6 +262,7 @@ function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
       const { studioStale: _stale, ...rest } = latest;
       return savePiece(current, {
         ...rest,
+        original: latest.original ?? source,
         photo: latest.photo === before ? file : latest.photo,
         variants: { ...latest.variants, studio: file },
       });

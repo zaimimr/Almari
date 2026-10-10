@@ -1,6 +1,10 @@
 # Almari studio worker
 
-Turns a piece cutout into a studio photo with Workers AI (`STUDIO_MODEL` in `wrangler.jsonc`). The app posts multipart form data (`image` as PNG or JPEG of at most 512x512, `category`, optional `kind`, `name`, `colour`) with `X-App-Token: <APP_TOKEN>` and `X-Install-Id`.
+Turns a selected piece into a studio photo with Workers AI (`STUDIO_MODEL` in `wrangler.jsonc`). The app posts multipart form data with `X-App-Token: <APP_TOKEN>` and `X-Install-Id`.
+
+`image` is the selected cutout or crop. Optional `original` is the full photo used to recover parts missing from the selection. Both images must be at most 512x512 and 8 MB. `area` is a JSON rectangle (`x`, `y`, `width`, `height`) locating the selection in the original, normalized from the top-left. Optional `category`, `kind`, `name`, `colour`, `details` and `note` describe the item. Owner notes override guessed item details and determine the arrangement. Without a cutout, the app sends the original as `image`.
+
+Run `npx tsx scripts/studio-eval.ts` from the repository root with the app's Studio configuration in `.env` to generate crop recovery comparisons through the deployed worker in `planning/build/studio/crop-eval`. This makes six paid model calls. Pass a case name to run just that case.
 
 ## Deploy
 

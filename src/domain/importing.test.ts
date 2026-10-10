@@ -1166,10 +1166,13 @@ test("a studio shot is a third variant and the real photo is always kept", () =>
   assert.equal(original.variants, undefined);
 });
 
-test("a studio shot needs a cutout and is made from the plain cutout", () => {
+test("studio uses the cutout even without enhancement and falls back to the original", () => {
   const plainOnly = finished();
-  assert.equal(importStudioSource(plainOnly.imports[0]!), null);
-  assert.equal(setImportStudio(plainOnly, "job", "s.png"), plainOnly);
+  assert.equal(importStudioSource(plainOnly.imports[0]!), "job.png");
+  assert.equal(
+    setImportStudio(plainOnly, "job", "s.png").imports[0]!.prepared?.studio,
+    "s.png",
+  );
   const ready = finished({ enhanced: "job-enhanced.png" });
   assert.equal(importStudioSource(ready.imports[0]!), "job.png");
   const piece = acceptImports(ready).pieces[0]!;
@@ -1180,8 +1183,24 @@ test("a studio shot needs a cutout and is made from the plain cutout", () => {
   assert.equal(studio.variants?.studio, "job-studio.png");
   assert.ok(filesInUse(savePiece(emptyCloset, studio)).has("job-studio.png"));
   const manual: Piece = { ...piece, variants: undefined, photo: "own.jpg" };
-  assert.equal(studioSource(manual), null);
-  assert.equal(withStudio(manual, "x.png"), manual);
+  assert.equal(studioSource(manual), manual.original);
+  assert.equal(withStudio(manual, "x.png").photo, "x.png");
+  const originalOnly = finished({ cutout: null, enhanced: null });
+  assert.equal(
+    importStudioSource(originalOnly.imports[0]!),
+    "job-original.jpg",
+  );
+  const made = setImportStudio(originalOnly, "job", "recovered.png");
+  const accepted = acceptImports(correctImport(made, "job", { kind: "kurta" }));
+  const recovered = accepted.pieces[0]!;
+  assert.equal(recovered.photo, "recovered.png");
+  assert.equal(recovered.variants?.studio, "recovered.png");
+  assert.equal(recovered.original, "job-original.jpg");
+  assert.equal(studioSource(recovered), "job-original.jpg");
+  assert.equal(
+    decodeCloset(JSON.stringify(accepted)).pieces[0]!.photo,
+    "recovered.png",
+  );
 });
 
 test("closets saved with the old studio switch still open without it", () => {

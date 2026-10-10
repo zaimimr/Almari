@@ -1540,6 +1540,7 @@ export const nb: Record<Key, string> = {
   "photo.adjust": "Juster",
   "photo.aiAgain": "Lag på nytt",
   "photo.aiFix": "Ikke riktig? Beskriv plagget",
+  "photo.aiDescribe": "Beskriv plagget",
   "photo.aiFixHint": "Svart, ikke marineblå. Lange ermer.",
   "photo.clean": "AI-forbedret",
   "photo.cleanDone": "AI-forbedring er klar",

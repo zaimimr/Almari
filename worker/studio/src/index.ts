@@ -5,6 +5,7 @@ import {
   isInstallId,
   maxBodyBytes,
   parseStudioRequest,
+  type StudioRequest,
 } from "./request";
 
 export type Env = {
@@ -15,8 +16,14 @@ export type Env = {
   LIMITS: KVNamespace;
 };
 
+const cors = {
+  "access-control-allow-origin": "*",
+  "access-control-allow-methods": "POST, OPTIONS",
+  "access-control-allow-headers": "content-type, x-app-token, x-install-id",
+};
+
 const fail = (error: string, status: number) =>
-  Response.json({ error }, { status });
+  Response.json({ error }, { status, headers: cors });
 
 const isLimitError = (error: unknown) =>
   /4006|daily free allocation|rate limit/i.test(String(error));
@@ -24,10 +31,11 @@ const isLimitError = (error: unknown) =>
 const fromBase64 = (data: string) =>
   Uint8Array.from(atob(data), (char) => char.charCodeAt(0));
 
-async function generate(env: Env, image: Blob, prompt: string) {
+async function generate(env: Env, piece: StudioRequest) {
   const form = new FormData();
-  form.append("prompt", prompt);
-  form.append("input_image_0", image);
+  form.append("prompt", studioPrompt(piece));
+  form.append("input_image_0", piece.image);
+  if (piece.original) form.append("input_image_1", piece.original);
   form.append("width", "1024");
   form.append("height", "1024");
   const formResponse = new Response(form);
@@ -51,6 +59,8 @@ async function generate(env: Env, image: Blob, prompt: string) {
 
 export default {
   async fetch(request, env, ctx): Promise<Response> {
+    if (request.method === "OPTIONS")
+      return new Response(null, { status: 204, headers: cors });
     if (request.method !== "POST") return fail("method", 405);
     if (!env.APP_TOKEN || request.headers.get("x-app-token") !== env.APP_TOKEN)
       return fail("token", 401);
@@ -64,14 +74,18 @@ export default {
     const piece = parseStudioRequest(form);
     if ("error" in piece) return fail(piece.error, piece.status);
 
-    if (!fitsModel(new Uint8Array(await piece.image.arrayBuffer())))
+    const images = [piece.image, ...(piece.original ? [piece.original] : [])];
+    const bytes = await Promise.all(
+      images.map(async (image) => new Uint8Array(await image.arrayBuffer())),
+    );
+    if (bytes.some((image) => !fitsModel(image)))
       return fail("dimensions", 400);
 
     const key = `all:${new Date().toISOString().slice(0, 10)}`;
     const count = Number((await env.LIMITS.get(key)) ?? 0);
     if (count >= Number(env.GLOBAL_DAILY_LIMIT)) return fail("limit", 429);
 
-    const shot = await generate(env, piece.image, studioPrompt(piece));
+    const shot = await generate(env, piece);
     if (shot === "limit") return fail("limit", 429);
     if (!shot) return fail("generate", 502);
     ctx.waitUntil(
@@ -80,7 +94,7 @@ export default {
       }),
     );
     return new Response(shot.bytes, {
-      headers: { "content-type": shot.type },
+      headers: { ...cors, "content-type": shot.type },
     });
   },
 } satisfies ExportedHandler<Env>;

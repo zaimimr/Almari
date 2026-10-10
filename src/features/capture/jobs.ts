@@ -32,6 +32,13 @@ export function jobPhoto(job: ImportJob): { photo: string; raw: boolean } {
     return { photo: job.region?.cutout ?? job.source, raw: !job.region };
   if (job.state === "failed" && job.region?.cutout)
     return { photo: job.region.cutout, raw: false };
+  if (
+    job.state !== "failed" &&
+    !job.keepOriginal &&
+    job.variant === "studio" &&
+    prepared.studio
+  )
+    return { photo: prepared.studio, raw: false };
   if (!prepared.cutout || job.keepOriginal || job.state === "failed")
     return { photo: prepared.original, raw: true };
   const enhanced = prepared.enhanced ?? null;

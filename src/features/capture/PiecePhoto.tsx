@@ -192,14 +192,17 @@ export function PiecePhoto({
             label: photoLabel(choice.id),
           }))}
           value={shownView}
-          onChange={onChange}
+          onChange={(next) => {
+            if (next === "studio" && !made && onMake) remake();
+            else onChange(next);
+          }}
           disabled={locked}
         />
       ) : null}
-      {made && onMake && !making ? (
+      {offersStudio && onMake && !making ? (
         <View style={styles.fix}>
           <Field
-            label={t("photo.aiFix")}
+            label={t(made ? "photo.aiFix" : "photo.aiDescribe")}
             placeholder={t("photo.aiFixHint")}
             value={fix}
             onChangeText={setFix}
@@ -213,7 +216,7 @@ export function PiecePhoto({
             <Button
               variant="secondary"
               icon="arrow.clockwise"
-              label={t("photo.aiAgain")}
+              label={t(made ? "photo.aiAgain" : "photo.clean")}
               disabled={disabled}
               onPress={remake}
               testID="photo-ai-again"

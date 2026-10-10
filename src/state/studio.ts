@@ -1,6 +1,7 @@
 import { getNetworkStateAsync } from "expo-network";
 import { useState } from "react";
 import type { Category, GarmentKind } from "../domain/taxonomy";
+import type { Frame } from "../domain/closet";
 import { t } from "../i18n";
 import ClosetVision from "../../modules/closet-vision/src";
 import {
@@ -13,6 +14,7 @@ import {
 } from "../storage/local";
 import { fixtures } from "../testing/fixtures";
 import { track } from "./telemetry";
+import { prepareStudioInput } from "./studioInput";
 
 export type StudioPiece = {
   category: Category;
@@ -20,6 +22,9 @@ export type StudioPiece = {
   name?: string;
   colour?: string | null;
   note?: string;
+  original?: string;
+  area?: Frame;
+  details?: string;
 };
 
 type StudioProblem = "offline" | "limit" | "failed";
@@ -49,15 +54,6 @@ async function fixtureStudio(source: string, id: string) {
     photoUri(source),
     `${id}-studio-${Date.now().toString(36)}`,
   );
-}
-
-async function studioInput(source: string, id: string) {
-  if (!ClosetVision.isAvailable()) return null;
-  try {
-    return await ClosetVision.studioInput(photoUri(source), id);
-  } catch {
-    throw new Error("failed");
-  }
 }
 
 export async function isOffline() {
@@ -92,19 +88,57 @@ async function makeStudio(
   piece: StudioPiece,
 ): Promise<string> {
   if (fixtures.studio) return fixtureStudio(source, id);
-  const input = await studioInput(source, id);
+  const temporary: string[] = [];
+  try {
+    const body = await studioForm(source, id, piece, temporary);
+    const { bytes, extension } = await requestStudio(body);
+    const name = `${id}-studio-${Date.now().toString(36)}`;
+    if (!ClosetVision.isAvailable())
+      return keepPhotoBytes(bytes, `${name}${extension}`);
+    const raw = await keepPhotoBytes(bytes, `${name}-raw${extension}`);
+    const clear = await clearStudio(raw, name);
+    if (!clear) return raw;
+    void discardPhoto(raw).catch(() => undefined);
+    return clear;
+  } finally {
+    for (const file of temporary)
+      void discardPhoto(file).catch(() => undefined);
+  }
+}
+
+async function studioForm(
+  source: string,
+  id: string,
+  piece: StudioPiece,
+  temporary: string[],
+) {
+  const input = await prepareStudioInput(source, `${id}-selection`);
+  temporary.push(input);
   const body = new FormData();
-  body.append("image", (await photoUpload(input ?? source)) as Blob);
+  body.append("image", (await photoUpload(input)) as Blob);
+  if (piece.original && piece.original !== source) {
+    const original = await prepareStudioInput(
+      piece.original,
+      `${id}-reference`,
+    );
+    temporary.push(original);
+    body.append("original", (await photoUpload(original)) as Blob);
+    if (piece.area) body.append("area", JSON.stringify(piece.area));
+  }
   body.append("category", piece.category);
   if (piece.kind) body.append("kind", piece.kind);
   if (piece.name?.trim()) body.append("name", piece.name.trim());
   if (piece.colour) body.append("colour", piece.colour);
   if (piece.note) body.append("note", piece.note);
+  if (piece.details) body.append("details", piece.details);
+  return body;
+}
+
+async function requestStudio(body: FormData) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), studioTimeout);
-  let response: Response;
-  let bytes: Uint8Array;
   try {
+    let response: Response;
     try {
       response = await fetch(studioUrl!, {
         method: "post",
@@ -121,25 +155,15 @@ async function makeStudio(
           ? "offline"
           : "failed",
       );
-    } finally {
-      if (input) void discardPhoto(input).catch(() => undefined);
     }
     if (response.status === 429) throw new Error("limit");
     if (!response.ok) throw new Error("failed");
-    bytes = new Uint8Array(await response.arrayBuffer());
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    const type = response.headers.get("content-type") ?? "";
+    return { bytes, extension: type.includes("png") ? ".png" : ".jpg" };
   } finally {
     clearTimeout(timer);
   }
-  const type = response.headers.get("content-type") ?? "";
-  const extension = type.includes("png") ? ".png" : ".jpg";
-  const name = `${id}-studio-${Date.now().toString(36)}`;
-  if (!ClosetVision.isAvailable())
-    return keepPhotoBytes(bytes, `${name}${extension}`);
-  const raw = await keepPhotoBytes(bytes, `${name}-raw${extension}`);
-  const clear = await clearStudio(raw, name);
-  if (!clear) return raw;
-  void discardPhoto(raw).catch(() => undefined);
-  return clear;
 }
 
 export async function clearStudio(

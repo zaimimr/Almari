@@ -1681,9 +1681,9 @@ export function savePiece(closet: Closet, piece: Piece): Closet {
 
 export function pieceVariant(piece: Piece): Variant | null {
   const { enhanced, plain, studio } = piece.variants ?? {};
+  if (studio && piece.photo === studio) return "studio";
   if (!enhanced || !plain) return null;
   if (piece.photo === enhanced) return "enhanced";
-  if (studio && piece.photo === studio) return "studio";
   if (piece.photo === plain) return "plain";
   return null;
 }
@@ -1694,14 +1694,16 @@ export function withVariant(piece: Piece, variant: Variant): Piece {
 }
 
 export function studioSource(piece: Piece): string | null {
-  if (!pieceVariant(piece)) return null;
-  return piece.variants!.plain!;
+  if (piece.source !== "owned") return null;
+  return piece.variants?.plain ?? piece.original ?? piece.photo;
 }
 
 export function withStudio(piece: Piece, studio: string): Piece {
-  if (!studioSource(piece)) return piece;
+  const source = studioSource(piece);
+  if (!source) return piece;
   return {
     ...piece,
+    original: piece.original ?? source,
     photo: studio,
     variants: { ...piece.variants, studio },
   };

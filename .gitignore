@@ -31,5 +31,6 @@ credentials.json
 
 # wrangler files
 .wrangler
+planning/build/studio/crop-eval/
 .dev.vars*
 !.dev.vars.example

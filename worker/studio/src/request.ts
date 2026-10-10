@@ -14,16 +14,19 @@ export type Category = (typeof categories)[number];
 
 export type StudioRequest = {
   image: File;
+  original?: File;
   category?: Category;
   kind?: string;
   name?: string;
   colour?: string;
   note?: string;
+  details?: string;
+  area?: { x: number; y: number; width: number; height: number };
 };
 
 export const maxImageBytes = 8 * 1024 * 1024;
 export const maxImageSide = 512;
-export const maxBodyBytes = maxImageBytes + 64 * 1024;
+export const maxBodyBytes = maxImageBytes * 2 + 64 * 1024;
 
 const imageTypes = ["image/png", "image/jpeg", "image/webp", "image/heic"];
 
@@ -52,6 +55,42 @@ export function parseStudioRequest(
     return { error: "image", status: 400 };
   if (image.size === 0) return { error: "image", status: 400 };
   if (image.size > maxImageBytes) return { error: "size", status: 413 };
+  const original = form.get("original");
+  if (original !== null) {
+    if (
+      !(original instanceof File) ||
+      !imageTypes.includes(original.type) ||
+      original.size === 0
+    )
+      return { error: "original", status: 400 };
+    if (original.size > maxImageBytes) return { error: "size", status: 413 };
+  }
+  const rawArea = form.get("area");
+  let area: StudioRequest["area"];
+  if (rawArea !== null) {
+    try {
+      const value = typeof rawArea === "string" ? JSON.parse(rawArea) : null;
+      if (
+        !value ||
+        ![value.x, value.y, value.width, value.height].every(Number.isFinite) ||
+        value.width <= 0 ||
+        value.height <= 0 ||
+        value.width > 4 ||
+        value.height > 4 ||
+        Math.abs(value.x) > 4 ||
+        Math.abs(value.y) > 4
+      )
+        return { error: "area", status: 400 };
+      area = {
+        x: value.x,
+        y: value.y,
+        width: value.width,
+        height: value.height,
+      };
+    } catch {
+      return { error: "area", status: 400 };
+    }
+  }
   const category = form.get("category");
   const kind = form.get("kind");
   if (
@@ -61,11 +100,14 @@ export function parseStudioRequest(
     return { error: "kind", status: 400 };
   return {
     image,
+    original: original ?? undefined,
     category: isCategory(category) ? category : undefined,
     kind: kind ?? undefined,
     name: text(form, "name", 60),
     colour: text(form, "colour", 40),
     note: text(form, "note", 200),
+    details: text(form, "details", 600),
+    area,
   };
 }
 

@@ -605,8 +605,9 @@ export function setImportLabel(
 }
 
 export function importStudioSource(job: ImportJob): string | null {
-  if (!job.prepared?.cutout || !job.prepared.enhanced) return null;
-  return job.prepared.cutout;
+  if (!job.prepared || (job.state !== "ready" && job.state !== "review"))
+    return null;
+  return job.prepared.cutout ?? job.prepared.original;
 }
 
 export function setImportStudio(
@@ -618,7 +619,12 @@ export function setImportStudio(
     if (job.state !== "ready" && job.state !== "review") return job;
     if (!job.prepared || !importStudioSource(job)) return job;
     const { studioStale: _stale, ...prepared } = job.prepared;
-    return { ...job, prepared: { ...prepared, studio }, variant: "studio" };
+    return {
+      ...job,
+      prepared: { ...prepared, studio },
+      keepOriginal: false,
+      variant: "studio",
+    };
   });
 }
 
@@ -832,7 +838,7 @@ export function pieceFromImport(job: ImportJob): Piece | null {
     return null;
   const useCutout = Boolean(job.prepared.cutout) && !job.keepOriginal;
   const enhanced = useCutout ? (job.prepared.enhanced ?? null) : null;
-  const studio = enhanced ? (job.prepared.studio ?? null) : null;
+  const studio = !job.keepOriginal ? (job.prepared.studio ?? null) : null;
   const cutoutPhoto =
     studio && job.variant === "studio"
       ? studio
@@ -852,12 +858,16 @@ export function pieceFromImport(job: ImportJob): Piece | null {
     ...(styles ? { styles } : {}),
     ...(job.traits ? { traits: job.traits } : {}),
     sources,
-    photo: useCutout ? cutoutPhoto : job.prepared.original,
-    ...(enhanced
+    photo:
+      studio && job.variant === "studio"
+        ? studio
+        : useCutout
+          ? cutoutPhoto
+          : job.prepared.original,
+    ...(enhanced || studio
       ? {
           variants: {
-            enhanced,
-            plain: job.prepared.cutout!,
+            ...(enhanced ? { enhanced, plain: job.prepared.cutout! } : {}),
             ...(studio ? { studio } : {}),
           },
         }

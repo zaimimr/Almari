@@ -117,14 +117,14 @@ describe("studioPrompt", () => {
     expect(kindOnly).toContain("clean front view");
   });
 
-  it("leaves the name out and adds the colour only when given", () => {
+  it("uses the item name and adds the colour only when given", () => {
     expect(studioPrompt({ category: "bottom" })).not.toContain("main colour");
     const prompt = studioPrompt({
       category: "bottom",
       name: "Denim shorts",
       colour: "light blue",
     });
-    expect(prompt).not.toContain("Denim shorts");
+    expect(prompt).toContain("Denim shorts");
     expect(prompt).toContain("Its main colour is light blue.");
   });
 
@@ -142,6 +142,59 @@ describe("studioPrompt", () => {
       prompt.indexOf("STUDIO STYLE"),
     );
   });
+
+  it("recovers a cropped item from the original and confirmed details", () => {
+    const prompt = studioPrompt({
+      original: png(),
+      category: "tunic",
+      name: "Long kameez",
+      details: "length ankle, sleeve long",
+      area: { x: 0.2, y: 0.3, width: 0.4, height: 0.2 },
+    });
+    expect(prompt).toContain("Image 1 is the selected item's cutout or crop");
+    expect(prompt).toContain("Image 2 is the original uncut photo");
+    expect(prompt).toContain("left 20 percent, top 30 percent");
+    expect(prompt).toContain("CONFIRMED DETAILS. length ankle, sleeve long");
+    expect(prompt).toContain("Reconstruct cropped or obscured parts");
+  });
+
+  it("does not force a corrected dress into the guessed trousers arrangement", () => {
+    const prompt = studioPrompt({
+      category: "bottom",
+      kind: "shorts",
+      note: "This is a full length sleeveless dress",
+    });
+    expect(prompt).toContain(
+      "presentation appropriate to the item described in the OWNER NOTE",
+    );
+    expect(prompt).not.toContain("both short legs naturally separated");
+    expect(prompt).not.toContain("never lengthen the legs");
+    expect(prompt).toContain("highest-priority description");
+  });
+  it("uses a descriptive item name over an incorrect automatic category even without a note", () => {
+    const prompt = studioPrompt({
+      category: "top",
+      kind: "t-shirt",
+      name: "Ivory chiffon hijab",
+    });
+    expect(prompt).toContain("Ivory chiffon hijab");
+    expect(prompt).toContain(
+      "Descriptive words about item type or construction override the automatic classification",
+    );
+    expect(prompt).not.toContain("It must stay t shirt");
+    expect(prompt).not.toContain("sleeves gently separated from the body");
+  });
+
+  it("lets confirmed construction resolve cropped length without a name or note", () => {
+    const prompt = studioPrompt({
+      category: "bottom",
+      kind: "shorts",
+      details: "length ankle",
+    });
+    expect(prompt).toContain("CONFIRMED DETAILS. length ankle");
+    expect(prompt).toContain("unconfirmed guess");
+    expect(prompt).not.toContain("never lengthen the legs into trousers");
+  });
 });
 
 describe("image header", () => {
@@ -156,6 +209,38 @@ describe("image header", () => {
 });
 
 describe("parseStudioRequest", () => {
+  it("validates the optional original photo and selection location", () => {
+    expect(
+      parseStudioRequest(
+        form({
+          image: png(),
+          original: png(),
+          area: JSON.stringify({ x: -0.02, y: 0.4, width: 0.3, height: 0.2 }),
+        }),
+      ),
+    ).toMatchObject({
+      original: expect.any(File),
+      area: { x: -0.02, y: 0.4, width: 0.3, height: 0.2 },
+    });
+    expect(
+      parseStudioRequest(form({ image: png(), original: "invalid" })),
+    ).toEqual({ error: "original", status: 400 });
+    expect(
+      parseStudioRequest(
+        form({ image: png(), original: png(maxImageBytes + 1) }),
+      ),
+    ).toEqual({ error: "size", status: 413 });
+    for (const area of [
+      "null",
+      "broken",
+      JSON.stringify({ x: 0, y: 0, width: 0, height: 1 }),
+      JSON.stringify({ x: "1", y: 0, width: 1, height: 1 }),
+    ])
+      expect(parseStudioRequest(form({ image: png(), area }))).toEqual({
+        error: "area",
+        status: 400,
+      });
+  });
   it("accepts an image with a category and kind", () => {
     const parsed = parseStudioRequest(
       form({
@@ -225,6 +310,24 @@ describe("parseStudioRequest", () => {
 });
 
 describe("worker", () => {
+  it("allows browser preflight and exposes generation errors to the app", async () => {
+    const context = setup();
+    const response = await worker.fetch(
+      new Request("https://studio.test", { method: "OPTIONS" }) as Request<
+        unknown,
+        IncomingRequestCfProperties
+      >,
+      context.env,
+      context.ctx,
+    );
+    expect(response.status).toBe(204);
+    expect(response.headers.get("access-control-allow-headers")).toContain(
+      "x-app-token",
+    );
+    expect(context.ai.run).not.toHaveBeenCalled();
+    const rejected = await call(context, { "x-app-token": "bad" });
+    expect(rejected.headers.get("access-control-allow-origin")).toBe("*");
+  });
   function setup(
     counts: Record<string, string> = {},
     run: (model: string, input: unknown) => Promise<unknown> = async () => ({
@@ -297,6 +400,55 @@ describe("worker", () => {
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({ error: "dimensions" });
     expect(context.ai.run).not.toHaveBeenCalled();
+  });
+
+  it("rejects an oversized original without invoking the model", async () => {
+    const context = setup();
+    const response = await call(
+      context,
+      {},
+      form({ image: png(), original: png(24, 1200, 800) }),
+    );
+    expect(response.status).toBe(400);
+    expect(context.ai.run).not.toHaveBeenCalled();
+  });
+
+  it("sends both selection and original to the model in the documented order", async () => {
+    const context = setup();
+    expect(
+      (
+        await call(
+          context,
+          {},
+          form({
+            image: png(24, 200, 100),
+            original: png(24, 400, 500),
+            name: "Long dress",
+            note: "ankle length",
+            details: "sleeve long",
+          }),
+        )
+      ).status,
+    ).toBe(200);
+    const input = context.ai.run.mock.calls[0]![1] as {
+      multipart: { body: ReadableStream; contentType: string };
+    };
+    const sent = await new Response(input.multipart.body, {
+      headers: { "content-type": input.multipart.contentType },
+    }).formData();
+    expect(
+      imageSize(
+        new Uint8Array(await (sent.get("input_image_0") as File).arrayBuffer()),
+      ),
+    ).toEqual({ width: 200, height: 100 });
+    expect(
+      imageSize(
+        new Uint8Array(await (sent.get("input_image_1") as File).arrayBuffer()),
+      ),
+    ).toEqual({ width: 400, height: 500 });
+    expect(sent.get("prompt")).toContain("Long dress");
+    expect(sent.get("prompt")).toContain("ankle length");
+    expect(sent.get("prompt")).toContain("sleeve long");
   });
 
   it("stops at the daily limit", async () => {
