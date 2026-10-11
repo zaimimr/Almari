@@ -88,6 +88,19 @@ struct VisionTests {
         try expect(pixels.contains(60 * 100 + 50), "Scarf over chest lost")
         try expect(!pixels.contains(30 * 100 + 50), "Face included")
       }),
+      ("manual selection preserves enclosed face and skin openings", {
+        let body: [ClothesClass] = [.face, .hair, .leftArm, .rightArm, .leftLeg, .rightLeg]
+        for label in body {
+          let source = grid([
+            (.scarf, 20..<80, 10..<80), (.hat, 20..<80, 10..<25),
+            (label, 30..<70, 25..<45),
+          ])
+          let picked = Set(GarmentRegions.picked(source, at: 15 * 100 + 40, person: true)?.pixels ?? [])
+          try expect(picked.contains(15 * 100 + 40), "Scarf cap lost")
+          try expect(picked.contains(60 * 100 + 50), "Scarf over chest lost")
+          try expect(!picked.contains(35 * 100 + 50), "Enclosed body region filled")
+        }
+      }),
       ("manual selection separates touching trousers from an upper garment", {
         let source = grid([(.upper, 20..<80, 20..<60), (.pants, 20..<80, 60..<90)])
         let upper = Set(GarmentRegions.picked(source, at: 40 * 100 + 40)?.pixels ?? [])

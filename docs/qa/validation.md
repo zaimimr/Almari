@@ -9,14 +9,14 @@ Checked on 11 October 2026 against the local source changes for this audit. Host
 | `npm run check`          | Passed                                          | Application types, test/Worker types, lint, formatting, offline domain/service/Worker tests and localized strings            |
 | Domain tests             | 642 passed                                      | Existing 622 tests plus 17 cross-feature journeys and 3 plan-date/missing-look regressions                                    |
 | Service and Worker tests | 131 passed                                      | Existing 29 Worker tests plus 63 scene/crop contracts, 19 app transport, 10 notification/export, 7 retailer and 3 native storage cases |
-| `npm run test:vision`    | 21 passed                                       | Compiled production Swift garment regions, cutout repair, Studio background and upload-input preparation with synthetic maps/pixels         |
+| `npm run test:vision`    | 22 passed                                       | Compiled production Swift garment regions, cutout repair, Studio background and upload-input preparation with synthetic maps/pixels         |
 | `npm run test:photos`    | 5 passed                                        | Actual local parser/selector, cutout crop and Studio input on four licensed photographs: head scarf, hanging trousers/jacket, worn blazer/jeans |
 | `npm run test:photo-gaps` | 1 failed                                        | Strict crowded-floor selection includes adjacent garments; this remains an open quality gate |
 | Domain coverage          | 98.21% lines, 91.42% branches, 91.40% functions | Loaded domain files only; UI, services, native parser and Worker coverage are not included in these percentages              |
 | Fresh iOS Release build  | Passed                                          | `xcodebuild` with the current source, iOS simulator target                                                                   |
 | Studio input preview     | Six prepared cases                              | Request and input hashes recorded locally; no inference                                                                      |
 
-The total is 799 passing automated tests, including 148 added during this audit, plus one retained failing real-photo quality test. This is not an all-green photo quality claim. Lint reports two existing unused-import warnings in `src/domain/importing.test.ts`; changed files pass without warnings. The coverage command enforces an 80% minimum for lines, branches and functions in its domain scope.
+The total is 800 passing automated tests, including 149 added during this audit, plus one retained failing real-photo quality test. This is not an all-green photo quality claim. Lint reports two existing unused-import warnings in `src/domain/importing.test.ts`; changed files pass without warnings. The coverage command enforces an 80% minimum for lines, branches and functions in its domain scope.
 
 The ordinary HTTP, HTTPS, socket and fetch APIs are disabled by `scripts/tests/no-network.mjs` in `npm run test:offline`. Service tests replace platform/native modules, and Worker tests replace inference with deterministic responses. This guard protects the ordinary test code from accidental network calls; it is not an operating-system network sandbox.
 

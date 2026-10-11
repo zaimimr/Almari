@@ -50,6 +50,8 @@ enum GarmentRegions {
     [ClothesClass.upper, .skirt, .pants, .dress, .scarf, .bag].map { UInt8($0.rawValue) })
   static let carried: Set<UInt8> = clothing.union(
     [ClothesClass.leftShoe, .rightShoe, .hat].map { UInt8($0.rawValue) })
+  static let body: Set<UInt8> = Set(
+    [ClothesClass.hair, .face, .leftArm, .rightArm, .leftLeg, .rightLeg].map { UInt8($0.rawValue) })
 
   static let lightnessWeight = 0.5
   static let colourGap = 18.0
@@ -102,7 +104,9 @@ enum GarmentRegions {
     {
       found = even
     }
-    return solid(found, width: grid.width, height: grid.height, gap: heldGap)
+    let sealed = solid(found, width: grid.width, height: grid.height, gap: heldGap)
+    let fabric = sealed.pixels.filter { !body.contains(grid.labels[$0]) }
+    return bounded(kind: sealed.kind, pixels: fabric, width: grid.width, total: grid.labels.count)
   }
 
   static func consistent(

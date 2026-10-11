@@ -3,9 +3,6 @@ import CoreImage
 import Vision
 
 final class CutoutSelector {
-  static let body: Set<UInt8> = Set(
-    [ClothesClass.hair, .face, .leftArm, .rightArm, .leftLeg, .rightLeg].map { UInt8($0.rawValue) })
-
   private struct Instances {
     let handler: VNImageRequestHandler
     let observation: VNInstanceMaskObservation
@@ -169,7 +166,7 @@ final class CutoutSelector {
       for x in 0..<grid.width {
         guard found.label(at: normalized(parse, x: x, y: y)) == label else { continue }
         inside += 1
-        if Self.body.contains(grid.labels[y * grid.width + x]) { skin += 1 }
+        if GarmentRegions.body.contains(grid.labels[y * grid.width + x]) { skin += 1 }
       }
     }
     return ClothesParser.showsPerson(skin: skin, mask: inside)
