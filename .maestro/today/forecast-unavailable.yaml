@@ -11,3 +11,7 @@ appId: com.zaimimran.almari
     timeout: 60000
 - assertNotVisible:
     id: "forecast-mark"
+- runFlow: ../lib/open-fit.yaml
+- assertVisible:
+    id: "fit-name"
+- assertVisible: "Wear this"

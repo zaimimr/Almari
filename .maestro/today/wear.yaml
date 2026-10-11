@@ -8,7 +8,9 @@ appId: com.zaimimran.almari
     visible:
       id: "home-fit-0"
     timeout: 10000
-- assertVisible: "Worn"
+- assertVisible:
+    id: "home-fit-0"
+    text: ".*, Worn"
 - tapOn: "Looks"
 - extendedWaitUntil:
     visible: "Looks"

@@ -1,6 +1,5 @@
 appId: com.zaimimran.almari
 # UC-F06-13
-# seed: fixture.sh failWrite=true
 ---
 - launchApp:
     permissions:

@@ -13,13 +13,27 @@ appId: com.zaimimran.almari
     id: "profile-morning"
 - tapOn:
     id: "morning-on-toggle"
-- tapOn:
-    id: "morning-weekdays-toggle"
-- tapOn:
-    id: "profile-morning"
+- assertVisible:
+    id: "morning-on-toggle"
+    checked: true
 - assertVisible: ".*07:00.*"
 - tapOn:
+    id: "morning-weekdays-toggle"
+- assertVisible:
+    id: "morning-weekdays-toggle"
+    checked: true
+- tapOn:
+    text: "Morning outfit"
+    index: 0
+- assertVisible: ".*07:00.*"
+- assertNotVisible:
+    id: "morning-time"
+- tapOn:
     id: "profile-morning"
+- assertVisible:
+    id: "morning-weekdays-toggle"
+    checked: true
+- takeScreenshot: docs/qa/screens/profile-runtime/reminders
 - tapOn:
     id: "morning-on-toggle"
 - assertNotVisible:

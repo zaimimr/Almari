@@ -9,4 +9,4 @@ appId: com.zaimimran.almari
     visible:
       id: "home-create"
     timeout: 60000
-- assertVisible: "Good afternoon, Sara"
+- assertVisible: "Good afternoon, Sara\\."

@@ -13,18 +13,28 @@ appId: com.zaimimran.almari
     id: "profile-body"
 - assertVisible:
     id: "body-height"
+- tapOn: "ft, lb"
+- assertVisible:
+    text: "ft, lb"
+    selected: true
 - swipe:
     from:
       id: "body-height"
     direction: LEFT
 - assertVisible:
     id: "body-height-clear"
+- assertVisible:
+    id: "body-height"
+    text: "[0-9]+ ft [0-9]+ in"
 - swipe:
     from:
       id: "body-weight"
     direction: RIGHT
 - assertVisible:
     id: "body-weight-clear"
+- assertVisible:
+    id: "body-weight"
+    text: "[0-9]+ lb"
 - scrollUntilVisible:
     element:
       id: "shape-hourglass"
@@ -34,3 +44,21 @@ appId: com.zaimimran.almari
     id: "onboarding-next"
 - assertVisible:
     id: "profile"
+- scrollUntilVisible:
+    element:
+      id: "profile-body"
+- tapOn:
+    id: "profile-body"
+- assertVisible:
+    text: "ft, lb"
+    selected: true
+- assertVisible:
+    id: "shape-hourglass"
+    selected: true
+- assertVisible:
+    id: "body-height"
+    text: "[0-9]+ ft [0-9]+ in"
+- assertVisible:
+    id: "body-weight"
+    text: "[0-9]+ lb"
+- takeScreenshot: docs/qa/screens/profile-runtime/body-imperial

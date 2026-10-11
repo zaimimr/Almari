@@ -10,7 +10,9 @@ appId: com.zaimimran.almari
 - tapOn: "Choose a date"
 - tapOn:
     id: "pick-2026-10-11"
-- assertVisible: "Sun 11 Oct"
+- assertVisible:
+    id: "when-pick"
+    text: "Sunday, 11 October 2026"
 - takeScreenshot: docs/redesign/screens/after/adjust/adjust
 - tapOn: "Show outfit"
 - extendedWaitUntil:
@@ -20,6 +22,10 @@ appId: com.zaimimran.almari
 - assertVisible: "Plan this"
 - assertNotVisible: "Wear this"
 - takeScreenshot: docs/redesign/screens/after/adjust/planning
+- scrollUntilVisible:
+    element:
+      id: "fit-another"
+    centerElement: true
 - tapOn:
     id: "fit-another"
 - extendedWaitUntil:
@@ -34,4 +40,12 @@ appId: com.zaimimran.almari
       id: "home-create"
     timeout: 10000
 - tapOn: "Looks"
-- assertVisible: "Planned for Sun 11 Oct"
+- assertVisible:
+    id: "look-.*"
+    text: ".*Planned for Sun 11 Oct.*"
+- assertVisible:
+    id: "week-2026-10-11"
+    text: "Sunday 11 October, .*"
+- assertNotVisible:
+    id: "week-2026-10-11"
+    text: ".*nothing planned"

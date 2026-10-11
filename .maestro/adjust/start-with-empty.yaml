@@ -1,14 +1,30 @@
 appId: com.zaimimran.almari
 # UC-F07-05
-# seed: seed-owned.sh
 ---
 - launchApp:
     permissions:
       all: allow
 - extendedWaitUntil:
-    visible: "Start with a piece"
+    visible:
+      id: "home-create"
     timeout: 60000
-- tapOn: "Start with a piece"
+- tapOn:
+    id: "home-create"
+- extendedWaitUntil:
+    visible:
+      id: "create-submit"
+    timeout: 10000
+- tapOn:
+    id: "create-more"
+- scrollUntilVisible:
+    element:
+      id: "create-start-with"
+    centerElement: true
+- tapOn:
+    id: "create-start-with"
 - assertVisible: "No pieces yet"
 - tapOn: "Add pieces"
-- assertVisible: "Add pieces"
+- extendedWaitUntil:
+    visible:
+      id: "capture-screen"
+    timeout: 20000

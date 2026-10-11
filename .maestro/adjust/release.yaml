@@ -3,10 +3,16 @@ appId: com.zaimimran.almari
 ---
 - runFlow: ../lib/sample-closet.yaml
 - runFlow: ../lib/open-fit.yaml
-- scrollUntilVisible:
-    element: "Keep.*"
-    timeout: 60000
-- tapOn: "Keep.*"
+- tapOn:
+    id: "outfit-piece-sample-.*-hijab"
+- extendedWaitUntil:
+    visible: "Change hijab.*"
+    timeout: 10000
+- tapOn:
+    id: "change-keep"
+- assertVisible:
+    id: "change-keep"
+    text: "(.*, )?checked"
 - runFlow: ../lib/open-adjust.yaml
 - scrollUntilVisible:
     element: "Stop keeping"

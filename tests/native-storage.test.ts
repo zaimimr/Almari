@@ -5,7 +5,11 @@ import { closetStorage } from "../src/storage/local.native";
 
 const native = vi.hoisted(() => ({
   values: new Map<string, string>(),
-  fixtures: {} as { failWrite?: boolean; failLookSave?: boolean },
+  fixtures: {} as {
+    failWrite?: boolean;
+    failLookSave?: boolean;
+    failStyleSave?: boolean;
+  },
 }));
 
 vi.mock("expo-sqlite/kv-store", () => ({
@@ -28,6 +32,7 @@ beforeEach(() => {
   native.values.clear();
   delete native.fixtures.failWrite;
   delete native.fixtures.failLookSave;
+  delete native.fixtures.failStyleSave;
 });
 
 it("normal native closet writes persist without fixture flags", async () => {
@@ -66,4 +71,33 @@ it("the existing next-write fault still fails once and allows retry", async () =
   expect(await closetStorage.read()).toBeNull();
   await closetStorage.write(value);
   expect(await closetStorage.read()).toBe(value);
+});
+
+it("a style-save fault survives startup writes, preserves the old style and permits retry", async () => {
+  const initial = {
+    ...emptyCloset,
+    styling: { ...emptyCloset.styling, everyday: null },
+  };
+  await closetStorage.write(JSON.stringify(initial));
+  native.fixtures.failStyleSave = true;
+  const prepared = { ...initial, photoTipsSeen: true };
+  await closetStorage.write(JSON.stringify(prepared));
+  expect(native.fixtures.failStyleSave).toBe(true);
+  const changed = JSON.stringify({
+    ...prepared,
+    styling: {
+      ...prepared.styling,
+      everyday: {
+        version: 1,
+        occasion: "work",
+        style: "western",
+        hijab: "always",
+        sample: true,
+      },
+    },
+  });
+  await expect(closetStorage.write(changed)).rejects.toThrow("fixture");
+  expect(await closetStorage.read()).toBe(JSON.stringify(prepared));
+  await closetStorage.write(changed);
+  expect(await closetStorage.read()).toBe(changed);
 });

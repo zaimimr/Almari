@@ -16,8 +16,7 @@ appId: com.zaimimran.almari
       id: "create-submit"
     timeout: 10000
 - tapOn:
-    id: "create-occasion"
-    text: "Party"
+    id: "create-occasion-party"
 - tapOn:
     id: "create-submit"
 - extendedWaitUntil:
@@ -37,8 +36,7 @@ appId: com.zaimimran.almari
       id: "create-submit"
     timeout: 10000
 - tapOn:
-    id: "create-occasion"
-    text: "Everyday"
+    id: "create-occasion-everyday"
 - tapOn:
     id: "create-submit"
 - extendedWaitUntil:

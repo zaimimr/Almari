@@ -1,6 +1,5 @@
 appId: com.zaimimran.almari
 # UC-F11-12
-# seed: sample with name
 ---
 - runFlow: ../lib/sample-closet.yaml
 - tapOn:
@@ -16,4 +15,4 @@ appId: com.zaimimran.almari
 - inputText: "Sara A"
 - tapOn: "Save"
 - tapOn: "Back"
-- assertVisible: "Good morning, Sara A|Good afternoon, Sara A|Good evening, Sara A|Hi, Sara A"
+- assertVisible: "(Good morning|Good afternoon|Good evening|Hi), Sara A\\."

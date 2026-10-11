@@ -39,6 +39,13 @@ appId: com.zaimimran.almari
 - takeScreenshot: docs/redesign/screens/after/today/another-ax5
 - takeScreenshot: docs/redesign/screens/after/today/today-scrolled-ax5
 - tapOn: "Wear this"
+- scrollUntilVisible:
+    element:
+      id: "home-fit-0"
+    centerElement: true
+    timeout: 30000
 - extendedWaitUntil:
-    visible: "Worn"
+    visible:
+      id: "home-fit-0"
+      text: ".*, Worn"
     timeout: 10000
