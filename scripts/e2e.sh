@@ -1,6 +1,11 @@
 #!/bin/bash
 set -e
 device="${DEVICE:-Closet Development}"
+fresh_media="${FRESH_MEDIA:-0}"
+if [ "$fresh_media" = "1" ] && [ "$device" != "Almari Systems QA" ]; then
+  printf 'FRESH_MEDIA requires the Almari Systems QA simulator.\n' >&2
+  exit 1
+fi
 app="ios/build/Build/Products/Release-iphonesimulator/Almari.app"
 if [ ! -d "$app" ] || [ "$REBUILD" = "1" ]; then
   xcodebuild -workspace ios/Almari.xcworkspace -scheme Almari -configuration Release -sdk iphonesimulator -derivedDataPath ios/build -quiet build
@@ -18,6 +23,13 @@ for folder in "$@"; do
     flows=("${folder%/}"/*.yaml)
   fi
   for flow in "${flows[@]}"; do
+    if [ "$fresh_media" = "1" ] && grep -qE '^[[:space:]]*- addMedia:' "$flow"; then
+      xcrun simctl shutdown "$device"
+      xcrun simctl erase "$device"
+      xcrun simctl boot "$device"
+      xcrun simctl bootstatus "$device" -b
+      xcrun simctl install "$device" "$app"
+    fi
     DEVICE="$device" sh .maestro/lib/clear.sh
     grep -E '^# seed: ' "$flow" | sed -E 's/^# seed: //' | perl -pe 's/,(?=[\w-]+\.sh)/\n/g' | while read -r line; do
       read -ra seed <<< "$line"

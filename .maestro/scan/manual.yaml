@@ -9,8 +9,7 @@ appId: com.zaimimran.almari
     timeout: 20000
 - tapOn: "Take (a )?photo"
 - extendedWaitUntil:
-    visible:
-      id: "tray-slot-1"
+    visible: "1 scanned: .*"
     timeout: 20000
 - tapOn:
     id: "header-switch"

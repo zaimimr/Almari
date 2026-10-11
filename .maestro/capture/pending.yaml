@@ -1,6 +1,5 @@
 appId: com.zaimimran.almari
 # UC-F02-15
-# seed: fresh.sh,fixture.sh slowPrepare=6000
 ---
 - addMedia:
     - "../../assets/wardrobe/ivory-hijab.png"
@@ -13,14 +12,19 @@ appId: com.zaimimran.almari
     env:
       COUNT: "1"
 - tapOn: "Back"
-- assertVisible: "1 new piece, getting ready"
+- assertVisible:
+    id: "moment-generating"
+    text: "1 new piece"
+- takeScreenshot: docs/qa/screens/capture/restart-pending
 - stopApp
 - launchApp
 - tapOn: "Closet"
 - extendedWaitUntil:
-    visible: "1 ready to add"
+    visible:
+      id: "progress-card"
+      text: "1 ready to add, Hijabs & scarves, 1 piece"
     timeout: 120000
-- assertVisible: "Hijabs & scarves 1"
+- takeScreenshot: docs/qa/screens/capture/restart-ready
 - tapOn:
     id: "progress-card"
 - assertVisible:

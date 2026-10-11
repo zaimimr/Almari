@@ -7,27 +7,17 @@ appId: com.zaimimran.almari
     visible: "Hold up a piece"
     timeout: 20000
 - extendedWaitUntil:
-    visible:
-      id: "moment-found"
+    visible: "[12] scanned: .*"
     timeout: 20000
 - extendedWaitUntil:
-    visible: "Hold still"
-    timeout: 20000
-- extendedWaitUntil:
-    visible:
-      id: "tray-slot-1"
-    timeout: 20000
-- assertNotVisible:
-    id: "scan-sticker"
-- extendedWaitUntil:
-    visible:
-      id: "tray-slot-2"
+    visible: "2 scanned: Sage kurta, Ivory chiffon hijab"
     timeout: 30000
 - takeScreenshot: docs/redesign/screens/after/scan/tray
 - tapOn: "Done"
 - assertVisible: "Pieces found"
 - assertVisible:
-    id: "review-thumb-1"
+    id: "group-card-1"
 - assertVisible:
-    id: "review-thumb-2"
+    id: "group-card-2"
+- assertVisible: "2 of 2"
 - assertVisible: "Link as a set"

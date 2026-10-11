@@ -19,7 +19,12 @@ appId: com.zaimimran.almari
 - tapOn: "Looks right"
 - assertVisible: "New piece"
 - assertNotVisible: "New piece, 2 left"
-- tapOn: "Blazer"
+- scrollUntilVisible:
+    element:
+      id: "confirm-kind-blazer"
+    centerElement: true
+- tapOn:
+    id: "confirm-kind-blazer"
 - tapOn: "Looks right"
 - assertVisible:
     id: "job-ready-2"

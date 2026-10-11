@@ -63,7 +63,6 @@ These requirements apply even where a single route contains several actions. New
 | B15 | I use large text, reduce motion, VoiceOver or Bokmål.                                                            | Actions remain reachable, selected states have labels, error recovery remains available, and translations share the same catalog keys.                      | i18n, motion, catalog; `*/large*.yaml`, `*/reduce-motion*.yaml`                            |
 | B16 | A low-confidence model proposes sleeve length, opacity, fabric or a colour.                                      | Unknown stays unknown; owner confirmations take precedence; a proposal cannot become a false coverage guarantee or false Studio detail.                     | attributes, facts, studio, coverage, importing                                             |
 | B17 | I open a planning link with no date, an impossible date, or a date for a look removed during planning.           | Invalid links return to Looks; invalid dates and missing looks preserve existing plans; a valid cold-launch plan returns to Looks and survives reopening.    | looks; `system/plan-deep-link.yaml`                                                        |
-
 | B18 | One garment in a grouped capture fails preparation. | The failed garment reports its error in its accessible label, opens the existing recovery screen and offers enabled Retake/Remove controls without losing the other parts. | `system/group-failed-recovery.yaml` |
 
 ## Complete feature suite inventory

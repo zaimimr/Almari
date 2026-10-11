@@ -15,3 +15,9 @@ appId: com.zaimimran.almari
 - assertVisible:
     text: "AI Enhanced"
     selected: true
+- tapOn: "Looks right"
+- tapOn:
+    id: "job-ready-1"
+- assertVisible:
+    text: "AI Enhanced"
+    selected: true

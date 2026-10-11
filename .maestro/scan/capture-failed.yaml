@@ -7,6 +7,5 @@ appId: com.zaimimran.almari
     visible: "Missed. Hold still."
     timeout: 20000
 - extendedWaitUntil:
-    visible:
-      id: "tray-slot-1"
+    visible: "[12] scanned: .*"
     timeout: 30000

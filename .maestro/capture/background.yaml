@@ -35,6 +35,8 @@ appId: com.zaimimran.almari
     visible:
       id: "today-outfit"
     timeout: 60000
+- tapOn: "Back"
+- tapOn: "Cancel"
 - tapOn: "Looks"
 - tapOn: "Closet"
 - extendedWaitUntil:

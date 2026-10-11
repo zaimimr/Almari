@@ -11,7 +11,7 @@ appId: com.zaimimran.almari
 - tapOn: "Blush"
 - assertVisible: "Colour: Blush"
 - tapOn: "Add 2 pieces"
-- tapOn: "Sage kurta"
+- tapOn: "Sage kurta.*"
 - assertVisible:
     id: "fact-colour"
-    text: "Colour: Blush"
+    text: "Colour: Blush, confirmed"
