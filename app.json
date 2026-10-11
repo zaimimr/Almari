@@ -2,11 +2,14 @@
   "expo": {
     "name": "Almari",
     "slug": "almari",
-    "version": "0.1.23",
+    "version": "0.1.24",
     "scheme": "almari",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
-    "platforms": ["ios", "web"],
+    "platforms": [
+      "ios",
+      "web"
+    ],
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.zaimimran.almari",
