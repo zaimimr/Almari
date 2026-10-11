@@ -22,12 +22,23 @@ final class CutoutSelector {
 
   private let photo: CIImage
   private let picture: CGImage
+  private let makeForegroundRequest: () -> VNGenerateForegroundInstanceMaskRequest
+  private let parsePhoto: (CIImage) -> (parse: ClothesParse, chroma: [SIMD2<Double>])?
+  private let renderMask: (CIImage) -> CGImage?
   private var instances: Instances??
   private var held: (parse: ClothesParse, chroma: [SIMD2<Double>])??
 
-  init(photo: CIImage, picture: CGImage) {
+  init(
+    photo: CIImage, picture: CGImage,
+    foregroundRequest: @escaping () -> VNGenerateForegroundInstanceMaskRequest,
+    parsePhoto: @escaping (CIImage) -> (parse: ClothesParse, chroma: [SIMD2<Double>])?,
+    renderMask: @escaping (CIImage) -> CGImage?
+  ) {
     self.photo = photo
     self.picture = picture
+    self.makeForegroundRequest = foregroundRequest
+    self.parsePhoto = parsePhoto
+    self.renderMask = renderMask
   }
 
   func select(at point: CGPoint) -> [UInt8]? {
@@ -117,7 +128,7 @@ final class CutoutSelector {
 
   private func foreground() -> Instances? {
     if let instances { return instances }
-    let request = GarmentPipeline.foregroundRequest()
+    let request = makeForegroundRequest()
     let handler = VNImageRequestHandler(cgImage: picture)
     var found: Instances?
     if (try? handler.perform([request])) != nil, let observation = request.results?.first,
@@ -144,7 +155,7 @@ final class CutoutSelector {
 
   private func parsed() -> (parse: ClothesParse, chroma: [SIMD2<Double>])? {
     if let held { return held }
-    let found = GarmentPipeline.shared.parseHeld(photo)
+    let found = parsePhoto(photo)
     held = .some(found)
     return found
   }
@@ -182,7 +193,7 @@ final class CutoutSelector {
     let y = Int((point.y * extent.height - (extent.height - area.maxY)) / area.height * CGFloat(grid.height))
     let index = min(grid.height - 1, max(0, y)) * grid.width + min(grid.width - 1, max(0, x))
     guard let region = GarmentRegions.picked(grid, at: index, chroma: chroma),
-      let mask = GarmentPipeline.shared.render(parse.mask(of: region).cropped(to: extent))
+      let mask = renderMask(parse.mask(of: region).cropped(to: extent))
     else { return nil }
     return Self.gray(mask, width: picture.width, height: picture.height)
   }

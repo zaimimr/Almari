@@ -1,0 +1,32 @@
+[
+  {
+    "file": "hijab-head.jpg",
+    "sha256": "311534a03913092c68acb232daa523ac03252b14053fd429e5f42186e308b9ef",
+    "source": "https://commons.wikimedia.org/wiki/File:Hijab_foto.jpg",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/a/a0/Hijab_foto.jpg",
+    "creator": "Daniel Zanini H.",
+    "license": "https://creativecommons.org/licenses/by/2.0/",
+    "changes": "None",
+    "scene": "Head-wrapped scarf extending over the chest, partly occluded by a hand",
+    "people": 1,
+    "kind": "head",
+    "pick": [0.3, 0.12],
+    "keep": [[0.3, 0.12], [0.78, 0.54], [0.55, 0.92]],
+    "exclude": [[0.42, 0.36], [0.48, 0.72], [0.87, 0.25]]
+  },
+  {
+    "file": "trousers-hanging.png",
+    "sha256": "2dbd86497c28cde5d1f7d99eff1b3c786a3980c0da359313c29750213decff93",
+    "source": "https://commons.wikimedia.org/wiki/File:Pants_hanger_in_use.png",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/e/eb/Pants_hanger_in_use.png",
+    "creator": "Th.Voekler",
+    "license": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "changes": "None",
+    "scene": "Folded trousers on a clamp hanger; the photo does not show the whole garment",
+    "people": 0,
+    "kind": "pants",
+    "pick": [0.2, 0.8],
+    "keep": [[0.2, 0.8], [0.75, 0.85], [0.12, 0.56]],
+    "exclude": [[0.12, 0.12], [0.86, 0.25]]
+  }
+]

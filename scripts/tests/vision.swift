@@ -76,6 +76,17 @@ struct VisionTests {
         let picked = GarmentRegions.picked(source, at: 50 * 100 + 20)
         try expect(picked != nil && picked!.maxX < 40, "Wrong garment selected")
       }),
+      ("manual head scarf selection keeps cap labels and excludes the face", {
+        let source = grid([
+          (.hat, 20..<80, 10..<25), (.scarf, 20..<30, 25..<40),
+          (.face, 30..<70, 25..<40), (.upper, 20..<80, 40..<80),
+        ])
+        let picked = GarmentRegions.picked(source, at: 15 * 100 + 30)
+        let pixels = Set(picked?.pixels ?? [])
+        try expect(pixels.contains(15 * 100 + 30), "Scarf cap lost")
+        try expect(pixels.contains(60 * 100 + 50), "Scarf over chest lost")
+        try expect(!pixels.contains(30 * 100 + 50), "Face included")
+      }),
       ("hanging trousers survive disconnected leg labels", {
         let source = grid([(.pants, 20..<40, 20..<80), (.pants, 60..<80, 20..<80)])
         let found = GarmentRegions.find(source, person: false).filter { $0.kind == "pants" }

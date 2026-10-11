@@ -64,7 +64,7 @@ enum GarmentRegions {
   static func picked(_ grid: LabelGrid, at index: Int, chroma: [SIMD2<Double>]? = nil) -> FoundRegion? {
     let width = grid.width
     let least = Double(grid.labels.count) * minComponentShare
-    let parts = components(grid, wanted: clothing).filter { Double($0.count) >= least }
+    let parts = components(grid, wanted: carried).filter { Double($0.count) >= least }
     let x = index % width
     let y = index / width
     func distance(_ part: [Int]) -> Int {

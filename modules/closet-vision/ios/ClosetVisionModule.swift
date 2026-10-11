@@ -149,6 +149,16 @@ func encodeEmbedding(_ embedding: [Float]) -> String? {
   return Data(bytes).base64EncodedString()
 }
 
+extension CutoutSelector {
+  convenience init(photo: CIImage, picture: CGImage) {
+    self.init(
+      photo: photo, picture: picture,
+      foregroundRequest: GarmentPipeline.foregroundRequest,
+      parsePhoto: { GarmentPipeline.shared.parseHeld($0) },
+      renderMask: { GarmentPipeline.shared.render($0) })
+  }
+}
+
 final class GarmentPipeline {
   static let shared = GarmentPipeline()
 
@@ -422,7 +432,7 @@ final class GarmentPipeline {
   func parseHeld(_ image: CIImage) -> (parse: ClothesParse, chroma: [SIMD2<Double>])? {
     queue.sync {
       guard let parse = try? loadParser().parse(image) else { return nil }
-      return (parse, chroma(image, parse: parse))
+      return (parse, parse.chroma(image, context: context))
     }
   }
 
@@ -629,24 +639,6 @@ final class GarmentPipeline {
       width: CGFloat(maxX - minX + 3) * scaleX, height: CGFloat(maxY - minY + 3) * scaleY
     ).integral.intersection(extent)
     return bounds.width >= 16 && bounds.height >= 16 ? bounds : nil
-  }
-
-  private func chroma(_ image: CIImage, parse: ClothesParse) -> [SIMD2<Double>] {
-    let width = parse.grid.width
-    let height = parse.grid.height
-    let area = parse.area
-    let small = image.cropped(to: area)
-      .transformed(by: CGAffineTransform(translationX: -area.minX, y: -area.minY))
-      .transformed(by: CGAffineTransform(scaleX: CGFloat(width) / area.width, y: CGFloat(height) / area.height))
-    var pixels = [UInt8](repeating: 0, count: width * height * 4)
-    context.render(
-      small, toBitmap: &pixels, rowBytes: width * 4, bounds: CGRect(x: 0, y: 0, width: width, height: height),
-      format: .RGBA8, colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
-    return (0..<width * height).map { index in
-      let lab = GarmentEnhancer.lab(
-        red: Double(pixels[index * 4]), green: Double(pixels[index * 4 + 1]), blue: Double(pixels[index * 4 + 2]))
-      return SIMD2(lab.a, lab.b)
-    }
   }
 
   private func elapsed(_ start: Date) -> Int { Int(Date().timeIntervalSince(start) * 1000) }

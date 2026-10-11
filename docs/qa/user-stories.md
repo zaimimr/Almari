@@ -77,10 +77,12 @@ These requirements apply even where a single route contains several actions. New
 | Outfit sessions and history              | today, day, feedback, looks, outfitName, outfitView, dates                                                                        |
 | Weather and reminders                    | weather, weatherTip, pieceWeather, notifications                                                                                  |
 | Colour profile and localization          | colourAnalysis, selfieGuide, i18n, hyphenate, motion, theme                                                                       |
-| Feature integration, added in this audit | journeys; Worker crop-matrix; `tests/app-transport`, `tests/services`, `tests/product-link-service`; `scripts/tests/vision.swift` |
+| Feature integration, added in this audit | journeys; Worker crop-matrix; `tests/app-transport`, `tests/services`, `tests/product-link-service`; `scripts/tests/vision.swift`, `scripts/tests/photos.swift` |
 
 ## Scope still requiring runtime evidence
 
 The story inventory covers every current non-layout route, including dynamic route variants. It does not assert exhaustive coverage of arbitrary user input or every OS interaction. Camera permissions, actual photo picking, native selfie/label models, share sheets, accessibility gestures and complete image fidelity require device/simulator or reviewed visual evidence. Current simulator seeds copy catalogue assets or recorded scan outputs; they do not establish recognition accuracy on new real head/outfit/hanging photographs.
+
+Two licensed photographs now exercise the actual local parser and manual selector outside the simulator: a head-wrapped hijab and folded hanging trousers. The [photo report](native-photos.md) records a repaired missing scarf cap, retained fabric/excluded person landmarks, parser diagnostics and the remaining scene and Studio-output gaps.
 
 New `system/` simulator flows cover product-link input, date-first planning, custom-list editing and statistics; execution outcomes are recorded separately. Retailer network, native share-sheet and notification-delivery behavior still need device evidence beyond service mocks. Re-run existing flows against the current app before interpreting older QA reports as current defects.

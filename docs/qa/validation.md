@@ -1,6 +1,6 @@
 # Execution evidence
 
-Checked on 11 October 2026 against the local source changes for this audit. All image inference in the tests is mocked. No live Studio evaluation or provider comparison was requested by the test commands.
+Checked on 11 October 2026 against the local source changes for this audit. Hosted generation is mocked. Two photograph tests run the packaged native models locally. No live Studio evaluation or provider comparison was requested by the test commands.
 
 ## Automated checks
 
@@ -9,12 +9,13 @@ Checked on 11 October 2026 against the local source changes for this audit. All 
 | `npm run check`          | Passed                                          | Application types, test/Worker types, lint, formatting, offline domain/service/Worker tests and localized strings            |
 | Domain tests             | 639 passed                                      | Existing 622 tests plus 17 cross-feature journeys                                                                            |
 | Service and Worker tests | 128 passed                                      | Existing 29 Worker tests plus 63 scene/crop contracts, 19 app transport, 10 notification/export and 7 retailer service cases |
-| `npm run test:vision`    | 12 passed                                       | Compiled production Swift garment regions, cutout repair and Studio background algorithms with synthetic maps/pixels         |
+| `npm run test:vision`    | 13 passed                                       | Compiled production Swift garment regions, cutout repair and Studio background algorithms with synthetic maps/pixels         |
+| `npm run test:photos`    | 2 passed                                        | Actual local parser and production selector on licensed head-wrapped hijab and hanging-trousers photos; marked fabric/exclusion points |
 | Domain coverage          | 98.25% lines, 91.40% branches, 91.39% functions | Loaded domain files only; UI, services, native parser and Worker coverage are not included in these percentages              |
 | Fresh iOS Release build  | Passed                                          | `xcodebuild` with the current source, iOS simulator target                                                                   |
 | Studio input preview     | Six prepared cases                              | Request and input hashes recorded locally; no inference                                                                      |
 
-The total is 779 passing automated tests, including 128 added during this audit. Lint reports two existing unused-import warnings in `src/domain/importing.test.ts`; changed files pass without warnings. The coverage command enforces an 80% minimum for lines, branches and functions in its domain scope.
+The total is 782 passing automated tests, including 131 added during this audit. Lint reports two existing unused-import warnings in `src/domain/importing.test.ts`; changed files pass without warnings. The coverage command enforces an 80% minimum for lines, branches and functions in its domain scope.
 
 The ordinary HTTP, HTTPS, socket and fetch APIs are disabled by `scripts/tests/no-network.mjs` in `npm run test:offline`. Service tests replace platform/native modules, and Worker tests replace inference with deterministic responses. This guard protects the ordinary test code from accidental network calls; it is not an operating-system network sandbox.
 
@@ -38,7 +39,7 @@ The fresh Release build runs on the dedicated `Almari Systems QA` iOS 27.0 simul
 | `looks/plan.yaml`             | Passed | Conflict confirmation replaces the plan; clearing its date restores unplanned state                     |
 | `change-piece/swap.yaml`      | Passed | Interactive hero garments open the swap control; a replacement applies and the control closes           |
 
-Eleven selected simulator flows passed across the audit builds. Weekly planning, garment swapping and plan replacement were rerun on the rebuilt preview-touch fix. Screenshots are saved under `docs/qa/screens/system/`, including the previously unresponsive filled tile and the working planned-look destination. The root-deep-link planner navigation failure remains an audit finding, distinct from the passing in-app weekly entry.
+Eleven selected simulator flows passed across the audit builds. Weekly planning, garment swapping and plan replacement were rerun on the rebuilt preview-touch fix. Native long-press selection and Done were rerun after the scarf-cap repair and selector constructor refactor; [the rebuilt editor screenshot](screens/system/native-cutout-selector.png) records that catalogue-garment flow. Screenshots are saved under `docs/qa/screens/system/`, including the previously unresponsive filled tile and the working planned-look destination. The root-deep-link planner navigation failure remains an audit finding, distinct from the passing in-app weekly entry.
 
 ## Reproduce without inference
 
@@ -46,15 +47,16 @@ Eleven selected simulator flows passed across the audit builds. Weekly planning,
 npm run check
 npm run test:offline -- --coverage
 npm run test:vision
+npm run test:photos
 node --import=./scripts/tests/no-network.mjs --import=tsx scripts/studio-eval.ts
 DEVICE='Almari Systems QA' bash scripts/e2e.sh .maestro/system
 ```
 
-`test:vision` needs macOS/Xcode; the preview needs ImageMagick. Simulator tests need a compatible installed iOS runtime and Maestro. The default Studio preview writes to ignored `planning/build/studio/crop-eval/preview/`, separately from historical outputs. Only the explicit `--live` flag permits inference.
+`test:vision` and `test:photos` need macOS/Xcode; the photo suite also needs the packaged `ClothesParser.mlmodelc`. The preview needs ImageMagick. Simulator tests need a compatible installed iOS runtime and Maestro. The default Studio preview writes to ignored `planning/build/studio/crop-eval/preview/`, separately from historical outputs. Only the explicit `--live` flag permits hosted inference.
 
 ## What these results cannot establish
 
-The crop matrix represents ten scene types with synthetic image headers and owner descriptions. It verifies the production request/prompt contract, not model recognition or reconstructed garment fidelity. Native tests verify selection and repair after synthetic segmentation, not the learned parser's accuracy on photographs. Simulator success copies a fixture image, rather than synthesizing a new one.
+The crop matrix represents ten scene types with synthetic image headers and owner descriptions. It verifies the production request/prompt contract, not model recognition or reconstructed garment fidelity. Synthetic native tests verify downstream selection and repair; two additional real-photo tests verify local selection at reviewed landmarks. Their [evidence and limits](native-photos.md) include a repaired scarf-cap omission and a raw parser category mismatch. Simulator Studio success copies a fixture image, rather than synthesizing a new one.
 
 Historical catalogue-like scarf, trousers and blazer output pairs were inspected locally. They show recoverable silhouettes and visible shadows, but lack reliable per-output request metadata and do not supply the requested full floor/hanging/head/body corpus. A current, provenance-aware visual comparison is still missing. No claim that every crop can be reconstructed correctly, or that one provider is the most reliable, follows from these results. The [analysis](system-analysis.md) specifies the missing corpus and review criteria.
 

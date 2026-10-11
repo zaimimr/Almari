@@ -14,6 +14,23 @@ struct ClothesParse {
   let extent: CGRect
   let people: Int
 
+  func chroma(_ image: CIImage, context: CIContext) -> [SIMD2<Double>] {
+    let width = grid.width
+    let height = grid.height
+    let small = image.cropped(to: area)
+      .transformed(by: CGAffineTransform(translationX: -area.minX, y: -area.minY))
+      .transformed(by: CGAffineTransform(scaleX: CGFloat(width) / area.width, y: CGFloat(height) / area.height))
+    var pixels = [UInt8](repeating: 0, count: width * height * 4)
+    context.render(
+      small, toBitmap: &pixels, rowBytes: width * 4, bounds: CGRect(x: 0, y: 0, width: width, height: height),
+      format: .RGBA8, colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
+    return (0..<width * height).map { index in
+      let lab = GarmentEnhancer.lab(
+        red: Double(pixels[index * 4]), green: Double(pixels[index * 4 + 1]), blue: Double(pixels[index * 4 + 2]))
+      return SIMD2(lab.a, lab.b)
+    }
+  }
+
   func mask(of classes: Set<ClothesClass>) -> CIImage {
     image(grid.labels.map { classes.contains(ClothesClass(rawValue: Int($0)) ?? .background) ? 255 : 0 })
   }
