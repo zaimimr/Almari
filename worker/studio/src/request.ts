@@ -25,6 +25,7 @@ export type StudioRequest = {
 };
 
 export const maxImageBytes = 8 * 1024 * 1024;
+export const minImageSide = 64;
 export const maxImageSide = 512;
 export const maxBodyBytes = maxImageBytes * 2 + 64 * 1024;
 
@@ -150,7 +151,13 @@ export function imageSize(
 
 export const fitsModel = (bytes: Uint8Array) => {
   const size = imageSize(bytes);
-  return !size || (size.width <= maxImageSide && size.height <= maxImageSide);
+  return (
+    !size ||
+    (size.width >= minImageSide &&
+      size.height >= minImageSide &&
+      size.width <= maxImageSide &&
+      size.height <= maxImageSide)
+  );
 };
 
 export function imageType(bytes: Uint8Array) {

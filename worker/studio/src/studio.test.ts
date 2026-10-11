@@ -422,6 +422,33 @@ describe("worker", () => {
     expect(context.ai.run).not.toHaveBeenCalled();
   });
 
+  it.each([
+    [34, 150],
+    [72, 54],
+    [62, 150],
+  ])("rejects a %i by %i selection before inference", async (width, height) => {
+    const context = setup();
+    const response = await call(
+      context,
+      {},
+      form({ image: png(24, width, height) }),
+    );
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: "dimensions" });
+    expect(context.ai.run).not.toHaveBeenCalled();
+  });
+
+  it("rejects an undersized original before inference", async () => {
+    const context = setup();
+    const response = await call(
+      context,
+      {},
+      form({ image: png(), original: png(24, 500, 63) }),
+    );
+    expect(response.status).toBe(400);
+    expect(context.ai.run).not.toHaveBeenCalled();
+  });
+
   it("sends both selection and original to the model in the documented order", async () => {
     const context = setup();
     expect(

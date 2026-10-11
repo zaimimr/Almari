@@ -1,8 +1,18 @@
 # Live Studio photograph review
 
-11 October 2026, after explicit approval for the 20 prepared requests. All 20 were attempted once against the configured live service: 17 returned decodable 1024-by-1024 images and three returned HTTP 502. No retries, deployment or provider change were performed. This is one batch on one service, not a provider comparison or an acceptance-rate estimate.
+Initial batch, 11 October 2026, after explicit approval for the 20 prepared requests. All 20 were attempted once against the configured live service: 17 returned decodable 1024-by-1024 images and three returned HTTP 502. No retries, deployment or provider change were performed in that batch. This is one batch on one service, not a provider comparison or an acceptance-rate estimate.
 
 The user accepted the nine results initially marked for owner review and confirmed the eight failures. Final batch result: nine accepted images, eight rejected images and three HTTP errors. The local [crop report](native-photos.md) remains separate: all ten original selection landmarks pass, while 12 of 56 extended crop variants fail.
+
+## Input dimension recovery
+
+The later 20-case run on deployment `31a07d09-455b-44b6-b82c-4b1e37eed137` returned 17 images and the same three fragment failures. A live Worker log identified `AiError: 3030: Invalid input image[0]: Image width must be at least 64 pixels and height at least 64 pixels`. The three inputs measured 34-by-150 (teal scarf), 72-by-54 (floor trousers) and 62-by-150 (floor jacket). These errors were input validation failures, not transient outages or content rejections.
+
+Native and web preparation now centre references on white padding when either side is below 64, preserving fabric scale and proportions. Worker validation rejects known undersized dimensions before inference. The evaluation harness applies the same padding, records failure latency and continues through failed cases. The Worker still bounds retries for transient provider failures.
+
+Deployment `542fc502-cffc-471e-b0f7-ebd067d3f5c1` uses the same Klein 4B model. All three padded fragments returned HTTP 200 and decodable 1024-by-1024 images: floor trousers in 8.4 seconds, floor jacket in 8.5 seconds and teal scarf in 14.2 seconds. Local records and comparisons are under `planning/build/studio/crop-eval/improvements/padded-recovery/`; the earlier repeated batch is under `deployed-recovery-20261011/`. Paid evaluations remain authorized by the user.
+
+This verifies recovery of these three dimension failures, not overall visual fidelity. The new floor trousers lose their washed texture; the floor jacket changes length and pocket construction. New outputs have not received owner acceptance. The initial acceptance table below remains historical evidence for its original batch.
 
 ## Results
 

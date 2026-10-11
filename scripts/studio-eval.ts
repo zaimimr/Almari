@@ -7,11 +7,16 @@ import type { StudioRequest } from "../worker/studio/src/request";
 
 const live = process.argv.includes("--live");
 const photos = process.argv.includes("--photos");
-const output = resolve(
-  "planning/build/studio/crop-eval",
-  ...(live ? [] : ["preview"]),
-  ...(photos ? ["real-photos"] : []),
-);
+const outputOption = process.argv
+  .find((argument) => argument.startsWith("--output="))
+  ?.slice("--output=".length);
+const output = outputOption
+  ? resolve(outputOption)
+  : resolve(
+      "planning/build/studio/crop-eval",
+      ...(live ? [] : ["preview"]),
+      ...(photos ? ["real-photos"] : []),
+    );
 mkdirSync(output, { recursive: true });
 const caseName = process.argv
   .slice(2)
@@ -211,6 +216,7 @@ if (caseName && !cases.some((entry) => entry.id === caseName))
   throw new Error(`Unknown Studio case: ${caseName}`);
 
 async function evaluate() {
+  let failures = 0;
   for (const entry of cases) {
     if (caseName && entry.id !== caseName) continue;
     const original = resolve(output, `${entry.id}-original.jpg`);
@@ -223,6 +229,10 @@ async function evaluate() {
       "remove",
       "-resize",
       "500x500>",
+      "-gravity",
+      "center",
+      "-extent",
+      "%[fx:max(w,64)]x%[fx:max(h,64)]",
       original,
     ]);
     execFileSync("magick", [
@@ -235,6 +245,10 @@ async function evaluate() {
       "remove",
       "-resize",
       "500x500>",
+      "-gravity",
+      "center",
+      "-extent",
+      "%[fx:max(w,64)]x%[fx:max(h,64)]",
       selected,
     ]);
     const image = new File([readFileSync(selected)], "selection.jpg", {
@@ -276,26 +290,69 @@ async function evaluate() {
         );
     }
     const started = Date.now();
-    const response = await fetch(studioUrl!, {
-      method: "POST",
-      headers: {
-        "x-app-token": studioToken!,
-        "x-install-id": "studio-crop-evaluation",
-      },
-      body: form,
-    });
+    let response: Response;
+    try {
+      response = await fetch(studioUrl!, {
+        method: "POST",
+        headers: {
+          "x-app-token": studioToken!,
+          "x-install-id": "studio-crop-evaluation",
+        },
+        body: form,
+        signal: AbortSignal.timeout(95000),
+      });
+    } catch (error) {
+      failures += 1;
+      writeFileSync(
+        recordPath,
+        JSON.stringify(
+          {
+            ...record,
+            elapsedMs: Date.now() - started,
+            status: null,
+            error: error instanceof Error ? error.name : "transport",
+            outputHash: null,
+          },
+          null,
+          2,
+        ),
+      );
+      console.log(`${entry.id}: transport failure`);
+      continue;
+    }
     if (
       !response.ok ||
       !response.headers.get("content-type")?.startsWith("image/")
-    )
-      throw new Error(`${entry.id}: generation failed (${response.status})`);
+    ) {
+      failures += 1;
+      writeFileSync(
+        recordPath,
+        JSON.stringify(
+          {
+            ...record,
+            elapsedMs: Date.now() - started,
+            status: response.status,
+            outputHash: null,
+          },
+          null,
+          2,
+        ),
+      );
+      console.log(`${entry.id}: generation failed (${response.status})`);
+      continue;
+    }
     const generated = resolve(output, `${entry.id}-result.jpg`);
     const bytes = Buffer.from(await response.arrayBuffer());
     writeFileSync(generated, bytes);
     writeFileSync(
       recordPath,
       JSON.stringify(
-        { ...record, elapsedMs: Date.now() - started, outputHash: hash(bytes) },
+        {
+          ...record,
+          elapsedMs: Date.now() - started,
+          status: response.status,
+          outputHash: hash(bytes),
+        },
         null,
         2,
       ),
@@ -317,6 +374,7 @@ async function evaluate() {
     ]);
     console.log(`${entry.id}: ${((Date.now() - started) / 1000).toFixed(1)}s`);
   }
+  if (failures) process.exitCode = 1;
 }
 
 void evaluate().catch((error) => {

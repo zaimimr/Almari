@@ -12,13 +12,21 @@ export async function prepareStudioInput(
     1,
     500 / Math.max(image.naturalWidth, image.naturalHeight),
   );
+  const width = Math.max(1, Math.floor(image.naturalWidth * scale));
+  const height = Math.max(1, Math.floor(image.naturalHeight * scale));
   const canvas = document.createElement("canvas");
-  canvas.width = Math.max(1, Math.floor(image.naturalWidth * scale));
-  canvas.height = Math.max(1, Math.floor(image.naturalHeight * scale));
+  canvas.width = Math.max(64, width);
+  canvas.height = Math.max(64, height);
   const context = canvas.getContext("2d");
   if (!context) throw new Error("failed");
   context.fillStyle = "white";
   context.fillRect(0, 0, canvas.width, canvas.height);
-  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+  context.drawImage(
+    image,
+    Math.floor((canvas.width - width) / 2),
+    Math.floor((canvas.height - height) / 2),
+    width,
+    height,
+  );
   return canvas.toDataURL("image/jpeg", 0.9);
 }

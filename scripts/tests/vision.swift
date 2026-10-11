@@ -355,6 +355,28 @@ struct VisionTests {
       ("Studio input refuses an empty image", {
         try expect(PhotoPreparation.studioInput(CIImage.empty(), context: CIContext()) == nil, "Empty input accepted")
       }),
+      ("Photo scaling keeps image extent aligned with integer mask dimensions", {
+        let source = CIImage(color: .white).cropped(to: CGRect(x: 0, y: 0, width: 3755, height: 5257))
+        let scaled = PhotoPreparation.scaled(source, longEdge: 2048)
+        try expect(scaled.extent == CGRect(x: 0, y: 0, width: 1463, height: 2048), "Fractional image extent retained")
+        let picture = CIContext().createCGImage(scaled, from: scaled.extent)!
+        try expect(CGSize(width: picture.width, height: picture.height) == scaled.extent.size, "Mask and source coordinate dimensions differ")
+      }),
+      ("Studio input pads narrow references without stretching fabric", {
+        let context = CIContext()
+        for size in [CGSize(width: 34, height: 150), CGSize(width: 72, height: 54), CGSize(width: 62, height: 150)] {
+          let source = CIImage(color: CIColor(red: 0.2, green: 0.3, blue: 0.4))
+            .cropped(to: CGRect(origin: .zero, size: size))
+          let input = PhotoPreparation.studioInput(source, context: context)!
+          try expect(input.extent == CGRect(x: 0, y: 0, width: max(64, size.width), height: max(64, size.height)), "Provider minimum not met")
+          let result = pixelsOf(context.createCGImage(input, from: input.extent)!)
+          try expect(Array(result[0..<4]) == [255, 255, 255, 255], "Padding was not white")
+          let middle = (Int(input.extent.height) / 2 * Int(input.extent.width) + Int(input.extent.width) / 2) * 4
+          for channel in 0..<3 {
+            try expect(abs(Int(result[middle + channel]) - [51, 77, 102][channel]) <= 2, "Fabric colour changed")
+          }
+        }
+      }),
     ]
     for (name, run) in tests {
       do {
