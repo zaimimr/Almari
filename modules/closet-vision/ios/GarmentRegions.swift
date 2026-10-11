@@ -322,8 +322,9 @@ enum GarmentRegions {
 
     let regions: [FoundRegion] = groups.compactMap { group in
       let share = Double(group.pixels.count) / Double(total)
-      guard share >= minRegionShare else { return nil }
       let kind = garmentOrder[group.kind]
+      let minimum = person && !covering.contains(kind) ? minComponentShare : minRegionShare
+      guard share >= minimum else { return nil }
       var member = [Bool](repeating: false, count: total)
       for index in group.pixels { member[index] = true }
       var minX = width

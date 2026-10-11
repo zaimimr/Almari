@@ -297,8 +297,6 @@ export const en = {
     "Keep the pieces that are yours and drop the rest. Each piece you keep gets its own closet image.",
   "capture.group.gone": "These pieces are no longer waiting",
   "capture.group.goneHint": "Your other photos are still waiting.",
-  "capture.othersIgnored":
-    "Other people were in this photo. Only the clothes of the person in front were used.",
   "capture.keep": "Keep",
   "capture.drop": "Drop",
   "capture.adjust": "Adjust crop",
@@ -306,7 +304,7 @@ export const en = {
   "capture.drawHint": "Drag across the photo to draw a box around the piece.",
   "capture.pickPiece": "Mark another piece",
   "capture.tapHint": "Tap a piece, or drag to draw a box",
-  "capture.alreadyFound": "Already found",
+  "capture.clearMarks": "Clear markings",
   "capture.chosen": "{count} of {total}",
   "capture.selectAll": "Select all",
   "capture.selectNone": "Select none",

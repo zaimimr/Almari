@@ -13,7 +13,7 @@ export type CaptureProposal = {
 export type CapturePlan = {
   proposals: CaptureProposal[];
   people: number;
-  notice: "others-ignored" | null;
+  notice: null;
   checkWhole: boolean;
 };
 
@@ -62,12 +62,12 @@ export function proposalsFromRegions(
   const parsed = found.filter(
     (region) =>
       region.kind !== "item" &&
-      (!region.partial || region.share >= minPartialShare),
+      (people > 0 || !region.partial || region.share >= minPartialShare),
   );
   const flatLay =
     parsed.filter((region) => region.share >= minPartialShare).length > 1;
   const regions = people === 0 && items.length && !flatLay ? items : parsed;
-  const notice = people > 1 ? "others-ignored" : null;
+  const notice = null;
   if (!regions.length || (people === 0 && regions.length === 1))
     return { proposals: [], people, notice, checkWhole: people > 1 };
   const proposals = [...regions]
@@ -80,7 +80,7 @@ export function proposalsFromRegions(
   return { proposals, people, notice, checkWhole: false };
 }
 
-export const minBox = 0.05;
+export const minBox = 0.015;
 
 export function coveredFrame(frame: Frame, aspect: number, box: number): Frame {
   if (aspect > box) {
@@ -121,37 +121,14 @@ export function resizeBox(box: Frame, step: number): Frame {
   };
 }
 
-export const minPick = 0.12;
-export const samePiece = 0.6;
-
-export function overlap(a: Frame, b: Frame): number {
-  const width = Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x);
-  const height = Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y);
-  if (width <= 0 || height <= 0) return 0;
-  const shared = width * height;
-  return shared / (a.width * a.height + b.width * b.height - shared);
-}
-
-export function matchingPiece(frames: (Frame | null)[], box: Frame): number {
-  let best = -1;
-  let score = samePiece;
-  frames.forEach((frame, index) => {
-    const value = frame ? overlap(frame, box) : 0;
-    if (value >= score) {
-      best = index;
-      score = value;
-    }
-  });
-  return best;
-}
-
+export const minPick = 0.04;
 function grow(start: number, size: number, least: number) {
   const next = Math.min(1, Math.max(size, least));
   const at = Math.min(1 - next, Math.max(0, start - (next - size) / 2));
   return { at, size: next };
 }
 
-export function pickedBox(frame: Frame, pad = 0.02): Frame {
+export function pickedBox(frame: Frame, pad = 0.005): Frame {
   const x = clamp(frame.x - pad);
   const y = clamp(frame.y - pad);
   const across = grow(x, clamp(frame.x + frame.width + pad) - x, minPick);

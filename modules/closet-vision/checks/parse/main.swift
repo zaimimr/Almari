@@ -46,7 +46,7 @@ check(cut.first?.partial == true, "skirt cut by the photo edge not partial")
 
 let small = GarmentRegions.find(
   grid([(.upper, 30, 10, 70, 40), (.bag, 5, 5, 7, 7), (.belt, 30, 45, 44, 49)]), person: true)
-check(small.map(\.kind) == ["upper"], "small regions kept: \(describe(small))")
+check(small.map(\.kind) == ["upper", "belt"], "small regions kept: \(describe(small))")
 
 let flatBlocks: [(ClothesClass, Int, Int, Int, Int)] = [
   (.upper, 10, 10, 40, 40), (.upper, 60, 10, 90, 40),

@@ -212,21 +212,23 @@ final class GarmentPipeline {
         loaded.transformed(by: CGAffineTransform(translationX: -loaded.extent.minX, y: -loaded.extent.minY)),
         longEdge: 2048)
       try FileManager.default.createDirectory(at: photos, withIntermediateDirectories: true)
-      let parse = try loadParser().parse(image)
+      let parses = try loadParser().parsePeople(image)
       var result = GarmentParse()
-      result.people = parse.people
-      for (index, region) in GarmentRegions.find(parse.grid, person: parse.people > 0).enumerated() {
-        let name = "\(id)-region-\(index + 1).png"
-        try write(regionCutout(image, parse: parse, region: region), to: name, extent: nil)
-        var record = GarmentRegionRecord()
-        record.kind = region.kind
-        record.cutout = name
-        record.frame = parse.frame(of: region)
-        record.share = region.share
-        record.partial = region.partial
-        result.regions.append(record)
+      result.people = parses.first?.people ?? 0
+      for parse in parses {
+        for region in GarmentRegions.find(parse.grid, person: parse.people > 0) {
+          let name = "\(id)-region-\(result.regions.count + 1).png"
+          try write(regionCutout(image, parse: parse, region: region), to: name, extent: nil)
+          var record = GarmentRegionRecord()
+          record.kind = region.kind
+          record.cutout = name
+          record.frame = parse.frame(of: region)
+          record.share = region.share
+          record.partial = region.partial
+          result.regions.append(record)
+        }
       }
-      if parse.people == 0 {
+      if result.people == 0 {
         result.regions += try items(image, id: id, after: result.regions.count)
       }
       return result
@@ -488,19 +490,25 @@ final class GarmentPipeline {
   }
 
   private let pickQueue = DispatchQueue(label: "closet.vision.pick")
-  private var picker: (uri: String, selector: CutoutSelector)?
+  private var picker: (uri: String, selector: CutoutSelector, parses: [ClothesParse])?
 
   func pickGarment(sourceUri: String, x: Double, y: Double) throws -> [String: Double]? {
     try pickQueue.sync {
-      let selector: CutoutSelector
-      if let picker, picker.uri == sourceUri {
-        selector = picker.selector
-      } else {
+      guard x.isFinite, y.isFinite, x >= 0, x < 1, y >= 0, y < 1 else { return nil }
+      if picker?.uri != sourceUri {
         let working = try workingPhoto(sourceUri: sourceUri)
-        selector = CutoutSelector(photo: working.image, picture: working.picture)
-        picker = (sourceUri, selector)
+        let parses = try queue.sync { try loadParser().parsePeople(working.image) }
+        picker = (sourceUri, CutoutSelector(photo: working.image, picture: working.picture), parses)
       }
-      return selector.garmentBox(at: CGPoint(x: x, y: y)).map(CutoutMapping.record)
+      guard let picker else { return nil }
+      let point = CGPoint(x: x, y: y)
+      if picker.parses.first?.people == 0 {
+        return picker.selector.garmentBox(at: point).map(CutoutMapping.record)
+      }
+      for parse in picker.parses {
+        if let frame = parse.garmentFrame(at: point) { return frame }
+      }
+      return nil
     }
   }
 

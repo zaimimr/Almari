@@ -163,9 +163,62 @@ func testPhoto(_ item: PhotoCase, photo: CIImage, parser: ClothesParser, context
   }
 }
 
+func testPersonFrames() throws {
+  let extent = CGRect(x: 0, y: 0, width: 1000, height: 1000)
+  var mask = [UInt8](repeating: 0, count: 10000)
+  for y in 10..<90 {
+    for x in 5..<35 { mask[y * 100 + x] = 1 }
+    for x in 65..<95 { mask[y * 100 + x] = 2 }
+  }
+  let first = ClothesParser.person(label: 1, count: 2, mask: mask, width: 100, height: 100, extent: extent)
+  let second = ClothesParser.person(label: 2, count: 2, mask: mask, width: 100, height: 100, extent: extent)
+  try require(first != nil && second != nil, "Both person instances need their own crop")
+  try require(first!.area.maxX < second!.area.minX, "Person crops combine two people")
+  try require(first!.count == 2 && second!.count == 2, "Person count lost")
+  try require(ClothesParser.person(label: 3, count: 2, mask: mask, width: 100, height: 100, extent: extent) == nil,
+    "Missing instance became a full-image crop")
+  var labels = [UInt8](repeating: 0, count: 10000)
+  for y in 20..<60 {
+    for x in 20..<80 { labels[y * 100 + x] = UInt8(ClothesClass.upper.rawValue) }
+  }
+  let parse = ClothesParse(grid: LabelGrid(width: 100, height: 100, labels: labels), area: second!.area, extent: extent, people: 2)
+  let at = CGPoint(x: second!.area.midX / extent.width, y: 1 - second!.area.midY / extent.height)
+  let frame = parse.garmentFrame(at: at)
+  try require(frame != nil && frame!["x"]! > 0.6, "Tap on second person uses the first person's bounds")
+  try require(parse.garmentFrame(at: CGPoint(x: 0.2, y: 0.5)) == nil, "Tap outside a person selects their clothing")
+  try require(parse.garmentFrame(at: CGPoint(x: .nan, y: 0.5)) == nil, "Non-finite tap accepted")
+  print("PASS separate person crops and tap coordinate mapping")
+}
+
+func testGroupPhoto(_ item: PhotoCase, folder: URL, parser: ClothesParser, context: CIContext, output: URL) throws {
+  let original = try readPhoto(item, folder: folder)
+  let photo = PhotoPreparation.scaled(original, longEdge: 900)
+  let smaller = photo.transformed(by: CGAffineTransform(scaleX: 0.75, y: 0.75))
+    .transformed(by: CGAffineTransform(translationX: photo.extent.width + 80, y: 0))
+  let extent = CGRect(x: 0, y: 0, width: photo.extent.width + 80 + smaller.extent.width, height: photo.extent.height)
+  let group = photo.composited(over: smaller).composited(over: CIImage(color: .white).cropped(to: extent))
+  let parses = try parser.parsePeople(group)
+  try require(parses.count == 2 && parses.allSatisfy { $0.people == 2 }, "Group capture did not analyse both people")
+  let frames = parses.map { parse in GarmentRegions.find(parse.grid, person: true).map { parse.normalizedFrame(of: $0) } }
+  try require(frames.allSatisfy { !$0.isEmpty }, "One person's visible clothes were ignored")
+  let left = photo.extent.width / extent.width
+  let right = (photo.extent.width + 80) / extent.width
+  try require(frames.contains { $0.allSatisfy { $0.maxX <= left } }, "Left person's garments were not isolated")
+  try require(frames.contains { $0.allSatisfy { $0.minX >= right } }, "Right person's garments were not isolated")
+  for (index, parse) in parses.enumerated() {
+    for region in GarmentRegions.find(parse.grid, person: true) {
+      try context.writePNGRepresentation(of: parse.cutout(group, region: region),
+        to: output.appendingPathComponent("group-\(index + 1)-\(region.kind).png"),
+        format: .RGBA8, colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
+    }
+  }
+  print("PASS group photo: separate clothes for both people, including the smaller person")
+}
+
 @main
 struct PhotoTests {
   static func main() throws {
+    try testPersonFrames()
     let arguments = CommandLine.arguments
     try require(arguments.count == 4, "Expected photo manifest, model and review paths")
     let manifest = URL(fileURLWithPath: arguments[1])
@@ -182,6 +235,9 @@ struct PhotoTests {
       folder: URL(fileURLWithPath: arguments[2]).deletingLastPathComponent(), configuration: segmentationConfig)
     let context = CIContext(options: [.workingColorSpace: CGColorSpace(name: CGColorSpace.sRGB)!])
     let parser = ClothesParser(model: model, context: context)
+    if let outfit = cases.first(where: { $0.file == "outfit-body.jpg" }) {
+      try testGroupPhoto(outfit, folder: manifest.deletingLastPathComponent(), parser: parser, context: context, output: output)
+    }
     var failures = 0
     var tested = 0
     let extended = ProcessInfo.processInfo.environment["PHOTO_VARIANTS"] == "1"

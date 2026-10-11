@@ -11,7 +11,6 @@ import {
   boxAround,
   boxFrom,
   holds,
-  matchingPiece,
   pickedBox,
   resizeBox,
   toggled,
@@ -60,7 +59,8 @@ import { useLargeText } from "../../../src/ui/useLargeText";
 const step = 0.05;
 const moveStep = 0.05;
 
-const handle = 28;
+const handle = 22;
+const dragThreshold = 4;
 
 type Point = { x: number; y: number };
 
@@ -110,13 +110,11 @@ export default function PiecesFound() {
   );
   const [picking, setPicking] = useState<Point | null>(null);
   const [picks, setPicks] = useState(0);
-  const [flash, setFlash] = useState<{ job: string; count: number } | null>(
-    null,
-  );
-  const [notice, setNotice] = useState<string | null>(null);
   const [added, setAdded] = useState(false);
   const pickRun = useRef(0);
   const gesture = useRef<Drag | null>(null);
+  const origin = useRef<Point>({ x: 0, y: 0 });
+  const [canvas, setCanvas] = useState({ width: 0, height: 0 });
   const [width, setWidth] = useState(0);
   const [aspect, setAspect] = useState(0.75);
   const [busy, setBusy] = useState(false);
@@ -158,36 +156,9 @@ export default function PiecesFound() {
     setDrawing((current) => (current ? { ...current, box } : current));
   }
 
-  function others(job: string | null) {
-    return jobs.filter((item) => item.id !== job && !foundNothing(item));
-  }
-
-  function alreadyFound(match: ImportJob) {
-    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    setFlash((current) => ({
-      job: match.id,
-      count: (current?.count ?? 0) + 1,
-    }));
-    if (dropped.includes(match.id)) {
-      setDropped((current) => toggled(current, match.id));
-      setNotice(null);
-      setDrawing(null);
-      return;
-    }
-    setNotice(t("capture.alreadyFound"));
-    setBox(null);
-  }
-
-  function duplicateOf(job: string | null, box: Frame) {
-    const candidates = others(job);
-    const match = matchingPiece(candidates.map(jobFrame), box);
-    return match >= 0 ? candidates[match]! : null;
-  }
-
   async function pick(at: Point) {
     if (!drawing || busy) return;
     const run = (pickRun.current += 1);
-    setNotice(null);
     setPicking(at);
     const found = await ClosetVision.pickGarment(
       photoUri(source),
@@ -199,11 +170,6 @@ export default function PiecesFound() {
     const picked = found ? pickedBox(found) : null;
     const hit = picked && holds(picked, at) ? picked : null;
     const box = hit ?? boxAround(at);
-    const match = hit ? duplicateOf(drawing.job, hit) : null;
-    if (match) {
-      alreadyFound(match);
-      return;
-    }
     void (hit
       ? Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
       : Haptics.selectionAsync());
@@ -233,7 +199,13 @@ export default function PiecesFound() {
       [box.x, box.y + box.height, box.x + box.width, box.y],
       [box.x + box.width, box.y + box.height, box.x, box.y],
     ] as const;
-    const corner = corners.find(([x, y]) => near(x, y));
+    const corner = corners
+      .filter(([x, y]) => near(x, y))
+      .sort(
+        ([ax, ay], [bx, by]) =>
+          Math.hypot((at.x - ax) * width, (at.y - ay) * height) -
+          Math.hypot((at.x - bx) * width, (at.y - by) * height),
+      )[0];
     if (corner)
       return {
         mode: "resize",
@@ -257,6 +229,14 @@ export default function PiecesFound() {
   }
 
   function drag(current: Drag, at: Point) {
+    if (
+      !current.moved &&
+      Math.hypot(
+        (at.x - current.start.x) * width,
+        (at.y - current.start.y) * height,
+      ) < dragThreshold
+    )
+      return;
     const box = drawing?.box;
     if (current.mode === "move" && box) {
       current.moved = true;
@@ -275,7 +255,6 @@ export default function PiecesFound() {
     if (!current.moved) {
       pickRun.current += 1;
       setPicking(null);
-      setNotice(null);
     }
     current.moved = true;
     setBox(next);
@@ -312,15 +291,22 @@ export default function PiecesFound() {
   }
 
   function startAdding() {
-    setNotice(null);
     setError(null);
     setDrawing({ job: null, box: null });
+  }
+
+  function clearMarks() {
+    void Haptics.selectionAsync();
+    setDropped(jobs.map((job) => job.id));
+    setDrawing({ job: null, box: null });
+    pickRun.current += 1;
+    setPicking(null);
+    setError(null);
   }
 
   function stopDrawing() {
     pickRun.current += 1;
     setPicking(null);
-    setNotice(null);
     setError(null);
     if (entry && !added && drawing?.job === null) router.back();
     else setDrawing(null);
@@ -329,11 +315,6 @@ export default function PiecesFound() {
   async function applyBox() {
     if (!drawing?.box || busy || picking) return;
     const { job, box } = drawing;
-    const match = scanned ? null : duplicateOf(job, box);
-    if (match) {
-      alreadyFound(match);
-      return;
-    }
     setBusy(true);
     setError(null);
     try {
@@ -344,7 +325,6 @@ export default function PiecesFound() {
       );
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setAdded(true);
-      setNotice(null);
       setDrawing(null);
     } catch {
       setError(t("capture.saveFailed"));
@@ -472,21 +452,29 @@ export default function PiecesFound() {
         else if (action === "right") moveBox(moveStep, 0);
       }}
       onAccessibilityEscape={stopDrawing}
-      onStartShouldSetResponder={() => true}
-      onMoveShouldSetResponder={() => true}
+      onStartShouldSetResponder={() => !busy}
+      onMoveShouldSetResponder={() => !busy}
       onResponderTerminationRequest={() => false}
       onResponderGrant={(event) => {
-        gesture.current = grab(
-          point(event.nativeEvent.locationX, event.nativeEvent.locationY),
-        );
+        const { pageX, pageY, locationX, locationY } = event.nativeEvent;
+        origin.current = { x: pageX - locationX, y: pageY - locationY };
+        pickRun.current += 1;
+        setPicking(null);
+        gesture.current = grab(point(locationX, locationY));
       }}
       onResponderMove={(event) => {
         const current = gesture.current;
         if (current)
           drag(
             current,
-            point(event.nativeEvent.locationX, event.nativeEvent.locationY),
+            point(
+              event.nativeEvent.pageX - origin.current.x,
+              event.nativeEvent.pageY - origin.current.y,
+            ),
           );
+      }}
+      onResponderTerminate={() => {
+        gesture.current = null;
       }}
       onResponderRelease={() => {
         const current = gesture.current;
@@ -549,7 +537,13 @@ export default function PiecesFound() {
     <View
       style={[
         styles.photo,
-        { backgroundColor: colors.sunken, aspectRatio: aspect },
+        {
+          backgroundColor: colors.sunken,
+          aspectRatio: aspect,
+          ...(drawing && canvas.width && canvas.height
+            ? { width: Math.min(canvas.width, canvas.height * aspect) }
+            : {}),
+        },
       ]}
       onLayout={(event) => setWidth(event.nativeEvent.layout.width)}
     >
@@ -567,7 +561,10 @@ export default function PiecesFound() {
         <ScanSweep />
       ) : null}
       {layered.map(({ job, number }) => {
-        if (drawing && (job.id === drawing.job || foundNothing(job)))
+        if (
+          dropped.includes(job.id) ||
+          (drawing && (job.id === drawing.job || foundNothing(job)))
+        )
           return null;
         const name = nameOf(job, number);
         return (
@@ -580,12 +577,10 @@ export default function PiecesFound() {
             order={number - 1}
             compact={ax}
             faint={Boolean(drawing)}
-            flash={flash?.job === job.id ? flash.count : 0}
             onToggle={() => toggle(job.id)}
             onAdjust={
               isSettled(job)
                 ? () => {
-                    setNotice(null);
                     setDrawing({ job: job.id, box: jobFrame(job) });
                   }
                 : undefined
@@ -603,11 +598,23 @@ export default function PiecesFound() {
       <Screen
         title={drawing.job ? t("capture.group.title") : t("capture.pickPiece")}
         headerTitleVisible
+        scroll={false}
         leading="cancel"
         onCancel={stopDrawing}
         footer={
           <Footer
             error={error}
+            actions={ax ? [] : undefined}
+            secondary={
+              kept.length
+                ? {
+                    label: t("capture.clearMarks"),
+                    onPress: clearMarks,
+                    disabled: busy,
+                    testID: "group-clear-marks",
+                  }
+                : undefined
+            }
             primary={{
               label: t("capture.useBox"),
               onPress: () => void applyBox(),
@@ -619,16 +626,23 @@ export default function PiecesFound() {
         }
         testID="group-screen"
       >
-        <View style={styles.content}>
-          {photo}
+        <View style={styles.drawingContent}>
+          <View
+            style={styles.canvas}
+            onLayout={(event) => {
+              const { width, height } = event.nativeEvent.layout;
+              setCanvas({ width, height });
+            }}
+          >
+            {photo}
+          </View>
           <Text
             role="footnote"
-            tone={notice ? "rose" : "muted"}
+            tone="muted"
             style={styles.hint}
-            accessibilityLiveRegion="polite"
             testID="group-hint"
           >
-            {notice ?? t("capture.tapHint")}
+            {t("capture.tapHint")}
           </Text>
         </View>
       </Screen>
@@ -763,13 +777,20 @@ export default function PiecesFound() {
           })}
         </ScrollView>
         {scanned ? null : (
-          <View style={styles.bleed}>
+          <View style={styles.markActions}>
             <Button
               label={t("capture.pickPiece")}
               icon="plus"
               variant="quiet"
               onPress={startAdding}
               testID="group-draw"
+            />
+            <Button
+              label={t("capture.clearMarks")}
+              variant="quiet"
+              disabled={busy || !kept.length}
+              onPress={clearMarks}
+              testID="group-clear-marks"
             />
           </View>
         )}
@@ -795,6 +816,12 @@ export default function PiecesFound() {
 
 const styles = StyleSheet.create({
   content: { gap: theme.space.lg },
+  drawingContent: {
+    flex: 1,
+    gap: theme.space.md,
+    paddingVertical: theme.space.md,
+  },
+  canvas: { flex: 1, alignItems: "center", justifyContent: "center" },
   photo: {
     width: "100%",
     borderRadius: theme.radius.md,
@@ -831,12 +858,17 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: theme.space.sm,
     right: theme.space.sm,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: theme.size.controlSmall,
+    height: theme.size.controlSmall,
+    borderRadius: theme.radius.full,
     borderWidth: 2,
     alignItems: "center",
     justifyContent: "center",
   },
-  bleed: { marginLeft: -theme.space.sm, alignSelf: "flex-start" },
+  markActions: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: theme.space.sm,
+    marginLeft: -theme.space.sm,
+  },
 });

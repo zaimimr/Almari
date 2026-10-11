@@ -1,0 +1,17 @@
+set -eu
+device="${DEVICE:-Closet Development}"
+data=$(xcrun simctl get_app_container "$device" com.zaimimran.almari data)
+closet=$(sqlite3 "$data/Documents/SQLite/ExpoSQLiteStorage" "select value from storage where key = 'closet.v3'")
+printf '%s' "$closet" | jq -e '
+  [.imports[] | select(.captureId == "group")] as $jobs |
+  [.pieces[] | select(.captureId == "group")] as $pieces |
+  ($jobs | length) + ($pieces | length) == 1 and
+  ([.imports[] | select(.id == "group" or .id == "group-2" or .id == "group-3")] | length) == 0 and
+  (if ($jobs | length) == 1 then
+    $jobs[0].crop.x > 0.35 and $jobs[0].crop.x < 0.65 and
+    $jobs[0].crop.width < 0.4 and $jobs[0].crop.height < 0.4
+  else
+    $pieces[0].cutoutArea.x > 0.1 and $pieces[0].cutoutArea.y > 0 and
+    $pieces[0].cutoutArea.width < 0.6 and $pieces[0].cutoutArea.height < 0.6
+  end)
+' >/dev/null

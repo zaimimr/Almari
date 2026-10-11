@@ -298,8 +298,6 @@ export const nb: Record<Key, string> = {
     "Behold plaggene som er dine, og fjern resten. Hvert plagg du beholder, får sitt eget bilde i garderoben.",
   "capture.group.gone": "Disse plaggene venter ikke lenger",
   "capture.group.goneHint": "De andre bildene dine venter fortsatt.",
-  "capture.othersIgnored":
-    "Det var flere personer i bildet. Bare klærne til personen foran ble brukt.",
   "capture.keep": "Behold",
   "capture.drop": "Fjern",
   "capture.adjust": "Juster utsnitt",
@@ -307,7 +305,7 @@ export const nb: Record<Key, string> = {
   "capture.drawHint": "Dra over bildet for å tegne en ramme rundt plagget.",
   "capture.pickPiece": "Marker et plagg til",
   "capture.tapHint": "Trykk på et plagg, eller dra for å tegne en ramme",
-  "capture.alreadyFound": "Allerede funnet",
+  "capture.clearMarks": "Fjern markeringer",
   "capture.chosen": "{count} av {total}",
   "capture.selectAll": "Velg alle",
   "capture.selectNone": "Velg ingen",

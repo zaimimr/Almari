@@ -187,10 +187,11 @@ test("splitting a link capture keeps the shop name on the first piece", () => {
   assert.equal(split.imports[1]!.linkName, undefined);
 });
 
-test("tiny cut-off regions are not proposed", () => {
+test("partly visible worn pieces remain available for review", () => {
   const plan = proposalsFromRegions(
     [region("upper", 0.4), region("pants", 0.3), region("shoes", 0.02, true)],
     1,
   );
-  assert.equal(plan.proposals.length, 2);
+  assert.equal(plan.proposals.length, 3);
+  assert.equal(plan.proposals[2]!.region.partial, true);
 });

@@ -1,0 +1,30 @@
+appId: com.zaimimran.almari
+---
+- launchApp
+- openLink: "almari://capture/group/group?add=1"
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "draw-area"
+    timeout: 60000
+- assertVisible:
+    id: "group-clear-marks"
+- swipe:
+    start: "40%, 34%"
+    end: "60%, 42%"
+    duration: 1500
+- assertVisible:
+    id: "draw-box"
+- assertVisible:
+    id: "group-use-box"
+    enabled: true
+- takeScreenshot: docs/qa/screens/capture/marking-large
+- tapOn:
+    id: "group-clear-marks"
+- assertNotVisible:
+    id: "draw-box"
+- assertVisible:
+    id: "draw-area"
+- takeScreenshot: docs/qa/screens/capture/marking-large-cleared

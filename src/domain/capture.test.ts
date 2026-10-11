@@ -7,10 +7,8 @@ import {
   boxFrom,
   categoryForRegion,
   coveredFrame,
-  matchingPiece,
   minBox,
   minPick,
-  overlap,
   pickedBox,
   proposalsFromRegions,
   resizeBox,
@@ -30,7 +28,7 @@ const region = (
   partial,
 });
 
-test("a group photo gives proposals for the person in front only and says others were ignored", () => {
+test("a group photo keeps proposals from every detected person", () => {
   const plan = proposalsFromRegions(
     [
       region("shoes"),
@@ -44,7 +42,7 @@ test("a group photo gives proposals for the person in front only and says others
     plan.proposals.map((proposal) => proposal.region.kind),
     ["head", "upper", "pants", "shoes"],
   );
-  assert.equal(plan.notice, "others-ignored");
+  assert.equal(plan.notice, null);
   assert.equal(plan.people, 3);
   assert.equal(plan.proposals[0]!.category, "hijab");
   assert.equal(plan.proposals[1]!.category, null);
@@ -201,30 +199,11 @@ test("pieces can be left out one by one or all at once", () => {
   assert.deepEqual(toggledAll(["a", "b", "c"], ["b"]), []);
 });
 
-test("a picked piece that covers one already found is matched instead of added twice", () => {
-  const found = [
-    { x: 0.3, y: 0, width: 0.4, height: 0.2 },
-    null,
-    { x: 0.2, y: 0.25, width: 0.6, height: 0.35 },
-  ];
-  assert.equal(
-    matchingPiece(found, { x: 0.22, y: 0.27, width: 0.56, height: 0.33 }),
-    2,
-  );
-  assert.equal(
-    matchingPiece(found, { x: 0.3, y: 0.62, width: 0.4, height: 0.36 }),
-    -1,
-  );
-  assert.ok(Math.abs(overlap(found[0]!, found[0]!) - 1) < 1e-9);
-  assert.equal(
-    overlap(found[0]!, { x: 0, y: 0.8, width: 0.1, height: 0.1 }),
-    0,
-  );
-});
-
 test("a picked piece gets a little room and never shrinks below a usable box", () => {
   const box = pickedBox({ x: 0.4, y: 0.4, width: 0.2, height: 0.3 });
-  assert.ok(Math.abs(box.x - 0.38) < 1e-9 && Math.abs(box.width - 0.24) < 1e-9);
+  assert.ok(
+    Math.abs(box.x - 0.395) < 1e-9 && Math.abs(box.width - 0.21) < 1e-9,
+  );
   const tiny = pickedBox({ x: 0.97, y: 0.5, width: 0.02, height: 0.01 });
   assert.ok(tiny.width >= minPick && tiny.height >= minPick);
   assert.ok(tiny.x + tiny.width <= 1 && tiny.x >= 0);
@@ -236,4 +215,30 @@ test("a pick that lands away from the tap is not the tapped piece", () => {
   const box = pickedBox({ x: 0.3, y: 0.4, width: 0.4, height: 0.4 });
   assert.equal(holds(box, { x: 0.5, y: 0.5 }), true);
   assert.equal(holds(box, { x: 0.5, y: 0.9 }), false);
+});
+
+test("group capture keeps separate garments of the same type and partially visible pieces", () => {
+  const first = region("upper", 0.3);
+  const second = {
+    ...region("upper", 0.2),
+    cutout: "second-upper.png",
+    frame: { x: 0.6, y: 0.2, width: 0.3, height: 0.4 },
+  };
+  const shoes = region("shoes", 0.025, true);
+  const plan = proposalsFromRegions([first, second, shoes], 2);
+  assert.deepEqual(
+    plan.proposals.map(({ region }) => region),
+    [first, second, shoes],
+  );
+  assert.equal(plan.people, 2);
+  assert.equal(plan.notice, null);
+});
+
+test("small manually drawn regions keep precise bounds inside a larger garment", () => {
+  const marked = boxFrom({ x: 0.4, y: 0.5 }, { x: 0.43, y: 0.52 });
+  assert.ok(marked);
+  assert.ok(Math.abs(marked.width - 0.03) < 1e-9);
+  assert.ok(Math.abs(marked.height - 0.02) < 1e-9);
+  const picked = pickedBox({ x: 0.4, y: 0.5, width: 0.04, height: 0.04 });
+  assert.ok(picked.width < 0.06 && picked.height < 0.06);
 });

@@ -62,6 +62,16 @@ struct ClothesParse {
       height: CGFloat(region.maxY - region.minY + 1) * scaleY / extent.height)
   }
 
+  func garmentFrame(at point: CGPoint) -> [String: Double]? {
+    guard point.x.isFinite, point.y.isFinite, point.x >= 0, point.x < 1, point.y >= 0, point.y < 1 else { return nil }
+    let x = (point.x * extent.width - area.minX) / area.width * CGFloat(grid.width)
+    let y = (point.y * extent.height - (extent.height - area.maxY)) / area.height * CGFloat(grid.height)
+    guard x >= 0, x < CGFloat(grid.width), y >= 0, y < CGFloat(grid.height) else { return nil }
+    let pixel = Int(y) * grid.width + Int(x)
+    return GarmentRegions.find(grid, person: people > 0)
+      .first(where: { $0.pixels.contains(pixel) }).map { frame(of: $0) }
+  }
+
   func frame(of region: FoundRegion) -> [String: Double] {
     let frame = normalizedFrame(of: region)
     return [
@@ -154,6 +164,16 @@ final class ClothesParser {
     return try parse(image, found: nil).parse
   }
 
+  func parsePeople(_ image: CIImage) throws -> [ClothesParse] {
+    guard let picture = context.createCGImage(image, from: image.extent) else { throw ParseError.unreadable }
+    let found = people(in: picture, extent: image.extent)
+    let results = try found.map { try parse(image, found: $0) }
+    guard results.contains(where: { Self.showsPerson(skin: $0.skin, mask: $0.mask) }) else {
+      return [try parseWhole(image)]
+    }
+    return results.map(\.parse)
+  }
+
   func parseWhole(_ image: CIImage) throws -> ClothesParse {
     try parse(image, found: nil).parse
   }
@@ -208,7 +228,7 @@ final class ClothesParser {
           if found.mask[my * found.width + mx] == found.label {
             inside += 1
             if body.contains(labels[y * Self.side + x]) { skin += 1 }
-          } else if !near[my * found.width + mx] {
+          } else if found.mask[my * found.width + mx] > 0 || !near[my * found.width + mx] {
             labels[y * Self.side + x] = 0
           }
         }
@@ -221,6 +241,10 @@ final class ClothesParser {
   }
 
   private func person(in picture: CGImage, extent: CGRect) -> Person? {
+    people(in: picture, extent: extent).first
+  }
+
+  private func people(in picture: CGImage, extent: CGRect) -> [Person] {
     let request = VNGeneratePersonInstanceMaskRequest()
     #if targetEnvironment(simulator)
       if let devices = try? request.supportedComputeStageDevices {
@@ -234,11 +258,11 @@ final class ClothesParser {
     let handler = VNImageRequestHandler(cgImage: picture)
     guard (try? handler.perform([request])) != nil, let observation = request.results?.first,
       !observation.allInstances.isEmpty
-    else { return nil }
+    else { return [] }
     let buffer = observation.instanceMask
     CVPixelBufferLockBaseAddress(buffer, .readOnly)
     defer { CVPixelBufferUnlockBaseAddress(buffer, .readOnly) }
-    guard let base = CVPixelBufferGetBaseAddress(buffer) else { return nil }
+    guard let base = CVPixelBufferGetBaseAddress(buffer) else { return [] }
     let width = CVPixelBufferGetWidth(buffer)
     let height = CVPixelBufferGetHeight(buffer)
     let row = CVPixelBufferGetBytesPerRow(buffer)
@@ -252,7 +276,13 @@ final class ClothesParser {
         if value > 0 { counts[value, default: 0] += 1 }
       }
     }
-    guard let label = counts.max(by: { $0.value < $1.value })?.key else { return nil }
+    return counts.keys.sorted { counts[$0]! > counts[$1]! }.compactMap { label in
+      Self.person(label: label, count: counts.count, mask: mask, width: width, height: height, extent: extent)
+    }
+  }
+
+  static func person(label: UInt8, count: Int, mask: [UInt8], width: Int, height: Int, extent: CGRect) -> Person? {
+    guard width > 0, height > 0, mask.count == width * height, label > 0 else { return nil }
     var minX = width
     var minY = height
     var maxX = -1
@@ -265,6 +295,7 @@ final class ClothesParser {
         maxY = max(maxY, y)
       }
     }
+    guard maxX >= minX, maxY >= minY else { return nil }
     let margin: CGFloat = 0.05
     let left = max(0, CGFloat(minX) / CGFloat(width) - margin)
     let right = min(1, CGFloat(maxX + 1) / CGFloat(width) + margin)
@@ -276,6 +307,6 @@ final class ClothesParser {
     ).integral.intersection(extent)
     guard !area.isEmpty else { return nil }
     return Person(
-      count: observation.allInstances.count, area: area, mask: mask, width: width, height: height, label: label)
+      count: count, area: area, mask: mask, width: width, height: height, label: label)
   }
 }

@@ -11,7 +11,7 @@ const keys = [
   "capture.group.intro",
   "capture.group.gone",
   "capture.group.goneHint",
-  "capture.othersIgnored",
+  "capture.clearMarks",
   "capture.keep",
   "capture.drop",
   "capture.adjust",

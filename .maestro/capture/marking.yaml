@@ -1,0 +1,66 @@
+appId: com.zaimimran.almari
+---
+- runFlow: ../lib/open-add.yaml
+- extendedWaitUntil:
+    visible: "3 pieces in one photo"
+    timeout: 120000
+- extendedWaitUntil:
+    notVisible:
+      id: "moment-generating"
+    timeout: 120000
+- tapOn: "3 pieces in one photo"
+- scrollUntilVisible:
+    element:
+      id: "group-draw"
+    centerElement: true
+- tapOn:
+    id: "group-draw"
+- swipe:
+    start: "40%, 32%"
+    end: "60%, 47%"
+    duration: 1500
+- assertVisible:
+    id: "draw-box"
+- takeScreenshot: docs/qa/screens/capture/marking-overlap
+- tapOn:
+    id: "group-use-box"
+- extendedWaitUntil:
+    visible: "4 of 4"
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      id: "group-clear-marks"
+    centerElement: true
+- tapOn:
+    id: "group-clear-marks"
+- assertVisible:
+    id: "draw-area"
+- assertNotVisible:
+    id: "draw-box"
+- takeScreenshot: docs/qa/screens/capture/marking-cleared
+- swipe:
+    start: "40%, 32%"
+    end: "60%, 47%"
+    duration: 1500
+- assertVisible:
+    id: "draw-box"
+- swipe:
+    start: "50%, 38%"
+    end: "55%, 42%"
+    duration: 1000
+- assertVisible:
+    id: "draw-box"
+- takeScreenshot: docs/qa/screens/capture/marking-after
+- tapOn:
+    id: "group-use-box"
+- extendedWaitUntil:
+    visible: "1 of 5"
+    timeout: 10000
+- extendedWaitUntil:
+    visible:
+      id: "group-done"
+      enabled: true
+    timeout: 120000
+- tapOn:
+    id: "group-done"
+- waitForAnimationToEnd

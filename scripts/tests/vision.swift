@@ -191,6 +191,15 @@ struct VisionTests {
         try expect(hijab.pixels.allSatisfy { source.labels[$0] == UInt8(ClothesClass.scarf.rawValue) }, "Face or outfit included")
         try expect(!found.contains { $0.kind == "face" }, "Face became a wardrobe item")
       }),
+      ("small worn accessories remain available for marking", {
+        let source = grid([
+          (.upper, 20..<80, 25..<75), (.belt, 20..<80, 75..<77),
+          (.sunglasses, 40..<60, 15..<18), (.bag, 5..<15, 40..<50),
+        ])
+        let found = GarmentRegions.find(source, person: true)
+        try expect(found.map(\.kind) == ["upper", "belt", "bag", "sunglasses"], "Visible accessories were dropped")
+        try expect(found.first { $0.kind == "belt" }?.pixels.count == 120, "Belt bounds changed")
+      }),
       ("manual selection targets the scarf beside another loose garment", {
         let source = grid([(.scarf, 10..<35, 20..<80), (.upper, 60..<90, 20..<80)])
         let picked = GarmentRegions.picked(source, at: 50 * 100 + 20)
