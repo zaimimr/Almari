@@ -1,0 +1,47 @@
+appId: com.zaimimran.almari
+---
+- addMedia:
+    - "../../tests/fixtures/vision/outfit-body.jpg"
+- launchApp
+- runFlow:
+    when:
+      visible:
+        id: "inspiration-screen"
+    commands:
+      - tapOn:
+          id: "BackButton"
+- scrollUntilVisible:
+    element:
+      id: "home-inspiration"
+- tapOn:
+    id: "home-inspiration"
+- extendedWaitUntil:
+    visible:
+      id: "inspiration-choose"
+    timeout: 30000
+- tapOn:
+    id: "inspiration-choose"
+- tapOn:
+    text: "Photo, [^,]+, [0-9:]+.*"
+    index: 0
+- tapOn:
+    text: "Add|Done|Choose"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "inspiration-outfit|inspiration-no-match"
+    timeout: 60000
+- assertVisible:
+    id: "inspiration-reference"
+- assertNotVisible:
+    id: "inspiration-error"
+- takeScreenshot: docs/qa/screens/system/photo-inspiration-native
+- tapOn:
+    id: "BackButton"
+- extendedWaitUntil:
+    visible: "Today"
+    timeout: 10000
+- scrollUntilVisible:
+    element:
+      id: "home-inspiration"
+    direction: DOWN

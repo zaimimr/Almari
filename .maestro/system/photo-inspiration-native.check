@@ -1,0 +1,10 @@
+#!/bin/sh
+set -eu
+device="${DEVICE:-Closet Development}"
+data=$(xcrun simctl get_app_container "$device" com.zaimimran.almari data)
+db="$data/Documents/SQLite/ExpoSQLiteStorage"
+closet=$(sqlite3 "$db" "select value from storage where key = 'closet.v3'")
+printf '%s' "$closet" | jq -e '.imports | length == 0' >/dev/null
+if find "$data/Library/Caches" -maxdepth 1 -name 'inspiration-*' | read -r ignored; then
+  exit 1
+fi

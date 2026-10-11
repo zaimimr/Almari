@@ -8,6 +8,8 @@ import {
 import { t } from "../../src/i18n";
 import { useAdjust } from "../../src/features/adjust/useAdjust";
 import { WhenRow } from "../../src/features/adjust/WhenRow";
+import { AdjustPresets } from "../../src/features/presets/AdjustPresets";
+import { PresetSettings } from "../../src/features/presets/PresetSettings";
 import {
   ChipRow,
   EmptyState,
@@ -60,6 +62,11 @@ export default function Adjust() {
         />
       }
     >
+      <AdjustPresets
+        request={request}
+        presets={closet.styling.presets ?? []}
+        onApply={adjust.applyPreset}
+      />
       <Section title={t("adjust.occasion")}>
         <ChipRow
           label={t("adjust.occasion")}
@@ -88,6 +95,13 @@ export default function Adjust() {
           onChange={(style) => set({ style })}
         />
       </Section>
+      <PresetSettings
+        value={request}
+        onChange={set}
+        id="adjust"
+        occasion={false}
+        style={false}
+      />
       <Section title={t("adjust.pieces")}>
         {kept.length ? (
           <Row

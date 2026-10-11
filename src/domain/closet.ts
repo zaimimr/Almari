@@ -512,6 +512,16 @@ export type OutfitRequest = {
 
 export type Feel = "comfy" | "smart" | "dressed";
 
+export type StylePreset = {
+  id: string;
+  name: string;
+  occasion: Occasion;
+  style: Style;
+  hijab: HijabPreference;
+  coverage?: CoverageNeed;
+  feel?: Feel;
+};
+
 export type Slot = "morning" | "afternoon" | "evening";
 
 export type DayFit = {
@@ -568,6 +578,7 @@ export type Styling = {
   fits?: Record<string, DayFit[]>;
   rules?: PersonalRule[];
   ruleAsked?: GarmentKind[];
+  presets?: StylePreset[];
 };
 
 export type Closet = {
@@ -1077,6 +1088,35 @@ function isRequest(value: unknown): value is OutfitRequest {
       ["comfy", "smart", "dressed"].includes(feel as string),
     )
   );
+}
+
+function cleanPresets(value: unknown): StylePreset[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const ids = new Set<string>();
+  const names = new Set<string>();
+  return value.filter((preset): preset is StylePreset => {
+    if (
+      !isRecord(preset) ||
+      !isString(preset.id) ||
+      !isString(preset.name) ||
+      preset.name !== preset.name.trim().replace(/\s+/gu, " ") ||
+      /[\u0000-\u001f\u007f-\u009f]/u.test(preset.name) ||
+      preset.name.length > 40 ||
+      !isOccasion(preset.occasion) ||
+      !isStyle(preset.style) ||
+      !isHijabPreference(preset.hijab) ||
+      !optional(preset.coverage, isCoverageNeed) ||
+      !optional(preset.feel, (feel): feel is Feel =>
+        ["comfy", "smart", "dressed"].includes(feel as string),
+      )
+    )
+      return false;
+    const name = preset.name.toLowerCase();
+    if (ids.has(preset.id) || names.has(name)) return false;
+    ids.add(preset.id);
+    names.add(name);
+    return true;
+  });
 }
 
 const isUnsetOr =
@@ -1597,6 +1637,7 @@ function withOnboardingState(closet: Closet): Closet {
       fits: fitDays,
       rules: listOf(isPersonalRule),
       ruleAsked: listOf(isKind),
+      presets: cleanPresets,
     },
   );
   const profile =

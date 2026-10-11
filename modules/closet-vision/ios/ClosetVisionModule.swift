@@ -29,6 +29,19 @@ struct GarmentParse: Record {
   @Field var people: Int = 0
 }
 
+struct InspirationGarmentRecord: Record {
+  @Field var region: String = ""
+  @Field var partial: Bool = false
+  @Field var labels: [LabelScore] = []
+  @Field var palette: [Swatch] = []
+  @Field var embedding: String? = nil
+}
+
+struct InspirationAnalysisRecord: Record {
+  @Field var garments: [InspirationGarmentRecord] = []
+  @Field var people: Int = 0
+}
+
 struct PrepareOptions: Record {
   @Field var cutout: String? = nil
   @Field var crop: [String: Double]? = nil
@@ -215,6 +228,38 @@ final class GarmentPipeline {
       }
       if parse.people == 0 {
         result.regions += try items(image, id: id, after: result.regions.count)
+      }
+      return result
+    }
+  }
+
+  func analyzeInspiration(sourceUri: String) throws -> InspirationAnalysisRecord {
+    try queue.sync {
+      let source = sourceUri.hasPrefix("file://") ? URL(string: sourceUri) : URL(fileURLWithPath: sourceUri)
+      guard let source, source.isFileURL,
+        let loaded = CIImage(contentsOf: source, options: [.applyOrientationProperty: true]) else {
+        throw PrepareError.unreadable
+      }
+      let image = scaled(
+        loaded.transformed(by: CGAffineTransform(translationX: -loaded.extent.minX, y: -loaded.extent.minY)),
+        longEdge: 2048)
+      let parse = try loadParser().parse(image)
+      let regions = InspirationRegions.extract(
+        photo: image, parse: parse, context: context,
+        cutout: { self.regionCutout(image, parse: parse, region: $0) },
+        foregroundRequest: Self.foregroundRequest)
+      try loadResources()
+      var result = InspirationAnalysisRecord()
+      result.people = parse.people
+      result.garments = try regions.prefix(12).map { region in
+        let vector = try embed(region.garment)
+        var garment = InspirationGarmentRecord()
+        garment.region = region.kind
+        garment.partial = region.partial
+        garment.labels = score(vector)
+        garment.palette = palette(region.garment, masked: true)
+        garment.embedding = encodeEmbedding(vector)
+        return garment
       }
       return result
     }
@@ -881,6 +926,10 @@ public class ClosetVisionModule: Module {
 
     AsyncFunction("parseGarments") { (sourceUri: String, id: String) throws -> GarmentParse in
       try GarmentPipeline.shared.parseGarments(sourceUri: sourceUri, id: id)
+    }
+
+    AsyncFunction("analyzeInspiration") { (sourceUri: String) throws -> InspirationAnalysisRecord in
+      try GarmentPipeline.shared.analyzeInspiration(sourceUri: sourceUri)
     }
 
     AsyncFunction("pickGarment") { (sourceUri: String, x: Double, y: Double) throws -> [String: Double]? in

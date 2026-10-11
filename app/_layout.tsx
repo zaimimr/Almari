@@ -109,6 +109,15 @@ function Screens() {
           options={{ title: t("home.create") }}
         />
         <Stack.Screen name="today/fit" options={{ title: t("fit.title") }} />
+        <Stack.Screen
+          name="today/inspiration"
+          options={{ title: t("inspiration.title") }}
+        />
+        <Stack.Screen
+          name="profile/presets"
+          options={{ title: t("presets.title") }}
+        />
+        <Stack.Screen name="looks/week" options={{ title: t("week.title") }} />
       </Stack>
     </View>
   );

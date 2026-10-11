@@ -405,6 +405,14 @@ export default function TodayScreen() {
           />
         </View>
         <Brief day={model.day} />
+        <Row
+          title={t("inspiration.title")}
+          leading={{ icon: "photo.on.rectangle" }}
+          trailing="chevron"
+          onPress={() => router.push("/today/inspiration")}
+          testID="home-inspiration"
+          last
+        />
         <DayLane model={model} units={units} />
         <Earlier model={model} />
       </View>

@@ -7,6 +7,7 @@ export type {
   CutoutEditorHandle,
   ForecastResult,
   GarmentParse,
+  InspirationAnalysis,
   GarmentRegion,
   GarmentRegionKind,
   LabelExtraction,

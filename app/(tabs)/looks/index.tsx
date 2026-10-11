@@ -31,6 +31,12 @@ export default function LooksScreen() {
             testID="header-build"
           />
           <HeaderItem
+            label={t("week.title")}
+            icon="calendar.badge.plus"
+            onPress={() => router.push("/looks/week")}
+            testID="header-plan-week"
+          />
+          <HeaderItem
             label={t("calendar.title")}
             icon="calendar"
             onPress={() => router.push("/looks/calendar")}

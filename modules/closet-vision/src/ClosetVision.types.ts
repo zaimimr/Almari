@@ -159,3 +159,14 @@ export type CutoutEditorHandle = {
   zoom(closer: boolean): Promise<void>;
   save(id: string): Promise<CutoutEdit>;
 };
+
+export type InspirationAnalysis = {
+  people: number;
+  garments: {
+    region: GarmentRegionKind;
+    partial: boolean;
+    labels: LabelScore[];
+    palette: Swatch[];
+    embedding: string | null;
+  }[];
+};

@@ -103,6 +103,12 @@ export default function Profile() {
         <View>
           <Rows>
             <Row
+              title={t("presets.title")}
+              trailing={{ value: String(closet.styling.presets?.length ?? 0) }}
+              onPress={() => router.push("/profile/presets")}
+              testID="profile-presets"
+            />
+            <Row
               title={t("never.title")}
               trailing={{ value: summary.never }}
               onPress={() => router.push("/profile/never")}

@@ -1,0 +1,54 @@
+appId: com.zaimimran.almari
+---
+- launchApp
+- extendedWaitUntil:
+    visible: "Today"
+    timeout: 30000
+- openLink: "almari://today/inspiration"
+- extendedWaitUntil:
+    visible:
+      id: "inspiration-choose"
+    timeout: 30000
+- tapOn:
+    id: "inspiration-choose"
+- extendedWaitUntil:
+    visible: "From your closet"
+    timeout: 60000
+- assertVisible:
+    id: "inspiration-reference"
+- scrollUntilVisible:
+    element:
+      id: "inspiration-another"
+    direction: DOWN
+- assertVisible:
+    id: "inspiration-outfit"
+- assertVisible:
+    id: "inspiration-another"
+- takeScreenshot: docs/qa/screens/system/photo-inspiration
+- tapOn:
+    id: "inspiration-another"
+- tapOn:
+    id: "inspiration-use"
+- extendedWaitUntil:
+    visible:
+      id: "today-outfit"
+    timeout: 30000
+- assertVisible:
+    id: "fit-wear"
+- openLink: "almari://today/inspiration"
+- extendedWaitUntil:
+    visible:
+      id: "inspiration-choose"
+    timeout: 30000
+- tapOn:
+    id: "inspiration-choose"
+- extendedWaitUntil:
+    visible: "From your closet"
+    timeout: 60000
+- tapOn:
+    id: "inspiration-save"
+- extendedWaitUntil:
+    notVisible:
+      id: "inspiration-screen"
+    timeout: 30000
+- takeScreenshot: docs/qa/screens/system/photo-inspiration-saved

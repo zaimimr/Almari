@@ -6,10 +6,14 @@ import {
   occasionOptions,
   styleOptions,
   type Feel,
+  type CoverageNeed,
+  type HijabPreference,
   type Occasion,
   type OutfitRequest,
   type Style,
+  type StylePreset,
 } from "../../src/domain/closet";
+import { applyStylePreset } from "../../src/domain/presets";
 import {
   parseBrief,
   slotOf,
@@ -30,6 +34,8 @@ import {
 } from "../../src/domain/today";
 import { forecastWeather } from "../../src/domain/weather";
 import { takePicked } from "../../src/features/adjust/useAdjust";
+import { AdjustPresets } from "../../src/features/presets/AdjustPresets";
+import { PresetSettings } from "../../src/features/presets/PresetSettings";
 import { degrees, skyIcon, whenLabel } from "../../src/features/today/sky";
 import { t } from "../../src/i18n";
 import { useCloset } from "../../src/state/closet";
@@ -79,12 +85,16 @@ export default function CreateFit() {
   const [when, setWhen] = useState<When>(
     fromBrief && whens.includes(fromBrief) ? fromBrief : firstWhen,
   );
-  const [feel, setFeel] = useState<Feel>(
+  const [feel, setFeel] = useState<Feel | undefined>(
     brief.feel ??
       (brief.occasion && brief.occasion !== "everyday" ? "smart" : "comfy"),
   );
   const [style, setStyle] = useState<Style>(
     brief.style ?? base?.style ?? "western",
+  );
+  const [hijab, setHijab] = useState<HijabPreference>(base?.hijab ?? null);
+  const [coverage, setCoverage] = useState<CoverageNeed | undefined>(
+    base?.coverage,
   );
   const [keptIds, setKeptIds] = useState<string[]>([]);
   const [hijabId, setHijabId] = useState<string | null>(null);
@@ -136,6 +146,25 @@ export default function CreateFit() {
       </Screen>
     );
 
+  const adjusted: OutfitRequest = {
+    ...base,
+    occasion,
+    style,
+    feel,
+    hijab,
+    coverage,
+    keptIds,
+  };
+
+  function applyPreset(next: StylePreset) {
+    const request = applyStylePreset(adjusted, next);
+    setOccasion(request.occasion);
+    setStyle(request.style);
+    setFeel(request.feel);
+    setHijab(request.hijab);
+    setCoverage(request.coverage);
+  }
+
   async function submit() {
     if (busy || !base) return;
     setBusy(true);
@@ -158,6 +187,8 @@ export default function CreateFit() {
           occasion,
           style,
           feel,
+          hijab,
+          coverage,
           garmentType: null,
           keptIds: kept,
           excludedIds: [],
@@ -217,6 +248,11 @@ export default function CreateFit() {
         />
       }
     >
+      <AdjustPresets
+        request={adjusted}
+        presets={closet.styling.presets ?? []}
+        onApply={applyPreset}
+      />
       <Section title={t("create.for")}>
         <ChipRow
           options={occasionOptions()}
@@ -274,10 +310,17 @@ export default function CreateFit() {
         </View>
       </Section>
       <Section title={t("create.feel")}>
-        <Segmented<Feel>
-          options={feels.map((id) => ({ id, label: t(`feel.${id}`) }))}
-          value={feel}
-          onChange={setFeel}
+        <ChipRow
+          options={[
+            { id: "default", label: t("coverage.noPreference") },
+            ...feels.map((id) => ({ id, label: t(`feel.${id}`) })),
+          ]}
+          value={feel ?? "default"}
+          onChange={(next) =>
+            typeof next === "string" &&
+            setFeel(next === "default" ? undefined : next)
+          }
+          testID="create-feel"
         />
       </Section>
       <Expander
@@ -299,6 +342,17 @@ export default function CreateFit() {
             value={style}
             onChange={setStyle}
           />
+          <PresetSettings
+            value={adjusted}
+            onChange={(change) => {
+              if ("hijab" in change) setHijab(change.hijab ?? null);
+              if ("coverage" in change) setCoverage(change.coverage);
+            }}
+            id="create"
+            occasion={false}
+            style={false}
+            feel={false}
+          />
           <Row
             title={
               kept.length
@@ -315,7 +369,7 @@ export default function CreateFit() {
             }
             testID="create-start-with"
           />
-          {hijabs.length && base.hijab === "always" ? (
+          {hijabs.length && hijab === "always" ? (
             <View style={styles.hijab}>
               <ChipRow
                 label={t("create.hijab")}

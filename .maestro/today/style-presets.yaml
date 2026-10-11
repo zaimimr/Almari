@@ -1,0 +1,93 @@
+appId: com.zaimimran.almari
+---
+- runFlow: ../lib/sample-closet.yaml
+- tapOn:
+    id: "home-create"
+- extendedWaitUntil:
+    visible:
+      id: "create"
+    timeout: 10000
+- tapOn:
+    id: "create-occasion-work"
+- tapOn:
+    id: "create-feel-smart"
+- tapOn:
+    id: "adjust-save-preset"
+- tapOn:
+    id: "adjust-preset-name"
+- inputText: "Office"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "adjust-preset-save"
+    direction: DOWN
+- tapOn:
+    id: "adjust-preset-save"
+- extendedWaitUntil:
+    visible: "Office"
+    timeout: 10000
+- stopApp
+- launchApp
+- openLink: "almari://profile/presets"
+- runFlow:
+    when:
+      visible: "Open"
+    commands:
+      - tapOn: "Open"
+- extendedWaitUntil:
+    visible:
+      id: "presets"
+    timeout: 10000
+- tapOn: "Office"
+- takeScreenshot: docs/qa/screens/system/style-presets
+- tapOn:
+    id: "preset-.*-name"
+- eraseText
+- inputText: "Workday"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "preset-.*-save"
+    direction: DOWN
+- tapOn:
+    id: "preset-.*-save"
+- extendedWaitUntil:
+    visible: "Workday"
+    timeout: 10000
+- openLink: "almari://today/create"
+- runFlow:
+    when:
+      visible: "Open"
+    commands:
+      - tapOn: "Open"
+- extendedWaitUntil:
+    visible:
+      id: "create"
+    timeout: 10000
+- tapOn: "Workday"
+- takeScreenshot: docs/qa/screens/system/style-presets-applied
+- tapOn:
+    id: "create-submit"
+- extendedWaitUntil:
+    visible:
+      id: "fit"
+    timeout: 10000
+- openLink: "almari://profile/presets"
+- runFlow:
+    when:
+      visible: "Open"
+    commands:
+      - tapOn: "Open"
+- extendedWaitUntil:
+    visible:
+      id: "presets"
+    timeout: 10000
+- tapOn: "Workday"
+- scrollUntilVisible:
+    element:
+      id: "preset-.*-remove"
+    direction: DOWN
+- tapOn:
+    id: "preset-.*-remove"
+- tapOn: "Remove"
+- assertNotVisible: "Workday"

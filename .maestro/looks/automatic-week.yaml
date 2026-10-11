@@ -1,0 +1,32 @@
+appId: com.zaimimran.almari
+---
+- runFlow: ../lib/sample-closet.yaml
+- tapOn: "Looks"
+- tapOn:
+    id: "header-plan-week"
+- extendedWaitUntil:
+    visible:
+      id: "plan-week"
+    timeout: 10000
+- assertVisible: "Weekdays and weekends"
+- tapOn:
+    id: "week-preview"
+- extendedWaitUntil:
+    visible:
+      id: "week-save"
+    timeout: 10000
+- assertVisible: "Edit week"
+- takeScreenshot: docs/qa/screens/system/automatic-week
+- tapOn:
+    id: "week-save"
+- extendedWaitUntil:
+    visible: "This week"
+    timeout: 10000
+- stopApp
+- launchApp
+- tapOn: "Looks"
+- tapOn:
+    id: "header-plan-week"
+- tapOn:
+    id: "week-preview"
+- assertVisible: ".*Already planned.*"

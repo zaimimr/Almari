@@ -4,6 +4,7 @@ import type {
   City,
   ForecastResult,
   GarmentParse,
+  InspirationAnalysis,
   LabelExtraction,
   PrepareOptions,
   PreparedGarment,
@@ -21,6 +22,7 @@ declare class ClosetVisionModule extends NativeModule {
     options?: PrepareOptions,
   ): Promise<PreparedGarment>;
   parseGarments(sourceUri: string, id: string): Promise<GarmentParse>;
+  analyzeInspiration(sourceUri: string): Promise<InspirationAnalysis>;
   pickGarment(sourceUri: string, x: number, y: number): Promise<Box | null>;
   studioInput(sourceUri: string, id: string): Promise<string>;
   clearBackground(sourceUri: string, id: string): Promise<string>;
@@ -49,6 +51,8 @@ export default native ?? {
     _id: string,
     _options?: PrepareOptions,
   ): Promise<PreparedGarment> => Promise.reject(new Error("unavailable")),
+  analyzeInspiration: (_sourceUri: string): Promise<InspirationAnalysis> =>
+    Promise.reject(new Error("unavailable")),
   parseGarments: (_sourceUri: string, _id: string): Promise<GarmentParse> =>
     Promise.reject(new Error("unavailable")),
   pickGarment: async (

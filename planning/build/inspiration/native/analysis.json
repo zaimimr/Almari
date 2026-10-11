@@ -1,0 +1,19 @@
+{
+  "garments" : [
+    {
+      "embeddingDimensions" : 768,
+      "kind" : "blouse",
+      "partial" : true,
+      "region" : "upper",
+      "score" : 0.15645654242634799
+    },
+    {
+      "embeddingDimensions" : 768,
+      "kind" : "jeans",
+      "partial" : true,
+      "region" : "pants",
+      "score" : 0.16309320490241053
+    }
+  ],
+  "people" : 1
+}

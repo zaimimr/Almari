@@ -3,6 +3,7 @@ import type {
   City,
   ForecastResult,
   GarmentParse,
+  InspirationAnalysis,
   LabelExtraction,
   PrepareOptions,
   PreparedGarment,
@@ -18,6 +19,8 @@ export default {
     _id: string,
     _options?: PrepareOptions,
   ): Promise<PreparedGarment> => Promise.reject(new Error("unavailable")),
+  analyzeInspiration: (_sourceUri: string): Promise<InspirationAnalysis> =>
+    Promise.reject(new Error("unavailable")),
   parseGarments: (_sourceUri: string, _id: string): Promise<GarmentParse> =>
     Promise.reject(new Error("unavailable")),
   pickGarment: async (

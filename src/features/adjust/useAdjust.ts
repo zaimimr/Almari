@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import { router, useFocusEffect } from "expo-router";
-import type { OutfitRequest } from "../../domain/closet";
+import type { OutfitRequest, StylePreset } from "../../domain/closet";
+import { applyStylePreset } from "../../domain/presets";
 import {
   activeSession,
   applyRequest,
@@ -73,6 +74,11 @@ export function useAdjust(keep?: string) {
   const set = (changes: Partial<OutfitRequest>) =>
     setRequest((current) => (current ? { ...current, ...changes } : current));
 
+  const applyPreset = (preset: StylePreset) =>
+    setRequest((current) =>
+      current ? applyStylePreset(current, preset) : current,
+    );
+
   const chooseDate = (next: string) => {
     setDate(next);
     const covered = forecastWeather(
@@ -128,6 +134,7 @@ export function useAdjust(keep?: string) {
     today,
     request,
     set,
+    applyPreset,
     date,
     localDate,
     tomorrow,

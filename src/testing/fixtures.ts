@@ -1,6 +1,7 @@
 import { File, Paths } from "expo-file-system";
 import type {
   ForecastResult,
+  InspirationAnalysis,
   SelfieReading,
 } from "../../modules/closet-vision/src";
 import type { NativeScanFrame } from "../domain/scan";
@@ -8,6 +9,8 @@ import type { CameraReading } from "../domain/selfieGuide";
 
 export type Fixtures = {
   now?: string;
+  inspiration?: InspirationAnalysis;
+  inspirationPhoto?: string;
   scan?: string;
   forecast?: ForecastResult | "fail";
   failWrite?: boolean;
