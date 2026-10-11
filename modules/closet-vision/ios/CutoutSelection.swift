@@ -1,5 +1,6 @@
 import CoreGraphics
 import CoreImage
+import OSLog
 import Vision
 
 final class CutoutSelector {
@@ -22,23 +23,39 @@ final class CutoutSelector {
   private let makeForegroundRequest: () -> VNGenerateForegroundInstanceMaskRequest
   private let parsePhoto: (CIImage) -> (parse: ClothesParse, colours: [SIMD3<Double>])?
   private let renderMask: (CIImage) -> CGImage?
+  private let segmentPhoto: ((CGPoint) throws -> [UInt8]?)?
   private var instances: Instances??
   private var held: (parse: ClothesParse, colours: [SIMD3<Double>])??
+  private var selection: (point: CGPoint, alpha: [UInt8])?
 
   init(
     photo: CIImage, picture: CGImage,
     foregroundRequest: @escaping () -> VNGenerateForegroundInstanceMaskRequest,
     parsePhoto: @escaping (CIImage) -> (parse: ClothesParse, colours: [SIMD3<Double>])?,
-    renderMask: @escaping (CIImage) -> CGImage?
+    renderMask: @escaping (CIImage) -> CGImage?,
+    segmentPhoto: ((CGPoint) throws -> [UInt8]?)? = nil
   ) {
     self.photo = photo
     self.picture = picture
     self.makeForegroundRequest = foregroundRequest
     self.parsePhoto = parsePhoto
     self.renderMask = renderMask
+    self.segmentPhoto = segmentPhoto
   }
 
   func select(at point: CGPoint) -> [UInt8]? {
+    guard point.x.isFinite, point.y.isFinite, point.x >= 0, point.x < 1, point.y >= 0, point.y < 1 else { return nil }
+    if let selection, selection.point == point { return selection.alpha }
+    if let segmentPhoto, parsed()?.parse.people == 0 {
+      do {
+        if let alpha = try segmentPhoto(point), alpha.count == picture.width * picture.height {
+          selection = (point, alpha)
+          return alpha
+        }
+      } catch {
+        Logger(subsystem: "ClosetVision", category: "selection").error("Garment segmentation failed: \(String(describing: error), privacy: .public)")
+      }
+    }
     if let found = foreground(), case let label = found.label(at: point), label > 0, !person(label, in: found),
       let buffer = try? found.observation.generateScaledMaskForImage(
         forInstances: IndexSet(integer: label), from: found.handler),
@@ -50,6 +67,16 @@ final class CutoutSelector {
   }
 
   func garmentBox(at point: CGPoint) -> CGRect? {
+    guard point.x.isFinite, point.y.isFinite, point.x >= 0, point.x < 1, point.y >= 0, point.y < 1 else { return nil }
+    if segmentPhoto != nil, parsed()?.parse.people == 0, let alpha = select(at: point) {
+      let inside = alpha.indices.filter { alpha[$0] > 128 }
+      guard let left = inside.map({ $0 % picture.width }).min(), let right = inside.map({ $0 % picture.width }).max(),
+        let top = inside.map({ $0 / picture.width }).min(), let bottom = inside.map({ $0 / picture.width }).max()
+      else { return nil }
+      return CGRect(
+        x: Double(left) / Double(picture.width), y: Double(top) / Double(picture.height),
+        width: Double(right - left + 1) / Double(picture.width), height: Double(bottom - top + 1) / Double(picture.height))
+    }
     if let found = foreground(), case let label = found.label(at: point), label > 0, !person(label, in: found),
       let box = Self.box(of: label, in: found)
     {

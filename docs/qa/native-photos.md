@@ -1,49 +1,56 @@
 # Native photograph evidence
 
-Checked on 11 October 2026 with `npm run test:photos` and `npm run test:photo-gaps`. The tests run the packaged Core ML clothes parser and Apple's Vision foreground selection locally, then use production cutout cropping and Studio input preparation. No hosted generation runs.
+Checked on 11 October 2026. The original five positive selections, four bundled gap photographs and separate local-download floor jacket pass their strict fabric/exclusion landmarks. The broader transformed-photo gate remains red: 44 of 56 variants pass, with 12 failures. No hosted generation runs.
 
-The positive suite has five selections from four photographs. Four additional photographs are strict failing gates: crowded floor trousers and three hanging scarf displays. Source pages, creators, licences, image changes and SHA-256 hashes are recorded in [the positive manifest](../../tests/fixtures/vision/sources.json) and [the unresolved manifest](../../tests/fixtures/vision/unresolved.json). Coordinates use the original photograph's top-left origin, normalized to its width and height. Each case verifies source hash, person count, selected fabric landmarks and exclusion landmarks. Parser category predictions are diagnostic; capture-region planning and the separate item recognizer are outside this suite.
+The tests exercise the packaged clothes parser, production manual selector, cutout bounds and Studio input preparation. Loose garments now use the packaged SAM 2.1 Small point segmenter, followed by source-pixel refinement. Worn garments retain the existing person-aware parser path. Production selection never reads fixture names, hashes, garment annotations or landmark coordinates.
 
-| Selection | Result | Evidence |
-| --------- | ------ | -------- |
-| Head-wrapped hijab | Passed after earlier repair | Cap, shoulder and chest fabric retained; face, hand and background excluded. |
-| Folded hanging trousers | Passed | Visible fabric retained and background excluded despite a parser dress prediction. The photograph does not show the complete trousers. |
-| Hanging dark jacket | Passed | Body and sleeve fabric retained; window and surrounding wall excluded. The source jacket is partly outside the frame. |
-| Worn white blazer | Passed after repair | Both sides and sleeves retained; black top, hand, face and background landmarks excluded. |
-| Worn blue jeans | Passed | Visible denim landmarks retained; white blazer, hand, face and background excluded. The legs extend outside the photograph. |
-| Crowded folded trousers on the floor | Failed | The selected foreground includes adjacent clothing and the sheet. Strict exclusion landmarks fail. |
-| Hand-dyed scarves drying on a line | Failed | Selecting the leftmost scarf includes a neighboring scarf. |
-| Solid-colour scarves tied on a display rail | Failed after person repair | Zero people now reported correctly; the chosen teal scarf still includes its blue neighbor. |
-| Patterned scarves on a display | Failed after person repair | Zero people now reported correctly; the selected red scarf still includes orange/blue neighbors. |
-| Folded black jacket on a wooden floor, separate local download | Failed | Body and neighbor landmarks pass, but the dangling hem drawstring is missing. |
+## Original photographs
 
-The earlier headscarf test exposed a missing cap: the parser labelled it `hat`, while manual selection accepted only clothing classes. Selection now includes the existing carried-garment classes while excluding skin, face and hair. The synthetic cap/scarf regression failed before that repair and passes afterwards.
+| Selection                                             | Result           | Evidence                                                                                                                |
+| ----------------------------------------------------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Head-wrapped hijab                                    | Passed           | Cap, shoulder and chest retained; face, hand and background excluded.                                                   |
+| Folded hanging trousers                               | Passed           | Fabric and background landmarks pass despite a diagnostic dress prediction. The source does not show complete trousers. |
+| Hanging dark jacket                                   | Passed           | Body and sleeves retained; window and wall excluded. The jacket is partly outside the frame.                            |
+| Worn white blazer                                     | Passed           | Both sides and sleeves retained; black top, hand, face and background excluded.                                         |
+| Worn blue jeans                                       | Passed           | Denim retained; blazer, hand, face and background excluded. Legs extend outside the frame.                              |
+| Crowded folded trousers on the floor                  | Repaired, passed | Selected trousers retained; adjoining garments and sheet excluded.                                                      |
+| Hand-dyed scarves drying on a line                    | Repaired, passed | Leftmost scarf retained; neighboring scarf excluded.                                                                    |
+| Solid-colour scarves tied on a rail                   | Repaired, passed | Selected teal scarf retained; blue neighbor excluded.                                                                   |
+| Patterned scarves on a display                        | Repaired, passed | Selected red scarf, including reviewed printed fabric, retained; orange and blue neighbors excluded.                    |
+| Folded black jacket on a wooden floor, local download | Repaired, passed | Body and dangling hem drawstring retained; adjacent jacket and floor excluded.                                          |
 
-The white blazer exposed another defect. Before the current repair, its selection included the adjoining black top. Chroma-only comparison cannot distinguish neutral black and white. Colour comparison now includes weighted lightness, and worn picked regions retain the seed's garment role. Head and upper labels can still join for wrapped scarves. Worn selections can retain matching fabric separated by arms or other occlusion; loose selections retain the selected component. Three new synthetic cases check adjoining upper/trouser separation, shaded neutral fabric and occluded worn versus separate loose garments. The corrected baseline passes the jeans selection before this repair. Its initially reported failure was an incorrect tap annotation on the white blazer, subsequently corrected against the source image.
+The loose-garment repair selects the tap-connected model component and uses original colours to recover attached thin details and small missing fabric areas. Broad neighboring regions are not added by the thin-detail recovery. Small-mask logits are interpolated before thresholding. Crop bounds come from the same refined selection, so retained cords also reach prepared inputs. Source-derived palettes, relative distances and connectivity apply across images rather than matching these photographs.
 
-A subsequent synthetic closed-scarf check exposed a hole-filling defect: the face enclosed by the scarf was added back into the selected mask. The pre-repair production probe failed. Final selection now removes known face, hair, arm and leg labels after hole filling; a new regression checks all six body classes while retaining cap and chest fabric. All five positive photograph cases still pass. This synthetic evidence does not establish recognition accuracy for an untested closed-wrap photograph.
+Six added native regressions cover diagonal thin details at three sizes and three colours, broad touching neighbors, existing cords and genuine openings, patterned fabric holes, component/anchor behavior and rectangular mask interpolation. The native suite has 29 passing cases. A review-artifact bug was also repaired: fractional Core Image widths were truncated when writing masks, shifting pixels between rows. Evidence now uses the actual rendered selection dimensions.
 
-Visual review of the saved simulator mask then caught a regression that those macOS photograph cases did not: the isolated ivory tunic lost large fabric sections. Restricting every selection to one parser role treated conflicting labels within a single loose garment as separate items. Role restriction now applies to worn selections; loose selections retain the selected connected garment across clothing labels. A new synthetic case failed before that repair and passes after it, while the worn upper/trouser separation regression remains enforced with an explicit person context. The rebuilt simulator screenshot restores the fabric. Post-flow checks read the actual saved PNG and source-coordinate mapping, require four fabric and two background landmarks, and record hashes in ignored `planning/build/studio/crop-eval/simulator/tunic.json`. The UI flow is marked failed if those disk landmarks fail.
+Model source, pinned revision and nine file hashes are recorded in [segmenter-source.json](../../modules/closet-vision/model/segmenter-source.json). [segmenter.py](../../modules/closet-vision/model/segmenter.py) verifies and compiles those sources. The three packaged models add approximately 90 MB. The resource bundle includes the model licence. Physical-device memory, inference latency and camera behavior remain unmeasured.
 
-The photograph harness also stopped whitening transparent references before selection. It now preserves source alpha and uses the production 2048-pixel working-photo scaler, matching the editor preprocessing. All five positive cases still pass. A separate transparent-catalogue probe passed on macOS even while the simulator image had holes; Vision device/platform differences mean the macOS selector results cannot replace simulator disk checks.
+## Broader gate
 
-A trial fallback for the crowded floor image was rejected: it lost fabric, included neighbours and broke other passing photographs. The production Vision foreground path remains unchanged. The floor case is retained as a failing test, without an expected-failure waiver or weakened landmarks. Run both photo commands to assess the requested scene coverage; the positive command alone is insufficient.
+Mirroring, clockwise rotation, a 600-pixel long edge and alternative taps at every reviewed fabric landmark reuse the original keep/exclude assertions. There are no expected-failure waivers. Alternative taps include a knot, printed fabric and a drawstring.
 
-The three new hanging photographs are real scarves, with `head` as the selected garment intent. Their use as a particular hijab style is not established by the source descriptions. The drying-line case fails exclusion at `[0.33, 0.4]`; the two display cases initially failed the independently reviewed zero-person expectation before selection. A diagnostic production probe found two Vision person instances and zero parsed body pixels in each display. The parser previously checked that mismatch only for exactly one instance. Its existing rejection now also checks multiple instances, so all four gap photos report zero people. The original five passing photo selections remain passing.
+| Suite                       | Passed | Failed | Remaining failures                                                                                                                                                                                        |
+| --------------------------- | ------ | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Positive-photo variants     | 24     | 2      | Mirrored scarf cap omitted; rotated white blazer includes black top.                                                                                                                                      |
+| Bundled gap variants        | 15     | 7      | One drying-scarf tap loses fabric; teal scarf mirror includes its neighbor, rotation loses its knot, two taps lose its body; patterned scarf rotation loses fabric and one print tap includes a neighbor. |
+| Local floor-jacket variants | 5      | 3      | Rotation, smaller input and tapping directly on the cord lose the cord.                                                                                                                                   |
 
-The display selections still include adjacent scarves. Full-mask review exposed orange/blue neighbor fragments in the patterned case that its first landmarks missed; three additional reviewed exclusion points now enforce that failure. The case was not accepted as a positive test. All four scene quality gates remain failing after the person repair. These checks do not establish detection accuracy for a real multiple-person photograph. The strict annotations are retained. The photographs are Changku88's [drying scarves](https://commons.wikimedia.org/wiki/File:Drying_hand-dyed_scarves.jpg), Yannick Bammert's [colourful scarves](https://commons.wikimedia.org/wiki/File:Colorful_scarves.jpg) and Erkaha's [patterned scarves](https://commons.wikimedia.org/wiki/File:Bunte_Tuecher.jpg). The manifest records their licences and unedited 960-pixel thumbnail hashes.
+The exact clockwise affine transform was rerun separately and retained the same failures. This is broader robustness evidence, not complete pixel ground truth. Hangers, rails and fine background fringes have no complete pixel-level exclusion gate. Same-colour overlapping garments, sheer fabric, multiple people and further independent scenes need evidence. The original five repaired defects do not imply universal selection accuracy.
 
-Each case that reaches selection writes parser diagnostics, full-source selection mask, transparent cropped cutout, prepared Studio input and JSON metadata to ignored `planning/build/studio/crop-eval/native-photos/`. Metadata includes source, mask and prepared-input hashes, crop bounds, input dimensions and `inference: false`. Artifacts are written before landmark assertions, so their existence does not imply a passing case. The production input helper enforces the 500-pixel limit; a separate native test checks top-left crop coordinates and retained source orientation.
+```sh
+npm run test:vision
+npm run test:photos
+npm run test:photo-gaps
+npm run test:photo-variants
+PHOTO_VARIANTS=1 npm run test:photo-gaps
+PHOTO_VARIANTS=1 bash scripts/test-photo-vision.sh tests/fixtures/vision/external.json
+```
 
-The blazer's [before mask](screens/native/blazer-before-mask.png) and [after mask](screens/native/blazer-after-mask.png) share the source dimensions. The [prepared input](screens/native/blazer-input.png) is cropped and whitened, not a generated Studio output. These derivatives use SkajaLee's [portrait photograph](https://commons.wikimedia.org/wiki/File:2021_urban_summer_fashion,_Andrea_Martinez_portrait.jpeg), licensed [CC BY-SA 2.0](https://creativecommons.org/licenses/by-sa/2.0/); the mask/input transformations are described above and the derivatives retain that licence.
+## Sources and artifacts
 
-The older parser smoke check also ran on all 23 wardrobe catalogue images. It permits category mismatches and missed garment regions, so a pass does not establish recognition accuracy.
+Source pages, creators, licences, changes and SHA-256 hashes are recorded in [sources.json](../../tests/fixtures/vision/sources.json), [unresolved.json](../../tests/fixtures/vision/unresolved.json) and [external.json](../../tests/fixtures/vision/external.json). Coordinates use a normalized top-left origin. Parser category predictions are diagnostic; automatic capture-region planning and the item recognizer are outside this suite. Display scarves are real scarves, but a particular hijab style is not established by their source descriptions.
 
-These are landmark tests, not complete pixel ground truth. They do not prove every edge or patterned detail survives, exclude an entire hanger, establish classification accuracy or assess automatic outfit splitting. Same-colour overlapping garments and multiple people remain untested. macOS inference does not establish physical iPhone camera behavior. Simulator cutout flows separately exercise the constructor and editor wiring.
-
-A separate floor-jacket case uses Hana Brannigan's [floor outerwear photograph](https://www.pexels.com/photo/flat-lay-of-jackets-on-brown-wooden-floor-3998647/). Its [manifest](../../tests/fixtures/vision/external.json) records source, [licence](https://www.pexels.com/license/), hash and landmarks. The source JPEG stays in ignored local storage. This case is additional to the five passing selections and four bundled failing gates, with no corresponding Studio output.
-
-The first floor-jacket check passed body and neighbor landmarks. Full-mask review then showed that the visible drawstring below the hem was removed. Source-pixel review placed a fabric landmark at `[0.55513, 0.75709]`; the strengthened check fails there. The initial pass was rejected. It does not establish complete garment retention.
+The separate floor source is Hana Brannigan's [floor outerwear photograph](https://www.pexels.com/photo/flat-lay-of-jackets-on-brown-wooden-floor-3998647/), under the [Pexels licence](https://www.pexels.com/license/). Its JPEG remains in ignored local storage. The first body-only check was rejected after visual review exposed the missing drawstring; that strengthened landmark remains enforced.
 
 ```sh
 mkdir -p planning/build/studio/crop-eval/external
@@ -51,19 +58,27 @@ curl --fail --location 'https://images.pexels.com/photos/3998647/pexels-photo-39
 bash scripts/test-photo-vision.sh tests/fixtures/vision/external.json
 ```
 
-The requested scene coverage remains incomplete:
+Selections write parser diagnostics, full-source mask, transparent cutout, prepared selected/original references and JSON metadata to ignored `planning/build/studio/crop-eval/native-photos/`. Metadata includes source/mask/input hashes, exact source dimensions, bounds and `inference: false`. Artifacts may exist for failing cases; their existence is not a pass. Variant artifacts live under `variants/<variant>/`.
 
-| Requested scene | Real-photo selection | Reviewed Studio output |
-| --------------- | -------------------- | ---------------------- |
-| Loose floor hijab | Missing | Missing |
-| Hanging hijab | Three related scarf scenes fail; particular hijab style not established | Missing |
-| Outfit-draped hijab | Missing | Missing |
-| Head-wrapped hijab | Landmark pass | Missing |
-| Floor trousers | Crowded selection fails | Missing |
-| Hanging trousers | Landmark pass, folded/partial | Missing |
-| Worn trousers | Landmark pass, legs outside frame | Missing |
-| Floor jacket | Separate local case fails drawstring retention | Missing |
-| Hanging jacket | Landmark pass, partly outside frame | Missing |
-| Worn jacket | Landmark pass | Missing |
+Earlier repairs retain the headscarf cap, separate the worn white blazer from its black top, remove enclosed body labels after hole filling, and allow conflicting clothing labels within a loose garment. The blazer's [before mask](screens/native/blazer-before-mask.png), [after mask](screens/native/blazer-after-mask.png) and [prepared input](screens/native/blazer-input.png) use SkajaLee's [portrait photograph](https://commons.wikimedia.org/wiki/File:2021_urban_summer_fashion,_Andrea_Martinez_portrait.jpeg), under [CC BY-SA 2.0](https://creativecommons.org/licenses/by-sa/2.0/). Mask/input derivatives retain that licence. These are cutouts, not generated Studio outputs.
 
-None of these photographs has a corresponding reviewed current Studio output. Loose and outfit-draped hijabs, isolated floor garments, more fabrics and colours, severe crops and reconstruction fidelity still need evidence. Crowded floor selection is a confirmed gap; the missing Studio corpus remains a separate gap in [the system analysis](system-analysis.md).
+Both rebuilt simulator cutout editor flows pass, including reading the saved catalogue-tunic PNG at four fabric and two background landmarks. Simulator catalogue fixtures and macOS real-photo tests provide different evidence; neither establishes physical iPhone performance. The older 23-image parser smoke check allows category errors and is not an accuracy gate.
+
+## Studio evidence
+
+`node --import=./scripts/tests/no-network.mjs --import=tsx scripts/studio-eval.ts --photos` prepares 20 real-photo requests: full selection and a central fragment for each of the ten selections. Both use actual native prepared inputs and the uncut original reference, with scene facts, source-derived crop bounds and request hashes. Preview artifacts live in ignored `planning/build/studio/crop-eval/preview/real-photos/`. Preview preparation makes no inference requests. `--live` is a separate explicit mode and was not run under the existing no-spend limit.
+
+| Requested scene     | Real-photo selection                                                        | Reviewed current Studio output |
+| ------------------- | --------------------------------------------------------------------------- | ------------------------------ |
+| Loose floor hijab   | Missing                                                                     | Missing                        |
+| Hanging hijab       | Three related scarf scenes pass original landmarks; variant failures remain | Missing                        |
+| Outfit-draped hijab | Missing                                                                     | Missing                        |
+| Head-wrapped hijab  | Original landmarks pass; mirrored cap fails                                 | Missing                        |
+| Floor trousers      | Crowded original and tested variants pass                                   | Missing                        |
+| Hanging trousers    | Landmark pass, folded/partial                                               | Missing                        |
+| Worn trousers       | Landmark pass, legs outside frame                                           | Missing                        |
+| Floor jacket        | Original passes; three cord variants fail                                   | Missing                        |
+| Hanging jacket      | Landmark pass, partly outside frame                                         | Missing                        |
+| Worn jacket         | Original passes; rotated black-top exclusion fails                          | Missing                        |
+
+None has a reviewed current Studio output. Loose and outfit-draped hijabs, further independent scenes, broader crop robustness and reconstruction fidelity remain separate gaps in [the system analysis](system-analysis.md).

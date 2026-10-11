@@ -6,6 +6,8 @@ xcrun swiftc -O \
   modules/closet-vision/ios/GarmentEnhancer.swift \
   modules/closet-vision/ios/ClothesParser.swift \
   modules/closet-vision/ios/CutoutSelection.swift \
+  modules/closet-vision/ios/GarmentMaskRefinement.swift \
+  modules/closet-vision/ios/GarmentSegmenter.swift \
   modules/closet-vision/ios/CutoutRepair.swift \
   modules/closet-vision/ios/PhotoPreparation.swift \
   scripts/tests/photos.swift \

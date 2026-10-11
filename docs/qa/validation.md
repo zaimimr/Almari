@@ -1,23 +1,23 @@
 # Execution evidence
 
-Checked on 11 October 2026 against the local source changes for this audit. Hosted generation is mocked. Five real-photo selection cases pass with the packaged native models locally. Four bundled strict scene gates fail: crowded floor trousers and three neighboring-scarf selections. False person detections in the two displays are repaired; their masks still fail. A separate local-download floor jacket also fails visible drawstring retention. No live Studio evaluation or provider comparison was requested by the test commands.
+Checked on 11 October 2026 against the local source changes for this audit. Hosted generation is mocked. All nine bundled original real-photo selections and the separate floor jacket pass strict fabric/exclusion landmarks. Broader variants retain 12 failures out of 56. Studio reconstruction remains unverified; the existing no-spend limit permits input previews only.
 
 ## Automated checks
 
-| Check                    | Result                                          | Scope                                                                                                                        |
-| ------------------------ | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `npm run check`          | Passed                                          | Application types, test/Worker types, lint, formatting, offline domain/service/Worker tests and localized strings            |
-| Domain tests             | 642 passed                                      | Existing 622 tests plus 17 cross-feature journeys and 3 plan-date/missing-look regressions                                    |
-| Service and Worker tests | 132 passed                                      | Existing 29 Worker tests plus 63 scene/crop contracts, 19 app transport, 10 notification/export, 7 retailer and 4 native storage cases |
-| `npm run test:vision`    | 23 passed                                       | Compiled production Swift garment regions, cutout repair, Studio background and upload-input preparation with synthetic maps/pixels         |
-| `npm run test:photos`    | 5 passed                                        | Actual local parser/selector, cutout crop and Studio input on four licensed photographs: head scarf, hanging trousers/jacket, worn blazer/jeans |
-| `npm run test:photo-gaps` | 4 failed                                        | Floor and three scarf selections include neighbors; zero-person assertions now pass |
-| External floor photograph | 1 failed, separate local download | Folded jacket body/neighbor checks pass, but the visible hem drawstring is removed; [source and command](native-photos.md) |
-| Domain coverage          | 98.21% lines, 91.42% branches, 91.40% functions | Loaded domain files only; UI, services, native parser and Worker coverage are not included in these percentages              |
-| Fresh iOS Release build  | Passed                                          | `xcodebuild` with the current source, iOS simulator target                                                                   |
-| Studio input preview     | Six prepared cases                              | Request and input hashes recorded locally; no inference                                                                      |
+| Check                     | Result                                          | Scope                                                                                                                                                    |
+| ------------------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run check`           | Passed                                          | Application types, test/Worker types, lint, formatting, offline domain/service/Worker tests and localized strings                                        |
+| Domain tests              | 642 passed                                      | Existing 622 tests plus 17 cross-feature journeys and 3 plan-date/missing-look regressions                                                               |
+| Service and Worker tests  | 132 passed                                      | Existing 29 Worker tests plus 63 scene/crop contracts, 19 app transport, 10 notification/export, 7 retailer and 4 native storage cases                   |
+| `npm run test:vision`     | 29 passed                                       | Compiled production Swift garment regions, source-pixel refinement, interpolation, cutout repair and upload-input preparation with synthetic maps/pixels |
+| `npm run test:photos`     | 5 passed                                        | Actual local parser/selector, cutout crop and Studio input on four licensed photographs: head scarf, hanging trousers/jacket, worn blazer/jeans          |
+| `npm run test:photo-gaps` | 4 passed                                        | Floor and three scarf selections retain fabric and exclude reviewed neighbors                                                                            |
+| External floor photograph | 1 passed, separate local download               | Folded jacket body, drawstring and neighbor checks pass; [source and command](native-photos.md)                                                          |
+| Domain coverage           | 98.21% lines, 91.42% branches, 91.40% functions | Loaded domain files only; UI, services, native parser and Worker coverage are not included in these percentages                                          |
+| Fresh iOS Release build   | Passed                                          | `xcodebuild` with the current source, iOS simulator target                                                                                               |
+| Studio input preview      | Six fixture cases plus 20 real-photo requests   | Request and input hashes recorded locally; no inference                                                                                                  |
 
-The total is 802 passing automated tests, including 151 added during this audit, plus four bundled failing real-photo quality tests and one separate failing floor-jacket test with a local source download. This is not an all-green photo quality claim. Lint reports two existing unused-import warnings in `src/domain/importing.test.ts`; changed files pass without warnings. The coverage command enforces an 80% minimum for lines, branches and functions in its domain scope.
+The canonical total is 812 passing automated tests: 774 offline, 29 synthetic native and nine bundled original photo selections. The separate local floor-jacket original also passes. The expanded photo gate has 44 passes and 12 failures out of 56 variants, and remains red. These variants and the external source are outside the 812 count. No current Studio output was generated or reviewed. Lint reports two existing unused-import warnings in `src/domain/importing.test.ts`; changed files pass without warnings. The coverage command enforces an 80% minimum for lines, branches and functions in its domain scope.
 
 The ordinary HTTP, HTTPS, socket and fetch APIs are disabled by `scripts/tests/no-network.mjs` in `npm run test:offline`. Service tests replace platform/native modules, and Worker tests replace inference with deterministic responses. This guard protects the ordinary test code from accidental network calls; it is not an operating-system network sandbox.
 
@@ -27,20 +27,20 @@ The ordinary HTTP, HTTPS, socket and fetch APIs are disabled by `scripts/tests/n
 
 The fresh Release build runs on the dedicated `Almari Systems QA` iOS 27.0 simulator. The runner injects a Studio fixture before each flow, including success, offline and failure fixtures, so pressing Enhance does not call a provider. Selected runtime flows are recorded below after execution. The complete route/story mapping is in [user stories](user-stories.md); the execution reports distinguish audit builds, failed baselines and corrected reruns.
 
-| Flow                          | Result | Behavior                                                                                                |
-| ----------------------------- | ------ | ------------------------------------------------------------------------------------------------------- |
-| `system/capture-link.yaml`    | Passed | Invalid input hides Add; a valid URL exposes it without fetching the retailer                           |
-| `system/custom-lists.yaml`    | Passed | Rename survives reopening; confirmed removal empties the custom list                                    |
-| `system/statistics.yaml`      | Passed | Owned counts and wear history appear; the most-worn row opens the correct garment                       |
-| `system/date-first-plan.yaml` | Passed | An empty weekly slot saves the exact outfit; the filled preview opens it; date persists after reopening |
-| `capture/studio.yaml`         | Passed | Fixture generation selects the resulting image and retains it after reopening the import                                            |
-| `capture/studio-offline.yaml` | Passed | Offline generation shows recoverable failure                                                            |
-| `piece/studio.yaml`           | Passed | Upload notice precedes the request; an existing piece selects the fixture result                        |
-| `piece/cutout.yaml`           | Passed | Native long press selects the catalogue garment; Done returns to editing                                |
-| `build-look/fill.yaml`        | Passed | Filling a partially selected outfit enables save                                                        |
-| `looks/plan.yaml`             | Passed | Conflict confirmation replaces the plan; clearing its date restores unplanned state                     |
-| `change-piece/swap.yaml`      | Passed | Interactive hero garments open the swap control; a replacement applies and the control closes           |
-| `system/plan-deep-link.yaml`  | Passed | Missing/impossible dates recover; cold-launch planning returns to Looks; assignment survives reopening  |
+| Flow                                | Result | Behavior                                                                                                             |
+| ----------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------- |
+| `system/capture-link.yaml`          | Passed | Invalid input hides Add; a valid URL exposes it without fetching the retailer                                        |
+| `system/custom-lists.yaml`          | Passed | Rename survives reopening; confirmed removal empties the custom list                                                 |
+| `system/statistics.yaml`            | Passed | Owned counts and wear history appear; the most-worn row opens the correct garment                                    |
+| `system/date-first-plan.yaml`       | Passed | An empty weekly slot saves the exact outfit; the filled preview opens it; date persists after reopening              |
+| `capture/studio.yaml`               | Passed | Fixture generation selects the resulting image and retains it after reopening the import                             |
+| `capture/studio-offline.yaml`       | Passed | Offline generation shows recoverable failure                                                                         |
+| `piece/studio.yaml`                 | Passed | Upload notice precedes the request; an existing piece selects the fixture result                                     |
+| `piece/cutout.yaml`                 | Passed | Native long press selects the catalogue garment; Done returns to editing                                             |
+| `build-look/fill.yaml`              | Passed | Filling a partially selected outfit enables save                                                                     |
+| `looks/plan.yaml`                   | Passed | Conflict confirmation replaces the plan; clearing its date restores unplanned state                                  |
+| `change-piece/swap.yaml`            | Passed | Interactive hero garments open the swap control; a replacement applies and the control closes                        |
+| `system/plan-deep-link.yaml`        | Passed | Missing/impossible dates recover; cold-launch planning returns to Looks; assignment survives reopening               |
 | `system/group-failed-recovery.yaml` | Passed | A failed grouped garment opens recovery with its error and enabled Retake/Remove; cancelling retains all three parts |
 
 One hundred and sixty-three distinct simulator flows passed across the audit builds, including three accessibility-reset setup flows and 160 feature flows. These include all 26 Today, 15 Profile and 6 Adjust flows, with their failed baselines and corrected reruns recorded in [Today execution](today-paths.md) and [Profile/Adjust execution](profile-adjust-paths.md). Imperial units, populated measurements and shape are required after reopening; reminder checks retain 07:00 and weekday state across collapse/reopen; forecast failure still permits outfit creation. All 21 Start flows, including the new backup-restore case, and the tab-route baseline passed across their baseline and corrected runs, recorded in [onboarding execution](onboarding-paths.md). Backup restoration retains all eleven owned pieces, the saved profile and the damaged copy after relaunch; the postcheck reads persisted SQLite data. Maximum-text onboarding and native selfie analysis passed with Bokmål fixtures. The report records the seed, modal-selector and fresh-setup isolation repairs.
@@ -55,15 +55,17 @@ npm run test:offline -- --coverage
 npm run test:vision
 npm run test:photos
 npm run test:photo-gaps
+npm run test:photo-variants
 node --import=./scripts/tests/no-network.mjs --import=tsx scripts/studio-eval.ts
+node --import=./scripts/tests/no-network.mjs --import=tsx scripts/studio-eval.ts --photos
 DEVICE='Almari Systems QA' bash scripts/e2e.sh .maestro/system
 ```
 
-`test:vision` and `test:photos` need macOS/Xcode; the photo suite also needs the packaged `ClothesParser.mlmodelc`. The preview needs ImageMagick. Simulator tests need a compatible installed iOS runtime and Maestro. The default Studio preview writes to ignored `planning/build/studio/crop-eval/preview/`, separately from historical outputs. Only the explicit `--live` flag permits hosted inference.
+`test:vision` and `test:photos` need macOS/Xcode; the photo suite also needs the packaged parser and three SAM model resources. The preview needs ImageMagick. Simulator tests need a compatible installed iOS runtime and Maestro. The default Studio preview writes to ignored `planning/build/studio/crop-eval/preview/`, separately from historical outputs. The real-photo preview additionally needs the local floor source described in [native photographs](native-photos.md). Only the explicit `--live` flag permits hosted inference.
 
 ## What these results cannot establish
 
-The crop matrix represents ten scene types with synthetic image headers and owner descriptions. It verifies the production request/prompt contract, not model recognition or reconstructed garment fidelity. Synthetic native tests verify downstream selection and repair; five additional real-photo selection cases verify local selection at reviewed landmarks, cutout cropping and input preparation. A crowded-floor case and three scarf displays fail strict exclusion landmarks. A separate local-download floor-jacket case retains the body but drops its visible hem drawstring; full-mask review rejected its initial body-only pass. The displays originally exposed false person counts; after repair they report zero people correctly but still fail selection. Their [evidence and limits](native-photos.md) include repaired scarf-cap and blazer/top defects, a corrected tap annotation, raw parser category mismatches and the unresolved crowded-floor failure. Four native input cases exercise the extracted production Core Image helper: small opaque references retain their dimensions/colour, transparent cutouts become white while large openings remain, shifted/rotated references retain aspect ratio within 500 pixels, and empty inputs are rejected. JPEG encoding preserves the prepared dimensions. A fifth preparation test checks top-left cutout bounds and source orientation through the extracted production crop helper. These checks cover input preparation, not provider fidelity or file-storage failures. Simulator Studio success copies a fixture image, rather than synthesizing a new one.
+The crop matrix represents ten scene types with synthetic image headers and owner descriptions. It verifies request/prompt behavior, not recognition or reconstruction fidelity. The ten original real-photo selections now pass strict landmarks, including the floor-jacket cord and neighbor exclusions. The expanded photo gate retains 12 failures out of 56 variants. Their [evidence and limits](native-photos.md) include previously repaired cap/blazer/person defects, unchanged strict exclusions, additional printed-fabric landmarks and raw parser category mismatches. Native input tests verify opaque colours, white cutout backgrounds, genuine openings, shifted/rotated references, top-left crop bounds and the 500-pixel limit. These checks cover input preparation, not provider fidelity or file-storage failures. The prepared 20 real-photo Studio requests have no generated outputs. Simulator Studio success copies a fixture image.
 
 Historical catalogue-like scarf, trousers and blazer output pairs were inspected locally. They show recoverable silhouettes and visible shadows, but lack reliable per-output request metadata and do not supply the requested full floor/hanging/head/body corpus. A current, provenance-aware visual comparison is still missing. No claim that every crop can be reconstructed correctly, or that one provider is the most reliable, follows from these results. The [analysis](system-analysis.md) specifies the missing corpus and review criteria.
 

@@ -1,5 +1,7 @@
 # Piece and closet execution
 
+The later crop checkpoint passes all ten original selections, including the separate floor-jacket drawstring, and 29 synthetic native cases. The extended photo gate still has 12 failures out of 56 variants. Historical failures below describe earlier checkpoints; current evidence is in [native photographs](native-photos.md).
+
 Checked on 11 October 2026 on the dedicated `Almari Systems QA` iOS 27.0 simulator. The initial 29-flow run uses the installed grouped-recovery/native-preparation Release build, with an immutable runner copy. Studio fixtures replace hosted inference. The product-link flow fetches a live retailer page; this run therefore has retailer network evidence as well as fixture tests.
 
 The complete baseline exited 1 with 18 passes and 11 failures: three piece assertions/navigation failures, one overscrolled large-text check and seven English entry waits after persisted Norwegian selection. These are failed commands, not a successful aggregate run. The complete first corrected rerun on `b10bd64` exited 1 with twelve passes and two failures, proposed-coverage confirmation and the new tool test's empty-mask save assumption. The final four-flow rerun on the enclosed-body repair at `546fb48` passed and exited 0. Visual crop review then exposed the loose-label regression described below. After its repair, a three-flow native rerun passed and exited 0, including the saved-file pixel checks. All 29 piece/closet flows and the new cutout-tools flow passed across these runs, not in one aggregate run.

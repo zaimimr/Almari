@@ -1,30 +1,34 @@
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { basename, dirname, resolve } from "node:path";
 import { studioPrompt } from "../worker/studio/src/prompt";
 import type { StudioRequest } from "../worker/studio/src/request";
 
 const live = process.argv.includes("--live");
+const photos = process.argv.includes("--photos");
 const output = resolve(
   "planning/build/studio/crop-eval",
   ...(live ? [] : ["preview"]),
+  ...(photos ? ["real-photos"] : []),
 );
 mkdirSync(output, { recursive: true });
 const caseName = process.argv
   .slice(2)
-  .find((argument) => argument !== "--live");
+  .find((argument) => !argument.startsWith("--"));
 if (live) process.loadEnvFile(".env");
 const studioUrl = process.env.EXPO_PUBLIC_STUDIO_URL;
 const studioToken = process.env.EXPO_PUBLIC_STUDIO_TOKEN;
 if (live && (!studioUrl || !studioToken))
   throw new Error("Studio configuration required");
-const cases: {
+type EvaluationCase = {
   id: string;
   source: string;
+  selection?: string;
   crop?: string;
   piece: Omit<StudioRequest, "image" | "original">;
-}[] = [
+};
+const fixtureCases: EvaluationCase[] = [
   {
     id: "kameez-hem",
     source: "assets/fixtures/scan/kameez-dupatta/frame-1.jpg",
@@ -108,6 +112,104 @@ const cases: {
   },
 ];
 
+const photoSubjects = {
+  head: { category: "hijab", kind: "scarf", name: "Scarf" },
+  pants: { category: "bottom", kind: "trousers", name: "Trousers" },
+  coat: { category: "layer", kind: "jacket", name: "Jacket" },
+} as const;
+type PhotoEntry = {
+  file: string;
+  sha256: string;
+  scene: string;
+  kind: keyof typeof photoSubjects;
+};
+
+function photoCase(entry: PhotoEntry, path: string): EvaluationCase {
+  const review = resolve("planning/build/studio/crop-eval/native-photos");
+  const stem = `${basename(entry.file).replace(/\.[^.]+$/, "")}-${entry.kind}`;
+  const metadata = JSON.parse(
+    readFileSync(resolve(review, `${stem}.json`), "utf8"),
+  ) as {
+    sourceSha256: string;
+    sourceWidth: number;
+    sourceHeight: number;
+    bounds: number[];
+  };
+  const sourceHash = createHash("sha256")
+    .update(readFileSync(resolve(dirname(path), entry.file)))
+    .digest("hex");
+  if (sourceHash !== entry.sha256 || metadata.sourceSha256 !== sourceHash)
+    throw new Error(`Real-photo evidence does not match ${entry.file}`);
+  const { sourceWidth, sourceHeight, bounds } = metadata;
+  if (
+    !(entry.kind in photoSubjects) ||
+    !Number.isFinite(sourceWidth) ||
+    sourceWidth <= 0 ||
+    !Number.isFinite(sourceHeight) ||
+    sourceHeight <= 0 ||
+    bounds.length !== 4 ||
+    !bounds.every(Number.isFinite)
+  )
+    throw new Error(`Invalid real-photo metadata: ${entry.file}`);
+  const [x, y, width, height] = bounds;
+  if (
+    x < 0 ||
+    y < 0 ||
+    width <= 0 ||
+    height <= 0 ||
+    x + width > sourceWidth ||
+    y + height > sourceHeight
+  )
+    throw new Error(`Invalid real-photo bounds: ${entry.file}`);
+  return {
+    id: stem,
+    source: resolve(review, `${stem}-original-input.png`),
+    selection: resolve(review, `${stem}-input.png`),
+    piece: {
+      ...photoSubjects[entry.kind],
+      note: entry.scene,
+      area: {
+        x: x / sourceWidth,
+        y: y / sourceHeight,
+        width: width / sourceWidth,
+        height: height / sourceHeight,
+      },
+    },
+  };
+}
+
+function photoCases(): EvaluationCase[] {
+  return ["sources", "unresolved", "external"].flatMap((manifest) => {
+    const path = resolve(`tests/fixtures/vision/${manifest}.json`);
+    const entries = JSON.parse(readFileSync(path, "utf8")) as PhotoEntry[];
+    return entries.flatMap((entry) => {
+      const full = photoCase(entry, path);
+      const area = full.piece.area!;
+      return [
+        full,
+        {
+          ...full,
+          id: `${full.id}-fragment`,
+          crop: "40%x30%+0+0",
+          piece: {
+            ...full.piece,
+            area: {
+              x: area.x + area.width * 0.3,
+              y: area.y + area.height * 0.35,
+              width: area.width * 0.4,
+              height: area.height * 0.3,
+            },
+          },
+        },
+      ];
+    });
+  });
+}
+
+const cases = photos ? photoCases() : fixtureCases;
+if (caseName && !cases.some((entry) => entry.id === caseName))
+  throw new Error(`Unknown Studio case: ${caseName}`);
+
 async function evaluate() {
   for (const entry of cases) {
     if (caseName && entry.id !== caseName) continue;
@@ -124,7 +226,8 @@ async function evaluate() {
       original,
     ]);
     execFileSync("magick", [
-      entry.source,
+      entry.selection ?? entry.source,
+      ...(entry.selection && entry.crop ? ["-gravity", "center"] : []),
       ...(entry.crop ? ["-crop", entry.crop, "+repage"] : []),
       "-background",
       "white",
@@ -137,11 +240,12 @@ async function evaluate() {
     const image = new File([readFileSync(selected)], "selection.jpg", {
       type: "image/jpeg",
     });
-    const reference = entry.crop
-      ? new File([readFileSync(original)], "original.jpg", {
-          type: "image/jpeg",
-        })
-      : undefined;
+    const reference =
+      entry.crop || entry.selection
+        ? new File([readFileSync(original)], "original.jpg", {
+            type: "image/jpeg",
+          })
+        : undefined;
     const prompt = studioPrompt({ ...entry.piece, original: reference });
     writeFileSync(resolve(output, `${entry.id}-prompt.txt`), prompt);
     const hash = (bytes: string | Uint8Array) =>

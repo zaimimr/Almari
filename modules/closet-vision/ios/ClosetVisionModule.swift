@@ -151,11 +151,16 @@ func encodeEmbedding(_ embedding: [Float]) -> String? {
 
 extension CutoutSelector {
   convenience init(photo: CIImage, picture: CGImage) {
+    var segmenter: GarmentSegmenter?
     self.init(
       photo: photo, picture: picture,
       foregroundRequest: GarmentPipeline.foregroundRequest,
       parsePhoto: { GarmentPipeline.shared.parseHeld($0) },
-      renderMask: { GarmentPipeline.shared.render($0) })
+      renderMask: { GarmentPipeline.shared.render($0) },
+      segmentPhoto: { point in
+        if segmenter == nil { segmenter = try GarmentPipeline.shared.makeSegmenter(photo: photo, picture: picture) }
+        return try segmenter?.select(at: point)
+      })
   }
 }
 
@@ -167,6 +172,7 @@ final class GarmentPipeline {
   private var model: MLModel?
   private var labels: [(group: String, value: String, embeddings: [[Float]])] = []
   private var parser: ClothesParser?
+  private var segmentationModels: GarmentSegmenter.Models?
 
   private var bundle: Bundle? {
     let host = Bundle(for: GarmentPipeline.self)
@@ -416,6 +422,23 @@ final class GarmentPipeline {
     queue.sync {
       guard let parse = try? loadParser().parse(image) else { return nil }
       return (parse, parse.colours(image, context: context))
+    }
+  }
+
+  func makeSegmenter(photo: CIImage, picture: CGImage) throws -> GarmentSegmenter {
+    try queue.sync {
+      if segmentationModels == nil {
+        guard let bundle else { throw GarmentSegmentationError.resources }
+        let configuration = MLModelConfiguration()
+        #if targetEnvironment(simulator)
+          configuration.computeUnits = .cpuOnly
+        #else
+          configuration.computeUnits = .all
+        #endif
+        segmentationModels = try GarmentSegmenter.Models(folder: bundle.bundleURL, configuration: configuration)
+      }
+      guard let segmentationModels else { throw GarmentSegmentationError.resources }
+      return GarmentSegmenter(models: segmentationModels, photo: photo, picture: picture, context: context)
     }
   }
 

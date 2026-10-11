@@ -52,6 +52,92 @@ func pixelsOf(_ image: CGImage) -> [UInt8] {
 struct VisionTests {
   static func main() throws {
     let tests: [(String, () throws -> Void)] = [
+      ("mask refinement recovers thin diagonal details across sizes and colours", {
+        for width in [100, 200, 400] {
+          for colour: [UInt8] in [[12, 18, 25, 255], [175, 35, 55, 255], [245, 242, 230, 255]] {
+            var alpha = [UInt8](repeating: 0, count: width * width)
+            var photo = [UInt8](repeating: 0, count: width * width * 4)
+            for y in 0..<width {
+              for x in 0..<width {
+                let px = Double(x) / Double(width)
+                let py = Double(y) / Double(width)
+                let body = px >= 0.2 && px < 0.8 && py >= 0.2 && py < 0.7
+                let cord = py >= 0.7 && py < 0.755 && abs(px - (0.6 + (py - 0.7) * 0.5)) <= 1 / Double(width)
+                let index = y * width + x
+                alpha[index] = body ? 255 : 0
+                photo.replaceSubrange((index * 4)..<(index * 4 + 4), with: body || cord ? colour : [90, 160, 115, 255])
+              }
+            }
+            let result = GarmentMaskRefinement.refine(alpha, pixels: photo, width: width, height: width)
+            let tip = Int(0.74 * Double(width)) * width + Int(0.62 * Double(width))
+            try expect(result[tip] > 128, "Diagonal detail was lost at size \(width), colour \(colour)")
+            try expect(result[width / 10 * width + width / 10] == 0, "Background was restored")
+          }
+        }
+      }),
+      ("mask refinement excludes a broad touching garment of the same colour", {
+        let alpha = (0..<10000).map { index -> UInt8 in
+          let x = index % 100
+          let y = index / 100
+          return x >= 20 && x < 80 && y >= 20 && y < 70 ? 255 : 0
+        }
+        let photo = rgba([20, 30, 40, 255]) { x, y in x >= 20 && x < 95 && y >= 20 && y < 70 }
+        var opaque = photo
+        for index in 0..<10000 where opaque[index * 4 + 3] == 0 {
+          opaque.replaceSubrange((index * 4)..<(index * 4 + 4), with: [190, 155, 120, 255])
+        }
+        let result = GarmentMaskRefinement.refine(alpha, pixels: opaque, width: 100, height: 100)
+        try expect(result[40 * 100 + 90] == 0, "Touching garment was included")
+        try expect(result[40 * 100 + 50] == 255, "Selected fabric was removed")
+      }),
+      ("mask refinement preserves existing one pixel cords and large openings", {
+        let member = (0..<10000).map { index in
+          let x = index % 100
+          let y = index / 100
+          let body = x >= 20 && x < 80 && y >= 20 && y < 70
+          let opening = x >= 40 && x < 60 && y >= 35 && y < 55
+          return body && !opening || x == 60 && y >= 70 && y < 88
+        }
+        let photo: [UInt8] = member.flatMap { $0 ? [15, 25, 35, 255] : [235, 225, 215, 255] }
+        let result = GarmentMaskRefinement.refine(member.map { $0 ? 255 : 0 }, pixels: photo, width: 100, height: 100)
+        try expect(result[86 * 100 + 60] == 255, "Existing narrow cord was eroded")
+        try expect(result[45 * 100 + 50] == 0, "Real opening was filled")
+      }),
+      ("mask refinement restores patterned fabric from the source pixels", {
+        var alpha = [UInt8](repeating: 0, count: 10000)
+        var photo: [UInt8] = []
+        for y in 0..<100 {
+          for x in 0..<100 {
+            let body = x >= 20 && x < 80 && y >= 20 && y < 70
+            let print = x % 10 < 4
+            photo += body ? (print ? [235, 235, 225, 255] : [180, 25, 55, 255]) : [25, 55, 95, 255]
+            let hole = x >= 60 && x < 63 && y >= 40 && y < 43
+            alpha[y * 100 + x] = body && !hole ? 255 : 0
+          }
+        }
+        let result = GarmentMaskRefinement.refine(alpha, pixels: photo, width: 100, height: 100)
+        try expect(result[41 * 100 + 61] == 255, "Printed fabric was discarded")
+        try expect(result[10 * 100 + 61] == 0, "Background was filled")
+      }),
+      ("point segmentation retains diagonal connections and rejects detached objects", {
+        var alpha = [UInt8](repeating: 0, count: 100)
+        for index in [11, 22, 33, 44, 55, 87, 88] { alpha[index] = 255 }
+        let result = GarmentSegmenter.connected(alpha, width: 10, height: 10, at: 11)
+        try expect(result[55] == 255, "Diagonal connection was removed")
+        try expect(result[88] == 0, "Detached neighbour was included")
+        try expect(GarmentSegmenter.connected(alpha, width: 10, height: 10, at: -1).allSatisfy { $0 == 0 }, "Invalid seed accepted")
+        var body = [UInt8](repeating: 0, count: 10000)
+        body[70 * 100 + 60] = 255
+        try expect(GarmentSegmenter.anchor(body, width: 100, height: 100, at: 74 * 100 + 60) == 70 * 100 + 60, "Nearby detail has no anchor")
+        try expect(GarmentSegmenter.anchor(body, width: 100, height: 100, at: 90 * 100 + 60) == nil, "Distant background has an anchor")
+      }),
+      ("point mask interpolation retains orientation on rectangular photographs", {
+        let result = GarmentSegmenter.upsampled([10, -10, -10, 10], width: 2, height: 2, to: 80, outputHeight: 40)
+        try expect(result.count == 3200, "Wrong output dimensions")
+        try expect(result[0] == 255 && result[79] == 0 && result[39 * 80] == 0 && result[3199] == 255, "Mask orientation changed")
+        try expect(GarmentSegmenter.upsampled([], width: 0, height: 2, to: 80, outputHeight: 40).isEmpty, "Empty mask accepted")
+        try expect(GarmentMaskRefinement.refine([255], pixels: [], width: 1, height: 1) == [255], "Invalid refinement changed its input")
+      }),
       ("loose hijab retains the complete scarf regardless of parser clothing label", {
         for label in [ClothesClass.scarf, .upper, .dress] {
           let source = grid([(label, 20..<80, 20..<80)])
