@@ -701,24 +701,25 @@ export default function PiecesFound() {
         >
           {numbered.map(({ job, number }) => {
             const name = nameOf(job, number);
-            const spoken = scanned ? name : `${number}, ${name}`;
+            const label = scanned ? name : `${number}, ${name}`;
+            const meta =
+              job.state === "failed"
+                ? t(
+                    job.error === "no-clothing"
+                      ? "capture.noClothing"
+                      : "capture.stateFailed",
+                  )
+                : job.region?.partial
+                  ? t("capture.partialShort")
+                  : undefined;
+            const spoken = job.state === "failed" ? `${label}, ${meta}` : label;
             const isKept = !dropped.includes(job.id);
             return (
               <View key={job.id} style={isKept ? null : styles.left}>
                 <Tile
                   image={jobPiece(job)}
                   label={scanned ? name : `${number} ${name}`}
-                  meta={
-                    job.state === "failed"
-                      ? t(
-                          job.error === "no-clothing"
-                            ? "capture.noClothing"
-                            : "capture.stateFailed",
-                        )
-                      : job.region?.partial
-                        ? t("capture.partialShort")
-                        : undefined
-                  }
+                  meta={meta}
                   size="strip"
                   state={
                     job.state === "queued" ||
@@ -728,9 +729,7 @@ export default function PiecesFound() {
                       : undefined
                   }
                   onPress={
-                    isKept && isSettled(job) && job.state !== "failed"
-                      ? () => review(job.id)
-                      : undefined
+                    isKept && isSettled(job) ? () => review(job.id) : undefined
                   }
                   accessibilityLabel={spoken}
                   testID={`group-card-${number}`}

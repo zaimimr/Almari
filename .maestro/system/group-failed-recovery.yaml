@@ -1,0 +1,34 @@
+appId: com.zaimimran.almari
+---
+- runFlow: ../lib/open-add.yaml
+- extendedWaitUntil:
+    visible: "3 pieces in one photo"
+    timeout: 120000
+- extendedWaitUntil:
+    notVisible:
+      id: "moment-generating"
+    timeout: 120000
+- tapOn: "3 pieces in one photo"
+- scrollUntilVisible:
+    element:
+      id: "group-card-1"
+    centerElement: true
+- assertVisible:
+    id: "group-card-1"
+    text: ".*Could not finish"
+- takeScreenshot: docs/qa/screens/capture/group-failed-before
+- tapOn:
+    id: "group-card-1"
+- extendedWaitUntil:
+    visible:
+      id: "confirm-screen"
+    timeout: 10000
+- assertVisible:
+    id: "confirm-retake"
+    enabled: true
+- assertVisible:
+    id: "confirm-remove"
+    enabled: true
+- takeScreenshot: docs/qa/screens/capture/group-failed-recovery
+- tapOn: "Cancel"
+- assertVisible: "3 of 3"
