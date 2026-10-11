@@ -1,4 +1,5 @@
 import CoreGraphics
+import CoreImage
 import Foundation
 
 struct TestFailure: Error {
@@ -155,6 +156,54 @@ struct VisionTests {
       ("indistinguishable white-on-white image returns no mask for raw fallback", {
         let image = cgImage([UInt8](repeating: 255, count: 40000))
         try expect(StudioBackground.clear(image) == nil, "Unsafe mask accepted")
+      }),
+      ("Studio input preserves opaque reference colours and does not enlarge small photos", {
+        let source = CIImage(cgImage: cgImage(rgba([40, 60, 80, 255], garment: { _, _ in true })))
+        let context = CIContext()
+        let input = PhotoPreparation.studioInput(source, context: context)
+        try expect(input?.extent == source.extent, "Small reference dimensions changed")
+        let rendered = context.createCGImage(input!, from: input!.extent)!
+        let pixels = pixelsOf(rendered)
+        for channel in 0..<3 {
+          try expect(abs(Int(pixels[channel]) - [40, 60, 80][channel]) <= 2, "Opaque reference colour changed")
+        }
+        try expect(pixels[3] == 255, "Reference became transparent")
+      }),
+      ("Studio input whitens cutout background while retaining fabric and large openings", {
+        let pixels = rgba([40, 60, 80, 255], garment: { x, y in
+          (10..<90).contains(x) && (10..<90).contains(y)
+            && !((35..<65).contains(x) && (35..<65).contains(y))
+        })
+        let context = CIContext()
+        let input = PhotoPreparation.studioInput(CIImage(cgImage: cgImage(pixels)), context: context)!
+        let result = pixelsOf(context.createCGImage(input, from: input.extent)!)
+        for index in [0, 50 * 100 + 50] {
+          try expect(Array(result[(index * 4)..<(index * 4 + 4)]) == [255, 255, 255, 255], "Background or intentional opening was not white")
+        }
+        let fabric = (20 * 100 + 20) * 4
+        try expect(result[fabric] < 50 && result[fabric + 2] < 90 && result[fabric + 3] == 255, "Fabric lost")
+      }),
+      ("Studio input normalizes rotated and shifted references at the 500 pixel limit", {
+        let context = CIContext()
+        let original = CIImage(color: CIColor(red: 0.2, green: 0.3, blue: 0.4))
+          .cropped(to: CGRect(x: 0, y: 0, width: 1200, height: 800))
+        let portrait = original.oriented(forExifOrientation: 6)
+          .transformed(by: CGAffineTransform(translationX: 42, y: -37))
+        for source in [original, portrait] {
+          let input = PhotoPreparation.studioInput(source, context: context)!
+          try expect(input.extent.origin == .zero, "Input origin was not normalized")
+          try expect(max(input.extent.width, input.extent.height) == 500, "Long edge is not 500")
+          try expect(abs(input.extent.width / input.extent.height - source.extent.width / source.extent.height) < 0.005, "Aspect ratio changed")
+        }
+        let input = PhotoPreparation.studioInput(portrait, context: context)!
+        let data = context.jpegRepresentation(
+          of: input, colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!,
+          options: [kCGImageDestinationLossyCompressionQuality as CIImageRepresentationOption: 0.9])!
+        let decoded = CIImage(data: data)!
+        try expect(decoded.extent == input.extent, "JPEG upload dimensions changed")
+      }),
+      ("Studio input refuses an empty image", {
+        try expect(PhotoPreparation.studioInput(CIImage.empty(), context: CIContext()) == nil, "Empty input accepted")
       }),
     ]
     for (name, run) in tests {

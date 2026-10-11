@@ -1,0 +1,28 @@
+import CoreImage
+import Foundation
+
+enum PhotoPreparation {
+  static func studioInput(_ source: CIImage, context: CIContext) -> CIImage? {
+    let normalized = source.transformed(
+      by: CGAffineTransform(translationX: -source.extent.minX, y: -source.extent.minY))
+    let image = scaled(normalized, longEdge: 500)
+    let extent = CGRect(
+      x: 0, y: 0, width: min(500, image.extent.width.rounded(.down)),
+      height: min(500, image.extent.height.rounded(.down)))
+    guard extent.width > 0, extent.height > 0 else { return nil }
+    return CutoutRepair.repaired(image, context: context).composited(over: CIImage(color: .white))
+      .cropped(to: extent)
+  }
+
+  static func scaled(_ image: CIImage, longEdge: CGFloat) -> CIImage {
+    let edge = max(image.extent.width, image.extent.height)
+    guard edge > longEdge else { return image }
+    let scale = longEdge / edge
+    let filter = CIFilter(name: "CILanczosScaleTransform")!
+    filter.setValue(image, forKey: kCIInputImageKey)
+    filter.setValue(scale, forKey: kCIInputScaleKey)
+    filter.setValue(1.0, forKey: kCIInputAspectRatioKey)
+    let output = filter.outputImage!
+    return output.transformed(by: CGAffineTransform(translationX: -output.extent.minX, y: -output.extent.minY))
+  }
+}

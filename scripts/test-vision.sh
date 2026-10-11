@@ -5,6 +5,7 @@ xcrun swiftc \
   modules/closet-vision/ios/GarmentRegions.swift \
   modules/closet-vision/ios/CutoutRepair.swift \
   modules/closet-vision/ios/StudioBackground.swift \
+  modules/closet-vision/ios/PhotoPreparation.swift \
   scripts/tests/vision.swift \
   -o "$vision_output/vision-tests"
 "$vision_output/vision-tests"

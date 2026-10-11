@@ -265,15 +265,9 @@ final class GarmentPipeline {
       guard let loaded = CIImage(contentsOf: source, options: [.applyOrientationProperty: true]) else {
         throw PrepareError.unreadable
       }
-      let image = scaled(
-        loaded.transformed(by: CGAffineTransform(translationX: -loaded.extent.minX, y: -loaded.extent.minY)),
-        longEdge: 500)
-      let extent = CGRect(
-        x: 0, y: 0, width: min(500, image.extent.width.rounded(.down)),
-        height: min(500, image.extent.height.rounded(.down)))
-      guard extent.width > 0, extent.height > 0 else { throw PrepareError.unreadable }
-      let flat = CutoutRepair.repaired(image, context: context).composited(over: CIImage(color: .white))
-        .cropped(to: extent)
+      guard let flat = PhotoPreparation.studioInput(loaded, context: context) else {
+        throw PrepareError.unreadable
+      }
       try FileManager.default.createDirectory(at: photos, withIntermediateDirectories: true)
       let name = "\(id)-studio-input.jpg"
       do {
@@ -765,15 +759,7 @@ final class GarmentPipeline {
   }
 
   func scaled(_ image: CIImage, longEdge: CGFloat) -> CIImage {
-    let edge = max(image.extent.width, image.extent.height)
-    guard edge > longEdge else { return image }
-    let scale = longEdge / edge
-    let filter = CIFilter(name: "CILanczosScaleTransform")!
-    filter.setValue(image, forKey: kCIInputImageKey)
-    filter.setValue(scale, forKey: kCIInputScaleKey)
-    filter.setValue(1.0, forKey: kCIInputAspectRatioKey)
-    let output = filter.outputImage!
-    return output.transformed(by: CGAffineTransform(translationX: -output.extent.minX, y: -output.extent.minY))
+    PhotoPreparation.scaled(image, longEdge: longEdge)
   }
 
   private func write(_ image: CIImage, to name: String, extent: CGRect?) throws {
