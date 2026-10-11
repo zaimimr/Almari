@@ -53,8 +53,27 @@ appId: com.zaimimran.almari
     id: "fact-coverage-sleeve"
 - assertNotVisible:
     id: "fact-coverage-length"
-- assertNotVisible:
-    id: "fact-coverage-sheer"
+- scrollUntilVisible:
+    element:
+      id: "fact-coverage-sheer-no"
+    centerElement: true
+- assertVisible:
+    id: "fact-coverage-sheer-no"
+    selected: true
+- scrollUntilVisible:
+    element:
+      id: "fact-coverage-sleeve-long"
+    centerElement: true
+- assertVisible:
+    id: "fact-coverage-sleeve-long"
+    selected: true
+- tapOn:
+    id: "fact-looks-right"
+- extendedWaitUntil:
+    visible:
+      id: "fact-coverage"
+      text: ".*Fully covered.*"
+    timeout: 10000
 - openLink: "almari://piece/seed-hijab"
 - runFlow:
     when:

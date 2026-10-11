@@ -30,7 +30,8 @@ func readPhoto(_ item: PhotoCase, folder: URL) throws -> CIImage {
   guard let loaded = CIImage(data: bytes, options: [.applyOrientationProperty: true]) else {
     throw PhotoTestError.failed("Unreadable photograph: \(item.file)")
   }
-  return loaded.transformed(by: CGAffineTransform(translationX: -loaded.extent.minX, y: -loaded.extent.minY))
+  let normalized = loaded.transformed(by: CGAffineTransform(translationX: -loaded.extent.minX, y: -loaded.extent.minY))
+  return PhotoPreparation.scaled(normalized, longEdge: 2048)
 }
 
 func selection(_ item: PhotoCase, photo: CIImage, parse: ClothesParse, context: CIContext) throws -> (alpha: [UInt8], width: Int, height: Int) {
@@ -92,8 +93,7 @@ func writeReview(_ item: PhotoCase, photo: CIImage, alpha: [UInt8], context: CIC
 
 func testPhoto(_ item: PhotoCase, folder: URL, parser: ClothesParser, context: CIContext, output: URL) throws {
   let photo = try readPhoto(item, folder: folder)
-  let flattened = photo.composited(over: CIImage(color: .white).cropped(to: photo.extent))
-  let parse = try parser.parse(flattened)
+  let parse = try parser.parse(photo)
   try require(parse.people == item.people, "Person detection: expected \(item.people), found \(parse.people)")
   let automatic = GarmentRegions.find(parse.grid, person: parse.people > 0)
   let kinds = automatic.map(\.kind)
@@ -103,8 +103,8 @@ func testPhoto(_ item: PhotoCase, folder: URL, parser: ClothesParser, context: C
   try context.writePNGRepresentation(
     of: parse.mask(of: classes), to: output.appendingPathComponent(stem + "-parser.png"),
     format: .RGBA8, colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
-  let selected = try selection(item, photo: flattened, parse: parse, context: context)
-  try writeReview(item, photo: flattened, alpha: selected.alpha, context: context, output: output)
+  let selected = try selection(item, photo: photo, parse: parse, context: context)
+  try writeReview(item, photo: photo, alpha: selected.alpha, context: context, output: output)
   func alpha(at point: [Double]) throws -> UInt8 {
     try require(point.count == 2 && point.allSatisfy { $0 >= 0 && $0 < 1 }, "Invalid landmark")
     let x = Int(point[0] * Double(selected.width))

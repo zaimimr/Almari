@@ -20,6 +20,10 @@ appId: com.zaimimran.almari
     timeout: 20000
 - tapOn:
     id: "piece-edit"
+- scrollUntilVisible:
+    element:
+      id: "edit-choose-photo"
+    centerElement: true
 - tapOn:
     id: "edit-choose-photo"
 - extendedWaitUntil:
@@ -42,3 +46,9 @@ appId: com.zaimimran.almari
     visible:
       id: "piece-detail"
     timeout: 60000
+- takeScreenshot: docs/qa/screens/piece/photo-replaced
+- tapOn:
+    id: "piece-edit"
+- assertVisible:
+    id: "edit-save"
+    enabled: false

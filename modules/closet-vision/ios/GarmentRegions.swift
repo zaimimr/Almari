@@ -70,7 +70,7 @@ enum GarmentRegions {
     let width = grid.width
     let least = Double(grid.labels.count) * minComponentShare
     var wanted = carried
-    if grid.labels.indices.contains(index), let kind = ClothesClass(rawValue: Int(grid.labels[index]))?.garment {
+    if person, grid.labels.indices.contains(index), let kind = ClothesClass(rawValue: Int(grid.labels[index]))?.garment {
       let headOrUpper = kind == "head" || kind == "upper"
       wanted = Set(carried.filter { label in
         let other = ClothesClass(rawValue: Int(label))?.garment

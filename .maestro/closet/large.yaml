@@ -37,10 +37,6 @@ appId: com.zaimimran.almari
           start: 50%, 75%
           end: 50%, 25%
           duration: 600
-- swipe:
-    start: 50%, 70%
-    end: 50%, 35%
-    duration: 600
 - assertVisible:
     id: "tile-seed-chiffon-hijab"
 - takeScreenshot: docs/redesign/screens/after/closet/ax-closet

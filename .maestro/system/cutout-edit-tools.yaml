@@ -1,0 +1,107 @@
+appId: com.zaimimran.almari
+---
+- launchApp
+- extendedWaitUntil:
+    visible: "Closet"
+    timeout: 60000
+- openLink: "almari://piece/seed-tunic"
+- runFlow:
+    when:
+      visible: "Open"
+    commands:
+      - tapOn: "Open"
+- extendedWaitUntil:
+    visible:
+      id: "piece-detail"
+    timeout: 20000
+- tapOn:
+    id: "piece-edit"
+- tapOn:
+    id: "edit-cutout"
+- extendedWaitUntil:
+    visible:
+      id: "cutout-restore"
+      enabled: true
+    timeout: 30000
+- assertVisible:
+    id: "cutout-undo"
+    enabled: false
+- longPressOn:
+    id: "cutout-canvas"
+- extendedWaitUntil:
+    visible: "Piece selected"
+    timeout: 20000
+- assertVisible:
+    id: "cutout-undo"
+    enabled: true
+- tapOn:
+    id: "cutout-erase"
+- tapOn:
+    id: "cutout-brush-large"
+- swipe:
+    start: 40%, 45%
+    end: 60%, 45%
+    duration: 800
+- takeScreenshot: docs/qa/screens/piece/cutout-erased
+- tapOn:
+    id: "cutout-undo"
+- assertVisible:
+    id: "cutout-undo"
+    enabled: true
+- takeScreenshot: docs/qa/screens/piece/cutout-undone
+- tapOn:
+    id: "cutout-undo"
+- assertVisible:
+    id: "cutout-undo"
+    enabled: false
+- tapOn:
+    id: "cutout-restore"
+- tapOn:
+    id: "cutout-brush-small"
+- swipe:
+    start: 45%, 45%
+    end: 55%, 45%
+    duration: 800
+- assertVisible:
+    id: "cutout-undo"
+    enabled: true
+- tapOn:
+    id: "cutout-reset"
+- tapOn:
+    id: "cutout-done"
+- extendedWaitUntil:
+    visible: "The cut-out could not be saved.*"
+    timeout: 30000
+- takeScreenshot: docs/qa/screens/piece/cutout-empty-save
+- longPressOn:
+    id: "cutout-canvas"
+- extendedWaitUntil:
+    visible: "Piece selected"
+    timeout: 20000
+- tapOn:
+    id: "cutout-done"
+- extendedWaitUntil:
+    visible:
+      id: "piece-edit-screen"
+    timeout: 30000
+- assertVisible:
+    id: "edit-save"
+    enabled: false
+- tapOn: "Cancel"
+- extendedWaitUntil:
+    visible:
+      id: "piece-detail"
+    timeout: 30000
+- tapOn:
+    id: "piece-edit"
+- tapOn:
+    id: "edit-cutout"
+- extendedWaitUntil:
+    visible:
+      id: "cutout-restore"
+      enabled: true
+    timeout: 30000
+- takeScreenshot: docs/qa/screens/piece/cutout-reopened
+- assertVisible:
+    id: "cutout-undo"
+    enabled: false

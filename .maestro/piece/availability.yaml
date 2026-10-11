@@ -18,8 +18,22 @@ appId: com.zaimimran.almari
     timeout: 20000
 - tapOn:
     id: "fact-availability"
+- scrollUntilVisible:
+    element:
+      id: "fact-availability-availability-wash"
+    centerElement: true
 - tapOn:
     id: "fact-availability-availability-wash"
+- assertVisible: ".*In the wash.*"
+- assertVisible:
+    id: "piece-plan"
+- tapOn: "Back"
+- openLink: "almari://piece/seed-tunic"
+- runFlow:
+    when:
+      visible: "Open"
+    commands:
+      - tapOn: "Open"
 - assertVisible: ".*In the wash.*"
 - assertVisible:
     id: "piece-plan"

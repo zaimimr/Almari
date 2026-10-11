@@ -8,8 +8,28 @@ appId: com.zaimimran.almari
 - tapOn:
     id: "confirm-cutout"
 - assertVisible: "Adjust cut-out"
-- assertVisible:
-    id: "cutout-restore"
+- extendedWaitUntil:
+    visible:
+      id: "cutout-restore"
+      enabled: true
+    timeout: 30000
+- longPressOn:
+    id: "cutout-canvas"
+- extendedWaitUntil:
+    visible: "Piece selected"
+    timeout: 20000
 - tapOn: "Done"
+- extendedWaitUntil:
+    visible:
+      id: "confirm-screen"
+    timeout: 30000
+- tapOn:
+    id: "confirm-cutout"
+- extendedWaitUntil:
+    visible:
+      id: "cutout-restore"
+      enabled: true
+    timeout: 30000
 - assertVisible:
-    id: "confirm-screen"
+    id: "cutout-undo"
+    enabled: false

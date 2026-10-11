@@ -12,6 +12,9 @@ if [ ! -d "$app" ] || [ "$REBUILD" = "1" ]; then
 fi
 xcrun simctl boot "$device" 2>/dev/null || true
 xcrun simctl install "$device" "$app"
+if [ "$fresh_media" = "1" ]; then
+  DEVICE="$device" sh .maestro/lib/fresh.sh
+fi
 udid=$(xcrun simctl list devices | grep -F "$device (" | grep -oE '[0-9A-F-]{36}' | head -1)
 [ $# -gt 0 ] || set -- .maestro/*/
 status=0
@@ -29,8 +32,10 @@ for folder in "$@"; do
       xcrun simctl boot "$device"
       xcrun simctl bootstatus "$device" -b
       xcrun simctl install "$device" "$app"
+      DEVICE="$device" sh .maestro/lib/fresh.sh
     fi
     DEVICE="$device" sh .maestro/lib/clear.sh
+    DEVICE="$device" sh .maestro/lib/fixture.sh language=en
     grep -E '^# seed: ' "$flow" | sed -E 's/^# seed: //' | perl -pe 's/,(?=[\w-]+\.sh)/\n/g' | while read -r line; do
       read -ra seed <<< "$line"
       if [ ${#seed[@]} -gt 0 ]; then
@@ -57,7 +62,8 @@ for folder in "$@"; do
     esac
     DEVICE="$device" sh .maestro/lib/fixture.sh "studio=$fixture_studio"
     out=$(mktemp -d)
-    if ~/.maestro/bin/maestro --device "$udid" test --test-output-dir "$out" "$flow"; then
+    if ~/.maestro/bin/maestro --device "$udid" test --test-output-dir "$out" "$flow" &&
+      { [ ! -f "${flow%.yaml}.check" ] || DEVICE="$device" sh "${flow%.yaml}.check"; }; then
       printf 'PASS %s\n' "$flow"
     else
       status=$?

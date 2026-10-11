@@ -101,10 +101,16 @@ struct VisionTests {
           try expect(!picked.contains(35 * 100 + 50), "Enclosed body region filled")
         }
       }),
-      ("manual selection separates touching trousers from an upper garment", {
+      ("manual selection keeps a loose garment across conflicting clothing labels", {
         let source = grid([(.upper, 20..<80, 20..<60), (.pants, 20..<80, 60..<90)])
-        let upper = Set(GarmentRegions.picked(source, at: 40 * 100 + 40)?.pixels ?? [])
-        let pants = Set(GarmentRegions.picked(source, at: 80 * 100 + 40)?.pixels ?? [])
+        let selected = Set(GarmentRegions.picked(source, at: 40 * 100 + 40)?.pixels ?? [])
+        try expect(selected.contains(40 * 100 + 40), "Upper fabric lost")
+        try expect(selected.contains(80 * 100 + 40), "Loose garment fabric lost to parser label")
+      }),
+      ("worn manual selection separates touching trousers from an upper garment", {
+        let source = grid([(.upper, 20..<80, 20..<60), (.pants, 20..<80, 60..<90)])
+        let upper = Set(GarmentRegions.picked(source, at: 40 * 100 + 40, person: true)?.pixels ?? [])
+        let pants = Set(GarmentRegions.picked(source, at: 80 * 100 + 40, person: true)?.pixels ?? [])
         try expect(upper.contains(40 * 100 + 40), "Upper garment lost")
         try expect(!upper.contains(80 * 100 + 40), "Trousers included in upper garment")
         try expect(pants.contains(80 * 100 + 40), "Trousers lost")
