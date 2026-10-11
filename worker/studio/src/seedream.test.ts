@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
-import { generateSeedream, seedreamModel, seedreamPrompt } from "./seedream";
+import {
+  generateSeedream,
+  seedreamModel,
+  seedreamPrompt,
+  seedreamCorrectionPrompt,
+} from "./seedream";
 import { maxImageBytes } from "./request";
 
 const output = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x04, 0x00, 0x00]);
@@ -15,17 +20,19 @@ function setup(
   const run = vi.fn().mockResolvedValue(result);
   const download = vi
     .spyOn(globalThis, "fetch")
-    .mockResolvedValue(
-      new Response(output, { headers: { "content-type": "image/jpeg" } }),
+    .mockImplementation(
+      async () =>
+        new Response(output, { headers: { "content-type": "image/jpeg" } }),
     );
-  const signal = new AbortController().signal;
+  const controller = new AbortController();
+  const signal = controller.signal;
   const generate = (original?: File, selection = image()) =>
     generateSeedream(
       { run } as unknown as Ai,
       { image: selection, original, category: "bottom", kind: "jeans" },
       signal,
     );
-  return { run, download, signal, generate };
+  return { run, download, controller, signal, generate };
 }
 
 describe("Seedream transport", () => {
@@ -53,6 +60,26 @@ describe("Seedream transport", () => {
     ).not.toContain("<bbox>");
   });
 
+  it("carries the owner's correction and confirmed details into the second pass", () => {
+    const prompt = seedreamCorrectionPrompt({
+      original: image(),
+      area: { x: 0.2, y: 0.3, width: 0.4, height: 0.2 },
+      category: "top",
+      kind: "t-shirt",
+      name: "Ivory hijab",
+      note: "A rectangular hijab scarf with two free ends",
+      details: "Plain border",
+      colour: "ivory",
+    });
+    expect(prompt).toContain("<bbox>200 300 600 500</bbox>");
+    expect(prompt).toContain("Ivory hijab");
+    expect(prompt).toContain("A rectangular hijab scarf with two free ends");
+    expect(prompt).toContain("Confirmed details: Plain border");
+    expect(prompt).toContain("Confirmed colour: ivory");
+    expect(prompt).toContain("disagrees with an automatic guess");
+    expect(prompt).not.toContain("t-shirt");
+  });
+
   it("keeps selection and original bytes in order and returns image bytes", async () => {
     const context = setup();
     const original = image(new Uint8Array([0xff, 0xd8, 0xff, 0xdb]));
@@ -75,6 +102,14 @@ describe("Seedream transport", () => {
       signal: context.signal,
       redirect: "manual",
     });
+    const correction = context.run.mock.calls[1]!;
+    expect(correction[1].image).toEqual([
+      ...input.image,
+      `data:image/jpeg;base64,${btoa(String.fromCharCode(...output))}`,
+    ]);
+    expect(correction[1].prompt).toContain("Correct Image 3");
+    expect(correction[1].prompt).toContain("Image 2 is the original photo");
+    expect(correction[2].signal).toBe(context.signal);
   });
 
   it("sends one image when the original is unavailable", async () => {
@@ -82,6 +117,40 @@ describe("Seedream transport", () => {
     await context.generate();
     expect(context.run.mock.calls[0]![1].image).toHaveLength(1);
     expect(context.run.mock.calls[0]![1].prompt).toContain("partial crop");
+    expect(context.run.mock.calls[1]![1].image).toHaveLength(2);
+    expect(context.run.mock.calls[1]![1].prompt).toContain("Correct Image 2");
+    expect(context.run.mock.calls[1]![1].prompt).not.toContain(
+      "Image 2 is the original photo",
+    );
+  });
+
+  it("returns the correction rather than the draft", async () => {
+    const context = setup();
+    const corrected = new Uint8Array([...output, 42]);
+    context.download
+      .mockResolvedValueOnce(new Response(output))
+      .mockResolvedValueOnce(new Response(corrected));
+    expect((await context.generate())?.bytes).toEqual(corrected);
+    expect(context.run).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not deliver the draft when correction returns no image", async () => {
+    const context = setup();
+    context.download
+      .mockResolvedValueOnce(new Response(output))
+      .mockResolvedValueOnce(new Response("<html>error</html>"));
+    expect(await context.generate()).toBeNull();
+    expect(context.run).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not start correction when the shared deadline has expired", async () => {
+    const context = setup();
+    context.download.mockImplementationOnce(async () => {
+      context.controller.abort();
+      return new Response(output);
+    });
+    expect(await context.generate()).toBeNull();
+    expect(context.run).toHaveBeenCalledOnce();
   });
 
   it("rejects redirects without following the location", async () => {

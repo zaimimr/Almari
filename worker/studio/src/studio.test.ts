@@ -538,7 +538,7 @@ describe("worker", () => {
     });
     const download = vi
       .spyOn(globalThis, "fetch")
-      .mockResolvedValue(new Response(jpegBytes(1024, 1024)));
+      .mockImplementation(async () => new Response(jpegBytes(1024, 1024)));
     const response = await call(
       context,
       {},
@@ -550,7 +550,7 @@ describe("worker", () => {
       jpegBytes(1024, 1024),
     );
     expect(context.ai.run.mock.calls[0]![0]).toBe("bytedance/seedream-5-pro");
-    expect(download).toHaveBeenCalledOnce();
+    expect(download).toHaveBeenCalledTimes(2);
     await Promise.all(context.waits);
     expect(context.store.get(`all:${day}`)).toBe("1");
   });
@@ -564,9 +564,9 @@ describe("worker", () => {
     });
     vi.spyOn(globalThis, "fetch")
       .mockResolvedValueOnce(new Response(null, { status: 503 }))
-      .mockResolvedValueOnce(new Response(jpegBytes(1024, 1024)));
+      .mockImplementation(async () => new Response(jpegBytes(1024, 1024)));
     expect((await call(context)).status).toBe(200);
-    expect(context.ai.run).toHaveBeenCalledTimes(2);
+    expect(context.ai.run).toHaveBeenCalledTimes(3);
     await Promise.all(context.waits);
     expect(context.store.get(`all:${day}`)).toBe("1");
   });
@@ -584,47 +584,56 @@ describe("worker", () => {
     expect(context.store.size).toBe(0);
   });
 
-  it("aborts stalled Seedream downloads without starting another paid generation", async () => {
-    vi.useFakeTimers();
-    vi.spyOn(console, "error").mockImplementation(() => undefined);
-    const timeout = vi
-      .spyOn(AbortSignal, "timeout")
-      .mockImplementation((ms) => {
-        const controller = new AbortController();
-        setTimeout(
-          () => controller.abort(new DOMException("Timed out", "TimeoutError")),
-          ms,
+  it.each([false, true])(
+    "aborts a stalled Seedream phase with correction=%s without another generation",
+    async (correction) => {
+      vi.useFakeTimers();
+      vi.spyOn(console, "error").mockImplementation(() => undefined);
+      const timeout = vi
+        .spyOn(AbortSignal, "timeout")
+        .mockImplementation((ms) => {
+          const controller = new AbortController();
+          setTimeout(
+            () =>
+              controller.abort(new DOMException("Timed out", "TimeoutError")),
+            ms,
+          );
+          return controller.signal;
+        });
+      try {
+        const context = setup();
+        context.env.STUDIO_MODEL = "bytedance/seedream-5-pro";
+        context.ai.run.mockResolvedValue({
+          result: { images: ["https://images.volces.com/result.jpeg"] },
+        });
+        const download = vi.spyOn(globalThis, "fetch").mockImplementation(
+          async (_input, options) =>
+            new Promise((_resolve, reject) => {
+              const signal = options?.signal;
+              signal?.addEventListener("abort", () => reject(signal.reason));
+            }),
         );
-        return controller.signal;
-      });
-    try {
-      const context = setup();
-      context.env.STUDIO_MODEL = "bytedance/seedream-5-pro";
-      context.ai.run.mockResolvedValue({
-        result: { images: ["https://images.volces.com/result.jpeg"] },
-      });
-      const download = vi.spyOn(globalThis, "fetch").mockImplementation(
-        async (_input, options) =>
-          new Promise((_resolve, reject) => {
-            const signal = options?.signal;
-            signal?.addEventListener("abort", () => reject(signal.reason));
-          }),
-      );
-      const pending = call(context);
-      await vi.waitFor(() => expect(download).toHaveBeenCalledOnce());
-      await vi.advanceTimersByTimeAsync(90000);
-      expect(download).toHaveBeenCalledOnce();
-      expect(download.mock.calls[0]?.[1]?.signal?.aborted).toBe(false);
-      await vi.advanceTimersByTimeAsync(90000);
-      expect((await pending).status).toBe(502);
-      expect(download).toHaveBeenCalledOnce();
-      expect(context.ai.run).toHaveBeenCalledOnce();
-      expect(context.store.size).toBe(0);
-    } finally {
-      timeout.mockRestore();
-      vi.useRealTimers();
-    }
-  });
+        if (correction)
+          download.mockResolvedValueOnce(new Response(jpegBytes(1024, 1024)));
+        const calls = correction ? 2 : 1;
+        const pending = call(context);
+        await vi.waitFor(() => expect(download).toHaveBeenCalledTimes(calls));
+        await vi.advanceTimersByTimeAsync(90000);
+        expect(download).toHaveBeenCalledTimes(calls);
+        expect(download.mock.calls[calls - 1]?.[1]?.signal?.aborted).toBe(
+          false,
+        );
+        await vi.advanceTimersByTimeAsync(90000);
+        expect((await pending).status).toBe(502);
+        expect(download).toHaveBeenCalledTimes(calls);
+        expect(context.ai.run).toHaveBeenCalledTimes(calls);
+        expect(context.store.size).toBe(0);
+      } finally {
+        timeout.mockRestore();
+        vi.useRealTimers();
+      }
+    },
+  );
 
   it("reports a failed generation without counting it", async () => {
     vi.spyOn(console, "error").mockImplementation(() => undefined);
