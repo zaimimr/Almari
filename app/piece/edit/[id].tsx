@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { router, useLocalSearchParams } from "expo-router";
@@ -139,6 +139,16 @@ function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
     setView(shownOf(piece, piece.photo));
   }
   const [newPhoto, setNewPhoto] = useState<string | null>(null);
+  const [draftStudio, setDraftStudio] = useState<string | null>(null);
+  const pendingStudio = useRef<string | null>(null);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      if (pendingStudio.current) void discardPhoto(pendingStudio.current);
+    };
+  }, []);
   const [leaveSet, setLeaveSet] = useState(false);
   const [pickCategory, setPickCategory] = useState(false);
   const [kindConfirmed, setKindConfirmed] = useState(false);
@@ -154,12 +164,14 @@ function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
     next === "original"
       ? (piece.original ?? piece.photo)
       : next === "studio"
-        ? piece.variants?.studio
+        ? (draftStudio ?? piece.variants?.studio)
         : (piece.variants?.plain ?? piece.variants?.enhanced);
   const photo =
-    view === null || view === shownOf(piece, piece.photo)
-      ? piece.photo
-      : (fileFor(view) ?? piece.photo);
+    view === "studio" && draftStudio
+      ? draftStudio
+      : view === null || view === shownOf(piece, piece.photo)
+        ? piece.photo
+        : (fileFor(view) ?? piece.photo);
   const categoryChanged = category !== piece.category;
   const kindMissing = categoryChanged && !own && (!kind || !isOffered(kind));
   const amount = parsePrice(price);
@@ -171,10 +183,11 @@ function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
     kind !== piece.kind ||
     own !== piece.ownKind ||
     photo !== piece.photo ||
+    draftStudio !== null ||
     newPhoto !== null ||
     kindConfirmed ||
     leaveSet;
-  const allowClose = useDiscardChanges(dirty, busy);
+  const allowClose = useDiscardChanges(dirty, busy || studio.making);
   const valid = Boolean(name.trim()) && !kindMissing && amount !== undefined;
 
   const changeFacts = async (transform: (current: Closet) => Closet) => {
@@ -198,11 +211,13 @@ function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
     kind === piece.kind &&
     !kindConfirmed;
 
-  const shown = newPhoto ? "original" : (shownOf(piece, photo) ?? "cutout");
+  const shown = newPhoto
+    ? "original"
+    : (view ?? shownOf(piece, photo) ?? "cutout");
   const hasVariants = Boolean(
     piece.variants?.plain || piece.original || (owned && studioOffered()),
   );
-  const studioMade = Boolean(piece.variants?.studio);
+  const studioMade = Boolean(draftStudio ?? piece.variants?.studio);
   const cleanOffered = studioMade || studioOffered();
   const cutout = pieceCutout(piece);
   const cutoutOffered =
@@ -234,7 +249,7 @@ function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
                 id: "studio",
                 image: {
                   ...piece,
-                  photo: piece.variants?.studio ?? studioFrom,
+                  photo: draftStudio ?? piece.variants?.studio ?? studioFrom,
                 },
                 raw: false,
               }
@@ -244,7 +259,7 @@ function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
   async function makeClean(note?: string) {
     const source = studioSource(piece);
     if (!source || studio.making) return;
-    const before = piece.variants?.studio;
+    const before = pendingStudio.current;
     const file = await studio.make(source, piece.id, {
       category,
       kind,
@@ -256,17 +271,12 @@ function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
       details: studioDetails(facts),
     });
     if (!file) return;
-    await update((current) => {
-      const latest = current.pieces.find((item) => item.id === piece.id);
-      if (!latest) return current;
-      const { studioStale: _stale, ...rest } = latest;
-      return savePiece(current, {
-        ...rest,
-        original: latest.original ?? source,
-        photo: latest.photo === before ? file : latest.photo,
-        variants: { ...latest.variants, studio: file },
-      });
-    });
+    if (!mounted.current) {
+      void discardPhoto(file);
+      return;
+    }
+    pendingStudio.current = file;
+    setDraftStudio(file);
     if (before && before !== file)
       void discardPhoto(before).catch(() => undefined);
     setView("studio");
@@ -274,11 +284,7 @@ function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
 
   function pickShown(next: PhotoView) {
     if (busy) return;
-    if (next === "studio" && !studioMade) {
-      void makeClean();
-      return;
-    }
-    if (fileFor(next)) setView(next);
+    if (fileFor(next) || next === "studio") setView(next);
   }
 
   async function pick(source: "camera" | "library") {
@@ -311,7 +317,7 @@ function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
   }
 
   async function save(archive = false) {
-    if (busy || (!archive && (!dirty || !valid))) return;
+    if (busy || studio.making || (!archive && (!dirty || !valid))) return;
     if (archive && !(dirty && valid)) {
       await putAway();
       return;
@@ -324,11 +330,15 @@ function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
       const fixed = kind ? fixedStyles(kind) : undefined;
       const { price: _price, ...rest } = {
         ...facts,
-        original: piece.original,
-        variants: piece.variants,
+        original: draftStudio
+          ? (piece.original ?? studioSource(piece) ?? piece.photo)
+          : piece.original,
+        variants: draftStudio
+          ? { ...piece.variants, studio: draftStudio }
+          : piece.variants,
         cutoutArea: piece.cutoutArea,
         frame: piece.frame,
-        studioStale: piece.studioStale,
+        studioStale: draftStudio ? undefined : piece.studioStale,
       };
       const base: Piece = {
         ...rest,
@@ -401,10 +411,11 @@ function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
         return done;
       });
       if (archive) announce(t("result.putAway"));
-      if (newPhoto) {
+      if (draftStudio && !newPhoto) pendingStudio.current = null;
+      if (newPhoto || draftStudio) {
         for (const file of new Set(leftovers(piece)))
           if (!inUse.has(file)) void discardPhoto(file).catch(() => undefined);
-        void measurePiece({ update }, next);
+        if (newPhoto) void measurePiece({ update }, next);
       }
       allowClose();
       router.back();
@@ -479,7 +490,7 @@ function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
           primary={{
             label: t("common.saveChanges"),
             onPress: () => void save(),
-            disabled: !dirty || !valid,
+            disabled: !dirty || !valid || studio.making,
             busy,
             testID: "edit-save",
           }}
@@ -495,6 +506,7 @@ function Editor({ piece, moreOpen }: { piece: Piece; moreOpen: boolean }) {
           onChange={pickShown}
           making={studio.making}
           made={studioMade && !newPhoto}
+          stale={!draftStudio && piece.studioStale}
           onMake={(note) => void makeClean(note)}
           adjust={
             cutoutOffered

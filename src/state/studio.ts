@@ -1,5 +1,5 @@
 import { getNetworkStateAsync } from "expo-network";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { Category, GarmentKind } from "../domain/taxonomy";
 import type { Frame } from "../domain/closet";
 import { t } from "../i18n";
@@ -191,6 +191,7 @@ const messages = {
 } as const;
 
 export function useStudioMaker() {
+  const inFlight = useRef(false);
   const [making, setMaking] = useState(false);
   const [problem, setProblem] = useState<StudioProblem | null>(null);
   async function make(
@@ -198,6 +199,8 @@ export function useStudioMaker() {
     id: string,
     piece: StudioPiece,
   ): Promise<string | null> {
+    if (inFlight.current) return null;
+    inFlight.current = true;
     setMaking(true);
     setProblem(null);
     try {
@@ -206,6 +209,7 @@ export function useStudioMaker() {
       setProblem(studioFailure(error));
       return null;
     } finally {
+      inFlight.current = false;
       setMaking(false);
     }
   }

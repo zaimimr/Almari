@@ -9,7 +9,7 @@ appId: com.zaimimran.almari
 - tapOn:
     id: "header-tips"
 - assertVisible: "Daylight, facing a window"
-- assertVisible: "Take photos"
+- assertVisible: "Take photo"
 - assertVisible: "Choose photos"
 - assertVisible: "Scan"
 - assertVisible: "Add by hand"

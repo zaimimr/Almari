@@ -11,6 +11,7 @@ appId: com.zaimimran.almari
 - assertVisible:
     text: "Original"
     selected: true
+- takeScreenshot: docs/qa/screens/camera/review-after
 - tapOn: "Looks right"
 - tapOn:
     id: "job-ready-1"

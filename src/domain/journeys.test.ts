@@ -106,7 +106,15 @@ for (const category of ["hijab", "bottom", "layer"] as const) {
         hasCutout ? `${category}-fragment.png` : `${category}-outfit.jpg`,
       );
       const shot = setImportStudio(before, category, `${category}-studio.png`);
-      const accepted = reopen(acceptImports(shot, [category]));
+      const accepted = reopen(
+        acceptImports(
+          correctImport(shot, category, {
+            variant: "studio",
+            keepOriginal: false,
+          }),
+          [category],
+        ),
+      );
       assert.equal(accepted.imports.length, 0);
       assert.equal(accepted.pieces.length, 1);
       const item = accepted.pieces[0]!;
@@ -143,7 +151,13 @@ for (const category of ["hijab", "bottom", "layer"] as const) {
     assert.equal(changed.imports[0]!.prepared?.studioStale, true);
     assert.equal(importStudioSource(changed.imports[0]!), "new-cut.png");
     const fresh = reopen(
-      acceptImports(setImportStudio(changed, category, "studio-2.png")),
+      acceptImports(
+        correctImport(
+          setImportStudio(changed, category, "studio-2.png"),
+          category,
+          { variant: "studio", keepOriginal: false },
+        ),
+      ),
     );
     assert.equal(fresh.pieces[0]!.studioStale, undefined);
     assert.equal(fresh.pieces[0]!.original, `${category}-outfit.jpg`);

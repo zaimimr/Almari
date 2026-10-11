@@ -10,7 +10,7 @@ appId: com.zaimimran.almari
 - tapOn:
     text: "Got it"
     optional: true
-- tapOn: "Take photos"
+- tapOn: "Take photo"
 - assertVisible: "Camera access is off"
 - assertVisible: "Open Settings"
 - tapOn:

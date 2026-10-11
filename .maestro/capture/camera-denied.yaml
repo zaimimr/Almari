@@ -1,0 +1,15 @@
+appId: com.zaimimran.almari
+---
+- launchApp:
+    permissions:
+      camera: deny
+- openLink: "almari://capture/camera"
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible: "Camera access is off"
+    timeout: 20000
+- assertVisible: "Open Settings"
+- assertVisible: "Choose photos"
+- takeScreenshot: docs/qa/screens/camera/denied

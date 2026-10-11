@@ -1,0 +1,7 @@
+set -eu
+device="${DEVICE:-Closet Development}"
+data=$(xcrun simctl get_app_container "$device" com.zaimimran.almari data)
+sqlite3 "$data/Documents/SQLite/ExpoSQLiteStorage" "select value from storage where key = 'closet.v3'" | jq -e '.pieces[] | select(.id == "seed-tunic") | .photo == "seed-tunic-original.png" and .variants.studio == null' >/dev/null
+if rg --files "$data/Documents/closet-photos" -g 'seed-tunic-studio-*' | rg -q .; then
+  exit 1
+fi

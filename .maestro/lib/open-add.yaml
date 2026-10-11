@@ -1,6 +1,9 @@
 appId: com.zaimimran.almari
 ---
 - launchApp
+- extendedWaitUntil:
+    visible: "Closet"
+    timeout: 60000
 - tapOn: "Closet"
 - tapOn: "Add pieces"
 - assertVisible:

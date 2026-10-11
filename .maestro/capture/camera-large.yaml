@@ -1,0 +1,26 @@
+appId: com.zaimimran.almari
+---
+- launchApp
+- openLink: "almari://capture/camera"
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible: "Keep every edge in view"
+    timeout: 60000
+- assertVisible: "Daylight, plain background"
+- assertVisible: "Choose photos"
+- takeScreenshot: docs/qa/screens/camera/capture-large
+- tapOn: "Take a photo"
+- extendedWaitUntil:
+    visible:
+      id: "camera-preview"
+    timeout: 20000
+- assertVisible: "Use photo"
+- assertVisible: "Retake"
+- takeScreenshot: docs/qa/screens/camera/preview-large
+- tapOn:
+    id: "camera-retake"
+- extendedWaitUntil:
+    visible: "Keep every edge in view"
+    timeout: 20000

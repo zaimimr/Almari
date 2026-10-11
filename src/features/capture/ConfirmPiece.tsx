@@ -117,6 +117,7 @@ function questionText(
 }
 
 function photoChoiceOf(job: ImportJob): PhotoView {
+  if (job.checks?.includes("studio") && job.prepared?.studio) return "studio";
   if (!job.keepOriginal && job.variant === "studio" && job.prepared?.studio)
     return "studio";
   if (!job.prepared?.cutout || job.keepOriginal) return "original";
@@ -222,7 +223,7 @@ function ConfirmForm({
       own !== initial.own ||
       facts !== null ||
       answer !== initial.answer);
-  const allowClose = useDiscardChanges(dirty, busy);
+  const allowClose = useDiscardChanges(dirty, busy || studio.making);
 
   function leave() {
     allowClose();
@@ -664,10 +665,6 @@ function ConfirmForm({
   }
 
   function pickPhoto(next: PhotoView) {
-    if (next === "studio" && !prepared!.studio) {
-      void makeStudio();
-      return;
-    }
     setPhoto(next);
   }
 
@@ -836,7 +833,7 @@ function ConfirmForm({
             label: t("common.looksRight"),
             onPress: () => void save(),
             busy,
-            disabled: !name.trim(),
+            disabled: !name.trim() || studio.making,
             testID: "confirm-save",
           }}
         />
@@ -851,6 +848,7 @@ function ConfirmForm({
           onChange={pickPhoto}
           making={studio.making}
           made={Boolean(prepared.studio)}
+          stale={prepared.studioStale}
           onMake={(note) => void makeStudio(note)}
           adjust={adjust}
           message={studio.message}

@@ -12,6 +12,7 @@ export type LiveScanProps = {
   facing: "front" | "back";
   active: boolean;
   frozen?: boolean;
+  photograph?: boolean;
   fps: number;
   onFrame: (event: { nativeEvent: ScanFrameEvent }) => void;
   onCamera: (event: { nativeEvent: { state: ScanCameraState } }) => void;

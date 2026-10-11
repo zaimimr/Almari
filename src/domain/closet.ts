@@ -180,7 +180,9 @@ export type ImportJob = {
   attributes?: Attributes;
   attributeSources?: Sources;
   attributeCheck?: AttributeKey;
-  checks?: ("uncertain" | "no-cutout" | "several" | "attribute" | "partial")[];
+  checks?: (
+    "uncertain" | "no-cutout" | "several" | "attribute" | "partial" | "studio"
+  )[];
   keepOriginal?: boolean;
   variant?: Variant;
   advice?: AdviceReason;
@@ -927,6 +929,7 @@ const checkReasons = [
   "several",
   "attribute",
   "partial",
+  "studio",
 ];
 const quickChecks = ["category", "subcategory", "style"];
 

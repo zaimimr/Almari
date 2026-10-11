@@ -1,0 +1,39 @@
+appId: com.zaimimran.almari
+---
+- runFlow: ../lib/open-add.yaml
+- tapOn:
+    id: "source-camera"
+- extendedWaitUntil:
+    visible: "Keep every edge in view"
+    timeout: 20000
+- assertVisible: "Daylight, plain background"
+- tapOn:
+    id: "camera-focus"
+- takeScreenshot: docs/qa/screens/camera/capture
+- tapOn: "Take a photo"
+- extendedWaitUntil:
+    visible:
+      id: "camera-preview"
+    timeout: 20000
+- assertVisible: "Use photo"
+- takeScreenshot: docs/qa/screens/camera/preview
+- tapOn:
+    id: "camera-retake"
+- extendedWaitUntil:
+    visible: "Keep every edge in view"
+    timeout: 20000
+- tapOn: "Take a photo"
+- extendedWaitUntil:
+    visible:
+      id: "camera-preview"
+    timeout: 20000
+- tapOn:
+    id: "camera-use"
+- extendedWaitUntil:
+    visible:
+      id: "capture-screen"
+    timeout: 20000
+- extendedWaitUntil:
+    visible:
+      id: "job-(group|confirm|ready)-1"
+    timeout: 120000

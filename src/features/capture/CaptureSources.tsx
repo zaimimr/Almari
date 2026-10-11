@@ -1,7 +1,7 @@
 import { Linking, View } from "react-native";
 import { router } from "expo-router";
 import { t } from "../../i18n";
-import { Banner, Expander, Row, Rows, Text } from "../../ui";
+import { Banner, Button, Expander, Row, Rows, Text } from "../../ui";
 import { theme } from "../../ui/theme";
 import type { Problem } from "./useCaptureGrid";
 
@@ -65,13 +65,14 @@ export function CaptureSources({
 }) {
   return (
     <View style={{ gap: theme.space.md }}>
+      <Button
+        label={t("capture.takePhotos")}
+        icon="camera"
+        size="regular"
+        onPress={onTakePhotos}
+        testID="source-camera"
+      />
       <Rows>
-        <Row
-          title={t("capture.takePhotos")}
-          leading={{ icon: "camera" }}
-          onPress={onTakePhotos}
-          testID="source-camera"
-        />
         <Row
           title={t("capture.choosePhotos")}
           leading={{ icon: "photo.on.rectangle" }}

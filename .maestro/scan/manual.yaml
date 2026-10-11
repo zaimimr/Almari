@@ -7,7 +7,7 @@ appId: com.zaimimran.almari
 - extendedWaitUntil:
     visible: "Tap to take it"
     timeout: 20000
-- tapOn: "Take (a )?photo"
+- tapOn: "Take a photo"
 - extendedWaitUntil:
     visible: "1 scanned: .*"
     timeout: 20000

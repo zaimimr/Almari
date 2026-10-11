@@ -1,0 +1,26 @@
+appId: com.zaimimran.almari
+---
+- runFlow: ../lib/open-add.yaml
+- tapOn:
+    id: "capture-clean-all"
+- tapOn: "Create drafts"
+- extendedWaitUntil:
+    visible:
+      id: "job-confirm-2"
+    timeout: 30000
+- assertNotVisible:
+    id: "job-ready-1"
+- tapOn:
+    id: "job-confirm-1"
+- assertVisible:
+    text: "Studio"
+    selected: true
+- tapOn: "Original"
+- tapOn: "Looks right"
+- assertVisible:
+    id: "confirm-screen"
+- tapOn: "Cancel"
+- assertVisible:
+    id: "job-ready-1"
+- assertVisible:
+    id: "job-confirm-1"

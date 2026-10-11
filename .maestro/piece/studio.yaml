@@ -22,12 +22,42 @@ appId: com.zaimimran.almari
     visible:
       id: "piece-edit-screen"
     timeout: 10000
-- assertVisible: "AI Enhance sends this photo to Cloudflare\\."
-- tapOn: "AI Enhanced"
+- scrollUntilVisible:
+    element:
+      text: "Studio sends this photo to Cloudflare\\."
+    direction: DOWN
+- tapOn:
+    id: "photo-ai-again"
 - extendedWaitUntil:
     notVisible:
       id: "moment-generating"
     timeout: 60000
 - assertVisible:
-    text: "AI Enhanced"
+    text: "Studio"
     selected: true
+- tapOn:
+    id: "photo-compare"
+- assertVisible:
+    id: "photo-comparison"
+- tapOn:
+    id: "photo-compare"
+- tapOn: "Save changes"
+- extendedWaitUntil:
+    visible:
+      id: "piece-detail"
+    timeout: 10000
+- tapOn:
+    id: "piece-edit"
+- assertVisible:
+    text: "Studio"
+    selected: true
+- tapOn:
+    id: "photo-ai-again"
+- extendedWaitUntil:
+    visible: "Create another"
+    timeout: 30000
+- tapOn: "Save changes"
+- extendedWaitUntil:
+    visible:
+      id: "piece-detail"
+    timeout: 10000

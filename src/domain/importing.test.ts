@@ -850,7 +850,7 @@ test("the enhanced image is the default and the plain cutout is kept", () => {
     finishImport(startImport(queued(), "job"), "job", prepared()),
   ).pieces[0]!;
   assert.equal(without.photo, "job.png");
-  assert.equal(without.variants, undefined);
+  assert.deepEqual(without.variants, { plain: "job.png" });
   assert.deepEqual(orphanedFiles(closet, acceptImports(closet)), [
     "job-thumb.png",
   ]);
@@ -1135,8 +1135,12 @@ test("advice she already dismissed stays dismissed after Adjust crop", () => {
 test("a studio shot is a third variant and the real photo is always kept", () => {
   const ready = finished({ enhanced: "job-enhanced.png" });
   const closet = setImportStudio(ready, "job", "job-studio.png");
-  assert.equal(closet.imports[0]!.variant, "studio");
-  const piece = acceptImports(closet).pieces[0]!;
+  assert.equal(closet.imports[0]!.variant, ready.imports[0]!.variant);
+  assert.equal(closet.imports[0]!.state, "review");
+  assert.equal(acceptImports(closet).pieces.length, 0);
+  const piece = acceptImports(
+    correctImport(closet, "job", { variant: "studio" }),
+  ).pieces[0]!;
   assert.equal(piece.photo, "job-studio.png");
   assert.equal(piece.original, "job-original.jpg");
   assert.deepEqual(piece.variants, {
@@ -1166,6 +1170,47 @@ test("a studio shot is a third variant and the real photo is always kept", () =>
   assert.equal(original.variants, undefined);
 });
 
+test("Studio drafts survive reopening and require review before batch acceptance", () => {
+  const ready = finished({ enhanced: "job-enhanced.png" });
+  const original = correctImport(ready, "job", { keepOriginal: true });
+  const draft = setImportStudio(original, "job", "draft.png");
+  const reopened = decodeCloset(JSON.stringify(draft));
+  const job = reopened.imports[0]!;
+  assert.equal(job.keepOriginal, true);
+  assert.equal(job.prepared?.studio, "draft.png");
+  assert.equal(job.prepared?.original, "job-original.jpg");
+  assert.deepEqual(job.checks, ["studio"]);
+  assert.equal(acceptImports(reopened).imports.length, 1);
+  assert.equal(
+    acceptImports(
+      correctImport(reopened, "job", { name: "Corrected name", kind: "kurta" }),
+    ).pieces.length,
+    0,
+  );
+  const regenerated = setImportStudio(reopened, "job", "new-draft.png");
+  assert.deepEqual(regenerated.imports[0]!.checks, ["studio"]);
+  const rejected = acceptImports(
+    correctImport(regenerated, "job", {
+      variant: "plain",
+      keepOriginal: false,
+    }),
+  );
+  assert.equal(rejected.pieces[0]!.photo, "job.png");
+  assert.equal(rejected.pieces[0]!.original, "job-original.jpg");
+  assert.equal(rejected.pieces[0]!.variants?.studio, "new-draft.png");
+});
+
+test("plain-only imports retain the original selection for later Studio requests", () => {
+  const area = { x: 0.2, y: 0.3, width: 0.4, height: 0.5 };
+  const closet = acceptImports(finished({ area }));
+  const reopened = decodeCloset(JSON.stringify(closet));
+  const piece = reopened.pieces[0]!;
+  assert.equal(piece.variants?.plain, "job.png");
+  assert.equal(studioSource(piece), "job.png");
+  assert.deepEqual(piece.cutoutArea, area);
+  assert.equal(piece.original, "job-original.jpg");
+});
+
 test("studio uses the cutout even without enhancement and falls back to the original", () => {
   const plainOnly = finished();
   assert.equal(importStudioSource(plainOnly.imports[0]!), "job.png");
@@ -1191,7 +1236,13 @@ test("studio uses the cutout even without enhancement and falls back to the orig
     "job-original.jpg",
   );
   const made = setImportStudio(originalOnly, "job", "recovered.png");
-  const accepted = acceptImports(correctImport(made, "job", { kind: "kurta" }));
+  const accepted = acceptImports(
+    correctImport(made, "job", {
+      kind: "kurta",
+      variant: "studio",
+      keepOriginal: false,
+    }),
+  );
   const recovered = accepted.pieces[0]!;
   assert.equal(recovered.photo, "recovered.png");
   assert.equal(recovered.variants?.studio, "recovered.png");

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, View, useWindowDimensions } from "react-native";
 import Animated, {
   FadeIn,
   FadeOut,
@@ -12,11 +12,12 @@ import Animated, {
 import { Image } from "expo-image";
 import type { Piece } from "../../domain/closet";
 import { t } from "../../i18n";
-import { Button, Field, Segmented, Silk, Text } from "../../ui";
+import { Button, Expander, Field, Segmented, Silk, Text } from "../../ui";
 import { motion, timing, useReduceMotion } from "../../ui/motion";
 import { photoSource } from "../../ui/photos";
 import { theme } from "../../ui/theme";
 import { useColors } from "../../ui/useColors";
+import { useLargeText } from "../../ui/useLargeText";
 
 export type PhotoView = "original" | "cutout" | "studio";
 
@@ -52,7 +53,7 @@ function Picture({ choice }: { choice: PhotoChoice }) {
   return choice.raw ? (
     <Image
       source={source}
-      contentFit="cover"
+      contentFit="contain"
       recyclingKey={choice.image.id}
       style={[StyleSheet.absoluteFill, styles.raw]}
     />
@@ -98,6 +99,7 @@ export function PiecePhoto({
   onChange,
   making = false,
   made = false,
+  stale = false,
   onMake,
   adjust,
   message,
@@ -112,6 +114,7 @@ export function PiecePhoto({
   onChange: (next: PhotoView) => void;
   making?: boolean;
   made?: boolean;
+  stale?: boolean;
   onMake?: (note?: string) => void;
   adjust?: {
     label: string;
@@ -128,6 +131,10 @@ export function PiecePhoto({
 }) {
   const colors = useColors();
   const reduce = useReduceMotion();
+  const { height } = useWindowDimensions();
+  const { ax } = useLargeText();
+  const [compare, setCompare] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const sorted = order
     .map((id) => choices.find((choice) => choice.id === id))
     .filter((choice): choice is PhotoChoice => Boolean(choice));
@@ -138,41 +145,83 @@ export function PiecePhoto({
     null;
   const locked = disabled || making;
   const offersStudio = sorted.some((choice) => choice.id === "studio");
+  const original = sorted.find((choice) => choice.id === "original");
+  const candidate = sorted.find((choice) => choice.id === "studio");
+  const comparing = compare && made && !making && original && candidate;
   const busyLabel = t("photo.cleanMaking");
   const [fix, setFix] = useState("");
-  const remake = () => onMake?.(fix.trim() || undefined);
+  const remake = () => {
+    if (!locked) onMake?.(fix.trim() || undefined);
+  };
 
   return (
     <View style={styles.block} testID={testID}>
       <View style={styles.hero}>
-        <View
-          accessible
-          accessibilityRole="image"
-          accessibilityLabel={making ? busyLabel : accessibilityLabel}
-          accessibilityState={{ busy: making }}
-          accessibilityIgnoresInvertColors
-          style={[styles.frame, { backgroundColor: colors.sunken }]}
-          testID={making ? "moment-generating" : heroID}
-        >
-          {shown ? (
-            <Animated.View
-              key={`${making ? "making" : shown.id}-${shown.uri ?? shown.image.photo}`}
-              entering={fade(
-                shown.id === "studio" && !making ? "drape" : "settle",
-                reduce,
-              )}
-              exiting={leave}
-              style={StyleSheet.absoluteFill}
-            >
-              {making ? (
-                <Generating choice={shown} label={busyLabel} />
-              ) : (
-                <Picture choice={shown} />
-              )}
-            </Animated.View>
-          ) : null}
-        </View>
-        {adjust ? (
+        {comparing ? (
+          <View
+            style={[styles.comparison, ax && styles.stacked]}
+            testID="photo-comparison"
+          >
+            {[original, candidate].map((choice) => (
+              <View key={choice.id} style={styles.comparisonPhoto}>
+                <Text role="subhead">{photoLabel(choice.id)}</Text>
+                <View
+                  accessible
+                  accessibilityRole="image"
+                  accessibilityLabel={`${photoLabel(choice.id)}, ${accessibilityLabel}`}
+                  accessibilityIgnoresInvertColors
+                  style={[
+                    styles.frame,
+                    {
+                      height: Math.min(
+                        height * (ax ? 0.42 : 0.34),
+                        ax ? 400 : 320,
+                      ),
+                      backgroundColor: colors.sunken,
+                    },
+                  ]}
+                >
+                  <Picture choice={choice} />
+                </View>
+              </View>
+            ))}
+          </View>
+        ) : (
+          <View
+            accessible
+            accessibilityRole="image"
+            accessibilityLabel={making ? busyLabel : accessibilityLabel}
+            accessibilityState={{ busy: making }}
+            accessibilityIgnoresInvertColors
+            style={[
+              styles.frame,
+              {
+                height: Math.min(height * 0.46, 440),
+                backgroundColor: colors.sunken,
+              },
+            ]}
+            testID={making ? "moment-generating" : heroID}
+          >
+            {shown ? (
+              <Animated.View
+                key={`${making ? "making" : shown.id}-${shown.uri ?? shown.image.photo}`}
+                entering={fade(
+                  shown.id === "studio" && !making ? "drape" : "settle",
+                  reduce,
+                )}
+                exiting={leave}
+                style={StyleSheet.absoluteFill}
+              >
+                {making ? (
+                  <Generating choice={shown} label={busyLabel} />
+                ) : (
+                  <Picture choice={shown} />
+                )}
+              </Animated.View>
+            ) : null}
+          </View>
+        )}
+        {adjust && !comparing ? (
           <View style={styles.adjust}>
             <Button
               variant="icon"
@@ -193,35 +242,58 @@ export function PiecePhoto({
           }))}
           value={shownView}
           onChange={(next) => {
-            if (next === "studio" && !made && onMake) remake();
-            else onChange(next);
+            setCompare(false);
+            onChange(next);
           }}
           disabled={locked}
         />
       ) : null}
+      {made && original && !making ? (
+        <View style={styles.lead}>
+          <Button
+            variant="quiet"
+            icon="rectangle.split.2x1"
+            label={t(compare ? "photo.closeCompare" : "photo.compare")}
+            selected={compare}
+            onPress={() => setCompare((current) => !current)}
+            disabled={disabled}
+            testID="photo-compare"
+          />
+          {value === "studio" || compare ? (
+            <Text role="footnote" tone={stale ? "error" : "muted"}>
+              {t(stale ? "photo.stale" : "photo.checkDetails")}
+            </Text>
+          ) : null}
+        </View>
+      ) : null}
       {offersStudio && onMake && !making ? (
         <View style={styles.fix}>
-          <Field
-            label={t(made ? "photo.aiFix" : "photo.aiDescribe")}
-            placeholder={t("photo.aiFixHint")}
-            value={fix}
-            onChangeText={setFix}
-            maxLength={200}
-            editable={!disabled}
-            returnKeyType="done"
-            onSubmitEditing={remake}
-            testID="photo-ai-fix"
+          <Button
+            variant={made ? "secondary" : "primary"}
+            icon={made ? "arrow.clockwise" : "wand.and.stars"}
+            label={t(made ? "photo.aiAgain" : "photo.create")}
+            disabled={disabled}
+            onPress={remake}
+            testID="photo-ai-again"
           />
-          <View style={styles.lead}>
-            <Button
-              variant="secondary"
-              icon="arrow.clockwise"
-              label={t(made ? "photo.aiAgain" : "photo.clean")}
-              disabled={disabled}
-              onPress={remake}
-              testID="photo-ai-again"
+          <Expander
+            id="photo-details"
+            title={t("photo.correctDetails")}
+            open={detailsOpen}
+            onToggle={() => setDetailsOpen((current) => !current)}
+            testID="photo-details"
+          >
+            <Field
+              label={t(made ? "photo.aiFix" : "photo.aiDescribe")}
+              placeholder={t("photo.aiFixHint")}
+              value={fix}
+              onChangeText={setFix}
+              maxLength={200}
+              editable={!disabled}
+              returnKeyType="done"
+              testID="photo-ai-fix"
             />
-          </View>
+          </Expander>
         </View>
       ) : null}
       {message ? (
@@ -252,14 +324,16 @@ export function PiecePhoto({
 
 const styles = StyleSheet.create({
   block: { gap: theme.space.md },
-  hero: { width: 240, alignSelf: "center" },
+  hero: { width: "100%", maxWidth: 440, alignSelf: "center" },
   frame: {
     width: "100%",
-    aspectRatio: 4 / 5,
     borderRadius: theme.radius.md,
     borderCurve: "continuous",
     overflow: "hidden",
   },
+  comparison: { flexDirection: "row", gap: theme.space.sm },
+  stacked: { flexDirection: "column" },
+  comparisonPhoto: { flex: 1, gap: theme.space.sm },
   raw: { borderRadius: theme.radius.md, borderCurve: "continuous" },
   cut: {
     position: "absolute",

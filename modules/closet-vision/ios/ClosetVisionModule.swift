@@ -971,6 +971,14 @@ public class ClosetVisionModule: Module {
         view.frozen = frozen ?? false
       }
 
+      Prop("photograph") { (view: LiveScanView, photograph: Bool?) in
+        view.photograph = photograph ?? false
+      }
+
+      AsyncFunction("focus") { (view: LiveScanView, x: Double, y: Double, promise: Promise) in
+        view.focus(x: x, y: y, promise: promise)
+      }.runOnQueue(.main)
+
       AsyncFunction("capture") { (view: LiveScanView, id: String, box: [String: Double], kind: String, promise: Promise) in
         view.capture(id: id, box: box, kind: kind, promise: promise)
       }.runOnQueue(.main)

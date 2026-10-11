@@ -336,6 +336,9 @@ final class LiveScanView: ExpoView, AVCaptureVideoDataOutputSampleBufferDelegate
     didSet { if active != oldValue { configure() } }
   }
   var fps: Double = 4
+  var photograph = false {
+    didSet { if photograph != oldValue { configure() } }
+  }
   var frozen = false {
     didSet { preview.connection?.isEnabled = !frozen }
   }
@@ -396,7 +399,7 @@ final class LiveScanView: ExpoView, AVCaptureVideoDataOutputSampleBufferDelegate
       report("unavailable")
       return
     }
-    if reader == nil {
+    if reader == nil && !photograph {
       guard let parser = try? GarmentPipeline.shared.makeParser() else {
         report("unavailable")
         return
@@ -413,6 +416,12 @@ final class LiveScanView: ExpoView, AVCaptureVideoDataOutputSampleBufferDelegate
       video.setSampleBufferDelegate(self, queue: frameQueue)
       if session.canAddOutput(video) { session.addOutput(video) }
       if session.canAddOutput(photos) { session.addOutput(photos) }
+      photos.maxPhotoQualityPrioritization = .quality
+    }
+    if photograph, let dimensions = device.activeFormat.supportedMaxPhotoDimensions.max(by: {
+      Int64($0.width) * Int64($0.height) < Int64($1.width) * Int64($1.height)
+    }) {
+      photos.maxPhotoDimensions = dimensions
     }
     let front = position == .front
     for connection in [video.connection(with: .video), photos.connection(with: .video)].compactMap({ $0 }) {
@@ -437,7 +446,7 @@ final class LiveScanView: ExpoView, AVCaptureVideoDataOutputSampleBufferDelegate
     _ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection
   ) {
     let now = Date()
-    guard now.timeIntervalSince(lastFrame) >= 1 / max(fps, 0.5), let reader,
+    guard !photograph, now.timeIntervalSince(lastFrame) >= 1 / max(fps, 0.5), let reader,
       let buffer = CMSampleBufferGetImageBuffer(sampleBuffer)
     else { return }
     lastFrame = now
@@ -446,7 +455,7 @@ final class LiveScanView: ExpoView, AVCaptureVideoDataOutputSampleBufferDelegate
   }
 
   func capture(id: String, box: [String: Double], kind: String, promise: Promise) {
-    guard session.isRunning, let reader else {
+    guard session.isRunning, photograph || reader != nil, takers.isEmpty else {
       promise.reject("E_SCAN_CAMERA", "unavailable")
       return
     }
@@ -457,6 +466,10 @@ final class LiveScanView: ExpoView, AVCaptureVideoDataOutputSampleBufferDelegate
     let settings =
       photos.availablePhotoCodecTypes.contains(.jpeg)
       ? AVCapturePhotoSettings(format: [AVVideoCodecKey: AVVideoCodecType.jpeg]) : AVCapturePhotoSettings()
+    settings.photoQualityPrioritization = photograph ? .quality : .balanced
+    if photograph { settings.maxPhotoDimensions = photos.maxPhotoDimensions }
+    settings.flashMode = .off
+    let fullPhoto = photograph
     let taker = PhotoTaker()
     taker.done = { [weak self, weak taker] data in
       DispatchQueue.main.async { self?.takers.removeAll { $0 === taker } }
@@ -474,7 +487,7 @@ final class LiveScanView: ExpoView, AVCaptureVideoDataOutputSampleBufferDelegate
           try data.write(to: folder.appendingPathComponent(name))
           var record = ScanCaptureRecord()
           record.photo = name
-          let cut = (try? reader.cutHeld(data: data, id: id, box: held, kind: kind, folder: folder)) ?? nil
+          let cut = fullPhoto ? nil : (try? self.reader?.cutHeld(data: data, id: id, box: held, kind: kind, folder: folder)) ?? nil
           record.region = cut?.region
           record.sticker = cut?.sticker
           record.box = [
@@ -489,5 +502,35 @@ final class LiveScanView: ExpoView, AVCaptureVideoDataOutputSampleBufferDelegate
     }
     takers.append(taker)
     photos.capturePhoto(with: settings, delegate: taker)
+  }
+
+  func focus(x: Double, y: Double, promise: Promise) {
+    guard x.isFinite, y.isFinite, (0...1).contains(x), (0...1).contains(y) else {
+      promise.reject("E_CAMERA_FOCUS", "invalid point")
+      return
+    }
+    let point = preview.captureDevicePointConverted(fromLayerPoint: CGPoint(x: x * bounds.width, y: y * bounds.height))
+    sessionQueue.async { [weak self] in
+      guard let self, let input = self.session.inputs.first as? AVCaptureDeviceInput else {
+        promise.reject("E_CAMERA_FOCUS", "unavailable")
+        return
+      }
+      do {
+        let device = input.device
+        try device.lockForConfiguration()
+        defer { device.unlockForConfiguration() }
+        if device.isFocusPointOfInterestSupported && device.isFocusModeSupported(.autoFocus) {
+          device.focusPointOfInterest = point
+          device.focusMode = .autoFocus
+        }
+        if device.isExposurePointOfInterestSupported && device.isExposureModeSupported(.continuousAutoExposure) {
+          device.exposurePointOfInterest = point
+          device.exposureMode = .continuousAutoExposure
+        }
+        promise.resolve(nil)
+      } catch {
+        promise.reject("E_CAMERA_FOCUS", "unavailable")
+      }
+    }
   }
 }

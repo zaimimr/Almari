@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AccessibilityInfo } from "react-native";
+import { AccessibilityInfo, Platform } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { randomUUID } from "expo-crypto";
-import { useFocusEffect } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import {
   categoryOf,
   type Category,
@@ -19,6 +19,7 @@ import {
   setImportStudio,
 } from "../../domain/importing";
 import { t } from "../../i18n";
+import { studioDetails } from "../../domain/studio";
 import { useCloset } from "../../state/closet";
 import { now } from "../../state/clock";
 import { changeImports } from "../../state/imports";
@@ -174,6 +175,12 @@ export function useCaptureGrid() {
           kind: job.kind,
           name: job.name,
           colour: jobColour(job),
+          original: job.prepared?.original,
+          area: job.prepared?.area ?? undefined,
+          details: studioDetails({
+            attributes: job.attributes,
+            sources: job.attributeSources,
+          }),
         });
         let applied = false;
         await update((current) => {
@@ -232,6 +239,10 @@ export function useCaptureGrid() {
     setProblem(null);
     if (lowOnSpace()) {
       setProblem({ kind: "low-space", from });
+      return;
+    }
+    if (from === "camera" && Platform.OS === "ios") {
+      router.push("/capture/camera");
       return;
     }
     try {

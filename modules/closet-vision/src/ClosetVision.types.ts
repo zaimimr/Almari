@@ -138,6 +138,7 @@ export type ScanFrameEvent = {
 export type ScanCameraState = "ready" | "unavailable" | "denied";
 
 export type LiveScanHandle = {
+  focus(x: number, y: number): Promise<void>;
   capture(
     id: string,
     box: { x: number; y: number; width: number; height: number },

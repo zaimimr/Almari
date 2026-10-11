@@ -7,17 +7,28 @@ appId: com.zaimimran.almari
     id: "job-ready-1"
 - assertVisible:
     id: "confirm-photo"
-- tapOn: "AI Enhanced"
+- tapOn: "Studio"
+- assertNotVisible:
+    id: "moment-generating"
+- tapOn:
+    id: "photo-ai-again"
 - extendedWaitUntil:
     notVisible:
       id: "moment-generating"
     timeout: 30000
 - assertVisible:
-    text: "AI Enhanced"
+    text: "Studio"
     selected: true
+- tapOn:
+    id: "photo-compare"
+- assertVisible:
+    id: "photo-comparison"
+- takeScreenshot: docs/qa/screens/camera/studio-comparison
+- tapOn:
+    id: "photo-compare"
 - tapOn: "Looks right"
 - tapOn:
     id: "job-ready-1"
 - assertVisible:
-    text: "AI Enhanced"
+    text: "Studio"
     selected: true

@@ -51,6 +51,7 @@ export function FixtureScanView({
   useImperativeHandle(
     ref,
     () => ({
+      async focus() {},
       async capture(id, box) {
         const frame = feed?.frames[Math.max(position.current, 0)];
         if (!feed || !frame) throw new Error("fixture");

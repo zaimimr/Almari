@@ -248,6 +248,8 @@ test("a stale studio photo stays stale when the import is accepted", () => {
   const named = correctImport(closet, "job", {
     kind: "kurta",
     name: "Sage kurta",
+    variant: "studio",
+    keepOriginal: false,
   });
   assert.equal(acceptImports(named).pieces[0]!.studioStale, true);
 });

@@ -1,0 +1,22 @@
+appId: com.zaimimran.almari
+---
+- launchApp
+- openLink: "almari://piece/seed-tunic"
+- tapOn:
+    text: "Open"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      id: "piece-detail"
+    timeout: 60000
+- tapOn:
+    id: "piece-edit"
+- tapOn:
+    id: "photo-ai-again"
+- extendedWaitUntil:
+    visible: "Create another"
+    timeout: 30000
+- tapOn: "Cancel"
+- tapOn: "Discard"
+- assertVisible:
+    id: "piece-detail"

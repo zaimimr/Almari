@@ -40,7 +40,7 @@ import { isSamplePhoto } from "./samples";
 import { linkSet } from "./sets";
 
 export type CheckReason =
-  "uncertain" | "no-cutout" | "several" | "attribute" | "partial";
+  "uncertain" | "no-cutout" | "several" | "attribute" | "partial" | "studio";
 
 export type RejectReason = "no-clothing";
 
@@ -560,6 +560,10 @@ export function correctImport(
       traits: _traits,
       ...base
     } = job;
+    const studioNeedsReview =
+      job.checks?.includes("studio") &&
+      change.variant === undefined &&
+      change.keepOriginal === undefined;
     return {
       ...base,
       ...(own ? { ownKind: own } : {}),
@@ -584,8 +588,8 @@ export function correctImport(
       duplicateOf: undefined,
       sources: weather ? { ...sources, ...weather.sources } : sources,
       question: undefined,
-      checks: [],
-      state: "ready",
+      checks: studioNeedsReview ? ["studio"] : [],
+      state: studioNeedsReview ? "review" : "ready",
     };
   });
 }
@@ -622,8 +626,11 @@ export function setImportStudio(
     return {
       ...job,
       prepared: { ...prepared, studio },
-      keepOriginal: false,
-      variant: "studio",
+      state: "review",
+      checks: [
+        ...(job.checks ?? []).filter((check) => check !== "studio"),
+        "studio",
+      ],
     };
   });
 }
@@ -864,17 +871,20 @@ export function pieceFromImport(job: ImportJob): Piece | null {
         : useCutout
           ? cutoutPhoto
           : job.prepared.original,
-    ...(enhanced || studio
+    ...(useCutout || studio
       ? {
           variants: {
-            ...(enhanced ? { enhanced, plain: job.prepared.cutout! } : {}),
+            ...(useCutout ? { plain: job.prepared.cutout! } : {}),
+            ...(enhanced ? { enhanced } : {}),
             ...(studio ? { studio } : {}),
           },
         }
       : {}),
     original: job.prepared.original,
     ...(useCutout && job.prepared.frame ? { frame: job.prepared.frame } : {}),
-    ...(enhanced && job.prepared.area ? { cutoutArea: job.prepared.area } : {}),
+    ...(useCutout && job.prepared.area
+      ? { cutoutArea: job.prepared.area }
+      : {}),
     ...(studio && job.prepared.studioStale ? { studioStale: true } : {}),
     createdAt: job.createdAt,
     source: "owned",

@@ -1,0 +1,15 @@
+appId: com.zaimimran.almari
+---
+- runFlow: ../lib/open-add.yaml
+- tapOn:
+    id: "source-camera"
+- extendedWaitUntil:
+    visible: "Keep every edge in view"
+    timeout: 20000
+- tapOn: "Take a photo"
+- extendedWaitUntil:
+    visible: "Could not take the photo.*"
+    timeout: 20000
+- assertNotVisible:
+    id: "camera-preview"
+- assertVisible: "Take a photo"
