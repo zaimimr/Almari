@@ -16,8 +16,14 @@ const stored = keyedStorage(
 export const closetStorage: ClosetStorage = {
   ...stored,
   async write(value) {
-    if (fixtures.failWrite) {
+    const before = fixtures.failLookSave ? await stored.read() : null;
+    const changedLook =
+      fixtures.failLookSave &&
+      JSON.stringify(JSON.parse(value).looks) !==
+        JSON.stringify(JSON.parse(before ?? '{"looks":[]}').looks);
+    if (fixtures.failWrite || changedLook) {
       fixtures.failWrite = false;
+      if (changedLook) fixtures.failLookSave = false;
       throw new Error("fixture");
     }
     return stored.write(value);

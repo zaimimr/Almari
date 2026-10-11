@@ -15,7 +15,7 @@ appId: com.zaimimran.almari
 - tapOn:
     id: "build-piece-seed-chiffon-hijab"
 - tapOn: "Cancel"
-- assertVisible: "Discard changes?"
+- assertVisible: "Discard your changes?"
 - tapOn: "Discard"
 - extendedWaitUntil:
     visible: "Office navy"

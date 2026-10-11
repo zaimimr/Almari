@@ -1,11 +1,40 @@
 appId: com.zaimimran.almari
 # UC-F10-06
-# seed: seed-looks-clean.sh,seed-looks.sh,fixture.sh failWrite=true
 ---
 - runFlow: ../lib/open-build.yaml
+- repeat:
+    while:
+      notVisible:
+        id: "build-piece-seed-chiffon-hijab"
+    times: 8
+    commands:
+      - swipe:
+          start: 85%, 68%
+          end: 30%, 68%
 - tapOn:
     id: "build-piece-seed-chiffon-hijab"
 - tapOn: "Save changes"
 - extendedWaitUntil:
     visible: "Could not save. Try again."
     timeout: 20000
+- assertVisible:
+    id: "build-save"
+    enabled: true
+- tapOn:
+    id: "build-save"
+- extendedWaitUntil:
+    visible: "Office navy"
+    timeout: 20000
+- assertNotVisible:
+    id: "build-look"
+- stopApp
+- launchApp
+- openLink: "almari://look/seed-look-office"
+- extendedWaitUntil:
+    visible: "Office navy"
+    timeout: 30000
+- scrollUntilVisible:
+    element: "Chiffon hijab"
+    centerElement: true
+- assertVisible: "Chiffon hijab"
+- takeScreenshot: docs/qa/screens/outfits/save-failure-retry

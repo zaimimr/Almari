@@ -7,15 +7,15 @@ Checked on 11 October 2026 against the local source changes for this audit. Host
 | Check                    | Result                                          | Scope                                                                                                                        |
 | ------------------------ | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | `npm run check`          | Passed                                          | Application types, test/Worker types, lint, formatting, offline domain/service/Worker tests and localized strings            |
-| Domain tests             | 639 passed                                      | Existing 622 tests plus 17 cross-feature journeys                                                                            |
-| Service and Worker tests | 128 passed                                      | Existing 29 Worker tests plus 63 scene/crop contracts, 19 app transport, 10 notification/export and 7 retailer service cases |
+| Domain tests             | 642 passed                                      | Existing 622 tests plus 17 cross-feature journeys and 3 plan-date/missing-look regressions                                    |
+| Service and Worker tests | 131 passed                                      | Existing 29 Worker tests plus 63 scene/crop contracts, 19 app transport, 10 notification/export, 7 retailer and 3 native storage cases |
 | `npm run test:vision`    | 13 passed                                       | Compiled production Swift garment regions, cutout repair and Studio background algorithms with synthetic maps/pixels         |
 | `npm run test:photos`    | 2 passed                                        | Actual local parser and production selector on licensed head-wrapped hijab and hanging-trousers photos; marked fabric/exclusion points |
-| Domain coverage          | 98.25% lines, 91.40% branches, 91.39% functions | Loaded domain files only; UI, services, native parser and Worker coverage are not included in these percentages              |
+| Domain coverage          | 98.21% lines, 91.42% branches, 91.40% functions | Loaded domain files only; UI, services, native parser and Worker coverage are not included in these percentages              |
 | Fresh iOS Release build  | Passed                                          | `xcodebuild` with the current source, iOS simulator target                                                                   |
 | Studio input preview     | Six prepared cases                              | Request and input hashes recorded locally; no inference                                                                      |
 
-The total is 782 passing automated tests, including 131 added during this audit. Lint reports two existing unused-import warnings in `src/domain/importing.test.ts`; changed files pass without warnings. The coverage command enforces an 80% minimum for lines, branches and functions in its domain scope.
+The total is 788 passing automated tests, including 137 added during this audit. Lint reports two existing unused-import warnings in `src/domain/importing.test.ts`; changed files pass without warnings. The coverage command enforces an 80% minimum for lines, branches and functions in its domain scope.
 
 The ordinary HTTP, HTTPS, socket and fetch APIs are disabled by `scripts/tests/no-network.mjs` in `npm run test:offline`. Service tests replace platform/native modules, and Worker tests replace inference with deterministic responses. This guard protects the ordinary test code from accidental network calls; it is not an operating-system network sandbox.
 
@@ -38,8 +38,9 @@ The fresh Release build runs on the dedicated `Almari Systems QA` iOS 27.0 simul
 | `build-look/fill.yaml`        | Passed | Filling a partially selected outfit enables save                                                        |
 | `looks/plan.yaml`             | Passed | Conflict confirmation replaces the plan; clearing its date restores unplanned state                     |
 | `change-piece/swap.yaml`      | Passed | Interactive hero garments open the swap control; a replacement applies and the control closes           |
+| `system/plan-deep-link.yaml`  | Passed | Missing/impossible dates recover; cold-launch planning returns to Looks; assignment survives reopening  |
 
-Eleven selected simulator flows passed across the audit builds. Weekly planning, garment swapping and plan replacement were rerun on the rebuilt preview-touch fix. Native long-press selection and Done were rerun after the scarf-cap repair and selector constructor refactor; [the rebuilt editor screenshot](screens/system/native-cutout-selector.png) records that catalogue-garment flow. Screenshots are saved under `docs/qa/screens/system/`, including the previously unresponsive filled tile and the working planned-look destination. The root-deep-link planner navigation failure remains an audit finding, distinct from the passing in-app weekly entry.
+Thirty-three distinct simulator flows passed across the audit builds. The full 24-flow outfit/builder/Looks batch, its initial failures and corrected reruns are recorded in [outfit execution](outfit-paths.md). Missing-date planning crashed the earlier build; the rebuilt deep-link flow now passes invalid-date recovery, return navigation and reopened persistence. Weekly planning and same-day replacement/clear were rerun after this repair. Native long-press selection and Done were rerun after the scarf-cap repair and selector constructor refactor; [the rebuilt editor screenshot](screens/system/native-cutout-selector.png) records that catalogue-garment flow. Screenshots are saved under `docs/qa/screens/system/` and `docs/qa/screens/outfits/`.
 
 ## Reproduce without inference
 

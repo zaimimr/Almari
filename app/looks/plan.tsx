@@ -1,6 +1,6 @@
-import { router, useLocalSearchParams } from "expo-router";
+import { Redirect, router, useLocalSearchParams } from "expo-router";
 import * as Haptics from "expo-haptics";
-import { lookEntries, setPlannedFor } from "../../src/domain/looks";
+import { isPlanDate, lookEntries, setPlannedFor } from "../../src/domain/looks";
 import type { LookEntry } from "../../src/domain/looks";
 import {
   confirmMove,
@@ -14,12 +14,14 @@ import { Row, Rows, Screen } from "../../src/ui";
 import { shortDate } from "../../src/ui/dates";
 
 export default function PlanDay() {
-  const { date } = useLocalSearchParams<{ date: string }>();
+  const { date } = useLocalSearchParams<{ date?: string | string[] }>();
   const { closet, update } = useCloset();
   const today = todayDate();
   const saved = lookEntries(closet, locale, today).filter(
     (entry) => entry.lookId,
   );
+
+  if (!isPlanDate(date)) return <Redirect href="/(tabs)/looks" />;
 
   const pick = async (entry: LookEntry) => {
     const lookId = entry.lookId;
@@ -36,7 +38,8 @@ export default function PlanDay() {
     }
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     if (now) router.dismissTo("/(tabs)/today");
-    else router.back();
+    else if (router.canGoBack()) router.back();
+    else router.replace("/(tabs)/looks");
   };
 
   return (

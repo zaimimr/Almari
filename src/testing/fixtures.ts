@@ -11,6 +11,7 @@ export type Fixtures = {
   scan?: string;
   forecast?: ForecastResult | "fail";
   failWrite?: boolean;
+  failLookSave?: boolean;
   slowPrepare?: number;
   failPrepare?: number;
   failCapture?: number;

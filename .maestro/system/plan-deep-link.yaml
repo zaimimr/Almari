@@ -1,0 +1,51 @@
+appId: com.zaimimran.almari
+---
+- launchApp:
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible: "Looks"
+    timeout: 30000
+- openLink: "almari://looks/plan"
+- runFlow:
+    when:
+      visible: "Open"
+    commands:
+      - tapOn: "Open"
+- extendedWaitUntil:
+    visible:
+      id: "header-calendar"
+    timeout: 20000
+- assertNotVisible:
+    id: "plan-day"
+- openLink: "almari://looks/plan?date=2026-02-29"
+- extendedWaitUntil:
+    visible:
+      id: "header-calendar"
+    timeout: 20000
+- assertNotVisible:
+    id: "plan-day"
+- stopApp
+- openLink: "almari://looks/plan?date=2026-10-16"
+- extendedWaitUntil:
+    visible:
+      id: "plan-day"
+    timeout: 30000
+- tapOn:
+    id: "plan-seed-look-office"
+- extendedWaitUntil:
+    visible:
+      id: "header-calendar"
+    timeout: 20000
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible: "Looks"
+    timeout: 30000
+- tapOn: "Looks"
+- tapOn: "Office navy.*"
+- extendedWaitUntil:
+    visible: "Work, Planned for Friday 16 October"
+    timeout: 20000
+- waitForAnimationToEnd
+- takeScreenshot: docs/qa/screens/system/plan-deep-link

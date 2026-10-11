@@ -2,7 +2,7 @@
 
 Checked on 11 October 2026 with `npm run test:photos`. The test runs the packaged Core ML clothes parser and Apple's Vision foreground selection locally. It compiles the production `CutoutSelector`, `GarmentRegions`, `ClothesParser` and colour sampling code. No hosted generation runs.
 
-The unchanged photographs, source pages, creators, licences and SHA-256 hashes are recorded in [the fixture manifest](../../tests/fixtures/vision/sources.json). Coordinates use the original photograph's top-left origin, normalized to its width and height. Each test verifies the source hash, person count, selected fabric landmarks and exclusion landmarks. Parser category predictions are diagnostic, because another model proposes the final item type in the app.
+The unchanged photographs, source pages, creators, licences and SHA-256 hashes are recorded in [the fixture manifest](../../tests/fixtures/vision/sources.json). Coordinates use the original photograph's top-left origin, normalized to its width and height. Each test verifies the source hash, person count, selected fabric landmarks and exclusion landmarks. Parser category predictions are diagnostic. Capture-region planning can constrain category, and a separate recognizer proposes item details; this suite does not execute either stage.
 
 | Photograph | Result | Evidence |
 | ---------- | ------ | -------- |

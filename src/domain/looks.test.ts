@@ -20,6 +20,7 @@ import {
   planSnapshot,
   removeLook,
   restorePlans,
+  isPlanDate,
   setPlannedFor,
   wearCalendar,
   weekPlan,
@@ -154,6 +155,45 @@ test("piece wears add no Looks row and removing a worn look keeps its name and i
   assert.equal(after.saved, false);
   assert.equal(after.id, `set-${[...look.pieceIds].sort().join(",")}`);
   assert.equal(before.name, after.name);
+});
+
+test("plan dates require an exact existing calendar day", () => {
+  for (const date of ["2026-10-11", "2028-02-29", "2000-02-29", "2026-12-31"])
+    assert.equal(isPlanDate(date), true, date);
+  for (const date of [
+    undefined,
+    null,
+    ["2026-10-11"],
+    "",
+    "2026-2-01",
+    "2026-02-29",
+    "2100-02-29",
+    "2026-04-31",
+    "2026-00-11",
+    "2026-13-11",
+    "2026-10-00",
+    "2026-10-11T00:00:00Z",
+    "not-a-date",
+  ])
+    assert.equal(isPlanDate(date), false, String(date));
+});
+
+test("planning a removed look preserves the date's existing assignment", () => {
+  const { closet } = sample();
+  const planned = setPlannedFor(closet, "eid", "2026-10-11");
+  assert.equal(setPlannedFor(planned, "removed", "2026-10-11"), planned);
+  assert.equal(plannedOn(planned, "2026-10-11")?.id, "eid");
+});
+
+test("invalid plan dates preserve existing assignments while null clears a plan", () => {
+  const { closet } = sample();
+  const planned = setPlannedFor(closet, "eid", "2026-10-11");
+  for (const date of ["", "2026-02-29", "2026-04-31", "invalid"])
+    assert.equal(setPlannedFor(planned, "eid", date), planned);
+  assert.equal(
+    plannedOn(setPlannedFor(planned, "eid", null), "2026-10-11"),
+    null,
+  );
 });
 
 test("planned looks come first and surface on their day", () => {

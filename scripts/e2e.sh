@@ -45,7 +45,12 @@ for folder in "$@"; do
     esac
     DEVICE="$device" sh .maestro/lib/fixture.sh "studio=$fixture_studio"
     out=$(mktemp -d)
-    ~/.maestro/bin/maestro --device "$udid" test --test-output-dir "$out" "$flow" || status=$?
+    if ~/.maestro/bin/maestro --device "$udid" test --test-output-dir "$out" "$flow"; then
+      printf 'PASS %s\n' "$flow"
+    else
+      status=$?
+      printf 'FAIL %s\n' "$flow"
+    fi
     find "$out" -type d -name takeScreenshot -exec cp -R {}/. . \;
   done
 done
