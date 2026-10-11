@@ -31,7 +31,11 @@ const isLimitError = (error: unknown) =>
 const fromBase64 = (data: string) =>
   Uint8Array.from(atob(data), (char) => char.charCodeAt(0));
 
-async function generate(env: Env, piece: StudioRequest) {
+async function generateOnce(
+  env: Env,
+  piece: StudioRequest,
+  signal: AbortSignal,
+) {
   const form = new FormData();
   form.append("prompt", studioPrompt(piece));
   form.append("input_image_0", piece.image);
@@ -40,12 +44,16 @@ async function generate(env: Env, piece: StudioRequest) {
   form.append("height", "1024");
   const formResponse = new Response(form);
   try {
-    const result = await env.AI.run(env.STUDIO_MODEL, {
-      multipart: {
-        body: formResponse.body!,
-        contentType: formResponse.headers.get("content-type")!,
+    const result = await env.AI.run(
+      env.STUDIO_MODEL,
+      {
+        multipart: {
+          body: formResponse.body!,
+          contentType: formResponse.headers.get("content-type")!,
+        },
       },
-    });
+      { signal },
+    );
     const bytes = result.image ? fromBase64(result.image) : null;
     const type = bytes && imageType(bytes);
     if (bytes && type) return { bytes, type };
@@ -53,6 +61,24 @@ async function generate(env: Env, piece: StudioRequest) {
   } catch (error) {
     console.error("studio", String(error));
     if (isLimitError(error)) return "limit";
+    if (/3030|output has been flagged|content rejection/i.test(String(error)))
+      return "rejected";
+    if (
+      !/\b3043\b|internal server|(?:http|status(?: code)?)[ :]*(?:500|502|503|504)\b|timeout|timed out|overload|temporar|AbortError/i.test(
+        String(error),
+      )
+    )
+      return "rejected";
+  }
+  return null;
+}
+
+async function generate(env: Env, piece: StudioRequest) {
+  const deadline = AbortSignal.timeout(85000);
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const signal = AbortSignal.any([deadline, AbortSignal.timeout(40000)]);
+    const result = await generateOnce(env, piece, signal);
+    if (result !== null || deadline.aborted) return result;
   }
   return null;
 }
@@ -87,7 +113,7 @@ export default {
 
     const shot = await generate(env, piece);
     if (shot === "limit") return fail("limit", 429);
-    if (!shot) return fail("generate", 502);
+    if (!shot || shot === "rejected") return fail("generate", 502);
     ctx.waitUntil(
       env.LIMITS.put(key, String(count + 1), {
         expirationTtl: 2 * 24 * 60 * 60,

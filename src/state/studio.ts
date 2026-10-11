@@ -32,7 +32,7 @@ type StudioProblem = "offline" | "limit" | "failed";
 const studioUrl = process.env.EXPO_PUBLIC_STUDIO_URL;
 const studioToken = process.env.EXPO_PUBLIC_STUDIO_TOKEN;
 
-export const studioTimeout = 45000;
+export const studioTimeout = 90000;
 
 export const studioAvailable = Boolean(studioUrl && studioToken);
 

@@ -151,8 +151,8 @@ describe("studioPrompt", () => {
       details: "length ankle, sleeve long",
       area: { x: 0.2, y: 0.3, width: 0.4, height: 0.2 },
     });
-    expect(prompt).toContain("Image 1 is the selected item's cutout or crop");
-    expect(prompt).toContain("Image 2 is the original uncut photo");
+    expect(prompt).toContain("Image 0 is the selected item's cutout or crop");
+    expect(prompt).toContain("Image 1 is the original uncut photo");
     expect(prompt).toContain("left 20 percent, top 30 percent");
     expect(prompt).toContain("CONFIRMED DETAILS. length ankle, sleeve long");
     expect(prompt).toContain("Reconstruct cropped or obscured parts");
@@ -335,7 +335,11 @@ describe("worker", () => {
   });
   function setup(
     counts: Record<string, string> = {},
-    run: (model: string, input: unknown) => Promise<unknown> = async () => ({
+    run: (
+      model: string,
+      input: unknown,
+      options?: { signal?: AbortSignal },
+    ) => Promise<unknown> = async () => ({
       image: btoa(String.fromCharCode(...jpegBytes(1024, 1024))),
     }),
   ) {
@@ -501,6 +505,91 @@ describe("worker", () => {
     }
   });
 
+  it("recovers a temporary provider failure with fresh multipart images", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const context = setup();
+    context.ai.run.mockRejectedValueOnce(
+      new Error("AiError: 3043: Internal server error"),
+    );
+    const response = await call(
+      context,
+      {},
+      form({ image: png(), original: png() }),
+    );
+    expect(response.status).toBe(200);
+    expect(context.ai.run).toHaveBeenCalledTimes(2);
+    for (const call of context.ai.run.mock.calls) {
+      const input = call[1] as {
+        multipart: { body: ReadableStream; contentType: string };
+      };
+      const sent = await new Response(input.multipart.body, {
+        headers: { "content-type": input.multipart.contentType },
+      }).formData();
+      expect(await (sent.get("input_image_0") as File).arrayBuffer()).toEqual(
+        await png().arrayBuffer(),
+      );
+      expect(sent.get("input_image_1")).toBeInstanceOf(File);
+    }
+    await Promise.all(context.waits);
+    expect(context.store.get(`all:${day}`)).toBe("1");
+  });
+
+  it("stops after two temporary provider failures", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const context = setup({}, async () => {
+      throw new Error("AiError: 3043: Internal server error");
+    });
+    expect((await call(context)).status).toBe(502);
+    expect(context.ai.run).toHaveBeenCalledTimes(2);
+    expect(context.store.size).toBe(0);
+  });
+
+  it("aborts stalled attempts and stops within the app deadline", async () => {
+    vi.useFakeTimers();
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const timeout = vi
+      .spyOn(AbortSignal, "timeout")
+      .mockImplementation((ms) => {
+        const controller = new AbortController();
+        setTimeout(
+          () => controller.abort(new DOMException("Timed out", "TimeoutError")),
+          ms,
+        );
+        return controller.signal;
+      });
+    try {
+      const context = setup(
+        {},
+        async (_model, _input, options) =>
+          new Promise((_resolve, reject) => {
+            options?.signal?.addEventListener("abort", () =>
+              reject(options.signal?.reason),
+            );
+          }),
+      );
+      const response = call(context);
+      await vi.waitFor(() => expect(context.ai.run).toHaveBeenCalledTimes(1));
+      await vi.advanceTimersByTimeAsync(40000);
+      expect(context.ai.run).toHaveBeenCalledTimes(2);
+      await vi.advanceTimersByTimeAsync(40000);
+      expect((await response).status).toBe(502);
+      expect(context.ai.run).toHaveBeenCalledTimes(2);
+      expect(context.store.size).toBe(0);
+    } finally {
+      timeout.mockRestore();
+      vi.useRealTimers();
+    }
+  });
+
+  it("does not retry provider content rejections", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const context = setup({}, async () => {
+      throw new Error("AiError: 3030: Your output has been flagged");
+    });
+    expect((await call(context)).status).toBe(502);
+    expect(context.ai.run).toHaveBeenCalledTimes(1);
+  });
+
   it("reports the model's daily allocation as the limit", async () => {
     vi.spyOn(console, "error").mockImplementation(() => undefined);
     for (const message of [
@@ -514,6 +603,7 @@ describe("worker", () => {
       expect(response.status).toBe(429);
       expect(await response.json()).toEqual({ error: "limit" });
       expect(context.store.size).toBe(0);
+      expect(context.ai.run).toHaveBeenCalledTimes(1);
     }
   });
 });

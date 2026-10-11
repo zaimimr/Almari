@@ -100,10 +100,10 @@ export function studioPrompt({
   return [
     "Create a premium e-commerce catalogue photograph of the exact item shown in the source photo, suitable for a digital wardrobe.",
     original
-      ? "REFERENCES. Image 1 is the selected item's cutout or crop. Use it to identify which single item to photograph, not as a template for the item's complete outline. Image 2 is the original uncut photo of that same item. Recover missing sleeves, hems, legs, straps and fabric from Image 2, while excluding the person and all other items. A crop or erased patch is not a real opening, short hem, missing sleeve or change of garment type. Preserve the selected item's design visible across both images."
+      ? "REFERENCES. Image 0 is the selected item's cutout or crop. Use it to identify which single item to photograph, not as a template for the item's complete outline. Image 1 is the original uncut photo of that same item. Recover missing sleeves, hems, legs, straps and fabric from Image 1, while excluding the person and all other items. A crop or erased patch is not a real opening, short hem, missing sleeve or change of garment type. Preserve the selected item's design visible across both images."
       : "REFERENCE. The source may be a partial crop or an imperfect cutout. Cropping and erased patches do not define the garment's actual length or construction. Use the owner's description and item details to complete the selected item without changing the visible design.",
     original && area
-      ? `SELECTION LOCATION. The selected crop is near the rectangle with left ${Math.round(area.x * 100)} percent, top ${Math.round(area.y * 100)} percent, width ${Math.round(area.width * 100)} percent and height ${Math.round(area.height * 100)} percent in Image 2, measured from its top-left. This rectangle locates the item; it does not limit its full outline.`
+      ? `SELECTION LOCATION. The selected crop is near the rectangle with left ${Math.round(area.x * 100)} percent, top ${Math.round(area.y * 100)} percent, width ${Math.round(area.width * 100)} percent and height ${Math.round(area.height * 100)} percent in Image 1, measured from its top-left. This rectangle locates the item; it does not limit its full outline.`
       : null,
     note || name || details
       ? `ITEM GUESS. Automatic classification suggests ${type}${group ? ` (${group})` : ""}. Treat this as an unconfirmed guess. Resolve the actual item type from the owner's description and reference photos, then preserve that type.`
