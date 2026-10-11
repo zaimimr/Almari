@@ -148,7 +148,7 @@ final class ClothesParser {
     guard let picture = context.createCGImage(image, from: extent) else { throw ParseError.unreadable }
     let found = person(in: picture, extent: extent)
     let result = try parse(image, found: found)
-    guard let found, found.count == 1, !Self.showsPerson(skin: result.skin, mask: result.mask) else {
+    guard found != nil, !Self.showsPerson(skin: result.skin, mask: result.mask) else {
       return result.parse
     }
     return try parse(image, found: nil).parse

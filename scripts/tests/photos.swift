@@ -95,6 +95,7 @@ func testPhoto(_ item: PhotoCase, folder: URL, parser: ClothesParser, context: C
   let photo = try readPhoto(item, folder: folder)
   let parse = try parser.parse(photo)
   try require(parse.people == item.people, "Person detection: expected \(item.people), found \(parse.people)")
+  print("PASS \(item.file): expected person count \(item.people)")
   let automatic = GarmentRegions.find(parse.grid, person: parse.people > 0)
   let kinds = automatic.map(\.kind)
   print("DIAGNOSTIC \(item.file): owner garment \(item.kind), found \(kinds)")

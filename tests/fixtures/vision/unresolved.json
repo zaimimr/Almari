@@ -14,5 +14,156 @@
     "pick": [0.44, 0.84],
     "keep": [[0.44, 0.84], [0.45, 0.87], [0.38, 0.89]],
     "exclude": [[0.68, 0.87], [0.61, 0.8], [0.2, 0.72], [0.65, 0.94], [0.33, 0.97]]
+  },
+  {
+    "file": "scarves-drying.jpg",
+    "sha256": "e46bf9922730dea5893673ce3891fbe75aed741f7debc022406b1eac6c17bbde",
+    "source": "https://commons.wikimedia.org/wiki/File:Drying_hand-dyed_scarves.jpg",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/1/1b/Drying_hand-dyed_scarves.jpg",
+    "fixture": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1b/Drying_hand-dyed_scarves.jpg/960px-Drying_hand-dyed_scarves.jpg",
+    "creator": "Changku88",
+    "license": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "changes": "Wikimedia Commons 960-pixel-wide thumbnail; no further edits",
+    "scene": "Leftmost hand-dyed rectangular scarf drying on a line beside other scarves; no people",
+    "people": 0,
+    "kind": "head",
+    "pick": [
+      0.16,
+      0.4
+    ],
+    "keep": [
+      [
+        0.16,
+        0.4
+      ],
+      [
+        0.1,
+        0.6
+      ],
+      [
+        0.23,
+        0.18
+      ]
+    ],
+    "exclude": [
+      [
+        0.33,
+        0.4
+      ],
+      [
+        0.4,
+        0.6
+      ],
+      [
+        0.12,
+        0.05
+      ],
+      [
+        0.5,
+        0.85
+      ]
+    ]
+  },
+  {
+    "file": "scarves-display.jpg",
+    "sha256": "2ae1092530e59f3fc24baa162f651f1c01fbd5e15745b216d1181df17f35f3f3",
+    "source": "https://commons.wikimedia.org/wiki/File:Colorful_scarves.jpg",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/e/e8/Colorful_scarves.jpg",
+    "fixture": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e8/Colorful_scarves.jpg/960px-Colorful_scarves.jpg",
+    "creator": "Yannick Bammert",
+    "license": "https://creativecommons.org/licenses/by/2.0/",
+    "changes": "Wikimedia Commons 960-pixel-wide thumbnail; no further edits",
+    "scene": "Teal scarf tied on a display rail among adjacent solid-colour scarves; no people",
+    "people": 0,
+    "kind": "head",
+    "pick": [
+      0.63,
+      0.5
+    ],
+    "keep": [
+      [
+        0.63,
+        0.5
+      ],
+      [
+        0.64,
+        0.78
+      ],
+      [
+        0.63,
+        0.06
+      ]
+    ],
+    "exclude": [
+      [
+        0.68,
+        0.5
+      ],
+      [
+        0.59,
+        0.5
+      ],
+      [
+        0.63,
+        0.99
+      ]
+    ]
+  },
+  {
+    "file": "scarves-patterned.jpg",
+    "sha256": "4b359cba9d4afb41c65227548e88bc083f7743ff73ab19b8c6688140446a87dc",
+    "source": "https://commons.wikimedia.org/wiki/File:Bunte_Tuecher.jpg",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/e/e3/Bunte_Tuecher.jpg",
+    "fixture": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e3/Bunte_Tuecher.jpg/960px-Bunte_Tuecher.jpg",
+    "creator": "Erkaha",
+    "license": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "changes": "Wikimedia Commons 960-pixel-wide thumbnail; no further edits",
+    "scene": "Red paisley scarf displayed beside orange and blue scarves, edges partly outside frame; no people",
+    "people": 0,
+    "kind": "head",
+    "pick": [
+      0.5,
+      0.5
+    ],
+    "keep": [
+      [
+        0.5,
+        0.5
+      ],
+      [
+        0.53,
+        0.12
+      ],
+      [
+        0.4,
+        0.88
+      ]
+    ],
+    "exclude": [
+      [
+        0.2,
+        0.5
+      ],
+      [
+        0.8,
+        0.5
+      ],
+      [
+        0.14,
+        0.9
+      ],
+      [
+        0.28,
+        0.16
+      ],
+      [
+        0.78,
+        0.08
+      ],
+      [
+        0.88,
+        0.9
+      ]
+    ]
   }
 ]

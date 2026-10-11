@@ -2,7 +2,7 @@
 
 Checked on 11 October 2026 with `npm run test:photos` and `npm run test:photo-gaps`. The tests run the packaged Core ML clothes parser and Apple's Vision foreground selection locally, then use production cutout cropping and Studio input preparation. No hosted generation runs.
 
-The positive suite has five selections from four photographs. A fifth photograph is a separate strict failing floor-selection gate. Source pages, creators, licences, image changes and SHA-256 hashes are recorded in [the positive manifest](../../tests/fixtures/vision/sources.json) and [the unresolved manifest](../../tests/fixtures/vision/unresolved.json). Coordinates use the original photograph's top-left origin, normalized to its width and height. Each case verifies source hash, person count, selected fabric landmarks and exclusion landmarks. Parser category predictions are diagnostic; capture-region planning and the separate item recognizer are outside this suite.
+The positive suite has five selections from four photographs. Four additional photographs are strict failing gates: crowded floor trousers and three hanging scarf displays. Source pages, creators, licences, image changes and SHA-256 hashes are recorded in [the positive manifest](../../tests/fixtures/vision/sources.json) and [the unresolved manifest](../../tests/fixtures/vision/unresolved.json). Coordinates use the original photograph's top-left origin, normalized to its width and height. Each case verifies source hash, person count, selected fabric landmarks and exclusion landmarks. Parser category predictions are diagnostic; capture-region planning and the separate item recognizer are outside this suite.
 
 | Selection | Result | Evidence |
 | --------- | ------ | -------- |
@@ -12,6 +12,9 @@ The positive suite has five selections from four photographs. A fifth photograph
 | Worn white blazer | Passed after repair | Both sides and sleeves retained; black top, hand, face and background landmarks excluded. |
 | Worn blue jeans | Passed | Visible denim landmarks retained; white blazer, hand, face and background excluded. The legs extend outside the photograph. |
 | Crowded folded trousers on the floor | Failed | The selected foreground includes adjacent clothing and the sheet. Strict exclusion landmarks fail. |
+| Hand-dyed scarves drying on a line | Failed | Selecting the leftmost scarf includes a neighboring scarf. |
+| Solid-colour scarves tied on a display rail | Failed after person repair | Zero people now reported correctly; the chosen teal scarf still includes its blue neighbor. |
+| Patterned scarves on a display | Failed after person repair | Zero people now reported correctly; the selected red scarf still includes orange/blue neighbors. |
 
 The earlier headscarf test exposed a missing cap: the parser labelled it `hat`, while manual selection accepted only clothing classes. Selection now includes the existing carried-garment classes while excluding skin, face and hair. The synthetic cap/scarf regression failed before that repair and passes afterwards.
 
@@ -25,7 +28,11 @@ The photograph harness also stopped whitening transparent references before sele
 
 A trial fallback for the crowded floor image was rejected: it lost fabric, included neighbours and broke other passing photographs. The production Vision foreground path remains unchanged. The floor case is retained as a failing test, without an expected-failure waiver or weakened landmarks. Run both photo commands to assess the requested scene coverage; the positive command alone is insufficient.
 
-Each case writes parser diagnostics, full-source selection mask, transparent cropped cutout, prepared Studio input and JSON metadata to ignored `planning/build/studio/crop-eval/native-photos/`. Metadata includes source, mask and prepared-input hashes, crop bounds, input dimensions and `inference: false`. Artifacts are written before landmark assertions, so their existence does not imply a passing case. The production input helper enforces the 500-pixel limit; a separate native test checks top-left crop coordinates and retained source orientation.
+The three new hanging photographs are real scarves, with `head` as the selected garment intent. Their use as a particular hijab style is not established by the source descriptions. The drying-line case fails exclusion at `[0.33, 0.4]`; the two display cases initially failed the independently reviewed zero-person expectation before selection. A diagnostic production probe found two Vision person instances and zero parsed body pixels in each display. The parser previously checked that mismatch only for exactly one instance. Its existing rejection now also checks multiple instances, so all four gap photos report zero people. The original five passing photo selections remain passing.
+
+The display selections still include adjacent scarves. Full-mask review exposed orange/blue neighbor fragments in the patterned case that its first landmarks missed; three additional reviewed exclusion points now enforce that failure. The case was not accepted as a positive test. All four scene quality gates remain failing after the person repair. These checks do not establish detection accuracy for a real multiple-person photograph. The strict annotations are retained. The photographs are Changku88's [drying scarves](https://commons.wikimedia.org/wiki/File:Drying_hand-dyed_scarves.jpg), Yannick Bammert's [colourful scarves](https://commons.wikimedia.org/wiki/File:Colorful_scarves.jpg) and Erkaha's [patterned scarves](https://commons.wikimedia.org/wiki/File:Bunte_Tuecher.jpg). The manifest records their licences and unedited 960-pixel thumbnail hashes.
+
+Each case that reaches selection writes parser diagnostics, full-source selection mask, transparent cropped cutout, prepared Studio input and JSON metadata to ignored `planning/build/studio/crop-eval/native-photos/`. Metadata includes source, mask and prepared-input hashes, crop bounds, input dimensions and `inference: false`. Artifacts are written before landmark assertions, so their existence does not imply a passing case. The production input helper enforces the 500-pixel limit; a separate native test checks top-left crop coordinates and retained source orientation.
 
 The blazer's [before mask](screens/native/blazer-before-mask.png) and [after mask](screens/native/blazer-after-mask.png) share the source dimensions. The [prepared input](screens/native/blazer-input.png) is cropped and whitened, not a generated Studio output. These derivatives use SkajaLee's [portrait photograph](https://commons.wikimedia.org/wiki/File:2021_urban_summer_fashion,_Andrea_Martinez_portrait.jpeg), licensed [CC BY-SA 2.0](https://creativecommons.org/licenses/by-sa/2.0/); the mask/input transformations are described above and the derivatives retain that licence.
 
@@ -38,7 +45,7 @@ The requested scene coverage remains incomplete:
 | Requested scene | Real-photo selection | Reviewed Studio output |
 | --------------- | -------------------- | ---------------------- |
 | Loose floor hijab | Missing | Missing |
-| Hanging hijab | Missing | Missing |
+| Hanging hijab | Three related scarf scenes fail; particular hijab style not established | Missing |
 | Outfit-draped hijab | Missing | Missing |
 | Head-wrapped hijab | Landmark pass | Missing |
 | Floor trousers | Crowded selection fails | Missing |
