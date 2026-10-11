@@ -2,7 +2,7 @@
 
 Initial batch, 11 October 2026, after explicit approval for the 20 prepared requests. All 20 were attempted once against the configured live service: 17 returned decodable 1024-by-1024 images and three returned HTTP 502. No retries, deployment or provider change were performed in that batch. This is one batch on one service, not a provider comparison or an acceptance-rate estimate.
 
-The user accepted the nine results initially marked for owner review and confirmed the eight failures. Final batch result: nine accepted images, eight rejected images and three HTTP errors. The local [crop report](native-photos.md) remains separate: all ten original selection landmarks pass, while 12 of 56 extended crop variants fail.
+The user accepted the nine results initially marked for owner review and confirmed the eight failures. Final batch result: nine accepted images, eight rejected images and three HTTP errors. The initial crop evaluation had 12 failures among 56 extended variants. The current [crop report](native-photos.md) records all ten originals and all 56 variants passing; that result does not establish Studio fidelity.
 
 ## Input dimension recovery
 
@@ -13,6 +13,27 @@ Native and web preparation now centre references on white padding when either si
 Deployment `542fc502-cffc-471e-b0f7-ebd067d3f5c1` uses the same Klein 4B model. All three padded fragments returned HTTP 200 and decodable 1024-by-1024 images: floor trousers in 8.4 seconds, floor jacket in 8.5 seconds and teal scarf in 14.2 seconds. Local records and comparisons are under `planning/build/studio/crop-eval/improvements/padded-recovery/`; the earlier repeated batch is under `deployed-recovery-20261011/`. Paid evaluations remain authorized by the user.
 
 This verifies recovery of these three dimension failures, not overall visual fidelity. The new floor trousers lose their washed texture; the floor jacket changes length and pocket construction. New outputs have not received owner acceptance. The initial acceptance table below remains historical evidence for its original batch.
+
+## Fidelity comparisons after crop recovery
+
+Fresh native selections and their original references were compared with seed 1, keeping each case's input hashes constant across prompt/model variants. Twenty requests returned 18 decodable 1024-by-1024 images, one content rejection and one provider HTTP 500. This comparison covers five full selections, not the entire 20-case acceptance matrix.
+
+| Prompt and model | Attempts | Observed limitation |
+| --- | --- | --- |
+| Current prompt, Klein 4B | 2 | Hanging trousers become shorts with added pockets; floor coat changes pocket construction. |
+| Compact prompt, Klein 4B | 2 | Trousers recover long legs but retain clamp material as a belt; floor coat gains unsupported pockets. |
+| Compact prompt, Klein 9B | 5 | Four results add unrelated garments or accessories. The scarf result has no added hand, but has not received owner acceptance. |
+| Single-arrangement prompt, Klein 9B | 5 | One content rejection; floor coat retains part of the neighbouring blue garment and changes construction. Hanging jacket gains unsupported details; floor trousers remain folded. |
+| Single-arrangement prompt, Klein 4B | 5 | Clamp material survives on trousers; coat and jacket gain unsupported pockets; scarf colour changes; floor trousers gain invented pocket/seam details. |
+| Single-arrangement prompt, FLUX.2 dev | 1 | HTTP 500, `AiError` 3043, after 44.9 seconds; no image. |
+
+The current 20 preview prompts measure 962 to 981 tokens with the upstream Qwen3 4B tokenizer and chat template. The [upstream FLUX.2 text encoder](https://github.com/black-forest-labs/flux2/blob/main/src/flux2/text_encoder.py) limits its Qwen input to 512 tokens. Reconstructing that window retains owner facts and the fidelity paragraph's beginning, but loses the final composition paragraph in all 20 cases. This identifies a truncation risk; Cloudflare's exact deployed tokenizer implementation was not inspected. Compact prompts measure 359 to 377 tokens and retain their final restrictions, yet their images still fail fidelity. Shortening the prompt alone is therefore insufficient evidence for a production fix.
+
+The comparisons, request metadata, prompts, hashes and outputs remain under `planning/build/studio/crop-eval/improvements/current-{baseline,compact,isolated}-{4b,9b,dev}/`. Token audits are `prompt-token-audit.json` and `compact-token-audit.json`. The evaluation sources are preserved in `fidelity-comparison-sources/`.
+
+A separate higher-capacity image-editing benchmark of the floor coat retains substantially more visible fabric, panel and fastening detail, but reconstructed hidden construction remains unverified. Its local artifact is `coat-benchmark/result.png`; it does not prove an available production API or acceptance of a replacement provider.
+
+The latest Gemini 3.1 Flash Image request returned HTTP 402 `RESOURCE_EXHAUSTED`, explicitly reporting depleted prepaid credits, with no image. Its record is `gemini-recheck-2/jackets-floor-coat.json`. Earlier higher-tier Cloudflare evaluations also returned insufficient-balance errors. No authenticated browser billing session was available. Production still uses Klein 4B; these comparisons have not established a replacement that passes the original fidelity requirements.
 
 ## Results
 
