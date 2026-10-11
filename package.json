@@ -12,6 +12,7 @@
     "test:offline": "node scripts/test-offline.mjs",
     "test:vision": "bash scripts/test-vision.sh",
     "test:photos": "bash scripts/test-photo-vision.sh",
+    "test:photo-gaps": "bash scripts/test-photo-vision.sh tests/fixtures/vision/unresolved.json",
     "test:typecheck": "tsc --noEmit --project tests/tsconfig.json && npm run typecheck --prefix worker/studio",
     "test:coverage": "tsx --test --experimental-test-coverage --test-coverage-lines=80 --test-coverage-branches=80 --test-coverage-functions=80 --test-coverage-include='src/domain/**/*.ts' --test-coverage-exclude='**/*.test.ts' --test-coverage-exclude='**/*.fixture.ts' src/domain/*.test.ts src/domain/scoring/*.test.ts",
     "lint": "eslint .",

@@ -1,6 +1,6 @@
 # Execution evidence
 
-Checked on 11 October 2026 against the local source changes for this audit. Hosted generation is mocked. Two photograph tests run the packaged native models locally. No live Studio evaluation or provider comparison was requested by the test commands.
+Checked on 11 October 2026 against the local source changes for this audit. Hosted generation is mocked. Five real-photo selection cases pass with the packaged native models locally. A separate strict crowded-floor selection case fails. No live Studio evaluation or provider comparison was requested by the test commands.
 
 ## Automated checks
 
@@ -9,13 +9,14 @@ Checked on 11 October 2026 against the local source changes for this audit. Host
 | `npm run check`          | Passed                                          | Application types, test/Worker types, lint, formatting, offline domain/service/Worker tests and localized strings            |
 | Domain tests             | 642 passed                                      | Existing 622 tests plus 17 cross-feature journeys and 3 plan-date/missing-look regressions                                    |
 | Service and Worker tests | 131 passed                                      | Existing 29 Worker tests plus 63 scene/crop contracts, 19 app transport, 10 notification/export, 7 retailer and 3 native storage cases |
-| `npm run test:vision`    | 17 passed                                       | Compiled production Swift garment regions, cutout repair, Studio background and upload-input preparation with synthetic maps/pixels         |
-| `npm run test:photos`    | 2 passed                                        | Actual local parser and production selector on licensed head-wrapped hijab and hanging-trousers photos; marked fabric/exclusion points |
+| `npm run test:vision`    | 21 passed                                       | Compiled production Swift garment regions, cutout repair, Studio background and upload-input preparation with synthetic maps/pixels         |
+| `npm run test:photos`    | 5 passed                                        | Actual local parser/selector, cutout crop and Studio input on four licensed photographs: head scarf, hanging trousers/jacket, worn blazer/jeans |
+| `npm run test:photo-gaps` | 1 failed                                        | Strict crowded-floor selection includes adjacent garments; this remains an open quality gate |
 | Domain coverage          | 98.21% lines, 91.42% branches, 91.40% functions | Loaded domain files only; UI, services, native parser and Worker coverage are not included in these percentages              |
 | Fresh iOS Release build  | Passed                                          | `xcodebuild` with the current source, iOS simulator target                                                                   |
 | Studio input preview     | Six prepared cases                              | Request and input hashes recorded locally; no inference                                                                      |
 
-The total is 792 passing automated tests, including 141 added during this audit. Lint reports two existing unused-import warnings in `src/domain/importing.test.ts`; changed files pass without warnings. The coverage command enforces an 80% minimum for lines, branches and functions in its domain scope.
+The total is 799 passing automated tests, including 148 added during this audit, plus one retained failing real-photo quality test. This is not an all-green photo quality claim. Lint reports two existing unused-import warnings in `src/domain/importing.test.ts`; changed files pass without warnings. The coverage command enforces an 80% minimum for lines, branches and functions in its domain scope.
 
 The ordinary HTTP, HTTPS, socket and fetch APIs are disabled by `scripts/tests/no-network.mjs` in `npm run test:offline`. Service tests replace platform/native modules, and Worker tests replace inference with deterministic responses. This guard protects the ordinary test code from accidental network calls; it is not an operating-system network sandbox.
 
@@ -50,6 +51,7 @@ npm run check
 npm run test:offline -- --coverage
 npm run test:vision
 npm run test:photos
+npm run test:photo-gaps
 node --import=./scripts/tests/no-network.mjs --import=tsx scripts/studio-eval.ts
 DEVICE='Almari Systems QA' bash scripts/e2e.sh .maestro/system
 ```
@@ -58,8 +60,8 @@ DEVICE='Almari Systems QA' bash scripts/e2e.sh .maestro/system
 
 ## What these results cannot establish
 
-The crop matrix represents ten scene types with synthetic image headers and owner descriptions. It verifies the production request/prompt contract, not model recognition or reconstructed garment fidelity. Synthetic native tests verify downstream selection and repair; two additional real-photo tests verify local selection at reviewed landmarks. Their [evidence and limits](native-photos.md) include a repaired scarf-cap omission and a raw parser category mismatch. Four native input cases exercise the extracted production Core Image helper: small opaque references retain their dimensions/colour, transparent cutouts become white while large openings remain, shifted/rotated references retain aspect ratio within 500 pixels, and empty inputs are rejected. JPEG encoding preserves the prepared dimensions. These checks cover input preparation, not provider fidelity or file-storage failures. Simulator Studio success copies a fixture image, rather than synthesizing a new one.
+The crop matrix represents ten scene types with synthetic image headers and owner descriptions. It verifies the production request/prompt contract, not model recognition or reconstructed garment fidelity. Synthetic native tests verify downstream selection and repair; five additional real-photo selection cases verify local selection at reviewed landmarks, cutout cropping and input preparation. A separate crowded-floor case fails its strict exclusion landmarks. Their [evidence and limits](native-photos.md) include repaired scarf-cap and blazer/top defects, a corrected tap annotation, raw parser category mismatches and the unresolved crowded-floor failure. Four native input cases exercise the extracted production Core Image helper: small opaque references retain their dimensions/colour, transparent cutouts become white while large openings remain, shifted/rotated references retain aspect ratio within 500 pixels, and empty inputs are rejected. JPEG encoding preserves the prepared dimensions. A fifth preparation test checks top-left cutout bounds and source orientation through the extracted production crop helper. These checks cover input preparation, not provider fidelity or file-storage failures. Simulator Studio success copies a fixture image, rather than synthesizing a new one.
 
 Historical catalogue-like scarf, trousers and blazer output pairs were inspected locally. They show recoverable silhouettes and visible shadows, but lack reliable per-output request metadata and do not supply the requested full floor/hanging/head/body corpus. A current, provenance-aware visual comparison is still missing. No claim that every crop can be reconstructed correctly, or that one provider is the most reliable, follows from these results. The [analysis](system-analysis.md) specifies the missing corpus and review criteria.
 
-Physical camera behavior, on-device parser accuracy, real permission/share sheets, actual notification delivery, large-text/VoiceOver task completion and the entire existing simulator suite still require separate runtime evidence. No live generation, provider migration or deployment occurred in this audit.
+Physical camera behavior, broad on-device parser accuracy, real share sheets, actual notification delivery, complete large-text/VoiceOver task completion and the entire existing simulator suite still require separate runtime evidence. No live generation, provider migration or deployment occurred in this audit.

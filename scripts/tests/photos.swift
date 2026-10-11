@@ -42,7 +42,7 @@ func selection(_ item: PhotoCase, photo: CIImage, parse: ClothesParse, context: 
   let selector = CutoutSelector(
     photo: photo, picture: picture,
     foregroundRequest: { VNGenerateForegroundInstanceMaskRequest() },
-    parsePhoto: { image in (parse, parse.chroma(image, context: context)) },
+    parsePhoto: { image in (parse, parse.colours(image, context: context)) },
     renderMask: { context.createCGImage($0, from: $0.extent, format: .RGBA8, colorSpace: space) })
   guard let alpha = selector.select(at: CGPoint(x: item.pick[0], y: item.pick[1])) else {
     throw PhotoTestError.failed("No garment selection")
@@ -50,15 +50,61 @@ func selection(_ item: PhotoCase, photo: CIImage, parse: ClothesParse, context: 
   return (alpha, picture.width, picture.height)
 }
 
-func testPhoto(_ item: PhotoCase, folder: URL, parser: ClothesParser, context: CIContext) throws {
+func writeReview(_ item: PhotoCase, photo: CIImage, alpha: [UInt8], context: CIContext, output: URL) throws {
+  let width = Int(photo.extent.width)
+  let height = Int(photo.extent.height)
+  guard let provider = CGDataProvider(data: Data(alpha) as CFData),
+    let mask = CGImage(
+      width: width, height: height, bitsPerComponent: 8, bitsPerPixel: 8, bytesPerRow: width,
+      space: CGColorSpaceCreateDeviceGray(), bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.none.rawValue),
+      provider: provider, decode: nil, shouldInterpolate: false, intent: .defaultIntent)
+  else { throw PhotoTestError.failed("Could not render selection mask") }
+  let inside = alpha.indices.filter { alpha[$0] > 0 }
+  guard let minX = inside.map({ $0 % width }).min(), let maxX = inside.map({ $0 % width }).max(),
+    let minY = inside.map({ $0 / width }).min(), let maxY = inside.map({ $0 / width }).max()
+  else { throw PhotoTestError.failed("Empty selection mask") }
+  let bounds = CGRect(x: minX, y: minY, width: maxX - minX + 1, height: maxY - minY + 1)
+  let cutout = PhotoPreparation.cutout(photo, mask: mask, bounds: bounds)
+  guard let input = PhotoPreparation.studioInput(cutout, context: context) else {
+    throw PhotoTestError.failed("Could not prepare real-photo Studio input")
+  }
+  try require(input.extent.width <= 500 && input.extent.height <= 500, "Studio input exceeds provider limit")
+  let stem = URL(fileURLWithPath: item.file).deletingPathExtension().lastPathComponent + "-" + item.kind
+  let space = CGColorSpace(name: CGColorSpace.sRGB)!
+  for (suffix, image) in [("mask", CIImage(cgImage: mask)), ("cutout", cutout), ("input", input)] {
+    try context.writePNGRepresentation(
+      of: image, to: output.appendingPathComponent(stem + "-" + suffix + ".png"),
+      format: .RGBA8, colorSpace: space)
+  }
+  let metadata: [String: Any] = [
+    "sourceSha256": item.sha256, "kind": item.kind, "pick": item.pick,
+    "keep": item.keep, "exclude": item.exclude,
+    "maskSha256": SHA256.hash(data: Data(alpha)).map { String(format: "%02x", $0) }.joined(),
+    "inputWidth": Int(input.extent.width), "inputHeight": Int(input.extent.height),
+    "bounds": [minX, minY, maxX - minX + 1, maxY - minY + 1],
+    "inputSha256": SHA256.hash(data: try Data(contentsOf: output.appendingPathComponent(stem + "-input.png")))
+      .map { String(format: "%02x", $0) }.joined(),
+    "inference": false,
+  ]
+  try JSONSerialization.data(withJSONObject: metadata, options: [.prettyPrinted, .sortedKeys])
+    .write(to: output.appendingPathComponent(stem + ".json"))
+}
+
+func testPhoto(_ item: PhotoCase, folder: URL, parser: ClothesParser, context: CIContext, output: URL) throws {
   let photo = try readPhoto(item, folder: folder)
   let flattened = photo.composited(over: CIImage(color: .white).cropped(to: photo.extent))
   let parse = try parser.parse(flattened)
   try require(parse.people == item.people, "Person detection: expected \(item.people), found \(parse.people)")
   let automatic = GarmentRegions.find(parse.grid, person: parse.people > 0)
   let kinds = automatic.map(\.kind)
-  print("DIAGNOSTIC \(item.file): expected parser role \(item.kind), found \(kinds)")
+  print("DIAGNOSTIC \(item.file): owner garment \(item.kind), found \(kinds)")
+  let stem = URL(fileURLWithPath: item.file).deletingPathExtension().lastPathComponent + "-" + item.kind
+  let classes: Set<ClothesClass> = item.kind == "pants" ? [.pants] : item.kind == "head" ? [.hat, .scarf] : [.upper]
+  try context.writePNGRepresentation(
+    of: parse.mask(of: classes), to: output.appendingPathComponent(stem + "-parser.png"),
+    format: .RGBA8, colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
   let selected = try selection(item, photo: flattened, parse: parse, context: context)
+  try writeReview(item, photo: flattened, alpha: selected.alpha, context: context, output: output)
   func alpha(at point: [Double]) throws -> UInt8 {
     try require(point.count == 2 && point.allSatisfy { $0 >= 0 && $0 < 1 }, "Invalid landmark")
     let x = Int(point[0] * Double(selected.width))
@@ -77,8 +123,10 @@ func testPhoto(_ item: PhotoCase, folder: URL, parser: ClothesParser, context: C
 struct PhotoTests {
   static func main() throws {
     let arguments = CommandLine.arguments
-    try require(arguments.count == 3, "Expected photo manifest and model paths")
+    try require(arguments.count == 4, "Expected photo manifest, model and review paths")
     let manifest = URL(fileURLWithPath: arguments[1])
+    let output = URL(fileURLWithPath: arguments[3])
+    try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
     let cases = try JSONDecoder().decode([PhotoCase].self, from: Data(contentsOf: manifest))
     try require(!cases.isEmpty, "No photographs tested")
     let config = MLModelConfiguration()
@@ -89,8 +137,8 @@ struct PhotoTests {
     var failures = 0
     for item in cases {
       do {
-        try testPhoto(item, folder: manifest.deletingLastPathComponent(), parser: parser, context: context)
-        print("PASS \(item.file): reviewed fabric and exclusion landmarks")
+        try testPhoto(item, folder: manifest.deletingLastPathComponent(), parser: parser, context: context, output: output)
+        print("PASS \(item.file) (\(item.kind)): reviewed fabric, exclusion and Studio input")
       } catch {
         failures += 1
         print("FAIL \(item.file): \(error)")

@@ -2,6 +2,20 @@ import CoreImage
 import Foundation
 
 enum PhotoPreparation {
+  static func cutout(_ photo: CIImage, mask: CGImage, bounds: CGRect) -> CIImage {
+    let rect = CGRect(
+      x: bounds.minX, y: photo.extent.height - bounds.maxY, width: bounds.width, height: bounds.height)
+    return photo.applyingFilter(
+      "CIBlendWithMask",
+      parameters: [
+        kCIInputBackgroundImageKey: CIImage(color: .clear).cropped(to: photo.extent),
+        kCIInputMaskImageKey: CIImage(cgImage: mask),
+      ]
+    )
+    .cropped(to: rect)
+    .transformed(by: CGAffineTransform(translationX: -rect.minX, y: -rect.minY))
+  }
+
   static func studioInput(_ source: CIImage, context: CIContext) -> CIImage? {
     let normalized = source.transformed(
       by: CGAffineTransform(translationX: -source.extent.minX, y: -source.extent.minY))

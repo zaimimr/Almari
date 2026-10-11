@@ -23,15 +23,15 @@ final class CutoutSelector {
   private let photo: CIImage
   private let picture: CGImage
   private let makeForegroundRequest: () -> VNGenerateForegroundInstanceMaskRequest
-  private let parsePhoto: (CIImage) -> (parse: ClothesParse, chroma: [SIMD2<Double>])?
+  private let parsePhoto: (CIImage) -> (parse: ClothesParse, colours: [SIMD3<Double>])?
   private let renderMask: (CIImage) -> CGImage?
   private var instances: Instances??
-  private var held: (parse: ClothesParse, chroma: [SIMD2<Double>])??
+  private var held: (parse: ClothesParse, colours: [SIMD3<Double>])??
 
   init(
     photo: CIImage, picture: CGImage,
     foregroundRequest: @escaping () -> VNGenerateForegroundInstanceMaskRequest,
-    parsePhoto: @escaping (CIImage) -> (parse: ClothesParse, chroma: [SIMD2<Double>])?,
+    parsePhoto: @escaping (CIImage) -> (parse: ClothesParse, colours: [SIMD3<Double>])?,
     renderMask: @escaping (CIImage) -> CGImage?
   ) {
     self.photo = photo
@@ -153,7 +153,7 @@ final class CutoutSelector {
     return found
   }
 
-  private func parsed() -> (parse: ClothesParse, chroma: [SIMD2<Double>])? {
+  private func parsed() -> (parse: ClothesParse, colours: [SIMD3<Double>])? {
     if let held { return held }
     let found = parsePhoto(photo)
     held = .some(found)
@@ -185,14 +185,14 @@ final class CutoutSelector {
   }
 
   private func garment(at point: CGPoint) -> [UInt8]? {
-    guard let (parse, chroma) = parsed() else { return nil }
+    guard let (parse, colours) = parsed() else { return nil }
     let grid = parse.grid
     let area = parse.area
     let extent = parse.extent
     let x = Int((point.x * extent.width - area.minX) / area.width * CGFloat(grid.width))
     let y = Int((point.y * extent.height - (extent.height - area.maxY)) / area.height * CGFloat(grid.height))
     let index = min(grid.height - 1, max(0, y)) * grid.width + min(grid.width - 1, max(0, x))
-    guard let region = GarmentRegions.picked(grid, at: index, chroma: chroma),
+    guard let region = GarmentRegions.picked(grid, at: index, colours: colours, person: parse.people > 0),
       let mask = renderMask(parse.mask(of: region).cropped(to: extent))
     else { return nil }
     return Self.gray(mask, width: picture.width, height: picture.height)

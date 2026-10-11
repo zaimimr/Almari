@@ -88,6 +88,36 @@ struct VisionTests {
         try expect(pixels.contains(60 * 100 + 50), "Scarf over chest lost")
         try expect(!pixels.contains(30 * 100 + 50), "Face included")
       }),
+      ("manual selection separates touching trousers from an upper garment", {
+        let source = grid([(.upper, 20..<80, 20..<60), (.pants, 20..<80, 60..<90)])
+        let upper = Set(GarmentRegions.picked(source, at: 40 * 100 + 40)?.pixels ?? [])
+        let pants = Set(GarmentRegions.picked(source, at: 80 * 100 + 40)?.pixels ?? [])
+        try expect(upper.contains(40 * 100 + 40), "Upper garment lost")
+        try expect(!upper.contains(80 * 100 + 40), "Trousers included in upper garment")
+        try expect(pants.contains(80 * 100 + 40), "Trousers lost")
+        try expect(!pants.contains(40 * 100 + 40), "Upper garment included in trousers")
+      }),
+      ("manual selection separates neutral garments while retaining shaded fabric", {
+        let source = grid([(.upper, 20..<80, 20..<80)])
+        var colours = [SIMD3<Double>](repeating: SIMD3(5, 0, 0), count: 10000)
+        for y in 20..<80 {
+          for x in 20..<50 { colours[y * 100 + x] = SIMD3(x < 30 ? 30 : 45, 0, 0) }
+        }
+        let selected = Set(GarmentRegions.picked(source, at: 40 * 100 + 40, colours: colours)?.pixels ?? [])
+        try expect(selected.contains(40 * 100 + 40), "White garment lost")
+        try expect(selected.contains(40 * 100 + 25), "Shaded fabric lost")
+        try expect(!selected.contains(40 * 100 + 70), "Black garment included")
+      }),
+      ("worn selection joins occluded fabric while loose selection keeps separate items", {
+        let source = grid([(.upper, 10..<30, 20..<80), (.upper, 70..<90, 20..<80)])
+        let colours = [SIMD3<Double>](repeating: SIMD3(45, 0, 0), count: 10000)
+        let worn = Set(GarmentRegions.picked(source, at: 40 * 100 + 20, colours: colours, person: true)?.pixels ?? [])
+        let loose = Set(GarmentRegions.picked(source, at: 40 * 100 + 20, colours: colours)?.pixels ?? [])
+        try expect(worn.contains(40 * 100 + 20) && worn.contains(40 * 100 + 80), "Occluded garment part lost")
+        try expect(!worn.contains(40 * 100 + 50), "Gap between garment parts filled")
+        try expect(loose.contains(40 * 100 + 20), "Chosen loose garment lost")
+        try expect(!loose.contains(40 * 100 + 80), "Second loose garment included")
+      }),
       ("hanging trousers survive disconnected leg labels", {
         let source = grid([(.pants, 20..<40, 20..<80), (.pants, 60..<80, 20..<80)])
         let found = GarmentRegions.find(source, person: false).filter { $0.kind == "pants" }
@@ -156,6 +186,21 @@ struct VisionTests {
       ("indistinguishable white-on-white image returns no mask for raw fallback", {
         let image = cgImage([UInt8](repeating: 255, count: 40000))
         try expect(StudioBackground.clear(image) == nil, "Unsafe mask accepted")
+      }),
+      ("saved cutout uses top-left photo bounds and retains source orientation", {
+        let source = (0..<10000).flatMap { index -> [UInt8] in [UInt8(index / 100), UInt8(index % 100), 0, 255] }
+        let photo = CIImage(cgImage: cgImage(source))
+        let mask = cgImage(rgba([255, 255, 255, 255]) { _, _ in true })
+        let cut = PhotoPreparation.cutout(photo, mask: mask, bounds: CGRect(x: 20, y: 10, width: 60, height: 40))
+        try expect(cut.extent == CGRect(x: 0, y: 0, width: 60, height: 40), "Cutout dimensions or origin changed")
+        let context = CIContext()
+        var top = [UInt8](repeating: 0, count: 4)
+        var bottom = top
+        let space = CGColorSpace(name: CGColorSpace.sRGB)!
+        context.render(cut, toBitmap: &top, rowBytes: 4, bounds: CGRect(x: 0, y: 39, width: 1, height: 1), format: .RGBA8, colorSpace: space)
+        context.render(cut, toBitmap: &bottom, rowBytes: 4, bounds: CGRect(x: 59, y: 0, width: 1, height: 1), format: .RGBA8, colorSpace: space)
+        try expect(top == [10, 20, 0, 255], "Wrong top-left source pixel")
+        try expect(bottom == [49, 79, 0, 255], "Wrong bottom-right source pixel")
       }),
       ("Studio input preserves opaque reference colours and does not enlarge small photos", {
         let source = CIImage(cgImage: cgImage(rgba([40, 60, 80, 255], garment: { _, _ in true })))

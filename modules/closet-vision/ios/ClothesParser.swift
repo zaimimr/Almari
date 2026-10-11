@@ -14,7 +14,7 @@ struct ClothesParse {
   let extent: CGRect
   let people: Int
 
-  func chroma(_ image: CIImage, context: CIContext) -> [SIMD2<Double>] {
+  func colours(_ image: CIImage, context: CIContext) -> [SIMD3<Double>] {
     let width = grid.width
     let height = grid.height
     let small = image.cropped(to: area)
@@ -27,7 +27,7 @@ struct ClothesParse {
     return (0..<width * height).map { index in
       let lab = GarmentEnhancer.lab(
         red: Double(pixels[index * 4]), green: Double(pixels[index * 4 + 1]), blue: Double(pixels[index * 4 + 2]))
-      return SIMD2(lab.a, lab.b)
+      return SIMD3(lab.l * GarmentRegions.lightnessWeight, lab.a, lab.b)
     }
   }
 

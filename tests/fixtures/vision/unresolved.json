@@ -1,0 +1,18 @@
+[
+  {
+    "file": "trousers-floor-folded.jpg",
+    "sha256": "dd1f04104fb1d9ed4ab5949811755868f1f55dc4c04b6a0072151ed2fd023a27",
+    "source": "https://commons.wikimedia.org/wiki/File:Jean_in_the_house.jpg",
+    "original": "https://upload.wikimedia.org/wikipedia/commons/a/aa/Jean_in_the_house.jpg",
+    "fixture": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/aa/Jean_in_the_house.jpg/960px-Jean_in_the_house.jpg",
+    "creator": "Freddy Kabeya",
+    "license": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "changes": "Wikimedia Commons 960-pixel-wide thumbnail; no further edits",
+    "scene": "Many folded trousers on a cloth laid on the floor; the target is the dark pair near the lower centre, with a bare foot and adjacent garments",
+    "people": 0,
+    "kind": "pants",
+    "pick": [0.44, 0.84],
+    "keep": [[0.44, 0.84], [0.45, 0.87], [0.38, 0.89]],
+    "exclude": [[0.68, 0.87], [0.61, 0.8], [0.2, 0.72], [0.65, 0.94], [0.33, 0.97]]
+  }
+]

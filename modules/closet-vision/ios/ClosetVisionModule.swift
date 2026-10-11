@@ -326,18 +326,7 @@ final class GarmentPipeline {
 
   func saveEdit(photo: CIImage, mask: CGImage, bounds: CGRect, id: String) throws -> CutoutEditRecord {
     try queue.sync {
-      let height = photo.extent.height
-      let rect = CGRect(x: bounds.minX, y: height - bounds.maxY, width: bounds.width, height: bounds.height)
-      let cover = CIImage(cgImage: mask)
-      let cut = photo.applyingFilter(
-        "CIBlendWithMask",
-        parameters: [
-          kCIInputBackgroundImageKey: CIImage(color: .clear).cropped(to: photo.extent),
-          kCIInputMaskImageKey: cover,
-        ]
-      )
-      .cropped(to: rect)
-      .transformed(by: CGAffineTransform(translationX: -rect.minX, y: -rect.minY))
+      let cut = PhotoPreparation.cutout(photo, mask: mask, bounds: bounds)
       let garment = scaled(cut, longEdge: 1536)
       try FileManager.default.createDirectory(at: photos, withIntermediateDirectories: true)
       let placed = try place(garment, id: id)
@@ -348,7 +337,7 @@ final class GarmentPipeline {
       record.frame = placed.frame
       record.area = CutoutMapping.record(
         CutoutMapping.area(
-          garmentOrigin: bounds.origin, scale: garment.extent.width / rect.width, side: placed.side,
+          garmentOrigin: bounds.origin, scale: garment.extent.width / bounds.width, side: placed.side,
           offset: placed.offset, garment: garment.extent.size, photo: photo.extent.size))
       return record
     }
@@ -423,10 +412,10 @@ final class GarmentPipeline {
     return request
   }
 
-  func parseHeld(_ image: CIImage) -> (parse: ClothesParse, chroma: [SIMD2<Double>])? {
+  func parseHeld(_ image: CIImage) -> (parse: ClothesParse, colours: [SIMD3<Double>])? {
     queue.sync {
       guard let parse = try? loadParser().parse(image) else { return nil }
-      return (parse, parse.chroma(image, context: context))
+      return (parse, parse.colours(image, context: context))
     }
   }
 
