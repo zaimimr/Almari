@@ -1,6 +1,6 @@
 # Native photograph evidence
 
-Checked on 11 October 2026. The original five positive selections, four bundled gap photographs and separate local-download floor jacket pass their strict fabric/exclusion landmarks. The broader transformed-photo gate remains red: 44 of 56 variants pass, with 12 failures. The local crop commands run no hosted generation. A separate approved 20-request [live Studio review](studio-photos.md) returned 17 images and three HTTP 502 errors; eight images clearly fail and nine require owner review.
+Checked on 11 October 2026. The original five positive selections, four bundled gap photographs and separate local-download floor jacket pass their strict fabric/exclusion landmarks. The broader transformed-photo gate remains red: 44 of 56 variants pass, with 12 failures. The local crop commands run no hosted generation. A separate approved 20-request [live Studio review](studio-photos.md) returned 17 images and three HTTP 502 errors; the user accepted nine images and confirmed eight failures.
 
 The tests exercise the packaged clothes parser, production manual selector, cutout bounds and Studio input preparation. Loose garments now use the packaged SAM 2.1 Small point segmenter, followed by source-pixel refinement. Worn garments retain the existing person-aware parser path. Production selection never reads fixture names, hashes, garment annotations or landmark coordinates.
 
@@ -68,17 +68,17 @@ Both rebuilt simulator cutout editor flows pass, including reading the saved cat
 
 `node --import=./scripts/tests/no-network.mjs --import=tsx scripts/studio-eval.ts --photos` prepares 20 real-photo requests: full selection and a central fragment for each of the ten selections. Both use actual native prepared inputs and the uncut original reference, with scene facts, source-derived crop bounds and request hashes. Preview artifacts live in ignored `planning/build/studio/crop-eval/preview/real-photos/`. Preview preparation makes no inference requests. `--live` is a separate explicit mode. After approval, these exact 20 requests were attempted once: 17 images returned and three requests failed with HTTP 502. The [live review](studio-photos.md) records all results and deployed-prompt provenance.
 
-| Requested scene     | Real-photo selection                                                        | Reviewed current Studio output                                           |
-| ------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| Loose floor hijab   | Missing                                                                     | Missing                                                                  |
-| Hanging hijab       | Three related scarf scenes pass original landmarks; variant failures remain | Five images reviewed; one HTTP 502; owner fidelity review still required |
-| Outfit-draped hijab | Missing                                                                     | Missing                                                                  |
-| Head-wrapped hijab  | Original landmarks pass; mirrored cap fails                                 | Two failures: added hand and changed colour                              |
-| Floor trousers      | Crowded original and tested variants pass                                   | Full fails visible fabric; fragment HTTP 502                             |
-| Hanging trousers    | Landmark pass, folded/partial                                               | Both outputs retain a hanger                                             |
-| Worn trousers       | Landmark pass, legs outside frame                                           | Two images need owner review                                             |
-| Floor jacket        | Original passes; three cord variants fail                                   | Full keeps cord but changes construction; fragment HTTP 502              |
-| Hanging jacket      | Landmark pass, partly outside frame                                         | Both outputs change visible fabric/construction                          |
-| Worn jacket         | Original passes; rotated black-top exclusion fails                          | Two images need trim/construction review                                 |
+| Requested scene     | Real-photo selection                                                        | Reviewed current Studio output                              |
+| ------------------- | --------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| Loose floor hijab   | Missing                                                                     | Missing                                                     |
+| Hanging hijab       | Three related scarf scenes pass original landmarks; variant failures remain | Five images accepted by user; one HTTP 502                  |
+| Outfit-draped hijab | Missing                                                                     | Missing                                                     |
+| Head-wrapped hijab  | Original landmarks pass; mirrored cap fails                                 | Two failures: added hand and changed colour                 |
+| Floor trousers      | Crowded original and tested variants pass                                   | Full fails visible fabric; fragment HTTP 502                |
+| Hanging trousers    | Landmark pass, folded/partial                                               | Both outputs retain a hanger                                |
+| Worn trousers       | Landmark pass, legs outside frame                                           | Two images accepted by user                                 |
+| Floor jacket        | Original passes; three cord variants fail                                   | Full keeps cord but changes construction; fragment HTTP 502 |
+| Hanging jacket      | Landmark pass, partly outside frame                                         | Both outputs change visible fabric/construction             |
+| Worn jacket         | Original passes; rotated black-top exclusion fails                          | Two images accepted by user                                 |
 
-All 17 returned current Studio outputs were visually reviewed; eight clearly fail and nine remain unconfirmed. Loose and outfit-draped hijabs, further independent scenes, broader crop robustness and validated reconstruction fidelity remain separate gaps in [the system analysis](system-analysis.md).
+All 17 returned current Studio outputs were visually reviewed; the user accepted nine and confirmed eight failures. Loose and outfit-draped hijabs, further independent scenes, broader crop robustness and validated reconstruction fidelity remain separate gaps in [the system analysis](system-analysis.md).
