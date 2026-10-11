@@ -9,5 +9,7 @@
     "STUDIO_MODEL": "@cf/black-forest-labs/flux-2-klein-4b",
     "GLOBAL_DAILY_LIMIT": "1000",
   },
-  "kv_namespaces": [{ "binding": "LIMITS" }],
+  "kv_namespaces": [
+    { "binding": "LIMITS", "id": "246b341217ad4de98d4379fae6fedaf6" },
+  ],
 }
