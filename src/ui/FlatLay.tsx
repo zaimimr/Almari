@@ -309,7 +309,7 @@ function LaidPiece({
 
   return (
     <Animated.View
-      pointerEvents={ghost ? "none" : "box-none"}
+      pointerEvents={ghost || !onPress ? "none" : "box-none"}
       style={[styles.piece, box, { zIndex: laid.depth }, travel]}
       {...(ghost ? hidden : null)}
     >

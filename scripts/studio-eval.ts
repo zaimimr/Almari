@@ -1,15 +1,23 @@
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { studioPrompt } from "../worker/studio/src/prompt";
 import type { StudioRequest } from "../worker/studio/src/request";
 
-const output = resolve("planning/build/studio/crop-eval");
+const live = process.argv.includes("--live");
+const output = resolve(
+  "planning/build/studio/crop-eval",
+  ...(live ? [] : ["preview"]),
+);
 mkdirSync(output, { recursive: true });
-process.loadEnvFile(".env");
+const caseName = process.argv
+  .slice(2)
+  .find((argument) => argument !== "--live");
+if (live) process.loadEnvFile(".env");
 const studioUrl = process.env.EXPO_PUBLIC_STUDIO_URL;
 const studioToken = process.env.EXPO_PUBLIC_STUDIO_TOKEN;
-if (!studioUrl || !studioToken)
+if (live && (!studioUrl || !studioToken))
   throw new Error("Studio configuration required");
 const cases: {
   id: string;
@@ -102,7 +110,7 @@ const cases: {
 
 async function evaluate() {
   for (const entry of cases) {
-    if (process.argv[2] && entry.id !== process.argv[2]) continue;
+    if (caseName && entry.id !== caseName) continue;
     const original = resolve(output, `${entry.id}-original.jpg`);
     const selected = resolve(output, `${entry.id}-selection.jpg`);
     execFileSync("magick", [
@@ -136,6 +144,23 @@ async function evaluate() {
       : undefined;
     const prompt = studioPrompt({ ...entry.piece, original: reference });
     writeFileSync(resolve(output, `${entry.id}-prompt.txt`), prompt);
+    const hash = (bytes: string | Uint8Array) =>
+      createHash("sha256").update(bytes).digest("hex");
+    const record = {
+      caseId: entry.id,
+      mode: live ? "live" : "preview",
+      createdAt: new Date().toISOString(),
+      parameters: entry.piece,
+      promptHash: hash(prompt),
+      selectionHash: hash(readFileSync(selected)),
+      originalHash: reference ? hash(readFileSync(original)) : null,
+    };
+    const recordPath = resolve(output, `${entry.id}-request.json`);
+    writeFileSync(recordPath, JSON.stringify(record, null, 2));
+    if (!live) {
+      console.log(`${entry.id}: inputs and prompt prepared, no inference`);
+      continue;
+    }
     const form = new FormData();
     form.append("image", image);
     if (reference) form.append("original", reference);
@@ -161,7 +186,16 @@ async function evaluate() {
     )
       throw new Error(`${entry.id}: generation failed (${response.status})`);
     const generated = resolve(output, `${entry.id}-result.jpg`);
-    writeFileSync(generated, Buffer.from(await response.arrayBuffer()));
+    const bytes = Buffer.from(await response.arrayBuffer());
+    writeFileSync(generated, bytes);
+    writeFileSync(
+      recordPath,
+      JSON.stringify(
+        { ...record, elapsedMs: Date.now() - started, outputHash: hash(bytes) },
+        null,
+        2,
+      ),
+    );
     execFileSync("magick", [
       original,
       selected,

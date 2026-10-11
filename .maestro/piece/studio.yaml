@@ -22,11 +22,11 @@ appId: com.zaimimran.almari
     visible:
       id: "piece-edit-screen"
     timeout: 10000
-- tapOn: "AI Enhanced"
 - assertVisible: "AI Enhance sends this photo to Cloudflare\\."
+- tapOn: "AI Enhanced"
 - extendedWaitUntil:
-    visible:
-      id: "edit-hero"
+    notVisible:
+      id: "moment-generating"
     timeout: 60000
 - assertVisible:
     text: "AI Enhanced"

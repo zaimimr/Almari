@@ -1,0 +1,29 @@
+appId: com.zaimimran.almari
+---
+- launchApp
+- openLink: "almari://capture/link"
+- runFlow:
+    when:
+      visible: "Open"
+    commands:
+      - tapOn: "Open"
+- extendedWaitUntil:
+    visible:
+      id: "link-screen"
+    timeout: 30000
+- tapOn:
+    id: "link-field"
+- inputText: "not-a-link"
+- hideKeyboard
+- assertNotVisible:
+    id: "link-add"
+- assertVisible:
+    id: "link-screen"
+- takeScreenshot: docs/qa/screens/system/capture-link-invalid
+- tapOn:
+    id: "link-field"
+- eraseText
+- inputText: "https://shop.invalid/products/piece"
+- hideKeyboard
+- assertVisible:
+    id: "link-add"

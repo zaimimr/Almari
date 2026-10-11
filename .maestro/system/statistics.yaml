@@ -1,0 +1,30 @@
+appId: com.zaimimran.almari
+---
+- launchApp
+- openLink: "almari://closet/stats"
+- runFlow:
+    when:
+      visible: "Open"
+    commands:
+      - tapOn: "Open"
+- extendedWaitUntil:
+    visible:
+      id: "closet-stats-screen"
+    timeout: 30000
+- assertVisible:
+    id: "stats-pieces"
+- assertVisible: "11"
+- assertVisible:
+    id: "stats-month"
+- scrollUntilVisible:
+    element:
+      id: "stats-most-seed-boots"
+    centerElement: true
+- tapOn:
+    id: "stats-most-seed-boots"
+- extendedWaitUntil:
+    visible:
+      id: "piece-detail"
+    timeout: 10000
+- assertVisible: "Black boots"
+- takeScreenshot: docs/qa/screens/system/statistics-piece

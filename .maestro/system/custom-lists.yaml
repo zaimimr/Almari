@@ -1,0 +1,42 @@
+appId: com.zaimimran.almari
+---
+- launchApp
+- openLink: "almari://profile/lists"
+- runFlow:
+    when:
+      visible: "Open"
+    commands:
+      - tapOn: "Open"
+- extendedWaitUntil:
+    visible:
+      id: "own-lists"
+    timeout: 30000
+- tapOn: "Soft weave"
+- tapOn:
+    id: "own-own-fabric-1-name"
+- eraseText
+- inputText: "Soft twill"
+- hideKeyboard
+- tapOn:
+    id: "own-own-fabric-1-save"
+- assertVisible: "Soft twill"
+- stopApp
+- launchApp
+- openLink: "almari://profile/lists"
+- extendedWaitUntil:
+    visible: "Soft twill"
+    timeout: 30000
+- tapOn: "Soft twill"
+- tapOn:
+    id: "own-own-fabric-1-remove"
+- extendedWaitUntil:
+    visible: "Remove Soft twill?"
+    timeout: 10000
+- tapOn:
+    text: "Remove"
+    index: 1
+- extendedWaitUntil:
+    visible:
+      id: "own-empty"
+    timeout: 10000
+- takeScreenshot: docs/qa/screens/system/custom-lists

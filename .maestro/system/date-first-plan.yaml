@@ -1,0 +1,38 @@
+appId: com.zaimimran.almari
+---
+- launchApp
+- extendedWaitUntil:
+    visible: "Looks"
+    timeout: 30000
+- tapOn: "Looks"
+- extendedWaitUntil:
+    visible:
+      id: "week-2026-10-12"
+    timeout: 10000
+- tapOn:
+    id: "week-2026-10-12"
+- extendedWaitUntil:
+    visible:
+      id: "plan-day"
+    timeout: 30000
+- tapOn:
+    id: "plan-seed-look-office"
+- extendedWaitUntil:
+    notVisible:
+      id: "plan-day"
+    timeout: 10000
+- waitForAnimationToEnd
+- assertVisible: "Monday 12 October, Office navy"
+- tapOn:
+    id: "week-2026-10-12"
+- extendedWaitUntil:
+    visible: "Work, Planned for Monday 12 October"
+    timeout: 20000
+- stopApp
+- launchApp
+- openLink: "almari://look/seed-look-office"
+- extendedWaitUntil:
+    visible: "Work, Planned for Monday 12 October"
+    timeout: 30000
+- waitForAnimationToEnd
+- takeScreenshot: docs/qa/screens/system/date-first-plan

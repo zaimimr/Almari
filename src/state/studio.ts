@@ -160,6 +160,8 @@ async function requestStudio(body: FormData) {
     if (!response.ok) throw new Error("failed");
     const bytes = new Uint8Array(await response.arrayBuffer());
     const type = response.headers.get("content-type") ?? "";
+    if (!bytes.length || !/^image\/(jpeg|png)(;|$)/i.test(type))
+      throw new Error("failed");
     return { bytes, extension: type.includes("png") ? ".png" : ".jpg" };
   } finally {
     clearTimeout(timer);
