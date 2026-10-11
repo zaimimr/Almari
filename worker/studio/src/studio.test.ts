@@ -200,6 +200,18 @@ describe("studioPrompt", () => {
     expect(prompt).toContain("unconfirmed guess");
     expect(prompt).not.toContain("never lengthen the legs into trousers");
   });
+
+  it("unfolds clothing when the owner's note describes the source pose", () => {
+    const prompt = studioPrompt({
+      category: "bottom",
+      kind: "trousers",
+      note: "Folded trousers on a hanger",
+    });
+    expect(prompt).toContain("Folded trousers on a hanger");
+    expect(prompt).toContain("source photograph, not the final product pose");
+    expect(prompt).toContain("Unfold clothing completely");
+    expect(prompt).toContain("waistband to both leg hems");
+  });
 });
 
 describe("image header", () => {
@@ -516,6 +528,102 @@ describe("worker", () => {
     await Promise.all(context.waits);
     expect(context.store.has(`install:${install}:${day}`)).toBe(false);
     expect(context.store.get(`all:${day}`)).toBe("1");
+  });
+
+  it("returns Seedream output through the same authenticated app endpoint", async () => {
+    const context = setup();
+    context.env.STUDIO_MODEL = "bytedance/seedream-5-pro";
+    context.ai.run.mockResolvedValue({
+      result: { images: ["https://images.volces.com/result.jpeg"] },
+    });
+    const download = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response(jpegBytes(1024, 1024)));
+    const response = await call(
+      context,
+      {},
+      form({ image: png(), original: png() }),
+    );
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toBe("image/jpeg");
+    expect(new Uint8Array(await response.arrayBuffer())).toEqual(
+      jpegBytes(1024, 1024),
+    );
+    expect(context.ai.run.mock.calls[0]![0]).toBe("bytedance/seedream-5-pro");
+    expect(download).toHaveBeenCalledOnce();
+    await Promise.all(context.waits);
+    expect(context.store.get(`all:${day}`)).toBe("1");
+  });
+
+  it("recovers a transient Seedream output download failure and counts once", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const context = setup();
+    context.env.STUDIO_MODEL = "bytedance/seedream-5-pro";
+    context.ai.run.mockResolvedValue({
+      result: { images: ["https://images.volces.com/result.jpeg"] },
+    });
+    vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response(null, { status: 503 }))
+      .mockResolvedValueOnce(new Response(jpegBytes(1024, 1024)));
+    expect((await call(context)).status).toBe(200);
+    expect(context.ai.run).toHaveBeenCalledTimes(2);
+    await Promise.all(context.waits);
+    expect(context.store.get(`all:${day}`)).toBe("1");
+  });
+
+  it("reports exhausted Seedream gateway credits without retrying or counting", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const context = setup({}, async () => {
+      throw new Error(
+        "AiError: 2021: Insufficient balance; add money to your gateway",
+      );
+    });
+    context.env.STUDIO_MODEL = "bytedance/seedream-5-pro";
+    expect((await call(context)).status).toBe(429);
+    expect(context.ai.run).toHaveBeenCalledOnce();
+    expect(context.store.size).toBe(0);
+  });
+
+  it("aborts stalled Seedream downloads without starting another paid generation", async () => {
+    vi.useFakeTimers();
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const timeout = vi
+      .spyOn(AbortSignal, "timeout")
+      .mockImplementation((ms) => {
+        const controller = new AbortController();
+        setTimeout(
+          () => controller.abort(new DOMException("Timed out", "TimeoutError")),
+          ms,
+        );
+        return controller.signal;
+      });
+    try {
+      const context = setup();
+      context.env.STUDIO_MODEL = "bytedance/seedream-5-pro";
+      context.ai.run.mockResolvedValue({
+        result: { images: ["https://images.volces.com/result.jpeg"] },
+      });
+      const download = vi.spyOn(globalThis, "fetch").mockImplementation(
+        async (_input, options) =>
+          new Promise((_resolve, reject) => {
+            const signal = options?.signal;
+            signal?.addEventListener("abort", () => reject(signal.reason));
+          }),
+      );
+      const pending = call(context);
+      await vi.waitFor(() => expect(download).toHaveBeenCalledOnce());
+      await vi.advanceTimersByTimeAsync(90000);
+      expect(download).toHaveBeenCalledOnce();
+      expect(download.mock.calls[0]?.[1]?.signal?.aborted).toBe(false);
+      await vi.advanceTimersByTimeAsync(90000);
+      expect((await pending).status).toBe(502);
+      expect(download).toHaveBeenCalledOnce();
+      expect(context.ai.run).toHaveBeenCalledOnce();
+      expect(context.store.size).toBe(0);
+    } finally {
+      timeout.mockRestore();
+      vi.useRealTimers();
+    }
   });
 
   it("reports a failed generation without counting it", async () => {

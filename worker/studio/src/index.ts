@@ -1,4 +1,5 @@
 import { studioPrompt } from "./prompt";
+import { generateSeedream, seedreamModel } from "./seedream";
 import {
   fitsModel,
   imageType,
@@ -11,7 +12,7 @@ import {
 export type Env = {
   AI: Ai;
   APP_TOKEN: string;
-  STUDIO_MODEL: "@cf/black-forest-labs/flux-2-klein-4b";
+  STUDIO_MODEL: "@cf/black-forest-labs/flux-2-klein-4b" | typeof seedreamModel;
   GLOBAL_DAILY_LIMIT: string;
   LIMITS: KVNamespace;
 };
@@ -26,7 +27,9 @@ const fail = (error: string, status: number) =>
   Response.json({ error }, { status, headers: cors });
 
 const isLimitError = (error: unknown) =>
-  /4006|daily free allocation|rate limit/i.test(String(error));
+  /\b(?:4006|2021)\b|daily free allocation|rate limit|insufficient balance/i.test(
+    String(error),
+  );
 
 const fromBase64 = (data: string) =>
   Uint8Array.from(atob(data), (char) => char.charCodeAt(0));
@@ -36,14 +39,16 @@ async function generateOnce(
   piece: StudioRequest,
   signal: AbortSignal,
 ) {
-  const form = new FormData();
-  form.append("prompt", studioPrompt(piece));
-  form.append("input_image_0", piece.image);
-  if (piece.original) form.append("input_image_1", piece.original);
-  form.append("width", "1024");
-  form.append("height", "1024");
-  const formResponse = new Response(form);
   try {
+    if (env.STUDIO_MODEL === seedreamModel)
+      return await generateSeedream(env.AI, piece, signal);
+    const form = new FormData();
+    form.append("prompt", studioPrompt(piece));
+    form.append("input_image_0", piece.image);
+    if (piece.original) form.append("input_image_1", piece.original);
+    form.append("width", "1024");
+    form.append("height", "1024");
+    const formResponse = new Response(form);
     const result = await env.AI.run(
       env.STUDIO_MODEL,
       {
@@ -74,9 +79,12 @@ async function generateOnce(
 }
 
 async function generate(env: Env, piece: StudioRequest) {
-  const deadline = AbortSignal.timeout(85000);
+  const seedream = env.STUDIO_MODEL === seedreamModel;
+  const deadline = AbortSignal.timeout(seedream ? 180000 : 85000);
   for (let attempt = 0; attempt < 2; attempt += 1) {
-    const signal = AbortSignal.any([deadline, AbortSignal.timeout(40000)]);
+    const signal = seedream
+      ? deadline
+      : AbortSignal.any([deadline, AbortSignal.timeout(40000)]);
     const result = await generateOnce(env, piece, signal);
     if (result !== null || deadline.aborted) return result;
   }

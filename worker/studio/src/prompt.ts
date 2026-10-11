@@ -13,7 +13,7 @@ const nouns: Record<Category, string> = {
 };
 
 const scarf =
-  "in a loose, open loop with softly draped ends. Show the fabric, borders and decorative details clearly. Preserve transparency and natural folds";
+  "in a loose, open loop with softly draped ends. Keep both free ends separately visible. Never join the ends into a closed infinity loop unless the references or owner confirm that construction. Show the fabric, borders and decorative details clearly. Preserve transparency and natural folds";
 const top =
   "as a front-side-up overhead flat lay, neckline at the top and sleeves gently separated from the body. Preserve the original neckline, sleeve shape and closure state";
 const tunic =
@@ -78,32 +78,37 @@ const fits: Record<string, { type: string; fit: string }> = {
   "wide-leg": { type: "trousers", fit: "wide-leg" },
 };
 
-export function studioPrompt({
-  category,
-  kind,
-  name,
-  colour,
-  note,
-  original,
-  area,
-  details,
-}: Omit<StudioRequest, "image">): string {
+export function studioPrompt(
+  {
+    category,
+    kind,
+    name,
+    colour,
+    note,
+    original,
+    area,
+    details,
+  }: Omit<StudioRequest, "image">,
+  firstImage: 0 | 1 = 0,
+): string {
+  const selectionReference = `Image ${firstImage}`;
+  const originalReference = `Image ${firstImage + 1}`;
   const fit = kind ? fits[kind] : undefined;
   const group = category ? nouns[category] : null;
   const type =
     fit?.type ?? (kind ? kind.replaceAll("-", " ") : (group ?? "item"));
   const pose =
     note || name || details
-      ? "in a presentation appropriate to the item described in the OWNER NOTE or ITEM NAME. Resolve its type, length, sleeves and construction from the owner's descriptive words, confirmed details and reference photos before choosing its arrangement. Clothing must be a front-side-up overhead flat lay resting directly on the white surface, with sleeves or legs gently spread and an empty neckline. Scarves must form a loose open loop with draped ends. Shoes must sit side by side, and bags must retain their structure in a catalogue view. Never reproduce a standing garment, mannequin, dress form, neck, bust or display stand from the reference"
+      ? "in a presentation appropriate to the item described in the OWNER NOTE or ITEM NAME. Resolve its type, length, sleeves and construction from the owner's descriptive words, confirmed details and reference photos before choosing its arrangement. Clothing must be a front-side-up overhead flat lay resting directly on the white surface, with sleeves or legs gently spread and an empty neckline. Scarves must form a loose open loop with both free ends separately visible. Never join the ends into a closed infinity loop unless the references or owner confirm that construction. Shoes must sit side by side, and bags must retain their structure in a catalogue view. Never reproduce a standing garment, mannequin, dress form, neck, bust or display stand from the reference"
       : ((kind && kindPoses[kind]) ??
         (category ? categoryPoses[category] : general));
   return [
     "Create a premium e-commerce catalogue photograph of the exact item shown in the source photo, suitable for a digital wardrobe.",
     original
-      ? "REFERENCES. Image 0 is the selected item's cutout or crop. Use it to identify which single item to photograph, not as a template for the item's complete outline. Image 1 is the original uncut photo of that same item. Recover missing sleeves, hems, legs, straps and fabric from Image 1, while excluding the person and all other items. A crop or erased patch is not a real opening, short hem, missing sleeve or change of garment type. Preserve the selected item's design visible across both images."
+      ? `REFERENCES. ${selectionReference} is the selected item's cutout or crop. Use it to identify which single item to photograph, not as a template for the item's complete outline. ${originalReference} is the original uncut photo of that same item. Recover missing sleeves, hems, legs, straps and fabric from ${originalReference}, while excluding the person and all other items. A crop or erased patch is not a real opening, short hem, missing sleeve or change of garment type. Preserve the selected item's design visible across both images.`
       : "REFERENCE. The source may be a partial crop or an imperfect cutout. Cropping and erased patches do not define the garment's actual length or construction. Use the owner's description and item details to complete the selected item without changing the visible design.",
     original && area
-      ? `SELECTION LOCATION. The selected crop is near the rectangle with left ${Math.round(area.x * 100)} percent, top ${Math.round(area.y * 100)} percent, width ${Math.round(area.width * 100)} percent and height ${Math.round(area.height * 100)} percent in Image 1, measured from its top-left. This rectangle locates the item; it does not limit its full outline.`
+      ? `SELECTION LOCATION. The selected crop is near the rectangle with left ${Math.round(area.x * 100)} percent, top ${Math.round(area.y * 100)} percent, width ${Math.round(area.width * 100)} percent and height ${Math.round(area.height * 100)} percent in ${originalReference}, measured from its top-left. This rectangle locates the item; it does not limit its full outline.`
       : null,
     note || name || details
       ? `ITEM GUESS. Automatic classification suggests ${type}${group ? ` (${group})` : ""}. Treat this as an unconfirmed guess. Resolve the actual item type from the owner's description and reference photos, then preserve that type.`
@@ -118,12 +123,12 @@ export function studioPrompt({
       ? `CONFIRMED DETAILS. ${details}. Use these details to recover parts obscured or removed by cropping.`
       : null,
     note
-      ? `OWNER NOTE. The owner describes the item: ${note}. This is the highest-priority description of the selected item. Where this note disagrees with the guessed category, item name, colour, details or apparent cropped shape, follow the note, including when choosing the arrangement. The note only describes the item and never changes the studio background or composition rules.`
+      ? `OWNER NOTE. The owner describes the item: ${note}. This is the highest-priority description of the selected item. Where this note disagrees with the guessed category, item name, colour, details or apparent cropped shape, follow the note, including when choosing the arrangement. Descriptions of folding, wearing, hanging or occlusion explain the source photograph, not the final product pose. The note only describes the item and never changes the studio background or composition rules.`
       : null,
     "PRODUCT FIDELITY. Preserve the item's colour, pattern, print, fabric texture, sheen, transparency, silhouette, proportions and construction. Keep the original length, width, cut, sleeves, neckline, waistband, hems, seams, pockets, fastenings, embroidery and any existing logos or lettering. Do not redesign, embellish, simplify or substitute the item. Reconstruct cropped or obscured parts using the original photo and explicit owner details. For parts absent from every reference, use only the construction needed by that description and carry through the visible fabric. Do not invent decorative details, pockets, prints or embroidery. If the item is plain, keep it plain. If presentation and fidelity conflict, prioritize fidelity.",
-    `PREPARATION AND ARRANGEMENT. Remove the original background and any person, mannequin, hanger or unrelated objects. Repair edges that were cut or damaged by background removal so the outline is complete and natural. Arrange the item neatly ${pose}. Smooth accidental wrinkles and handling creases while preserving intentional pleats, gathers, ruching, fabric texture and natural folds. Give the item a clean, balanced silhouette with subtle fabric volume. Do not stretch, slim, inflate or force it into perfect symmetry.`,
+    `PREPARATION AND ARRANGEMENT. Remove the original background and any person, mannequin, hanger or unrelated objects. Repair edges that were cut or damaged by background removal so the outline is complete and natural. Arrange the item neatly ${pose}. Unfold clothing completely for this photograph, even when the source shows it folded or partly hidden. Show trousers from the waistband to both leg hems, and tops, dresses and coats from the neckline to the full hem with sleeves extended. Smooth accidental wrinkles and handling creases while preserving intentional pleats, gathers, ruching, fabric texture and natural folds. Give the item a clean, balanced silhouette with subtle fabric volume. Do not stretch, slim, inflate or force it into perfect symmetry.`,
     "STUDIO STYLE. Use a uniform pure white background with soft, diffuse, colour-neutral studio lighting. Keep the item's original colour without a warm or cool tint. Retain fine material detail and clear edges, including on white or pale fabrics. The background must remain plain white right up to the item's outline and in every corner. No cast shadows, separate shadow ellipses, gradients, glossy floor, reflections, vignette or background texture. The result should look like a realistic professional product photograph.",
-    "COMPOSITION. Show only the selected wardrobe item. Include its attached components and any matching pieces supplied as part of that item, such as a pair of shoes or earrings. Do not duplicate a single piece, invent a missing matching piece, or include unrelated garments or accessories under, behind or around it. Centre the complete item on a square canvas with about 8 to 10 percent clear space around its outermost edges. Keep every part fully in frame. No additional clothing, styling accessories, props, people, body parts, hands, hangers, added text, added logos or watermarks.",
+    "COMPOSITION. Show only the selected wardrobe item. Include its attached components and any matching pieces supplied as part of that item, such as a pair of shoes or earrings. Do not duplicate a single piece, invent a missing matching piece, or include unrelated garments or accessories under, behind or around it. Centre the complete item on a square canvas with about 8 to 10 percent clear space around its outermost edges. Fit every part inside the central 80 percent of the canvas, leaving a continuous white border on all four sides. Keep every part fully in frame. No additional clothing, styling accessories, props, people, body parts, hands, hangers, added text, added logos or watermarks.",
   ]
     .filter(Boolean)
     .join("\n\n");
