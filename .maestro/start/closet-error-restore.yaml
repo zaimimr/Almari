@@ -1,0 +1,45 @@
+appId: com.zaimimran.almari
+---
+- launchApp:
+    permissions:
+      all: allow
+- extendedWaitUntil:
+    visible: "Could not open your closet"
+    timeout: 20000
+- assertVisible:
+    id: "splash-restore"
+- assertNotVisible:
+    id: "splash-try-again"
+- takeScreenshot: docs/qa/screens/onboarding-runtime/backup-error
+- tapOn:
+    id: "splash-restore"
+- extendedWaitUntil:
+    visible:
+      id: "home-create"
+    timeout: 20000
+- assertNotVisible: "Could not open your closet"
+- tapOn: "Closet"
+- extendedWaitUntil:
+    visible:
+      id: "closet-grid"
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      id: "tile-seed-tunic"
+    centerElement: true
+- takeScreenshot: docs/qa/screens/onboarding-runtime/backup-restored
+- stopApp
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: "home-create"
+    timeout: 20000
+- tapOn: "Closet"
+- extendedWaitUntil:
+    visible:
+      id: "closet-grid"
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      id: "tile-seed-tunic"
+    centerElement: true

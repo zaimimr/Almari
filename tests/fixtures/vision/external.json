@@ -1,0 +1,70 @@
+[
+  {
+    "file": "../../../planning/build/studio/crop-eval/external/jackets-floor.jpg",
+    "sha256": "657d5f96da1d775794b1c2fd3af80276b2b68492009dd7a4332acf6470e9211e",
+    "source": "https://www.pexels.com/photo/flat-lay-of-jackets-on-brown-wooden-floor-3998647/",
+    "original": "https://images.pexels.com/photos/3998647/pexels-photo-3998647.jpeg?cs=srgb&dl=pexels-thishanabee-3998647.jpg&fm=jpg",
+    "creator": "Hana Brannigan",
+    "license": "https://www.pexels.com/license/",
+    "changes": "Original downloadable JPEG; no edits",
+    "scene": "Folded black long jacket on a wooden floor among a grey coat, a blue bomber and a sweater; zero people",
+    "people": 0,
+    "kind": "coat",
+    "pick": [
+      0.58,
+      0.46
+    ],
+    "keep": [
+      [
+        0.58,
+        0.46
+      ],
+      [
+        0.56,
+        0.24
+      ],
+      [
+        0.6,
+        0.67
+      ],
+      [
+        0.67,
+        0.51
+      ],
+      [
+        0.5,
+        0.68
+      ],
+      [
+        0.55513,
+        0.75709
+      ]
+    ],
+    "exclude": [
+      [
+        0.38,
+        0.47
+      ],
+      [
+        0.83,
+        0.45
+      ],
+      [
+        0.11,
+        0.45
+      ],
+      [
+        0.46,
+        0.46
+      ],
+      [
+        0.58,
+        0.12
+      ],
+      [
+        0.76,
+        0.75
+      ]
+    ]
+  }
+]

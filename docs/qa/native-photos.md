@@ -15,6 +15,7 @@ The positive suite has five selections from four photographs. Four additional ph
 | Hand-dyed scarves drying on a line | Failed | Selecting the leftmost scarf includes a neighboring scarf. |
 | Solid-colour scarves tied on a display rail | Failed after person repair | Zero people now reported correctly; the chosen teal scarf still includes its blue neighbor. |
 | Patterned scarves on a display | Failed after person repair | Zero people now reported correctly; the selected red scarf still includes orange/blue neighbors. |
+| Folded black jacket on a wooden floor, separate local download | Failed | Body and neighbor landmarks pass, but the dangling hem drawstring is missing. |
 
 The earlier headscarf test exposed a missing cap: the parser labelled it `hat`, while manual selection accepted only clothing classes. Selection now includes the existing carried-garment classes while excluding skin, face and hair. The synthetic cap/scarf regression failed before that repair and passes afterwards.
 
@@ -40,6 +41,16 @@ The older parser smoke check also ran on all 23 wardrobe catalogue images. It pe
 
 These are landmark tests, not complete pixel ground truth. They do not prove every edge or patterned detail survives, exclude an entire hanger, establish classification accuracy or assess automatic outfit splitting. Same-colour overlapping garments and multiple people remain untested. macOS inference does not establish physical iPhone camera behavior. Simulator cutout flows separately exercise the constructor and editor wiring.
 
+A separate floor-jacket case uses Hana Brannigan's [floor outerwear photograph](https://www.pexels.com/photo/flat-lay-of-jackets-on-brown-wooden-floor-3998647/). Its [manifest](../../tests/fixtures/vision/external.json) records source, [licence](https://www.pexels.com/license/), hash and landmarks. The source JPEG stays in ignored local storage. This case is additional to the five passing selections and four bundled failing gates, with no corresponding Studio output.
+
+The first floor-jacket check passed body and neighbor landmarks. Full-mask review then showed that the visible drawstring below the hem was removed. Source-pixel review placed a fabric landmark at `[0.55513, 0.75709]`; the strengthened check fails there. The initial pass was rejected. It does not establish complete garment retention.
+
+```sh
+mkdir -p planning/build/studio/crop-eval/external
+curl --fail --location 'https://images.pexels.com/photos/3998647/pexels-photo-3998647.jpeg?cs=srgb&dl=pexels-thishanabee-3998647.jpg&fm=jpg' -o planning/build/studio/crop-eval/external/jackets-floor.jpg
+bash scripts/test-photo-vision.sh tests/fixtures/vision/external.json
+```
+
 The requested scene coverage remains incomplete:
 
 | Requested scene | Real-photo selection | Reviewed Studio output |
@@ -51,7 +62,7 @@ The requested scene coverage remains incomplete:
 | Floor trousers | Crowded selection fails | Missing |
 | Hanging trousers | Landmark pass, folded/partial | Missing |
 | Worn trousers | Landmark pass, legs outside frame | Missing |
-| Floor jacket | Missing | Missing |
+| Floor jacket | Separate local case fails drawstring retention | Missing |
 | Hanging jacket | Landmark pass, partly outside frame | Missing |
 | Worn jacket | Landmark pass | Missing |
 

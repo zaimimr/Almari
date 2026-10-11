@@ -1,0 +1,20 @@
+#!/bin/sh
+set -eu
+device="${DEVICE:-Almari Systems QA}"
+[ "$device" = "Almari Systems QA" ]
+data=$(xcrun simctl get_app_container "$device" com.zaimimran.almari data)
+python3 - "$data/Documents/SQLite/ExpoSQLiteStorage" <<'PY'
+import json, sqlite3, sys
+from pathlib import Path
+database = Path(sys.argv[1])
+with sqlite3.connect(database.as_uri() + "?mode=ro", uri=True) as connection:
+    stored = dict(connection.execute("select key, value from storage"))
+closet = json.loads(stored["closet.v3"])
+assert len(closet["pieces"]) == 11
+assert all(piece["source"] == "owned" for piece in closet["pieces"])
+assert any(piece["id"] == "seed-tunic" for piece in closet["pieces"])
+assert closet["styling"]["name"] == "Sara"
+assert closet["styling"]["wardrobe"] == "owned"
+assert any(key.startswith("closet.v3.corrupt-") and value == "{" for key, value in stored.items())
+print("PASS restored closet: 11 owned pieces, saved profile and retained damaged copy after relaunch")
+PY

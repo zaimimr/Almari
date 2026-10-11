@@ -7,9 +7,20 @@ appId: com.zaimimran.almari
     timeout: 20000
 - tapOn:
     id: "splash-start-over"
+- tapOn: "Cancel"
+- assertVisible: "Could not open your closet"
+- assertNotVisible:
+    id: "welcome-start"
+- tapOn:
+    id: "splash-start-over"
+- takeScreenshot: docs/qa/screens/onboarding-runtime/start-over-confirm
 - tapOn:
     text: "Start over"
-    rightOf: "Cancel"
+    above:
+      id: "splash-start-over"
 - extendedWaitUntil:
-    notVisible: "Could not open your closet"
+    visible:
+      id: "welcome-start"
     timeout: 20000
+- assertNotVisible: "Could not open your closet"
+- takeScreenshot: docs/qa/screens/onboarding-runtime/start-over

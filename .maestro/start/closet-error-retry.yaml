@@ -6,6 +6,10 @@ appId: com.zaimimran.almari
 - extendedWaitUntil:
     visible: "Could not open your closet"
     timeout: 20000
+- tapOn: "Try again"
+- extendedWaitUntil:
+    visible: "Could not open your closet"
+    timeout: 20000
 - runFlow: ../lib/sample-closet.yaml
 - stopApp
 - launchApp
