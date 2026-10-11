@@ -90,6 +90,39 @@ struct VisionTests {
         try expect(result[40 * 100 + 90] == 0, "Touching garment was included")
         try expect(result[40 * 100 + 50] == 255, "Selected fabric was removed")
       }),
+      ("mask refinement retains thin fabric across short resampling colour gaps", {
+        var alpha = [UInt8](repeating: 0, count: 10000)
+        var photo = [UInt8](repeating: 0, count: 40000)
+        for y in 0..<100 {
+          for x in 0..<100 {
+            let body = (20..<80).contains(x) && (20..<70).contains(y)
+            let cord = x == 60 && (73..<76).contains(y)
+            let index = y * 100 + x
+            alpha[index] = body ? 255 : 0
+            photo.replaceSubrange((index * 4)..<(index * 4 + 4), with: body || cord ? [12, 18, 25, 255] : [190, 155, 120, 255])
+          }
+        }
+        let result = GarmentMaskRefinement.refine(alpha, pixels: photo, width: 100, height: 100)
+        try expect(result[75 * 100 + 60] == 255, "Separated cord sample lost")
+        try expect(result[71 * 100 + 60] == 0, "Background gap filled")
+        try expect(result[77 * 100 + 60] == 0, "Background beyond cord included")
+      }),
+      ("mask refinement retains a shaded coloured edge and excludes its blue neighbour", {
+        var alpha = [UInt8](repeating: 0, count: 10000)
+        var photo = [UInt8](repeating: 0, count: 40000)
+        for y in 0..<100 {
+          for x in 0..<100 {
+            let inside = (20..<80).contains(x) && (20..<80).contains(y)
+            alpha[y * 100 + x] = inside ? 255 : 0
+            let colour: [UInt8] = !inside || x == 79 ? [0, 87, 112, 255]
+              : x == 20 ? [0, 35, 48, 255] : x < 45 ? [0, 40, 50, 255] : [0, 70, 70, 255]
+            photo.replaceSubrange(((y * 100 + x) * 4)..<((y * 100 + x) * 4 + 4), with: colour)
+          }
+        }
+        let result = GarmentMaskRefinement.refine(alpha, pixels: photo, width: 100, height: 100)
+        try expect(result[50 * 100 + 20] == 255, "Shaded fabric edge lost")
+        try expect(result[50 * 100 + 79] == 0, "Blue neighbouring edge included")
+      }),
       ("mask refinement preserves existing one pixel cords and large openings", {
         let member = (0..<10000).map { index in
           let x = index % 100
@@ -201,6 +234,20 @@ struct VisionTests {
         try expect(!upper.contains(80 * 100 + 40), "Trousers included in upper garment")
         try expect(pants.contains(80 * 100 + 40), "Trousers lost")
         try expect(!pants.contains(40 * 100 + 40), "Upper garment included in trousers")
+      }),
+      ("manual selection uses source fabric when the tapped parser label is wrong", {
+        for label in [ClothesClass.background, .hair] {
+          var source = grid([(.upper, 20..<80, 20..<80)])
+          source.labels[40 * 100 + 40] = UInt8(label.rawValue)
+          var colours = [SIMD3<Double>](repeating: SIMD3(5, 0, 0), count: 10000)
+          for y in 20..<80 {
+            for x in 20..<50 { colours[y * 100 + x] = SIMD3(45, -15, -8) }
+          }
+          let selected = Set(GarmentRegions.picked(source, at: 40 * 100 + 40, colours: colours, person: true)?.pixels ?? [])
+          try expect(selected.contains(40 * 100 + 40), "Tapped fabric lost")
+          try expect(selected.contains(30 * 100 + 30), "Same-colour fabric lost")
+          try expect(!selected.contains(40 * 100 + 70), "Different garment included")
+        }
       }),
       ("manual selection separates neutral garments while retaining shaded fabric", {
         let source = grid([(.upper, 20..<80, 20..<80)])

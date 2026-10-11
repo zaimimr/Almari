@@ -13,5 +13,5 @@ xcrun swiftc -O \
   scripts/tests/photos.swift \
   -o "$photo_test_output/photo-tests"
 "$photo_test_output/photo-tests" "${1:-tests/fixtures/vision/sources.json}" \
-  modules/closet-vision/ios/Resources/ClothesParser.mlmodelc \
-  planning/build/studio/crop-eval/native-photos
+  "${PHOTO_MODEL_DIR:-modules/closet-vision/ios/Resources}/ClothesParser.mlmodelc" \
+  "${PHOTO_REVIEW_DIR:-planning/build/studio/crop-eval/native-photos}"

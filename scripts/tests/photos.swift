@@ -177,7 +177,7 @@ struct PhotoTests {
     config.computeUnits = .cpuOnly
     let model = try MLModel(contentsOf: URL(fileURLWithPath: arguments[2]), configuration: config)
     let segmentationConfig = MLModelConfiguration()
-    segmentationConfig.computeUnits = .cpuAndGPU
+    segmentationConfig.computeUnits = ProcessInfo.processInfo.environment["PHOTO_CPU_ONLY"] == "1" ? .cpuOnly : .cpuAndGPU
     let models = try GarmentSegmenter.Models(
       folder: URL(fileURLWithPath: arguments[2]).deletingLastPathComponent(), configuration: segmentationConfig)
     let context = CIContext(options: [.workingColorSpace: CGColorSpace(name: CGColorSpace.sRGB)!])

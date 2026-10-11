@@ -77,6 +77,9 @@ enum GarmentRegions {
         return headOrUpper ? other == "head" || other == "upper" : other == kind
       })
     }
+    if person, grid.labels.indices.contains(index), grid.labels[index] == UInt8(ClothesClass.hair.rawValue) {
+      wanted.insert(UInt8(ClothesClass.hair.rawValue))
+    }
     let parts = components(grid, wanted: wanted).filter { Double($0.count) >= least }
     let x = index % width
     let y = index / width
@@ -105,7 +108,17 @@ enum GarmentRegions {
       found = even
     }
     let sealed = solid(found, width: grid.width, height: grid.height, gap: heldGap)
-    let fabric = sealed.pixels.filter { !body.contains(grid.labels[$0]) }
+    let existing = Set(found.pixels)
+    let fabric = sealed.pixels.filter { index in
+      if body.contains(grid.labels[index]) {
+        guard grid.labels[index] == UInt8(ClothesClass.hair.rawValue), let seed, let colours else { return false }
+        let gap = colours[index] - colours[seed]
+        return (gap * gap).sum() < colourGap * colourGap
+      }
+      guard let seed, let colours, !existing.contains(index) else { return true }
+      let gap = colours[index] - colours[seed]
+      return (gap * gap).sum() < colourGap * colourGap
+    }
     return bounded(kind: sealed.kind, pixels: fabric, width: grid.width, total: grid.labels.count)
   }
 
@@ -118,23 +131,33 @@ enum GarmentRegions {
         abs($0 % width - seed % width) <= seedRadius && abs($0 / width - seed / width) <= seedRadius
       }
     }
-    let sample = near?.isEmpty == false ? near! : region.pixels
+    let sample = near?.isEmpty == false ? near! : seed.map { [$0] } ?? region.pixels
     let lightness = sample.map { colours[$0].x }.sorted()
     let a = sample.map { colours[$0].y }.sorted()
     let b = sample.map { colours[$0].z }.sorted()
     guard !a.isEmpty else { return nil }
-    let reference = SIMD3(lightness[lightness.count / 2], a[a.count / 2], b[b.count / 2])
+    let reference = seed.map { colours[$0] } ?? SIMD3(lightness[lightness.count / 2], a[a.count / 2], b[b.count / 2])
     var labels = [UInt8](repeating: 0, count: grid.labels.count)
     for index in region.pixels {
       let gap = colours[index] - reference
       if (gap * gap).sum() < colourGap * colourGap { labels[index] = 1 }
     }
     let even = LabelGrid(width: width, height: grid.height, labels: labels)
-    if let seed, near?.isEmpty == false, labels[seed] == 1,
-      let part = components(even, wanted: [1]).first(where: { $0.contains(seed) })
-    {
-      let selected = joined ? labels.indices.filter { labels[$0] == 1 } : part
-      return bounded(kind: region.kind, pixels: selected, width: width, total: labels.count)
+    if let seed {
+      let parts = components(even, wanted: [1])
+      let selected = joined ? labels.indices.filter { labels[$0] == 1 } : parts.min { first, second in
+        func gap(_ part: [Int]) -> Int {
+          part.map { pixel in
+            let dx = pixel % width - seed % width
+            let dy = pixel / width - seed / width
+            return dx * dx + dy * dy
+          }.min() ?? Int.max
+        }
+        return gap(first) < gap(second)
+      } ?? []
+      if Double(selected.count) >= Double(grid.labels.count) * minComponentShare {
+        return bounded(kind: region.kind, pixels: selected, width: width, total: labels.count)
+      }
     }
     guard let kept = largest(even, kind: region.kind, wanted: [1]),
       Double(kept.pixels.count) >= Double(region.pixels.count) * colourKept

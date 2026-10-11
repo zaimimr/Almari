@@ -196,7 +196,8 @@ final class CutoutSelector {
         if GarmentRegions.body.contains(grid.labels[y * grid.width + x]) { skin += 1 }
       }
     }
-    return ClothesParser.showsPerson(skin: skin, mask: inside)
+    return parse.people > 0 && Double(inside) >= Double(grid.labels.count) * 0.1
+      || ClothesParser.showsPerson(skin: skin, mask: inside)
   }
 
   private func normalized(_ parse: ClothesParse, x: Int, y: Int) -> CGPoint {

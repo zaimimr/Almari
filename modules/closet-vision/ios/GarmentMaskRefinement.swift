@@ -6,6 +6,8 @@ enum GarmentMaskRefinement {
   static let detailWidthShare = 0.005
   static let colourMargin = 0.7
   static let backgroundMatchGap = 3.0
+  static let minShadowChroma = 10.0
+  static let holeShare = 0.1
 
   static func refine(_ alpha: [UInt8], pixels: [UInt8], width: Int, height: Int, seed: Int? = nil) -> [UInt8] {
     let total = width * height
@@ -35,7 +37,22 @@ enum GarmentMaskRefinement {
     let detail = attachedDetails(additions, to: mask, width: width, height: height)
     let core = GarmentRegions.spread(repaired, width: width, height: height, radius: 1, value: false)
     let narrow = narrowParts(repaired, width: width, height: height)
-    return mask.indices.map { core[$0] || detail[$0] || narrow[$0] || (seed == $0 && mask[$0]) ? 255 : 0 }
+    let darkest = foreground.map(\.x).min() ?? 0
+    return mask.indices.map { index in
+      let shadow = mask[index] && hypot(colours[index].y, colours[index].z) >= minShadowChroma && colours[index].x < darkest
+        && distance(colours[index], to: foreground) < distance(colours[index], to: background) * colourMargin
+      return core[index] || detail[index] || narrow[index] || shadow || (seed == index && mask[index]) ? 255 : 0
+    }
+  }
+
+  static func attaching(_ candidate: [UInt8], to alpha: [UInt8], width: Int, height: Int) -> [UInt8] {
+    guard candidate.count == alpha.count, alpha.count == width * height, width > 0, height > 0 else { return alpha }
+    let mask = alpha.map { $0 > 128 }
+    let distance = CutoutRepair.distances(to: mask, width: width, height: height)
+    let search = pow(Double(min(width, height)) * searchShare, 2)
+    let additions = candidate.indices.map { candidate[$0] > 128 && !mask[$0] && distance[$0] <= search }
+    let detail = attachedDetails(additions, to: mask, width: width, height: height)
+    return mask.indices.map { mask[$0] || detail[$0] ? 255 : 0 }
   }
 
   private static func repairedHoles(
@@ -47,7 +64,7 @@ enum GarmentMaskRefinement {
     let grown = GarmentRegions.spread(mask, width: width, height: height, radius: radius, value: true)
     var closed = GarmentRegions.spread(grown, width: width, height: height, radius: radius, value: false)
     let area = mask.filter { $0 }.count
-    CutoutRepair.fillHoles(&closed, width: width, height: height, largest: Int(Double(area) * CutoutRepair.holeShare))
+    CutoutRepair.fillHoles(&closed, width: width, height: height, largest: Int(Double(area) * holeShare))
     return mask.indices.map { index in
       let backgroundDistance = distance(colours[index], to: background)
       let fabric = backgroundDistance > backgroundMatchGap * backgroundMatchGap
@@ -122,9 +139,16 @@ enum GarmentMaskRefinement {
     let thickness = CutoutRepair.distances(to: additions.map { !$0 }, width: width, height: height)
     let radius = max(2, Double(min(width, height)) * detailWidthShare)
     var result = [Bool](repeating: false, count: mask.count)
-    for part in components(additions, width: width) {
-      guard part.allSatisfy({ thickness[$0] <= radius * radius }),
-        part.contains(where: { index in neighbours(index, width: width, total: mask.count).contains { mask[$0] } })
+    let broad = additions.indices.map { additions[$0] && thickness[$0] > radius * radius }
+    let wide = GarmentRegions.spread(broad, width: width, height: height, radius: Int(radius), value: true)
+    let thin = additions.indices.map { additions[$0] && !wide[$0] }
+    let reach = min(3, Int(radius.rounded(.up))) * 2
+    let nearby = GarmentRegions.spread(mask, width: width, height: height, radius: reach, value: true)
+    for part in components(thin, width: width) {
+      let xs = part.map { $0 % width }
+      let ys = part.map { $0 / width }
+      let span = max(xs.max()! - xs.min()! + 1, ys.max()! - ys.min()! + 1)
+      guard Double(part.count) <= Double(span) * radius * 2, part.contains(where: { nearby[$0] })
       else { continue }
       for index in part { result[index] = true }
     }
